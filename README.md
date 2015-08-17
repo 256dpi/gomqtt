@@ -7,17 +7,6 @@ This go package is an encoder/decoder library for
 [MQTT 3.1](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html)
 and [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
 
->	MQTT is a Client Server publish/subscribe messaging transport protocol. It is
->	light weight, open, simple, and designed so as to be easy to implement. These
->	characteristics make it ideal for use in many situations, including constrained
->	environments such as for communication in Machine to Machine (M2M) and Internet
->	of Things (IoT) contexts where a small code footprint is required and/or network
->	bandwidth is at a premium.
->
->	The MQTT protocol works by exchanging a series of MQTT messages in a defined way.
->	The protocol runs over TCP/IP, or over other network protocols that provide
->	ordered, lossless, bi-directional connections.
-
 ## Installation
 
 Get it using go's standard toolset:
@@ -85,6 +74,6 @@ n, err := msg.Decode(br)
 if err != nil {
     return err
 }
+```
 
 More details can be found in the [documentation](http://godoc.org/github.com/gomqtt/message).
-```
