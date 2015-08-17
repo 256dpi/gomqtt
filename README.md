@@ -1,4 +1,6 @@
-Package message is an encoder/decoder library for MQTT 3.1 and 3.1.1 messages. You can
+# gomqtt/message
+
+This go package is an encoder/decoder library for MQTT 3.1 and 3.1.1 messages. You can
 find the MQTT specs at the following locations:
 
 >	3.1.1 - http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/
@@ -17,11 +19,20 @@ From the spec:
 >	The protocol runs over TCP/IP, or over other network protocols that provide
 >	ordered, lossless, bi-directional connections.
 
+## Installation
+
+Get it using go's standard toolset:
+
+```bash
+$ go get github.com/gomqtt/message
+```
+
+## Usage
 
 There are two main items to take note in this package. The first is
 
-```
-	type MessageType byte
+```go
+type MessageType byte
 ```
 
 MessageType is the type representing the MQTT packet types. In the MQTT spec, MQTT
@@ -31,17 +42,17 @@ several methods that returns string representations of the names and description
 Also, one of the methods is New(). It returns a new Message object based on the mtype
 parameter. For example:
 
-```
-	m, err := CONNECT.New()
-	msg := m.(*ConnectMessage)
+```go
+m, err := CONNECT.New()
+msg := m.(*ConnectMessage)
 ```
 
 This would return a PublishMessage struct, but mapped to the Message interface. You can
 then type assert it back to a *PublishMessage. Another way to create a new
 PublishMessage is to call
 
-```
-	msg := NewConnectMessage()
+```go
+msg := NewConnectMessage()
 ```
 
 Every message type has a New function that returns a new message. The list of available
@@ -51,9 +62,9 @@ As you may have noticed, the second important item is the Message interface. It 
 several methods that are common to all messages, including Name(), Desc(), and Type().
 Most importantly, it also defines the Encode() and Decode() methods.
 
-```
-	Encode() (io.Reader, int, error)
-	Decode(io.Reader) (int, error)
+```go
+Encode() (io.Reader, int, error)
+Decode(io.Reader) (int, error)
 ```
 
 Encode returns an io.Reader in which the encoded bytes can be read. The second return
@@ -67,70 +78,70 @@ The second is error if Decode encounters any problems.
 
 With these in mind, we can now do:
 
-```
-	// Create a new CONNECT message
-	msg := NewConnectMessage()
+```go
+// Create a new CONNECT message
+msg := NewConnectMessage()
 
-	// Set the appropriate parameters
-	msg.SetWillQos(1)
-	msg.SetVersion(4)
-	msg.SetCleanSession(true)
-	msg.SetClientId([]byte("surgemq"))
-	msg.SetKeepAlive(10)
-	msg.SetWillTopic([]byte("will"))
-	msg.SetWillMessage([]byte("send me home"))
-	msg.SetUsername([]byte("surgemq"))
-	msg.SetPassword([]byte("verysecret"))
+// Set the appropriate parameters
+msg.SetWillQos(1)
+msg.SetVersion(4)
+msg.SetCleanSession(true)
+msg.SetClientId([]byte("surgemq"))
+msg.SetKeepAlive(10)
+msg.SetWillTopic([]byte("will"))
+msg.SetWillMessage([]byte("send me home"))
+msg.SetUsername([]byte("surgemq"))
+msg.SetPassword([]byte("verysecret"))
 
-	// Encode the message and get the io.Reader
-	r, n, err := msg.Encode()
-	if err == nil {
-		return err
-	}
+// Encode the message and get the io.Reader
+r, n, err := msg.Encode()
+if err == nil {
+    return err
+}
 
-	// Write n bytes into the connection
-	m, err := io.CopyN(conn, r, int64(n))
-	if err != nil {
-		return err
-	}
+// Write n bytes into the connection
+m, err := io.CopyN(conn, r, int64(n))
+if err != nil {
+    return err
+}
 
-	fmt.Printf("Sent %d bytes of %s message", m, msg.Name())
+fmt.Printf("Sent %d bytes of %s message", m, msg.Name())
 ```
 
 To receive a CONNECT message from a connection, we can do:
 
-```
-	// Create a new CONNECT message
-	msg := NewConnectMessage()
+```go
+// Create a new CONNECT message
+msg := NewConnectMessage()
 
-	// Decode the message by reading from conn
-	n, err := msg.Decode(conn)
+// Decode the message by reading from conn
+n, err := msg.Decode(conn)
 ```
 
 If you don't know what type of message is coming down the pipe, you can do something like this:
 
-```
-	// Create a buffered IO reader for the connection
-	br := bufio.NewReader(conn)
+```go
+// Create a buffered IO reader for the connection
+br := bufio.NewReader(conn)
 
-	// Peek at the first byte, which contains the message type
-	b, err := br.Peek(1)
-	if err != nil {
-		return err
-	}
+// Peek at the first byte, which contains the message type
+b, err := br.Peek(1)
+if err != nil {
+    return err
+}
 
-	// Extract the type from the first byte
-	t := MessageType(b[0] >> 4)
+// Extract the type from the first byte
+t := MessageType(b[0] >> 4)
 
-	// Create a new message
-	msg, err := t.New()
-	if err != nil {
-		return err
-	}
+// Create a new message
+msg, err := t.New()
+if err != nil {
+    return err
+}
 
-	// Decode it from the bufio.Reader
-	n, err := msg.Decode(br)
-	if err != nil {
-		return err
-	}
+// Decode it from the bufio.Reader
+n, err := msg.Decode(br)
+if err != nil {
+    return err
+}
 ```
