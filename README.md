@@ -26,11 +26,11 @@ msg := NewConnectMessage()
 msg.SetWillQos(1)
 msg.SetVersion(4)
 msg.SetCleanSession(true)
-msg.SetClientId([]byte("surgemq"))
+msg.SetClientId([]byte("gomqtt"))
 msg.SetKeepAlive(10)
 msg.SetWillTopic([]byte("will"))
 msg.SetWillMessage([]byte("send me home"))
-msg.SetUsername([]byte("surgemq"))
+msg.SetUsername([]byte("gomqtt"))
 msg.SetPassword([]byte("verysecret"))
 
 // Encode the message and get an io.Reader.

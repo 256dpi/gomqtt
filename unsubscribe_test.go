@@ -1,4 +1,4 @@
-// Copyright (c) 2014 The SurgeMQ Authors. All rights reserved.
+// Copyright (c) 2014 The gomqtt Authors. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ func TestUnsubscribeMessageDecode(t *testing.T) {
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 	require.Equal(t, UNSUBSCRIBE, msg.Type(), "Error decoding message.")
 	require.Equal(t, 3, len(msg.Topics()), "Error decoding topics.")
-	require.True(t, msg.TopicExists([]byte("surgemq")), "Topic 'surgemq' should exist.")
+	require.True(t, msg.TopicExists([]byte("gomqtt")), "Topic 'gomqtt' should exist.")
 	require.True(t, msg.TopicExists([]byte("/a/b/#/c")), "Topic '/a/b/#/c' should exist.")
 	require.True(t, msg.TopicExists([]byte("/a/b/#/cdd")), "Topic '/a/b/#/c' should exist.")
 }
@@ -104,7 +104,7 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 
 	msg := NewUnsubscribeMessage()
 	msg.SetPacketId(7)
-	msg.AddTopic([]byte("surgemq"))
+	msg.AddTopic([]byte("gomqtt"))
 	msg.AddTopic([]byte("/a/b/#/c"))
 	msg.AddTopic([]byte("/a/b/#/cdd"))
 

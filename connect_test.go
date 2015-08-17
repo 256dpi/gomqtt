@@ -1,4 +1,4 @@
-// Copyright (c) 2014 The SurgeMQ Authors. All rights reserved.
+// Copyright (c) 2014 The gomqtt Authors. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -163,10 +163,10 @@ func TestConnectMessageDecode(t *testing.T) {
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 	require.Equal(t, 206, int(msg.connectFlags), "Incorrect flag value.")
 	require.Equal(t, 10, int(msg.KeepAlive()), "Incorrect KeepAlive value.")
-	require.Equal(t, "surgemq", string(msg.ClientId()), "Incorrect client ID value.")
+	require.Equal(t, "gomqtt", string(msg.ClientId()), "Incorrect client ID value.")
 	require.Equal(t, "will", string(msg.WillTopic()), "Incorrect will topic value.")
 	require.Equal(t, "send me home", string(msg.WillMessage()), "Incorrect will message value.")
-	require.Equal(t, "surgemq", string(msg.Username()), "Incorrect username value.")
+	require.Equal(t, "gomqtt", string(msg.Username()), "Incorrect username value.")
 	require.Equal(t, "verysecret", string(msg.Password()), "Incorrect password value.")
 }
 
@@ -308,11 +308,11 @@ func TestConnectMessageEncode(t *testing.T) {
 	msg.SetWillQos(1)
 	msg.SetVersion(4)
 	msg.SetCleanSession(true)
-	msg.SetClientId([]byte("surgemq"))
+	msg.SetClientId([]byte("gomqtt"))
 	msg.SetKeepAlive(10)
 	msg.SetWillTopic([]byte("will"))
 	msg.SetWillMessage([]byte("send me home"))
-	msg.SetUsername([]byte("surgemq"))
+	msg.SetUsername([]byte("gomqtt"))
 	msg.SetPassword([]byte("verysecret"))
 
 	dst := make([]byte, 100)

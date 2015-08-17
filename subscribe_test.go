@@ -1,4 +1,4 @@
-// Copyright (c) 2014 The SurgeMQ Authors. All rights reserved.
+// Copyright (c) 2014 The gomqtt Authors. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,8 +62,8 @@ func TestSubscribeMessageDecode(t *testing.T) {
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 	require.Equal(t, SUBSCRIBE, msg.Type(), "Error decoding message.")
 	require.Equal(t, 3, len(msg.Topics()), "Error decoding topics.")
-	require.True(t, msg.TopicExists([]byte("surgemq")), "Topic 'surgemq' should exist.")
-	require.Equal(t, 0, int(msg.TopicQos([]byte("surgemq"))), "Incorrect topic qos.")
+	require.True(t, msg.TopicExists([]byte("gomqtt")), "Topic 'gomqtt' should exist.")
+	require.Equal(t, 0, int(msg.TopicQos([]byte("gomqtt"))), "Incorrect topic qos.")
 	require.True(t, msg.TopicExists([]byte("/a/b/#/c")), "Topic '/a/b/#/c' should exist.")
 	require.Equal(t, 1, int(msg.TopicQos([]byte("/a/b/#/c"))), "Incorrect topic qos.")
 	require.True(t, msg.TopicExists([]byte("/a/b/#/cdd")), "Topic '/a/b/#/c' should exist.")
@@ -107,7 +107,7 @@ func TestSubscribeMessageEncode(t *testing.T) {
 
 	msg := NewSubscribeMessage()
 	msg.SetPacketId(7)
-	msg.AddTopic([]byte("surgemq"), 0)
+	msg.AddTopic([]byte("gomqtt"), 0)
 	msg.AddTopic([]byte("/a/b/#/c"), 1)
 	msg.AddTopic([]byte("/a/b/#/cdd"), 2)
 
