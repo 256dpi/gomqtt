@@ -13,9 +13,9 @@
 // limitations under the License.
 
 /*
-This go package is an encoder/decoder library for [MQTT 3.1](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html) and [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
-
-From the spec:
+This go package is an encoder/decoder library for
+[MQTT 3.1](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html)
+and [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
 
 	MQTT is a Client Server publish/subscribe messaging transport protocol. It is
 	light weight, open, simple, and designed so as to be easy to implement. These
