@@ -77,3 +77,8 @@ if err != nil {
 ```
 
 More details can be found in the [documentation](http://godoc.org/github.com/gomqtt/message).
+
+## Credits
+
+This package has been extracted and contributed by @zhenjl from the
+[surgemq](https://github.com/surgemq/surgemq) project.
