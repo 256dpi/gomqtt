@@ -97,7 +97,7 @@ func TestPublishMessageDecode1(t *testing.T) {
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 	require.Equal(t, 7, int(msg.PacketId()), "Error decoding message.")
-	require.Equal(t, "gomqtt", string(msg.Topic()), "Error deocding topic name.")
+	require.Equal(t, "surgemq", string(msg.Topic()), "Error deocding topic name.")
 	require.Equal(t, []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}, msg.Payload(), "Error deocding payload.")
 }
 
@@ -150,7 +150,7 @@ func TestPublishMessageEncode(t *testing.T) {
 	}
 
 	msg := NewPublishMessage()
-	msg.SetTopic([]byte("gomqtt"))
+	msg.SetTopic([]byte("surgemq"))
 	msg.SetQoS(1)
 	msg.SetPacketId(7)
 	msg.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
@@ -187,7 +187,7 @@ func TestPublishMessageEncode3(t *testing.T) {
 	}
 
 	msg := NewPublishMessage()
-	msg.SetTopic([]byte("gomqtt"))
+	msg.SetTopic([]byte("surgemq"))
 	msg.SetQoS(0)
 	msg.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
 
@@ -214,7 +214,7 @@ func TestPublishMessageEncode4(t *testing.T) {
 	msgBytes = append(msgBytes, payload...)
 
 	msg := NewPublishMessage()
-	msg.SetTopic([]byte("gomqtt"))
+	msg.SetTopic([]byte("surgemq"))
 	msg.SetQoS(0)
 	msg.SetPayload(payload)
 
