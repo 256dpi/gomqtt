@@ -2,6 +2,7 @@
 
 [![Circle CI](https://circleci.com/gh/gomqtt/message.svg?style=svg)](https://circleci.com/gh/gomqtt/message)
 [![GoDoc](https://godoc.org/github.com/gomqtt/message?status.svg)](http://godoc.org/github.com/gomqtt/message)
+[![Release](https://img.shields.io/github/release/qubyte/rubidium.svg)](https://github.com/gomqtt/message/releases)
 
 This go package is an encoder/decoder library for
 [MQTT 3.1](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html)
