@@ -1,5 +1,8 @@
 # gomqtt/message
 
+[![Circle CI](https://circleci.com/gh/gomqtt/message.svg?style=svg)](https://circleci.com/gh/gomqtt/message)
+[![GoDoc](https://godoc.org/github.com/gomqtt/message?status.svg)](http://godoc.org/github.com/gomqtt/message)
+
 This go package is an encoder/decoder library for MQTT 3.1 and 3.1.1 messages. You can
 find the MQTT specs at the following locations:
 
