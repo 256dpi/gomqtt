@@ -50,9 +50,9 @@ m, err := CONNECT.New()
 msg := m.(*ConnectMessage)
 ```
 
-This would return a PublishMessage struct, but mapped to the Message interface. You can
-then type assert it back to a *PublishMessage. Another way to create a new
-PublishMessage is to call
+This would return a ConnectMessage struct, but mapped to the Message interface. You can
+then type assert it back to a \*ConnectMessage. Another way to create a new
+ConnectMessage is to call
 
 ```go
 msg := NewConnectMessage()
