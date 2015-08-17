@@ -13,11 +13,7 @@
 // limitations under the License.
 
 /*
-Package message is an encoder/decoder library for MQTT 3.1 and 3.1.1 messages. You can
-find the MQTT specs at the following locations:
-
-	3.1.1 - http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/
-	3.1 - http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html
+This go package is an encoder/decoder library for [MQTT 3.1](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html) and [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
 
 From the spec:
 
