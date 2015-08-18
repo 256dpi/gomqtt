@@ -158,3 +158,26 @@ func TestConnackDecodeEncodeEquiv(t *testing.T) {
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }
+
+func BenchmarkConnackEncode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		msg := NewConnackMessage()
+		msg.SetReturnCode(ConnectionAccepted)
+		msg.SetSessionPresent(true)
+		msg.Encode(make([]byte, msg.Len()))
+	}
+}
+
+func BenchmarkConnackDecode(b *testing.B) {
+	msgBytes := []byte{
+		byte(CONNACK << 4),
+		2,
+		0, // session not present
+		0, // connection accepted
+	}
+
+	for i := 0; i < b.N; i++ {
+		msg := NewConnackMessage()
+		msg.Decode(msgBytes)
+	}
+}

@@ -132,3 +132,33 @@ func TestSubackDecodeEncodeEquiv(t *testing.T) {
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }
+
+func BenchmarkSubackEncode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		msg := NewSubackMessage()
+		msg.SetPacketId(7)
+		msg.AddReturnCode(0)
+		msg.AddReturnCode(1)
+		msg.AddReturnCode(2)
+		msg.AddReturnCode(0x80)
+		msg.Encode(make([]byte, msg.Len()))
+	}
+}
+
+func BenchmarkSubackDecode(b *testing.B) {
+	msgBytes := []byte{
+		byte(SUBACK << 4),
+		6,
+		0,    // packet ID MSB (0)
+		7,    // packet ID LSB (7)
+		0,    // return code 1
+		1,    // return code 2
+		2,    // return code 3
+		0x80, // return code 4
+	}
+
+	for i := 0; i < b.N; i++ {
+		msg := NewSubackMessage()
+		msg.Decode(msgBytes)
+	}
+}

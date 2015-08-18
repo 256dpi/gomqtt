@@ -76,3 +76,22 @@ func TestDisconnectDecodeEncodeEquiv(t *testing.T) {
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }
+
+func BenchmarkDisconnectEncode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		msg := NewDisconnectMessage()
+		msg.Encode(make([]byte, msg.Len()))
+	}
+}
+
+func BenchmarkDisconnectDecode(b *testing.B) {
+	msgBytes := []byte{
+		byte(DISCONNECT << 4),
+		0,
+	}
+
+	for i := 0; i < b.N; i++ {
+		msg := NewDisconnectMessage()
+		msg.Decode(msgBytes)
+	}
+}

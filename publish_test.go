@@ -279,3 +279,33 @@ func TestPublishDecodeEncodeEquiv(t *testing.T) {
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }
+
+func BenchmarkPublishEncode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		msg := NewPublishMessage()
+		msg.SetTopic([]byte("surgemq"))
+		msg.SetQoS(1)
+		msg.SetPacketId(7)
+		msg.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
+		msg.Encode(make([]byte, msg.Len()))
+	}
+}
+
+func BenchmarkPublishDecode(b *testing.B) {
+	msgBytes := []byte{
+		byte(PUBLISH<<4) | 2,
+		23,
+		0, // topic name MSB (0)
+		7, // topic name LSB (7)
+		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
+	}
+
+	for i := 0; i < b.N; i++ {
+		msg := NewPublishMessage()
+		msg.Decode(msgBytes)
+	}
+}
+

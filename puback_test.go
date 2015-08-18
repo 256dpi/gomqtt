@@ -106,3 +106,26 @@ func TestPubackDecodeEncodeEquiv(t *testing.T) {
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }
+
+func BenchmarkPubackEncode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		msg := NewPubackMessage()
+		msg.SetPacketId(7)
+		msg.Encode(make([]byte, msg.Len()))
+	}
+}
+
+func BenchmarkPubackDecode(b *testing.B) {
+	msgBytes := []byte{
+		byte(PUBACK << 4),
+		2,
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+	}
+
+	for i := 0; i < b.N; i++ {
+		msg := NewPubackMessage()
+		msg.Decode(msgBytes)
+	}
+}
+
