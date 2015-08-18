@@ -622,11 +622,6 @@ func (this *ConnectMessage) msglen() int {
 //
 //		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 func (this *ConnectMessage) validClientId(cid []byte) bool {
-	// Fixed https://github.com/surgemq/surgemq/issues/4
-	//if len(cid) > 23 {
-	//	return false
-	//}
-
 	if this.Version() == 0x3 {
 		return true
 	}
