@@ -203,7 +203,6 @@ func (this *header) decode(src []byte) (int, error) {
 		return total, fmt.Errorf("header/Decode: Invalid message type %d. Expecting %d.", this.Type(), mtype)
 	}
 
-
 	if this.Type() != PUBLISH && this.Flags() != this.Type().DefaultFlags() {
 		return total, fmt.Errorf("header/Decode: Invalid message (%d) flags. Expecting %d, got %d", this.Type(), this.Type().DefaultFlags(), this.Flags())
 	}
