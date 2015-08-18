@@ -281,12 +281,15 @@ func TestPublishDecodeEncodeEquiv(t *testing.T) {
 }
 
 func BenchmarkPublishEncode(b *testing.B) {
+	t := []byte("surgemq")
+	p := []byte("send me home")
+
 	for i := 0; i < b.N; i++ {
 		msg := NewPublishMessage()
-		msg.SetTopic([]byte("surgemq"))
+		msg.SetTopic(t)
 		msg.SetQoS(1)
 		msg.SetPacketId(7)
-		msg.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
+		msg.SetPayload(p)
 		msg.Encode(make([]byte, msg.Len()))
 	}
 }

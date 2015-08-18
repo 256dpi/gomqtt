@@ -373,17 +373,23 @@ func TestConnectDecodeEncodeEquiv(t *testing.T) {
 }
 
 func BenchmarkConnectEncode(b *testing.B) {
+	cid := []byte("surgemq")
+	wt := []byte("will")
+	wm := []byte("send me home")
+	usr := []byte("surgemq")
+	pw := []byte("verysecret")
+
 	for i := 0; i < b.N; i++ {
 		msg := NewConnectMessage()
 		msg.SetWillQos(1)
 		msg.SetVersion(4)
 		msg.SetCleanSession(true)
-		msg.SetClientId([]byte("surgemq"))
+		msg.SetClientId(cid)
 		msg.SetKeepAlive(10)
-		msg.SetWillTopic([]byte("will"))
-		msg.SetWillMessage([]byte("send me home"))
-		msg.SetUsername([]byte("surgemq"))
-		msg.SetPassword([]byte("verysecret"))
+		msg.SetWillTopic(wt)
+		msg.SetWillMessage(wm)
+		msg.SetUsername(usr)
+		msg.SetPassword(pw)
 		msg.Encode(make([]byte, msg.Len()))
 	}
 }

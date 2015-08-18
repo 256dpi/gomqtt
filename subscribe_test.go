@@ -161,12 +161,16 @@ func TestSubscribeDecodeEncodeEquiv(t *testing.T) {
 }
 
 func BenchmarkSubscribeEncode(b *testing.B) {
+	t1 := []byte("surgemq")
+	t2 := []byte("/a/b/#/c")
+	t3 := []byte("/a/b/#/cdd")
+
 	for i := 0; i < b.N; i++ {
 		msg := NewSubscribeMessage()
 		msg.SetPacketId(7)
-		msg.AddTopic([]byte("surgemq"), 0)
-		msg.AddTopic([]byte("/a/b/#/c"), 1)
-		msg.AddTopic([]byte("/a/b/#/cdd"), 2)
+		msg.AddTopic(t1, 0)
+		msg.AddTopic(t2, 1)
+		msg.AddTopic(t3, 2)
 		msg.Encode(make([]byte, msg.Len()))
 	}
 }
