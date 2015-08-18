@@ -166,17 +166,3 @@ func TestMessageHeaderEncode4(t *testing.T) {
 	_, err := header.encode(buf)
 	require.Error(t, err)
 }
-
-/*
-// This test is to ensure that an empty message is at least 2 bytes long
-func TestMessageHeaderEncode5(t *testing.T) {
-	msg := NewPingreqMessage()
-
-	dst, n, err := msg.encode()
-	if err != nil {
-		t.Errorf("Error encoding PINGREQ message: %v", err)
-	} else if n != 2 {
-		t.Errorf("Incorrect result. Expecting length of 2 bytes, got %d.", dst.(*bytes.Buffer).Len())
-	}
-}
-*/

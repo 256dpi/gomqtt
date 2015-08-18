@@ -91,7 +91,6 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 		return total, err
 	}
 
-	//this.packetId = binary.BigEndian.Uint16(src[total:])
 	this.packetId = src[total : total+2]
 	total += 2
 

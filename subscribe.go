@@ -161,7 +161,6 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 		return total, err
 	}
 
-	//this.packetId = binary.BigEndian.Uint16(src[total:])
 	this.packetId = src[total : total+2]
 	total += 2
 
@@ -220,11 +219,9 @@ func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
 
 	if this.PacketId() == 0 {
 		this.SetPacketId(uint16(atomic.AddUint64(&gPacketId, 1) & 0xffff))
-		//this.packetId = uint16(atomic.AddUint64(&gPacketId, 1) & 0xffff)
 	}
 
 	n = copy(dst[total:], this.packetId)
-	//binary.BigEndian.PutUint16(dst[total:], this.packetId)
 	total += n
 
 	for i, t := range this.topics {

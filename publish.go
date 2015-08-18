@@ -165,7 +165,6 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	// The packet identifier field is only present in the PUBLISH packets where the
 	// QoS level is 1 or 2
 	if this.QoS() != 0 {
-		//this.packetId = binary.BigEndian.Uint16(src[total:])
 		this.packetId = src[total : total+2]
 		total += 2
 	}
@@ -226,11 +225,9 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	if this.QoS() != 0 {
 		if this.PacketId() == 0 {
 			this.SetPacketId(uint16(atomic.AddUint64(&gPacketId, 1) & 0xffff))
-			//this.packetId = uint16(atomic.AddUint64(&gPacketId, 1) & 0xffff)
 		}
 
 		n = copy(dst[total:], this.packetId)
-		//binary.BigEndian.PutUint16(dst[total:], this.packetId)
 		total += n
 	}
 
