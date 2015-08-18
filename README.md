@@ -27,11 +27,11 @@ msg := NewConnectMessage()
 msg.SetWillQos(1)
 msg.SetVersion(4)
 msg.SetCleanSession(true)
-msg.SetClientId([]byte("surgemq"))
+msg.SetClientId([]byte("gomqtt"))
 msg.SetKeepAlive(10)
 msg.SetWillTopic([]byte("will"))
 msg.SetWillMessage([]byte("send me home"))
-msg.SetUsername([]byte("surgemq"))
+msg.SetUsername([]byte("gomqtt"))
 msg.SetPassword([]byte("verysecret"))
 
 // Encode the message and get an io.Reader.
@@ -78,3 +78,8 @@ if err != nil {
 ```
 
 More details can be found in the [documentation](http://godoc.org/github.com/gomqtt/message).
+
+## Credits
+
+This package has been extracted and contributed by @zhenjl from the
+[surgemq](https://github.com/surgemq/surgemq) project.

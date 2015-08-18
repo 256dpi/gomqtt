@@ -1,4 +1,4 @@
-// Copyright (c) 2014 The SurgeMQ Authors. All rights reserved.
+// Copyright (c) 2014 The gomqtt Authors. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -77,11 +77,11 @@ With these in mind, we can now do:
 	msg.SetWillQos(1)
 	msg.SetVersion(4)
 	msg.SetCleanSession(true)
-	msg.SetClientId([]byte("surgemq"))
+	msg.SetClientId([]byte("gomqtt"))
 	msg.SetKeepAlive(10)
 	msg.SetWillTopic([]byte("will"))
 	msg.SetWillMessage([]byte("send me home"))
-	msg.SetUsername([]byte("surgemq"))
+	msg.SetUsername([]byte("gomqtt"))
 	msg.SetPassword([]byte("verysecret"))
 
 	// Encode the message and get the io.Reader
