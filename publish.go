@@ -89,7 +89,7 @@ func (this *PublishMessage) QoS() byte {
 // An error is returned if the value is not one of these.
 func (this *PublishMessage) SetQoS(v byte) error {
 	if v != 0x0 && v != 0x1 && v != 0x2 {
-		return fmt.Errorf("publish/SetQoS: Invalid QoS %d.", v)
+		return fmt.Errorf(this.Name() + "/SetQoS: Invalid QoS %d.", v)
 	}
 
 	this.mtypeflags[0] = (this.mtypeflags[0] & 249) | (v << 1) // 249 = 11111001
@@ -107,7 +107,7 @@ func (this *PublishMessage) Topic() []byte {
 // payload data is published. An error is returned if ValidTopic() is falbase.
 func (this *PublishMessage) SetTopic(v []byte) error {
 	if !ValidTopic(v) {
-		return fmt.Errorf("publish/SetTopic: Invalid topic name (%s). Must not be empty or contain wildcard characters", string(v))
+		return fmt.Errorf(this.Name() + "/SetTopic: Invalid topic name (%s). Must not be empty or contain wildcard characters", string(v))
 	}
 
 	this.topic = v
@@ -159,7 +159,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	}
 
 	if !ValidTopic(this.topic) {
-		return total, fmt.Errorf("publish/Decode: Invalid topic name (%s). Must not be empty or contain wildcard characters", string(this.topic))
+		return total, fmt.Errorf(this.Name() + "/Decode: Invalid topic name (%s). Must not be empty or contain wildcard characters", string(this.topic))
 	}
 
 	// The packet identifier field is only present in the PUBLISH packets where the
@@ -181,18 +181,18 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	if !this.dirty {
 		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf("publish/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
+			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
 		}
 
 		return copy(dst, this.dbuf), nil
 	}
 
 	if len(this.topic) == 0 {
-		return 0, fmt.Errorf("publish/Encode: Topic name is empty.")
+		return 0, fmt.Errorf(this.Name() + "/Encode: Topic name is empty.")
 	}
 
 	if len(this.payload) == 0 {
-		return 0, fmt.Errorf("publish/Encode: Payload is empty.")
+		return 0, fmt.Errorf(this.Name() + "/Encode: Payload is empty.")
 	}
 
 	ml := this.msglen()
@@ -204,7 +204,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	hl := this.header.msglen()
 
 	if len(dst) < hl+ml {
-		return 0, fmt.Errorf("publish/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
+		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
 	}
 
 	total := 0

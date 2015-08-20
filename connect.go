@@ -94,7 +94,7 @@ func (this *ConnectMessage) Version() byte {
 // SetVersion sets the version value of the CONNECT message
 func (this *ConnectMessage) SetVersion(v byte) error {
 	if _, ok := SupportedVersions[v]; !ok {
-		return fmt.Errorf("connect/SetVersion: Invalid version number %d", v)
+		return fmt.Errorf(this.Name() + "/SetVersion: Invalid version number %d", v)
 	}
 
 	this.version = v
@@ -152,7 +152,7 @@ func (this *ConnectMessage) WillQos() byte {
 // the Will Message.
 func (this *ConnectMessage) SetWillQos(qos byte) error {
 	if qos != QosAtMostOnce && qos != QosAtLeastOnce && qos != QosExactlyOnce {
-		return fmt.Errorf("connect/SetWillQos: Invalid QoS level %d", qos)
+		return fmt.Errorf(this.Name() + "/SetWillQos: Invalid QoS level %d", qos)
 	}
 
 	this.connectFlags = (this.connectFlags & 231) | (qos << 3) // 231 = 11100111
@@ -371,14 +371,14 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	if !this.dirty {
 		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf("connect/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
+			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
 		}
 
 		return copy(dst, this.dbuf), nil
 	}
 
 	if this.Type() != CONNECT {
-		return 0, fmt.Errorf("connect/Encode: Invalid message type. Expecting %d, got %d", CONNECT, this.Type())
+		return 0, fmt.Errorf(this.Name() + "/Encode: Invalid message type. Expecting %d, got %d", CONNECT, this.Type())
 	}
 
 	_, ok := SupportedVersions[this.version]
@@ -390,7 +390,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	ml := this.msglen()
 
 	if len(dst) < hl+ml {
-		return 0, fmt.Errorf("connect/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
+		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
 	}
 
 	if err := this.SetRemainingLength(int32(ml)); err != nil {
@@ -498,23 +498,23 @@ func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
 	total++
 
 	if this.connectFlags&0x1 != 0 {
-		return total, fmt.Errorf("connect/decodeMessage: Connect Flags reserved bit 0 is not 0")
+		return total, fmt.Errorf(this.Name() + "/decodeMessage: Connect Flags reserved bit 0 is not 0")
 	}
 
 	if this.WillQos() > QosExactlyOnce {
-		return total, fmt.Errorf("connect/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQos(), this.Name())
+		return total, fmt.Errorf(this.Name() + "/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQos(), this.Name())
 	}
 
 	if !this.WillFlag() && (this.WillRetain() || this.WillQos() != QosAtMostOnce) {
-		return total, fmt.Errorf("connect/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", this.WillFlag(), this.WillQos(), this.WillRetain())
+		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", this.WillFlag(), this.WillQos(), this.WillRetain())
 	}
 
 	if this.UsernameFlag() && !this.PasswordFlag() {
-		return total, fmt.Errorf("connect/decodeMessage: Username flag is set but Password flag is not set")
+		return total, fmt.Errorf(this.Name() + "/decodeMessage: Username flag is set but Password flag is not set")
 	}
 
 	if len(src[total:]) < 2 {
-		return 0, fmt.Errorf("connect/decodeMessage: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
+		return 0, fmt.Errorf(this.Name() + "/decodeMessage: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
 	}
 
 	this.keepAlive = binary.BigEndian.Uint16(src[total:])

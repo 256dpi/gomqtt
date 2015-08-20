@@ -52,7 +52,7 @@ func (this *SubackMessage) ReturnCodes() []byte {
 func (this *SubackMessage) AddReturnCodes(ret []byte) error {
 	for _, c := range ret {
 		if c != QosAtMostOnce && c != QosAtLeastOnce && c != QosExactlyOnce && c != QosFailure {
-			return fmt.Errorf("suback/AddReturnCode: Invalid return code %d. Must be 0, 1, 2, 0x80.", c)
+			return fmt.Errorf(this.Name() + "/AddReturnCode: Invalid return code %d. Must be 0, 1, 2, 0x80.", c)
 		}
 
 		this.returnCodes = append(this.returnCodes, c)
@@ -100,7 +100,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	for i, code := range this.returnCodes {
 		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
-			return total, fmt.Errorf("suback/Decode: Invalid return code %d for topic %d", code, i)
+			return total, fmt.Errorf(this.Name() + "/Decode: Invalid return code %d for topic %d", code, i)
 		}
 	}
 
@@ -112,7 +112,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	if !this.dirty {
 		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf("suback/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
+			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
 		}
 
 		return copy(dst, this.dbuf), nil
@@ -120,7 +120,7 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 
 	for i, code := range this.returnCodes {
 		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
-			return 0, fmt.Errorf("suback/Encode: Invalid return code %d for topic %d", code, i)
+			return 0, fmt.Errorf(this.Name() + "/Encode: Invalid return code %d for topic %d", code, i)
 		}
 	}
 
@@ -128,7 +128,7 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	ml := this.msglen()
 
 	if len(dst) < hl+ml {
-		return 0, fmt.Errorf("suback/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
+		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
 	}
 
 	if err := this.SetRemainingLength(int32(ml)); err != nil {

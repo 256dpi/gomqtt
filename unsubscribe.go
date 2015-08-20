@@ -136,7 +136,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	}
 
 	if len(this.topics) == 0 {
-		return 0, fmt.Errorf("unsubscribe/Decode: Empty topic list")
+		return 0, fmt.Errorf(this.Name() + "/Decode: Empty topic list")
 	}
 
 	this.dirty = false
@@ -152,7 +152,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	if !this.dirty {
 		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf("unsubscribe/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
+			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
 		}
 
 		return copy(dst, this.dbuf), nil
@@ -162,7 +162,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	ml := this.msglen()
 
 	if len(dst) < hl+ml {
-		return 0, fmt.Errorf("unsubscribe/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
+		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
 	}
 
 	if err := this.SetRemainingLength(int32(ml)); err != nil {

@@ -98,7 +98,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	b := src[total]
 
 	if b&254 != 0 {
-		return 0, fmt.Errorf("connack/Decode: Bits 7-1 in Connack Acknowledge Flags byte (1) are not 0")
+		return 0, fmt.Errorf(this.Name() + "/Decode: Bits 7-1 in Connack Acknowledge Flags byte (1) are not 0")
 	}
 
 	this.sessionPresent = b&0x1 == 1
@@ -108,7 +108,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// Read return code
 	if b > 5 {
-		return 0, fmt.Errorf("connack/Decode: Invalid CONNACK return code (%d)", b)
+		return 0, fmt.Errorf(this.Name() + "/Decode: Invalid CONNACK return code (%d)", b)
 	}
 
 	this.returnCode = ConnackCode(b)
@@ -122,7 +122,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	if !this.dirty {
 		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf("connack/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
+			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
 		}
 
 		return copy(dst, this.dbuf), nil
@@ -133,7 +133,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	ml := this.msglen()
 
 	if len(dst) < hl+ml {
-		return 0, fmt.Errorf("connack/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
+		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
 	}
 
 	if err := this.SetRemainingLength(int32(ml)); err != nil {
@@ -154,7 +154,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	total++
 
 	if this.returnCode > 5 {
-		return total, fmt.Errorf("connack/Encode: Invalid CONNACK return code (%d)", this.returnCode)
+		return total, fmt.Errorf(this.Name() + "/Encode: Invalid CONNACK return code (%d)", this.returnCode)
 	}
 
 	dst[total] = this.returnCode.Value()

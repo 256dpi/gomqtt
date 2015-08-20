@@ -81,7 +81,7 @@ func (this *header) Type() MessageType {
 // default flags for the message type. It returns an error if the type is invalid.
 func (this *header) SetType(mtype MessageType) error {
 	if !mtype.Valid() {
-		return fmt.Errorf("header/SetType: Invalid control packet type %d", mtype)
+		return fmt.Errorf(this.Name() + "/SetType: Invalid control packet type %d", mtype)
 	}
 
 	// Notice we don't set the message to be dirty when we are not allocating a new
@@ -114,7 +114,7 @@ func (this *header) RemainingLength() int32 {
 // message length as defined by the MQTT spec.
 func (this *header) SetRemainingLength(remlen int32) error {
 	if remlen > maxRemainingLength || remlen < 0 {
-		return fmt.Errorf("header/SetLength: Remaining length (%d) out of bound (max %d, min 0)", remlen, maxRemainingLength)
+		return fmt.Errorf(this.Name() + "/SetLength: Remaining length (%d) out of bound (max %d, min 0)", remlen, maxRemainingLength)
 	}
 
 	this.remlen = remlen
@@ -161,17 +161,17 @@ func (this *header) encode(dst []byte) (int, error) {
 	ml := this.msglen()
 
 	if len(dst) < ml {
-		return 0, fmt.Errorf("header/Encode: Insufficient buffer size. Expecting %d, got %d.", ml, len(dst))
+		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", ml, len(dst))
 	}
 
 	total := 0
 
 	if this.remlen > maxRemainingLength || this.remlen < 0 {
-		return total, fmt.Errorf("header/Encode: Remaining length (%d) out of bound (max %d, min 0)", this.remlen, maxRemainingLength)
+		return total, fmt.Errorf(this.Name() + "/Encode: Remaining length (%d) out of bound (max %d, min 0)", this.remlen, maxRemainingLength)
 	}
 
 	if !this.Type().Valid() {
-		return total, fmt.Errorf("header/Encode: Invalid message type %d", this.Type())
+		return total, fmt.Errorf(this.Name() + "/Encode: Invalid message type %d", this.Type())
 	}
 
 	dst[total] = this.mtypeflags[0]
@@ -196,19 +196,19 @@ func (this *header) decode(src []byte) (int, error) {
 	this.mtypeflags = src[total : total+1]
 
 	if !this.Type().Valid() {
-		return total, fmt.Errorf("header/Decode: Invalid message type %d.", mtype)
+		return total, fmt.Errorf(this.Name() + "/Decode: Invalid message type %d.", mtype)
 	}
 
 	if mtype != this.Type() {
-		return total, fmt.Errorf("header/Decode: Invalid message type %d. Expecting %d.", this.Type(), mtype)
+		return total, fmt.Errorf(this.Name() + "/Decode: Invalid message type %d. Expecting %d.", this.Type(), mtype)
 	}
 
 	if this.Type() != PUBLISH && this.Flags() != this.Type().DefaultFlags() {
-		return total, fmt.Errorf("header/Decode: Invalid message (%d) flags. Expecting %d, got %d", this.Type(), this.Type().DefaultFlags(), this.Flags())
+		return total, fmt.Errorf(this.Name() + "/Decode: Invalid message (%d) flags. Expecting %d, got %d", this.Type(), this.Type().DefaultFlags(), this.Flags())
 	}
 
 	if this.Type() == PUBLISH && !ValidQos((this.Flags()>>1)&0x3) {
-		return total, fmt.Errorf("header/Decode: Invalid QoS (%d) for PUBLISH message.", (this.Flags()>>1)&0x3)
+		return total, fmt.Errorf(this.Name() + "/Decode: Invalid QoS (%d) for PUBLISH message.", (this.Flags()>>1)&0x3)
 	}
 
 	total++
@@ -218,11 +218,11 @@ func (this *header) decode(src []byte) (int, error) {
 	this.remlen = int32(remlen)
 
 	if this.remlen > maxRemainingLength || remlen < 0 {
-		return total, fmt.Errorf("header/Decode: Remaining length (%d) out of bound (max %d, min 0)", this.remlen, maxRemainingLength)
+		return total, fmt.Errorf(this.Name() + "/Decode: Remaining length (%d) out of bound (max %d, min 0)", this.remlen, maxRemainingLength)
 	}
 
 	if int(this.remlen) > len(src[total:]) {
-		return total, fmt.Errorf("header/Decode: Remaining length (%d) is greater than remaining buffer (%d)", this.remlen, len(src[total:]))
+		return total, fmt.Errorf(this.Name() + "/Decode: Remaining length (%d) is greater than remaining buffer (%d)", this.remlen, len(src[total:]))
 	}
 
 	return total, nil
