@@ -388,3 +388,40 @@ func writeLPBytes(buf []byte, b []byte) (int, error) {
 
 	return total, nil
 }
+
+/*
+A basic fuzzing test that works with `https://github.com/dvyukov/go-fuzz`:
+
+	$ go-fuzz-build github.com/gomqtt/message
+	$ go-fuzz -bin=./message-fuzz.zip -workdir=./fuzz
+*/
+func Fuzz(data []byte) int {
+	// check for zero length data
+	if len(data) == 0 {
+		return 1
+	}
+
+	// Extract the type from the first byte.
+	t := MessageType(data[0] >> 4)
+
+	// Create a new message
+	msg, err := t.New()
+	if err != nil {
+		return 0
+	}
+
+	// Decode it from the bufio.Reader.
+	_, err = msg.Decode(data)
+	if err != nil {
+		return 0
+	}
+
+	// Try to encode message again.
+	_, err = msg.Encode(make([]byte, msg.Len()))
+	if err != nil {
+		panic(err)
+	}
+
+	// Everything was ok!
+	return 1
+}
