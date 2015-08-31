@@ -85,6 +85,7 @@ func (this *ConnackMessage) Len() int {
 	return this.header.msglen() + ml
 }
 
+// Decode the ConnackMessage from the passed buffer.
 func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	total := 0
 

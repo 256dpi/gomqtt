@@ -175,9 +175,6 @@ func (this *header) encode(dst []byte) (int, error) {
 	return total, nil
 }
 
-// Decode reads from the io.Reader parameter until a full message is decoded, or
-// when io.Reader returns EOF or error. The first return value is the number of
-// bytes read from io.Reader. The second is error if Decode encounters any problems.
 func (this *header) decode(src []byte) (int, error) {
 	total := 0
 
