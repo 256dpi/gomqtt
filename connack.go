@@ -32,7 +32,7 @@ type ConnackMessage struct {
 
 var _ Message = (*ConnackMessage)(nil)
 
-// NewConnackMessage creates a new CONNACK message
+// NewConnackMessage creates a new CONNACK message.
 func NewConnackMessage() *ConnackMessage {
 	msg := &ConnackMessage{}
 	msg.setType(CONNACK)
@@ -40,17 +40,17 @@ func NewConnackMessage() *ConnackMessage {
 	return msg
 }
 
-// String returns a string representation of the CONNACK message
+// String returns a string representation of the CONNACK message.
 func (this ConnackMessage) String() string {
 	return fmt.Sprintf("%s, Session Present=%t, Return code=%q\n", this.header, this.sessionPresent, this.returnCode)
 }
 
-// SessionPresent returns the session present flag value
+// SessionPresent returns the session present flag value.
 func (this *ConnackMessage) SessionPresent() bool {
 	return this.sessionPresent
 }
 
-// SetSessionPresent sets the value of the session present flag
+// SetSessionPresent sets the value of the session present flag.
 func (this *ConnackMessage) SetSessionPresent(v bool) {
 	if v {
 		this.sessionPresent = true
@@ -61,8 +61,7 @@ func (this *ConnackMessage) SetSessionPresent(v bool) {
 	this.dirty = true
 }
 
-// ReturnCode returns the return code received for the CONNECT message. The return
-// type is an error
+// ReturnCode returns the return code received for the CONNECT message.
 func (this *ConnackMessage) ReturnCode() ConnackCode {
 	return this.returnCode
 }
