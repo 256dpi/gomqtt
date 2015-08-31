@@ -53,7 +53,7 @@ Every message type has a New function that returns a new message. The list of av
 message types are defined as constants below.
 
 As you may have noticed, the second important item is the Message interface. It defines
-several methods that are common to all messages, including Name(), Desc(), and Type().
+several methods that are common to all messages, including Name(), and Type().
 Most importantly, it also defines the Encode() and Decode() methods.
 
 	Encode() (io.Reader, int, error)

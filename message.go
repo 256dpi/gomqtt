@@ -68,11 +68,6 @@ type Message interface {
 	// the message types and cannot be changed.
 	Name() string
 
-	// Desc returns a string description of the message type. For example, a
-	// CONNECT message would return "Client request to connect to Server." These
-	// descriptions are statically defined (copied from the MQTT spec) and cannot
-	// be changed.
-	Desc() string
 
 	// Type returns the MessageType of the Message. The retured value should be one
 	// of the constants defined for MessageType.
@@ -193,47 +188,6 @@ func (this MessageType) Name() string {
 		return "DISCONNECT"
 	case RESERVED2:
 		return "RESERVED2"
-	}
-
-	return "UNKNOWN"
-}
-
-// Desc returns the description of the message type. It is statically defined (copied
-// from MQTT spec) and cannot be changed.
-func (this MessageType) Desc() string {
-	switch this {
-	case RESERVED:
-		return "Reserved"
-	case CONNECT:
-		return "Client request to connect to Server"
-	case CONNACK:
-		return "Connect acknowledgement"
-	case PUBLISH:
-		return "Publish message"
-	case PUBACK:
-		return "Publish acknowledgement"
-	case PUBREC:
-		return "Publish received (assured delivery part 1)"
-	case PUBREL:
-		return "Publish release (assured delivery part 2)"
-	case PUBCOMP:
-		return "Publish complete (assured delivery part 3)"
-	case SUBSCRIBE:
-		return "Client subscribe request"
-	case SUBACK:
-		return "Subscribe acknowledgement"
-	case UNSUBSCRIBE:
-		return "Unsubscribe request"
-	case UNSUBACK:
-		return "Unsubscribe acknowledgement"
-	case PINGREQ:
-		return "PING request"
-	case PINGRESP:
-		return "PING response"
-	case DISCONNECT:
-		return "Client is disconnecting"
-	case RESERVED2:
-		return "Reserved"
 	}
 
 	return "UNKNOWN"

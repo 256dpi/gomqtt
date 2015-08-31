@@ -57,14 +57,6 @@ func (this *header) Name() string {
 	return this.Type().Name()
 }
 
-// Desc returns a string description of the message type. For example, a
-// CONNECT message would return "Client request to connect to Server." These
-// descriptions are statically defined (copied from the MQTT spec) and cannot
-// be changed.
-func (this *header) Desc() string {
-	return this.Type().Desc()
-}
-
 // Type returns the MessageType of the Message. The retured value should be one
 // of the constants defined for MessageType.
 func (this *header) Type() MessageType {
