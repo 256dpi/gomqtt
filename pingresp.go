@@ -25,7 +25,7 @@ var _ Message = (*PingrespMessage)(nil)
 // NewPingrespMessage creates a new PINGRESP message.
 func NewPingrespMessage() *PingrespMessage {
 	msg := &PingrespMessage{}
-	msg.SetType(PINGRESP)
+	msg.setType(PINGRESP)
 
 	return msg
 }

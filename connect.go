@@ -64,7 +64,7 @@ var _ Message = (*ConnectMessage)(nil)
 // NewConnectMessage creates a new CONNECT message.
 func NewConnectMessage() *ConnectMessage {
 	msg := &ConnectMessage{}
-	msg.SetType(CONNECT)
+	msg.setType(CONNECT)
 
 	return msg
 }

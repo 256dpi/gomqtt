@@ -71,7 +71,7 @@ func (this *header) Type() MessageType {
 
 // SetType sets the message type of this message. It also correctly sets the
 // default flags for the message type. It returns an error if the type is invalid.
-func (this *header) SetType(mtype MessageType) error {
+func (this *header) setType(mtype MessageType) error {
 	if !mtype.Valid() {
 		return fmt.Errorf(this.Name() + "/SetType: Invalid control packet type %d", mtype)
 	}

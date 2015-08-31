@@ -35,11 +35,11 @@ func TestMessageHeaderFields(t *testing.T) {
 
 	require.Error(t, err)
 
-	err = header.SetType(RESERVED)
+	err = header.setType(RESERVED)
 
 	require.Error(t, err)
 
-	err = header.SetType(PUBREL)
+	err = header.setType(PUBREL)
 
 	require.NoError(t, err)
 	require.Equal(t, PUBREL, header.Type())
@@ -105,7 +105,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 	header := &header{}
 	headerBytes := []byte{0x62, 193, 2}
 
-	err := header.SetType(PUBREL)
+	err := header.setType(PUBREL)
 
 	require.NoError(t, err)
 
@@ -124,7 +124,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 func TestMessageHeaderEncode2(t *testing.T) {
 	header := &header{}
 
-	err := header.SetType(PUBREL)
+	err := header.setType(PUBREL)
 	require.NoError(t, err)
 
 	header.remlen = 268435456
@@ -139,7 +139,7 @@ func TestMessageHeaderEncode3(t *testing.T) {
 	header := &header{}
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
-	err := header.SetType(PUBREL)
+	err := header.setType(PUBREL)
 
 	require.NoError(t, err)
 

@@ -25,7 +25,7 @@ var _ Message = (*PubrelMessage)(nil)
 // NewPubrelMessage creates a new PUBREL message.
 func NewPubrelMessage() *PubrelMessage {
 	msg := &PubrelMessage{}
-	msg.SetType(PUBREL)
+	msg.setType(PUBREL)
 
 	return msg
 }

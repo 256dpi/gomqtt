@@ -27,7 +27,7 @@ var _ Message = (*DisconnectMessage)(nil)
 // NewDisconnectMessage creates a new DISCONNECT message.
 func NewDisconnectMessage() *DisconnectMessage {
 	msg := &DisconnectMessage{}
-	msg.SetType(DISCONNECT)
+	msg.setType(DISCONNECT)
 
 	return msg
 }

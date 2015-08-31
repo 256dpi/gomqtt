@@ -25,7 +25,7 @@ var _ Message = (*PubcompMessage)(nil)
 // NewPubcompMessage creates a new PUBCOMP message.
 func NewPubcompMessage() *PubcompMessage {
 	msg := &PubcompMessage{}
-	msg.SetType(PUBCOMP)
+	msg.setType(PUBCOMP)
 
 	return msg
 }

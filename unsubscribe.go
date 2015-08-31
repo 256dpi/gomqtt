@@ -32,7 +32,7 @@ var _ Message = (*UnsubscribeMessage)(nil)
 // NewUnsubscribeMessage creates a new UNSUBSCRIBE message.
 func NewUnsubscribeMessage() *UnsubscribeMessage {
 	msg := &UnsubscribeMessage{}
-	msg.SetType(UNSUBSCRIBE)
+	msg.setType(UNSUBSCRIBE)
 
 	return msg
 }

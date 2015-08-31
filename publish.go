@@ -33,7 +33,7 @@ var _ Message = (*PublishMessage)(nil)
 // NewPublishMessage creates a new PUBLISH message.
 func NewPublishMessage() *PublishMessage {
 	msg := &PublishMessage{}
-	msg.SetType(PUBLISH)
+	msg.setType(PUBLISH)
 
 	return msg
 }
