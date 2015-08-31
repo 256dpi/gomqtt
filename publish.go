@@ -134,7 +134,7 @@ func (this *PublishMessage) Len() int {
 
 	ml := this.msglen()
 
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
+	if err := this.setRemainingLength(int32(ml)); err != nil {
 		return 0
 	}
 
@@ -197,7 +197,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 
 	ml := this.msglen()
 
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
+	if err := this.setRemainingLength(int32(ml)); err != nil {
 		return 0, err
 	}
 

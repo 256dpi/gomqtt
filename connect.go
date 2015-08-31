@@ -335,7 +335,7 @@ func (this *ConnectMessage) Len() int {
 
 	ml := this.msglen()
 
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
+	if err := this.setRemainingLength(int32(ml)); err != nil {
 		return 0
 	}
 
@@ -393,7 +393,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
 	}
 
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
+	if err := this.setRemainingLength(int32(ml)); err != nil {
 		return 0, err
 	}
 

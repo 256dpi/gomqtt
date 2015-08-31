@@ -105,16 +105,16 @@ func (this *header) Flags() byte {
 }
 
 // RemainingLength returns the length of the non-fixed-header part of the message.
-func (this *header) RemainingLength() int32 {
+func (this *header) remainingLength() int32 {
 	return this.remlen
 }
 
 // SetRemainingLength sets the length of the non-fixed-header part of the message.
 // It returns error if the length is greater than 268435455, which is the max
 // message length as defined by the MQTT spec.
-func (this *header) SetRemainingLength(remlen int32) error {
+func (this *header) setRemainingLength(remlen int32) error {
 	if remlen > maxRemainingLength || remlen < 0 {
-		return fmt.Errorf(this.Name() + "/SetLength: Remaining length (%d) out of bound (max %d, min 0)", remlen, maxRemainingLength)
+		return fmt.Errorf(this.Name() + "/setRemainingLength: length (%d) out of bound (max %d, min 0)", remlen, maxRemainingLength)
 	}
 
 	this.remlen = remlen

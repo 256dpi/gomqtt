@@ -23,15 +23,15 @@ import (
 func TestMessageHeaderFields(t *testing.T) {
 	header := &header{}
 
-	header.SetRemainingLength(33)
+	header.setRemainingLength(33)
 
-	require.Equal(t, int32(33), header.RemainingLength())
+	require.Equal(t, int32(33), header.remainingLength())
 
-	err := header.SetRemainingLength(268435456)
+	err := header.setRemainingLength(268435456)
 
 	require.Error(t, err)
 
-	err = header.SetRemainingLength(-1)
+	err = header.setRemainingLength(-1)
 
 	require.Error(t, err)
 
@@ -85,7 +85,7 @@ func TestMessageHeaderDecode4(t *testing.T) {
 
 	require.Error(t, err)
 	require.Equal(t, 5, n)
-	require.Equal(t, maxRemainingLength, header.RemainingLength())
+	require.Equal(t, maxRemainingLength, header.remainingLength())
 }
 
 func TestMessageHeaderDecode5(t *testing.T) {
@@ -109,7 +109,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 
 	require.NoError(t, err)
 
-	err = header.SetRemainingLength(321)
+	err = header.setRemainingLength(321)
 
 	require.NoError(t, err)
 
@@ -143,7 +143,7 @@ func TestMessageHeaderEncode3(t *testing.T) {
 
 	require.NoError(t, err)
 
-	err = header.SetRemainingLength(maxRemainingLength)
+	err = header.setRemainingLength(maxRemainingLength)
 
 	require.NoError(t, err)
 
