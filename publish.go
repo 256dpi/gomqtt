@@ -104,7 +104,7 @@ func (this *PublishMessage) Topic() []byte {
 }
 
 // SetTopic sets the the topic name that identifies the information channel to which
-// payload data is published. An error is returned if ValidTopic() is falbase.
+// payload data is published. An error is returned if ValidTopic returns an error.
 func (this *PublishMessage) SetTopic(v []byte) error {
 	if !ValidTopic(v) {
 		return fmt.Errorf(this.Name() + "/SetTopic: Invalid topic name (%s). Must not be empty or contain wildcard characters", string(v))

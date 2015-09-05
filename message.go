@@ -37,7 +37,7 @@ MessageType is the type representing the MQTT packet types. In the MQTT spec, MQ
 control packet type is represented as a 4-bit unsigned value. MessageType receives
 several methods that returns string representations of the names and descriptions.
 
-Also, one of the methods is New(). It returns a new Message object based on the
+Also, one of the methods is New. It returns a new Message object based on the
 MessageType. For example:
 
 	m, err := CONNECT.New()
@@ -54,19 +54,19 @@ Every message type has a New function that returns a new message. The list of av
 message types are defined as constants below.
 
 As you may have noticed, the second important item is the Message interface. It defines
-several methods that are common to all messages, including Name(), Len() and Type().
-Most importantly, it also defines the Encode() and Decode() methods.
+several methods that are common to all messages, including Name, Len and Type.
+Most importantly, it also defines the Encode and Decode methods.
 
 	Encode(dst []byte) (int, error)
 	Decode(src []byte) (int, error)
 
-Encode() encodes the message into the destination byte slice. The return value is the number
-of bytes encoded, so the caller knows how many bytes there will be. If Encode() returns an
+Encode encodes the message into the destination byte slice. The return value is the number
+of bytes encoded, so the caller knows how many bytes there will be. If Encode returns an
 error, then the encoded bytes should be considered invalid. The destination slice must
 have enough capacity for the message.
 
-Decode() decodes the byte slice and populates the Message. The first return value is the
-number of bytes read. The second is error if Decode() encounters any problems.
+Decode decodes the byte slice and populates the Message. The first return value is the
+number of bytes read. The second is error if Decode encounters any problems.
 
 With these in mind, we can now do:
 
@@ -184,12 +184,11 @@ type Message interface {
 	// the message types and cannot be changed.
 	Name() string
 
-
-	// Type returns the MessageType of the Message. The retured value should be one
+	// Type returns the MessageType of the Message. The returned value should be one
 	// of the constants defined for MessageType.
 	Type() MessageType
 
-	// PacketId returns the packet ID of the Message. The retured value is 0 if
+	// PacketId returns the packet ID of the Message. The returned value is 0 if
 	// there's no packet ID for this message type. Otherwise non-0.
 	PacketId() uint16
 
@@ -206,6 +205,7 @@ type Message interface {
 	// references.
 	Decode([]byte) (int, error)
 
+	// Len returns the messages length in bytes.
 	Len() int
 }
 
@@ -217,7 +217,7 @@ func ValidTopic(topic []byte) bool {
 }
 
 // ValidQos checks the QoS value to see if it's valid. Valid QoS are QosAtMostOnce,
-// QosAtLeastonce, and QosExactlyOnce.
+// QosAtLeastOnce, and QosExactlyOnce.
 func ValidQos(qos byte) bool {
 	return qos == QosAtMostOnce || qos == QosAtLeastOnce || qos == QosExactlyOnce
 }
@@ -228,7 +228,7 @@ func ValidVersion(v byte) bool {
 	return ok
 }
 
-// ValidConnackError checks to see if the error is a Connack Error or not
+// ValidConnackError checks to see if the error is a Connack Error or not.
 func ValidConnackError(err error) bool {
 	return err == ErrInvalidProtocolVersion || err == ErrIdentifierRejected ||
 		err == ErrServerUnavailable || err == ErrBadUsernameOrPassword || err == ErrNotAuthorized
