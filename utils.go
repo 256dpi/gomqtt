@@ -20,13 +20,13 @@ import (
 )
 
 const (
-	maxLPString          uint16 = 65535
+	maxLPString uint16 = 65535
 )
 
 // Read length prefixed bytes
 func readLPBytes(buf []byte) ([]byte, int, error) {
 	if len(buf) < 2 {
-		return nil, 0, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d.", 2, len(buf))
+		return nil, 0, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting 2, got %d.", len(buf))
 	}
 
 	n, total := 0, 0

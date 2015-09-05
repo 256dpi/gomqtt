@@ -53,7 +53,7 @@ func TestReadLPBytes(t *testing.T) {
 
 func TestWriteLPBytes(t *testing.T) {
 	total := 0
-	buf := make([]byte, 1000)
+	buf := make([]byte, 127)
 
 	for _, str := range lpstrings {
 		n, err := writeLPBytes(buf[total:], []byte(str))
