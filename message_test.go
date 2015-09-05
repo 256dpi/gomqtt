@@ -16,7 +16,6 @@ package message
 
 import (
 	"testing"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,25 +67,7 @@ func TestWriteLPBytes(t *testing.T) {
 	require.Equal(t, lpstringBytes, buf[:total])
 }
 
-func TestMessageTypes(t *testing.T) {
-	if CONNECT != 1 ||
-		CONNACK != 2 ||
-		PUBLISH != 3 ||
-		PUBACK != 4 ||
-		PUBREC != 5 ||
-		PUBREL != 6 ||
-		PUBCOMP != 7 ||
-		SUBSCRIBE != 8 ||
-		SUBACK != 9 ||
-		UNSUBSCRIBE != 10 ||
-		UNSUBACK != 11 ||
-		PINGREQ != 12 ||
-		PINGRESP != 13 ||
-		DISCONNECT != 14 {
 
-		t.Errorf("Message types have invalid code")
-	}
-}
 
 func TestQosCodes(t *testing.T) {
 	if QosAtMostOnce != 0 || QosAtLeastOnce != 1 || QosExactlyOnce != 2 {
