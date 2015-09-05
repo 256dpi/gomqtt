@@ -19,56 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	lpstrings []string = []string{
-		"this is a test",
-		"hope it succeeds",
-		"but just in case",
-		"send me your millions",
-		"",
-	}
-
-	lpstringBytes []byte = []byte{
-		0x0, 0xe, 't', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 't', 'e', 's', 't',
-		0x0, 0x10, 'h', 'o', 'p', 'e', ' ', 'i', 't', ' ', 's', 'u', 'c', 'c', 'e', 'e', 'd', 's',
-		0x0, 0x10, 'b', 'u', 't', ' ', 'j', 'u', 's', 't', ' ', 'i', 'n', ' ', 'c', 'a', 's', 'e',
-		0x0, 0x15, 's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'y', 'o', 'u', 'r', ' ', 'm', 'i', 'l', 'l', 'i', 'o', 'n', 's',
-		0x0, 0x0,
-	}
-)
-
-func TestReadLPBytes(t *testing.T) {
-	total := 0
-
-	for _, str := range lpstrings {
-		b, n, err := readLPBytes(lpstringBytes[total:])
-
-		require.NoError(t, err)
-		require.Equal(t, str, string(b))
-		require.Equal(t, len(str)+2, n)
-
-		total += n
-	}
-}
-
-func TestWriteLPBytes(t *testing.T) {
-	total := 0
-	buf := make([]byte, 1000)
-
-	for _, str := range lpstrings {
-		n, err := writeLPBytes(buf[total:], []byte(str))
-
-		require.NoError(t, err)
-		require.Equal(t, 2+len(str), n)
-
-		total += n
-	}
-
-	require.Equal(t, lpstringBytes, buf[:total])
-}
-
-
-
 func TestQosCodes(t *testing.T) {
 	if QosAtMostOnce != 0 || QosAtLeastOnce != 1 || QosExactlyOnce != 2 {
 		t.Errorf("QOS codes invalid")

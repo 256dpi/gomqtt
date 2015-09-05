@@ -144,7 +144,6 @@ import (
 )
 
 const (
-	maxLPString          uint16 = 65535
 	maxFixedHeaderLength int    = 5
 	maxRemainingLength   int32  = 268435455 // bytes, or 256 MB
 )
@@ -235,47 +234,6 @@ func ValidVersion(v byte) bool {
 func ValidConnackError(err error) bool {
 	return err == ErrInvalidProtocolVersion || err == ErrIdentifierRejected ||
 		err == ErrServerUnavailable || err == ErrBadUsernameOrPassword || err == ErrNotAuthorized
-}
-
-// Read length prefixed bytes
-func readLPBytes(buf []byte) ([]byte, int, error) {
-	if len(buf) < 2 {
-		return nil, 0, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d.", 2, len(buf))
-	}
-
-	n, total := 0, 0
-
-	n = int(binary.BigEndian.Uint16(buf))
-	total += 2
-
-	if len(buf) < n {
-		return nil, total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d.", n, len(buf))
-	}
-
-	total += n
-
-	return buf[2:total], total, nil
-}
-
-// Write length prefixed bytes
-func writeLPBytes(buf []byte, b []byte) (int, error) {
-	total, n := 0, len(b)
-
-	if n > int(maxLPString) {
-		return 0, fmt.Errorf("utils/writeLPBytes: Length (%d) greater than %d bytes.", n, maxLPString)
-	}
-
-	if len(buf) < 2+n {
-		return 0, fmt.Errorf("utils/writeLPBytes: Insufficient buffer size. Expecting %d, got %d.", 2+n, len(buf))
-	}
-
-	binary.BigEndian.PutUint16(buf, uint16(n))
-	total += 2
-
-	copy(buf[total:], b)
-	total += n
-
-	return total, nil
 }
 
 /*
