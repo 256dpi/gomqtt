@@ -108,9 +108,6 @@ func (this *UnsubscribeMessage) Len() int {
 	return this.header.msglen() + ml
 }
 
-// Decode reads from the io.Reader parameter until a full message is decoded, or
-// when io.Reader returns EOF or error. The first return value is the number of
-// bytes read from io.Reader. The second is error if Decode encounters any problems.
 func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -144,11 +141,6 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode returns an io.Reader in which the encoded bytes can be read. The second
-// return value is the number of bytes encoded, so the caller knows how many bytes
-// there will be. If Encode returns an error, then the first two return values
-// should be considered invalid.
-// Any changes to the message after Encode() is called will invalidate the io.Reader.
 func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	if !this.dirty {
 		if len(dst) < len(this.dbuf) {
