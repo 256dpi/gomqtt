@@ -487,7 +487,7 @@ func Fuzz(data []byte) int {
 		return 0
 	}
 
-	// Decode it from the bufio.Reader.
+	// Decode it from the buffer.
 	_, err = msg.Decode(data)
 	if err != nil {
 		return 0
