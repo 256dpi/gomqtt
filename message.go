@@ -139,8 +139,6 @@ package message
 
 import (
 	"bytes"
-	"encoding/binary"
-	"fmt"
 )
 
 const (
