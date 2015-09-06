@@ -160,11 +160,14 @@ func TestConnackDecodeEncodeEquiv(t *testing.T) {
 }
 
 func BenchmarkConnackEncode(b *testing.B) {
+	msg := NewConnackMessage()
+	msg.SetReturnCode(ConnectionAccepted)
+	msg.SetSessionPresent(true)
+
+	buf := make([]byte, msg.Len())
+
 	for i := 0; i < b.N; i++ {
-		msg := NewConnackMessage()
-		msg.SetReturnCode(ConnectionAccepted)
-		msg.SetSessionPresent(true)
-		msg.Encode(make([]byte, msg.Len()))
+		msg.Encode(buf)
 	}
 }
 

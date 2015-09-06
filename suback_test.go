@@ -134,14 +134,17 @@ func TestSubackDecodeEncodeEquiv(t *testing.T) {
 }
 
 func BenchmarkSubackEncode(b *testing.B) {
+	msg := NewSubackMessage()
+	msg.SetPacketId(7)
+	msg.AddReturnCode(0)
+	msg.AddReturnCode(1)
+	msg.AddReturnCode(2)
+	msg.AddReturnCode(0x80)
+
+	buf := make([]byte, msg.Len())
+
 	for i := 0; i < b.N; i++ {
-		msg := NewSubackMessage()
-		msg.SetPacketId(7)
-		msg.AddReturnCode(0)
-		msg.AddReturnCode(1)
-		msg.AddReturnCode(2)
-		msg.AddReturnCode(0x80)
-		msg.Encode(make([]byte, msg.Len()))
+		msg.Encode(buf)
 	}
 }
 

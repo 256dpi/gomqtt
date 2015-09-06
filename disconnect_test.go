@@ -78,9 +78,12 @@ func TestDisconnectDecodeEncodeEquiv(t *testing.T) {
 }
 
 func BenchmarkDisconnectEncode(b *testing.B) {
+	msg := NewDisconnectMessage()
+
+	buf := make([]byte, msg.Len())
+
 	for i := 0; i < b.N; i++ {
-		msg := NewDisconnectMessage()
-		msg.Encode(make([]byte, msg.Len()))
+		msg.Encode(buf)
 	}
 }
 

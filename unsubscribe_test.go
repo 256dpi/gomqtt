@@ -155,17 +155,15 @@ func TestUnsubscribeDecodeEncodeEquiv(t *testing.T) {
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
-	t1 := []byte("surgemq")
-	t2 := []byte("/a/b/#/c")
-	t3 := []byte("/a/b/#/cdd")
+	msg := NewUnsubscribeMessage()
+	msg.SetPacketId(7)
+	msg.AddTopic([]byte("/a/b/#/c"))
+	msg.AddTopic([]byte("/a/b/#/cdd"))
+
+	buf := make([]byte, msg.Len())
 
 	for i := 0; i < b.N; i++ {
-		msg := NewUnsubscribeMessage()
-		msg.SetPacketId(7)
-		msg.AddTopic(t1)
-		msg.AddTopic(t2)
-		msg.AddTopic(t3)
-		msg.Encode(make([]byte, msg.Len()))
+		msg.Encode(buf)
 	}
 }
 
