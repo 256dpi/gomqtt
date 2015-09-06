@@ -186,8 +186,9 @@ func BenchmarkUnsubscribeDecode(b *testing.B) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
+	msg := NewUnsubscribeMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewUnsubscribeMessage()
 		msg.Decode(msgBytes)
 	}
 }

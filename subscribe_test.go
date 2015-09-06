@@ -195,8 +195,9 @@ func BenchmarkSubscribeDecode(b *testing.B) {
 		2, // QoS
 	}
 
+	msg := NewSubscribeMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewSubscribeMessage()
 		msg.Decode(msgBytes)
 	}
 }

@@ -90,8 +90,9 @@ func BenchmarkDisconnectDecode(b *testing.B) {
 		0,
 	}
 
+	msg := NewDisconnectMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewDisconnectMessage()
 		msg.Decode(msgBytes)
 	}
 }

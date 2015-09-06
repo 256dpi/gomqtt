@@ -123,8 +123,9 @@ func BenchmarkPubackDecode(b *testing.B) {
 		7, // packet ID LSB (7)
 	}
 
+	msg := NewPubackMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewPubackMessage()
 		msg.Decode(msgBytes)
 	}
 }

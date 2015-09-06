@@ -306,8 +306,9 @@ func BenchmarkPublishDecode(b *testing.B) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
+	msg := NewPublishMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewPublishMessage()
 		msg.Decode(msgBytes)
 	}
 }

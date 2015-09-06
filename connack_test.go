@@ -176,8 +176,9 @@ func BenchmarkConnackDecode(b *testing.B) {
 		0, // connection accepted
 	}
 
+	msg := NewConnackMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewConnackMessage()
 		msg.Decode(msgBytes)
 	}
 }

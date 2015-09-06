@@ -422,8 +422,9 @@ func BenchmarkConnectDecode(b *testing.B) {
 		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
 	}
 
+	msg := NewConnectMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewConnectMessage()
 		msg.Decode(msgBytes)
 	}
 }

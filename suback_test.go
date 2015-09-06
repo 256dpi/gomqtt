@@ -157,8 +157,9 @@ func BenchmarkSubackDecode(b *testing.B) {
 		0x80, // return code 4
 	}
 
+	msg := NewSubackMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewSubackMessage()
 		msg.Decode(msgBytes)
 	}
 }
