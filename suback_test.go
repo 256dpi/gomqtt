@@ -20,19 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSubackMessageFields(t *testing.T) {
-	msg := NewSubackMessage()
-
-	msg.SetPacketId(100)
-	require.Equal(t, 100, int(msg.PacketId()), "Error setting packet ID.")
-
-	msg.AddReturnCode(1)
-	require.Equal(t, 1, len(msg.ReturnCodes()), "Error adding return code.")
-
-	err := msg.AddReturnCode(0x90)
-	require.Error(t, err)
-}
-
 func TestSubackMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
@@ -50,8 +37,8 @@ func TestSubackMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, SUBACK, msg.Type(), "Error decoding message.")
-	require.Equal(t, 4, len(msg.ReturnCodes()), "Error adding return code.")
+	require.Equal(t, SUBACK, msg.Type, "Error decoding message.")
+	require.Equal(t, 4, len(msg.ReturnCodes), "Error adding return code.")
 }
 
 // test with wrong return code
@@ -86,11 +73,8 @@ func TestSubackMessageEncode(t *testing.T) {
 	}
 
 	msg := NewSubackMessage()
-	msg.SetPacketId(7)
-	msg.AddReturnCode(0)
-	msg.AddReturnCode(1)
-	msg.AddReturnCode(2)
-	msg.AddReturnCode(0x80)
+	msg.PacketId = 7
+	msg.ReturnCodes = []byte{0, 1, 2, 0x80}
 
 	dst := make([]byte, 10)
 	n, err := msg.Encode(dst)
@@ -100,9 +84,7 @@ func TestSubackMessageEncode(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
 }
 
-// test to ensure encoding and decoding are the same
-// decode, encode, and decode again
-func TestSubackDecodeEncodeEquiv(t *testing.T) {
+func TestSubackEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
@@ -135,13 +117,16 @@ func TestSubackDecodeEncodeEquiv(t *testing.T) {
 
 func BenchmarkSubackEncode(b *testing.B) {
 	msg := NewSubackMessage()
-	msg.SetPacketId(1)
-	msg.AddReturnCode(0)
+	msg.PacketId = 1
+	msg.ReturnCodes = []byte{0}
 
 	buf := make([]byte, msg.Len())
 
 	for i := 0; i < b.N; i++ {
-		msg.Encode(buf)
+		_, err := msg.Encode(buf)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -157,6 +142,9 @@ func BenchmarkSubackDecode(b *testing.B) {
 	msg := NewSubackMessage()
 
 	for i := 0; i < b.N; i++ {
-		msg.Decode(msgBytes)
+		_, err := msg.Decode(msgBytes)
+		if err != nil {
+			panic(err);
+		}
 	}
 }

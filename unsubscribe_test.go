@@ -20,27 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnsubscribeMessageFields(t *testing.T) {
-	msg := NewUnsubscribeMessage()
-
-	msg.SetPacketId(100)
-	require.Equal(t, 100, int(msg.PacketId()), "Error setting packet ID.")
-
-	msg.AddTopic([]byte("/a/b/#/c"))
-	require.Equal(t, 1, len(msg.Topics()), "Error adding topic.")
-
-	msg.AddTopic([]byte("/a/b/#/c"))
-	require.Equal(t, 1, len(msg.Topics()), "Error adding duplicate topic.")
-
-	msg.RemoveTopic([]byte("/a/b/#/c"))
-	require.False(t, msg.TopicExists([]byte("/a/b/#/c")), "Topic should not exist.")
-
-	require.False(t, msg.TopicExists([]byte("a/b")), "Topic should not exist.")
-
-	msg.RemoveTopic([]byte("/a/b/#/c"))
-	require.False(t, msg.TopicExists([]byte("/a/b/#/c")), "Topic should not exist.")
-}
-
 func TestUnsubscribeMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
@@ -63,11 +42,11 @@ func TestUnsubscribeMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, UNSUBSCRIBE, msg.Type(), "Error decoding message.")
-	require.Equal(t, 3, len(msg.Topics()), "Error decoding topics.")
-	require.True(t, msg.TopicExists([]byte("surgemq")), "Topic 'surgemq' should exist.")
-	require.True(t, msg.TopicExists([]byte("/a/b/#/c")), "Topic '/a/b/#/c' should exist.")
-	require.True(t, msg.TopicExists([]byte("/a/b/#/cdd")), "Topic '/a/b/#/c' should exist.")
+	require.Equal(t, UNSUBSCRIBE, msg.Type, "Error decoding message.")
+	require.Equal(t, 3, len(msg.Topics), "Error decoding topics.")
+	require.Equal(t, []byte("surgemq"), msg.Topics[0], "Topic 'surgemq' should exist.")
+	require.Equal(t, []byte("/a/b/#/c"), msg.Topics[1], "Topic '/a/b/#/c' should exist.")
+	require.Equal(t, []byte("/a/b/#/cdd"), msg.Topics[2], "Topic '/a/b/#/c' should exist.")
 }
 
 // test empty topic list
@@ -103,10 +82,12 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 	}
 
 	msg := NewUnsubscribeMessage()
-	msg.SetPacketId(7)
-	msg.AddTopic([]byte("surgemq"))
-	msg.AddTopic([]byte("/a/b/#/c"))
-	msg.AddTopic([]byte("/a/b/#/cdd"))
+	msg.PacketId = 7
+	msg.Topics = [][]byte{
+		[]byte("surgemq"),
+		[]byte("/a/b/#/c"),
+		[]byte("/a/b/#/cdd"),
+	}
 
 	dst := make([]byte, 100)
 	n, err := msg.Encode(dst)
@@ -118,7 +99,7 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 
 // test to ensure encoding and decoding are the same
 // decode, encode, and decode again
-func TestUnsubscribeDecodeEncodeEquiv(t *testing.T) {
+func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
@@ -156,13 +137,18 @@ func TestUnsubscribeDecodeEncodeEquiv(t *testing.T) {
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
 	msg := NewUnsubscribeMessage()
-	msg.SetPacketId(1)
-	msg.AddTopic([]byte("t"))
+	msg.PacketId = 1
+	msg.Topics = [][]byte{
+		[]byte("t"),
+	}
 
 	buf := make([]byte, msg.Len())
 
 	for i := 0; i < b.N; i++ {
-		msg.Encode(buf)
+		_, err := msg.Encode(buf)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -180,6 +166,9 @@ func BenchmarkUnsubscribeDecode(b *testing.B) {
 	msg := NewUnsubscribeMessage()
 
 	for i := 0; i < b.N; i++ {
-		msg.Decode(msgBytes)
+		_, err := msg.Decode(msgBytes)
+		if err != nil {
+			panic(err);
+		}
 	}
 }

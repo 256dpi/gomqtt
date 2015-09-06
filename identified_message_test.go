@@ -20,55 +20,61 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPubcompMessageFields(t *testing.T) {
-	msg := NewPubcompMessage()
+var imType MessageType = 1
 
-	msg.SetPacketId(100)
+func TestIdentifiedMessageFields(t *testing.T) {
+	msg := &PubackMessage{}
+	msg.Type = imType
 
-	require.Equal(t, 100, int(msg.PacketId()))
+	msg.PacketId= 100
+
+	require.Equal(t, 100, int(msg.PacketId))
 }
 
-func TestPubcompMessageDecode(t *testing.T) {
+func TestIdentifiedMessageDecode(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBCOMP << 4),
+		byte(imType << 4),
 		2,
 		0, // packet ID MSB (0)
 		7, // packet ID LSB (7)
 	}
 
-	msg := NewPubcompMessage()
+	msg := &PubackMessage{}
+	msg.Type = imType
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, PUBCOMP, msg.Type(), "Error decoding message.")
-	require.Equal(t, 7, int(msg.PacketId()), "Error decoding message.")
+	require.Equal(t, imType, msg.Type, "Error decoding message.")
+	require.Equal(t, 7, int(msg.PacketId), "Error decoding message.")
 }
 
 // test insufficient bytes
-func TestPubcompMessageDecode2(t *testing.T) {
+func TestIdentifiedMessageDecode2(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBCOMP << 4),
+		byte(imType << 4),
 		2,
 		7, // packet ID LSB (7)
 	}
 
-	msg := NewPubcompMessage()
+	msg := &PubackMessage{}
+	msg.Type = imType
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestPubcompMessageEncode(t *testing.T) {
+func TestIdentifiedMessageEncode(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBCOMP << 4),
+		byte(imType << 4),
 		2,
 		0, // packet ID MSB (0)
 		7, // packet ID LSB (7)
 	}
 
-	msg := NewPubcompMessage()
-	msg.SetPacketId(7)
+	msg := &PubackMessage{}
+	msg.Type = imType
+	msg.PacketId = 7
 
 	dst := make([]byte, 10)
 	n, err := msg.Encode(dst)
@@ -78,17 +84,16 @@ func TestPubcompMessageEncode(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
 }
 
-// test to ensure encoding and decoding are the same
-// decode, encode, and decode again
-func TestPubcompDecodeEncodeEquiv(t *testing.T) {
+func TestIdentifiedMessageEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBCOMP << 4),
+		byte(imType << 4),
 		2,
 		0, // packet ID MSB (0)
 		7, // packet ID LSB (7)
 	}
 
-	msg := NewPubcompMessage()
+	msg := &PubackMessage{}
+	msg.Type = imType
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
@@ -106,3 +111,38 @@ func TestPubcompDecodeEncodeEquiv(t *testing.T) {
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }
+
+func BenchmarkIdentifiedMessageEncode(b *testing.B) {
+	msg := &PubackMessage{}
+	msg.Type = imType
+	msg.PacketId = 1
+
+	buf := make([]byte, msg.Len())
+
+	for i := 0; i < b.N; i++ {
+		_, err := msg.Encode(buf)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func BenchmarkIdentifiedMessageDecode(b *testing.B) {
+	msgBytes := []byte{
+		byte(imType << 4),
+		2,
+		0, // packet ID MSB (0)
+		1, // packet ID LSB (7)
+	}
+
+	msg := &PubackMessage{}
+	msg.Type = imType
+
+	for i := 0; i < b.N; i++ {
+		_, err := msg.Decode(msgBytes)
+		if err != nil {
+			panic(err);
+		}
+	}
+}
+

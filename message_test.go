@@ -27,13 +27,9 @@ func TestQosCodes(t *testing.T) {
 
 func TestConnackReturnCodes(t *testing.T) {
 	require.Equal(t, ErrInvalidProtocolVersion.Error(), ConnackCode(1).Error(), "Incorrect ConnackCode error value.")
-
 	require.Equal(t, ErrIdentifierRejected.Error(), ConnackCode(2).Error(), "Incorrect ConnackCode error value.")
-
 	require.Equal(t, ErrServerUnavailable.Error(), ConnackCode(3).Error(), "Incorrect ConnackCode error value.")
-
 	require.Equal(t, ErrBadUsernameOrPassword.Error(), ConnackCode(4).Error(), "Incorrect ConnackCode error value.")
-
 	require.Equal(t, ErrNotAuthorized.Error(), ConnackCode(5).Error(), "Incorrect ConnackCode error value.")
 }
 
@@ -67,8 +63,8 @@ func TestFixedHeaderFlags(t *testing.T) {
 			t.Errorf("Name mismatch. Expecting %s, got %s.", d.name, m.Name())
 		}
 
-		if m.DefaultFlags() != d.flags {
-			t.Errorf("Flag mismatch for %s. Expecting %d, got %d.", m.Name(), d.flags, m.DefaultFlags())
+		if m.defaultFlags() != d.flags {
+			t.Errorf("Flag mismatch for %s. Expecting %d, got %d.", m.Name(), d.flags, m.defaultFlags())
 		}
 	}
 }

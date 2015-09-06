@@ -20,39 +20,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMessageHeaderFields(t *testing.T) {
-	header := &header{}
-
-	header.setRemainingLength(33)
-
-	require.Equal(t, int32(33), header.remainingLength())
-
-	err := header.setRemainingLength(268435456)
-
-	require.Error(t, err)
-
-	err = header.setRemainingLength(-1)
-
-	require.Error(t, err)
-
-	err = header.setType(RESERVED)
-
-	require.Error(t, err)
-
-	err = header.setType(PUBREL)
-
-	require.NoError(t, err)
-	require.Equal(t, PUBREL, header.Type())
-	require.Equal(t, "PUBREL", header.Name())
-	require.Equal(t, 2, int(header.Flags()))
-}
-
 // Not enough bytes
 func TestMessageHeaderDecode(t *testing.T) {
 	buf := []byte{0x6f, 193, 2}
 	header := &header{}
 
-	_, err := header.decode(buf)
+	_, _, _, err := header.decode(buf)
 	require.Error(t, err)
 }
 
@@ -61,7 +34,7 @@ func TestMessageHeaderDecode2(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0xff}
 	header := &header{}
 
-	_, err := header.decode(buf)
+	_, _, _, err := header.decode(buf)
 	require.Error(t, err)
 }
 
@@ -69,34 +42,25 @@ func TestMessageHeaderDecode3(t *testing.T) {
 	buf := []byte{0x62, 0xff}
 	header := &header{}
 
-	_, err := header.decode(buf)
+	_, _, _, err := header.decode(buf)
 	require.Error(t, err)
 }
 
 func TestMessageHeaderDecode4(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
-	header := &header{
-		mtypeflags: []byte{6<<4 | 2},
-		//mtype:      6,
-		//flags:      2,
-	}
+	header := &header{ Type: 6 }
 
-	n, err := header.decode(buf)
+	n, _, _, err := header.decode(buf)
 
 	require.Error(t, err)
 	require.Equal(t, 5, n)
-	require.Equal(t, maxRemainingLength, header.remainingLength())
 }
 
 func TestMessageHeaderDecode5(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0x7f}
-	header := &header{
-		mtypeflags: []byte{6<<4 | 2},
-		//mtype:      6,
-		//flags:      2,
-	}
+	header := &header{ Type: 6 }
 
-	n, err := header.decode(buf)
+	n, _, _, err := header.decode(buf)
 	require.Error(t, err)
 	require.Equal(t, 3, n)
 }
@@ -105,16 +69,10 @@ func TestMessageHeaderEncode1(t *testing.T) {
 	header := &header{}
 	headerBytes := []byte{0x62, 193, 2}
 
-	err := header.setType(PUBREL)
-
-	require.NoError(t, err)
-
-	err = header.setRemainingLength(321)
-
-	require.NoError(t, err)
+	header.Type = PUBREL
 
 	buf := make([]byte, 3)
-	n, err := header.encode(buf)
+	n, err := header.encode(buf, 0, 321)
 
 	require.NoError(t, err)
 	require.Equal(t, 3, n)
@@ -124,13 +82,10 @@ func TestMessageHeaderEncode1(t *testing.T) {
 func TestMessageHeaderEncode2(t *testing.T) {
 	header := &header{}
 
-	err := header.setType(PUBREL)
-	require.NoError(t, err)
-
-	header.remlen = 268435456
+	header.Type = PUBREL
 
 	buf := make([]byte, 5)
-	_, err = header.encode(buf)
+	_, err := header.encode(buf, 0, 268435456)
 
 	require.Error(t, err)
 }
@@ -139,16 +94,10 @@ func TestMessageHeaderEncode3(t *testing.T) {
 	header := &header{}
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
-	err := header.setType(PUBREL)
-
-	require.NoError(t, err)
-
-	err = header.setRemainingLength(maxRemainingLength)
-
-	require.NoError(t, err)
+	header.Type = PUBREL
 
 	buf := make([]byte, 5)
-	n, err := header.encode(buf)
+	n, err := header.encode(buf, 0, maxRemainingLength)
 
 	require.NoError(t, err)
 	require.Equal(t, 5, n)
@@ -156,13 +105,9 @@ func TestMessageHeaderEncode3(t *testing.T) {
 }
 
 func TestMessageHeaderEncode4(t *testing.T) {
-	header := &header{
-		mtypeflags: []byte{byte(RESERVED2) << 4},
-		//mtype:      6,
-		//flags:      2,
-	}
+	header := &header{ Type: RESERVED2 }
 
 	buf := make([]byte, 5)
-	_, err := header.encode(buf)
+	_, err := header.encode(buf, 0, 0)
 	require.Error(t, err)
 }

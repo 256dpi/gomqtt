@@ -14,8 +14,7 @@
 
 package message
 
-// ConnackCode is the type representing the return code in the CONNACK message,
-// returned after the initial CONNECT message.
+// ConnackCode is the type representing the return code in the CONNACK message.
 type ConnackCode byte
 
 const (
@@ -38,12 +37,7 @@ const (
 	ErrNotAuthorized
 )
 
-// Value returns the value of the ConnackCode, which is just the byte representation.
-func (this ConnackCode) Value() byte {
-	return byte(this)
-}
-
-// Valid checks to see if the ConnackCode is valid. Currently valid codes are <= 5.
+// Valid checks to see if the ConnackCode is valid.
 func (this ConnackCode) Valid() bool {
 	return this <= 5
 }

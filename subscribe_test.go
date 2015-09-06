@@ -20,21 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSubscribeMessageFields(t *testing.T) {
-	msg := NewSubscribeMessage()
-
-	msg.SetPacketId(100)
-	require.Equal(t, 100, int(msg.PacketId()), "Error setting packet ID.")
-
-	msg.AddTopic([]byte("/a/b/#/c"), 1)
-	require.Equal(t, 1, len(msg.Topics()), "Error adding topic.")
-
-	require.False(t, msg.TopicExists([]byte("a/b")), "Topic should not exist.")
-
-	msg.RemoveTopic([]byte("/a/b/#/c"))
-	require.False(t, msg.TopicExists([]byte("/a/b/#/c")), "Topic should not exist.")
-}
-
 func TestSubscribeMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
@@ -60,14 +45,14 @@ func TestSubscribeMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, SUBSCRIBE, msg.Type(), "Error decoding message.")
-	require.Equal(t, 3, len(msg.Topics()), "Error decoding topics.")
-	require.True(t, msg.TopicExists([]byte("surgemq")), "Topic 'surgemq' should exist.")
-	require.Equal(t, 0, int(msg.TopicQos([]byte("surgemq"))), "Incorrect topic qos.")
-	require.True(t, msg.TopicExists([]byte("/a/b/#/c")), "Topic '/a/b/#/c' should exist.")
-	require.Equal(t, 1, int(msg.TopicQos([]byte("/a/b/#/c"))), "Incorrect topic qos.")
-	require.True(t, msg.TopicExists([]byte("/a/b/#/cdd")), "Topic '/a/b/#/c' should exist.")
-	require.Equal(t, 2, int(msg.TopicQos([]byte("/a/b/#/cdd"))), "Incorrect topic qos.")
+	require.Equal(t, SUBSCRIBE, msg.Type, "Error decoding message.")
+	require.Equal(t, 3, len(msg.Subscriptions), "Error decoding topics.")
+	require.Equal(t, []byte("surgemq"), msg.Subscriptions[0].Topic, "Topic 'surgemq' should exist.")
+	require.Equal(t, 0, int(msg.Subscriptions[0].QoS), "Incorrect topic qos.")
+	require.Equal(t, []byte("/a/b/#/c"), msg.Subscriptions[1].Topic, "Topic '/a/b/#/c' should exist.")
+	require.Equal(t, 1, int(msg.Subscriptions[1].QoS), "Incorrect topic qos.")
+	require.Equal(t, []byte("/a/b/#/cdd"), msg.Subscriptions[2].Topic, "Topic '/a/b/#/c' should exist.")
+	require.Equal(t, 2, int(msg.Subscriptions[2].QoS), "Incorrect topic qos.")
 }
 
 // test empty topic list
@@ -106,10 +91,12 @@ func TestSubscribeMessageEncode(t *testing.T) {
 	}
 
 	msg := NewSubscribeMessage()
-	msg.SetPacketId(7)
-	msg.AddTopic([]byte("surgemq"), 0)
-	msg.AddTopic([]byte("/a/b/#/c"), 1)
-	msg.AddTopic([]byte("/a/b/#/cdd"), 2)
+	msg.PacketId = 7
+	msg.Subscriptions = []Subscription{
+		Subscription{[]byte("surgemq"), 0},
+		Subscription{[]byte("/a/b/#/c"), 1},
+		Subscription{[]byte("/a/b/#/cdd"), 2},
+	}
 
 	dst := make([]byte, 100)
 	n, err := msg.Encode(dst)
@@ -121,7 +108,7 @@ func TestSubscribeMessageEncode(t *testing.T) {
 
 // test to ensure encoding and decoding are the same
 // decode, encode, and decode again
-func TestSubscribeDecodeEncodeEquiv(t *testing.T) {
+func TestSubscribeEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		36,
@@ -162,13 +149,18 @@ func TestSubscribeDecodeEncodeEquiv(t *testing.T) {
 
 func BenchmarkSubscribeEncode(b *testing.B) {
 	msg := NewSubscribeMessage()
-	msg.SetPacketId(7)
-	msg.AddTopic([]byte("t"), 0)
+	msg.PacketId = 7
+	msg.Subscriptions = []Subscription{
+		Subscription{[]byte("t"), 0},
+	}
 
 	buf := make([]byte, msg.Len())
 
 	for i := 0; i < b.N; i++ {
-		msg.Encode(buf)
+		_, err := msg.Encode(buf)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -187,6 +179,9 @@ func BenchmarkSubscribeDecode(b *testing.B) {
 	msg := NewSubscribeMessage()
 
 	for i := 0; i < b.N; i++ {
-		msg.Decode(msgBytes)
+		_, err := msg.Decode(msgBytes)
+		if err != nil {
+			panic(err);
+		}
 	}
 }

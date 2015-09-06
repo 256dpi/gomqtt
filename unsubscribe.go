@@ -15,16 +15,15 @@
 package message
 
 import (
-	"bytes"
 	"fmt"
-	"sync/atomic"
+	"encoding/binary"
 )
 
 // An UNSUBSCRIBE Packet is sent by the Client to the Server, to unsubscribe from topics.
 type UnsubscribeMessage struct {
 	header
 
-	topics [][]byte
+	Topics [][]byte
 }
 
 var _ Message = (*UnsubscribeMessage)(nil)
@@ -32,88 +31,38 @@ var _ Message = (*UnsubscribeMessage)(nil)
 // NewUnsubscribeMessage creates a new UNSUBSCRIBE message.
 func NewUnsubscribeMessage() *UnsubscribeMessage {
 	msg := &UnsubscribeMessage{}
-	msg.setType(UNSUBSCRIBE)
-
+	msg.Type = UNSUBSCRIBE
 	return msg
 }
 
 func (this UnsubscribeMessage) String() string {
 	msgstr := fmt.Sprintf("%s", this.header)
 
-	for i, t := range this.topics {
+	for i, t := range this.Topics {
 		msgstr = fmt.Sprintf("%s, Topic%d=%s", msgstr, i, string(t))
 	}
 
 	return msgstr
 }
 
-// Topics returns a list of topics sent by the Client.
-func (this *UnsubscribeMessage) Topics() [][]byte {
-	return this.topics
-}
-
-// AddTopic adds a single topic to the message.
-func (this *UnsubscribeMessage) AddTopic(topic []byte) {
-	if this.TopicExists(topic) {
-		return
-	}
-
-	this.topics = append(this.topics, topic)
-}
-
-// RemoveTopic removes a single topic from the list of existing ones in the message.
-// If topic does not exist it just does nothing.
-func (this *UnsubscribeMessage) RemoveTopic(topic []byte) {
-	var i int
-	var t []byte
-	var found bool
-
-	for i, t = range this.topics {
-		if bytes.Equal(t, topic) {
-			found = true
-			break
-		}
-	}
-
-	if found {
-		this.topics = append(this.topics[:i], this.topics[i+1:]...)
-	}
-}
-
-// TopicExists checks to see if a topic exists in the list.
-func (this *UnsubscribeMessage) TopicExists(topic []byte) bool {
-	for _, t := range this.topics {
-		if bytes.Equal(t, topic) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (this *UnsubscribeMessage) Len() int {
 	ml := this.msglen()
-
-	if err := this.setRemainingLength(int32(ml)); err != nil {
-		return 0
-	}
-
-	return this.header.msglen() + ml
+	return this.header.len(ml) + ml
 }
 
 func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
 
-	hn, err := this.header.decode(src[total:])
-	total += hn
+	hl, _, rl, err := this.header.decode(src[total:])
+	total += hl
 	if err != nil {
 		return total, err
 	}
 
-	this.packetId = src[total : total+2]
+	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	remlen := int(this.remlen) - (total - hn)
+	remlen := int(rl) - (total - hl)
 	for remlen > 0 {
 		t, n, err := readLPBytes(src[total:])
 		total += n
@@ -121,11 +70,11 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 			return total, err
 		}
 
-		this.topics = append(this.topics, t)
+		this.Topics = append(this.Topics, t)
 		remlen = remlen - n - 1
 	}
 
-	if len(this.topics) == 0 {
+	if len(this.Topics) == 0 {
 		return 0, fmt.Errorf(this.Name() + "/Decode: Empty topic list")
 	}
 
@@ -133,33 +82,24 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 }
 
 func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
-	hl := this.header.msglen()
-	ml := this.msglen()
+	l := this.Len()
 
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
-	}
-
-	if err := this.setRemainingLength(int32(ml)); err != nil {
-		return 0, err
+	if len(dst) < l {
+		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	total := 0
 
-	n, err := this.header.encode(dst[total:])
+	n, err := this.header.encode(dst[total:], 0, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	if this.PacketId() == 0 {
-		this.SetPacketId(uint16(atomic.AddUint64(&gPacketId, 1) & 0xffff))
-	}
+	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
+	total += 2
 
-	n = copy(dst[total:], this.packetId)
-	total += n
-
-	for _, t := range this.topics {
+	for _, t := range this.Topics {
 		n, err := writeLPBytes(dst[total:], t)
 		total += n
 		if err != nil {
@@ -174,7 +114,7 @@ func (this *UnsubscribeMessage) msglen() int {
 	// packet ID
 	total := 2
 
-	for _, t := range this.topics {
+	for _, t := range this.Topics {
 		total += 2 + len(t)
 	}
 

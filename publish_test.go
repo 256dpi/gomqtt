@@ -20,65 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPublishMessageHeaderFields(t *testing.T) {
-	msg := NewPublishMessage()
-	msg.mtypeflags[0] |= 11
-
-	require.True(t, msg.Dup(), "Incorrect DUP flag.")
-	require.True(t, msg.Retain(), "Incorrect RETAIN flag.")
-	require.Equal(t, 1, int(msg.QoS()), "Incorrect QoS.")
-
-	msg.SetDup(false)
-
-	require.False(t, msg.Dup(), "Incorrect DUP flag.")
-
-	msg.SetRetain(false)
-
-	require.False(t, msg.Retain(), "Incorrect RETAIN flag.")
-
-	err := msg.SetQoS(2)
-
-	require.NoError(t, err, "Error setting QoS.")
-	require.Equal(t, 2, int(msg.QoS()), "Incorrect QoS.")
-
-	err = msg.SetQoS(3)
-
-	require.Error(t, err)
-
-	err = msg.SetQoS(0)
-
-	require.NoError(t, err, "Error setting QoS.")
-	require.Equal(t, 0, int(msg.QoS()), "Incorrect QoS.")
-
-	msg.SetDup(true)
-
-	require.True(t, msg.Dup(), "Incorrect DUP flag.")
-
-	msg.SetRetain(true)
-
-	require.True(t, msg.Retain(), "Incorrect RETAIN flag.")
-}
-
-func TestPublishMessageFields(t *testing.T) {
-	msg := NewPublishMessage()
-
-	msg.SetTopic([]byte("coolstuff"))
-
-	require.Equal(t, "coolstuff", string(msg.Topic()), "Error setting message topic.")
-
-	err := msg.SetTopic([]byte("coolstuff/#"))
-
-	require.Error(t, err)
-
-	msg.SetPacketId(100)
-
-	require.Equal(t, 100, int(msg.PacketId()), "Error setting acket ID.")
-
-	msg.SetPayload([]byte("this is a payload to be sent"))
-
-	require.Equal(t, []byte("this is a payload to be sent"), msg.Payload(), "Error setting payload.")
-}
-
 func TestPublishMessageDecode1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,
@@ -96,9 +37,9 @@ func TestPublishMessageDecode1(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, 7, int(msg.PacketId()), "Error decoding message.")
-	require.Equal(t, "surgemq", string(msg.Topic()), "Error deocding topic name.")
-	require.Equal(t, []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}, msg.Payload(), "Error deocding payload.")
+	require.Equal(t, 7, int(msg.PacketId), "Error decoding message.")
+	require.Equal(t, "surgemq", string(msg.Topic), "Error deocding topic name.")
+	require.Equal(t, []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}, msg.Payload, "Error deocding payload.")
 }
 
 // test insufficient bytes
@@ -150,10 +91,10 @@ func TestPublishMessageEncode(t *testing.T) {
 	}
 
 	msg := NewPublishMessage()
-	msg.SetTopic([]byte("surgemq"))
-	msg.SetQoS(1)
-	msg.SetPacketId(7)
-	msg.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
+	msg.Topic = []byte("surgemq")
+	msg.QoS = QosAtLeastOnce
+	msg.PacketId = 7
+	msg.Payload = []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}
 
 	dst := make([]byte, 100)
 	n, err := msg.Encode(dst)
@@ -166,9 +107,9 @@ func TestPublishMessageEncode(t *testing.T) {
 // test empty topic name
 func TestPublishMessageEncode2(t *testing.T) {
 	msg := NewPublishMessage()
-	msg.SetTopic([]byte(""))
-	msg.SetPacketId(7)
-	msg.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
+	msg.Topic = []byte("")
+	msg.PacketId = 7
+	msg.Payload = []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}
 
 	dst := make([]byte, 100)
 	_, err := msg.Encode(dst)
@@ -187,9 +128,9 @@ func TestPublishMessageEncode3(t *testing.T) {
 	}
 
 	msg := NewPublishMessage()
-	msg.SetTopic([]byte("surgemq"))
-	msg.SetQoS(0)
-	msg.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
+	msg.Topic = []byte("surgemq")
+	msg.QoS = QosAtMostOnce
+	msg.Payload = []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}
 
 	dst := make([]byte, 100)
 	n, err := msg.Encode(dst)
@@ -214,9 +155,9 @@ func TestPublishMessageEncode4(t *testing.T) {
 	msgBytes = append(msgBytes, payload...)
 
 	msg := NewPublishMessage()
-	msg.SetTopic([]byte("surgemq"))
-	msg.SetQoS(0)
-	msg.SetPayload(payload)
+	msg.Topic = []byte("surgemq")
+	msg.QoS = QosAtMostOnce
+	msg.Payload = payload
 
 	require.Equal(t, len(msgBytes), msg.Len())
 
@@ -228,8 +169,7 @@ func TestPublishMessageEncode4(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
 }
 
-// test from github issue #2, @mrdg
-func TestPublishDecodeEncodeEquiv2(t *testing.T) {
+func TestPublishEqualDecodeEncode2(t *testing.T) {
 	msgBytes := []byte{50, 18, 0, 9, 103, 114, 101, 101, 116, 105, 110, 103, 115, 0, 1, 72, 101, 108, 108, 111}
 
 	msg := NewPublishMessage()
@@ -246,9 +186,7 @@ func TestPublishDecodeEncodeEquiv2(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
 }
 
-// test to ensure encoding and decoding are the same
-// decode, encode, and decode again
-func TestPublishDecodeEncodeEquiv(t *testing.T) {
+func TestPublishEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		23,
@@ -282,15 +220,18 @@ func TestPublishDecodeEncodeEquiv(t *testing.T) {
 
 func BenchmarkPublishEncode(b *testing.B) {
 	msg := NewPublishMessage()
-	msg.SetTopic([]byte("t"))
-	msg.SetQoS(1)
-	msg.SetPacketId(1)
-	msg.SetPayload([]byte("p"))
+	msg.Topic = []byte("t")
+	msg.QoS = QosAtLeastOnce
+	msg.PacketId = 1
+	msg.Payload = []byte("p")
 
 	buf := make([]byte, msg.Len())
 
 	for i := 0; i < b.N; i++ {
-		msg.Encode(buf)
+		_, err := msg.Encode(buf)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -309,7 +250,10 @@ func BenchmarkPublishDecode(b *testing.B) {
 	msg := NewPublishMessage()
 
 	for i := 0; i < b.N; i++ {
-		msg.Decode(msgBytes)
+		_, err := msg.Decode(msgBytes)
+		if err != nil {
+			panic(err);
+		}
 	}
 }
 

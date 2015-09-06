@@ -14,11 +14,9 @@
 
 package message
 
-import "fmt"
-
 // A PUBACK Packet is the response to a PUBLISH Packet with QoS level 1.
 type PubackMessage struct {
-	header
+	identifiedMessage
 }
 
 var _ Message = (*PubackMessage)(nil)
@@ -26,69 +24,6 @@ var _ Message = (*PubackMessage)(nil)
 // NewPubackMessage creates a new PUBACK message.
 func NewPubackMessage() *PubackMessage {
 	msg := &PubackMessage{}
-	msg.setType(PUBACK)
-
+	msg.Type = PUBACK
 	return msg
-}
-
-func (this PubackMessage) String() string {
-	return fmt.Sprintf("%s, Packet ID=%d", this.header, this.packetId)
-}
-
-func (this *PubackMessage) Len() int {
-	ml := this.msglen()
-
-	if err := this.setRemainingLength(int32(ml)); err != nil {
-		return 0
-	}
-
-	return this.header.msglen() + ml
-}
-
-func (this *PubackMessage) Decode(src []byte) (int, error) {
-	total := 0
-
-	n, err := this.header.decode(src[total:])
-	total += n
-	if err != nil {
-		return total, err
-	}
-
-	this.packetId = src[total : total+2]
-	total += 2
-
-	return total, nil
-}
-
-func (this *PubackMessage) Encode(dst []byte) (int, error) {
-	hl := this.header.msglen()
-	ml := this.msglen()
-
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
-	}
-
-	if err := this.setRemainingLength(int32(ml)); err != nil {
-		return 0, err
-	}
-
-	total := 0
-
-	n, err := this.header.encode(dst[total:])
-	total += n
-	if err != nil {
-		return total, err
-	}
-
-	if copy(dst[total:total+2], this.packetId) != 2 {
-		dst[total], dst[total+1] = 0, 0
-	}
-	total += 2
-
-	return total, nil
-}
-
-func (this *PubackMessage) msglen() int {
-	// packet ID
-	return 2
 }

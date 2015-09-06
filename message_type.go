@@ -121,7 +121,7 @@ func (this MessageType) Name() string {
 
 // DefaultFlags returns the default flag values for the message type, as defined by
 // the MQTT spec.
-func (this MessageType) DefaultFlags() byte {
+func (this MessageType) defaultFlags() byte {
 	switch this {
 	case RESERVED:
 		return 0

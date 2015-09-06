@@ -14,8 +14,7 @@
 
 /*
 This go package is an encoder/decoder library for
-[MQTT 3.1](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html)
-and [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
+[MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
 
 	MQTT is a client server publish/subscribe messaging transport protocol. It is
 	light weight, open, simple, and designed so as to be easy to implement. These
@@ -139,11 +138,12 @@ package message
 
 import (
 	"bytes"
+	"regexp"
 )
 
 const (
 	maxFixedHeaderLength int    = 5
-	maxRemainingLength   int32  = 268435455 // bytes, or 256 MB
+	maxRemainingLength   int  = 268435455 // bytes, or 256 MB
 )
 
 const (
@@ -184,14 +184,6 @@ type Message interface {
 	// the message types and cannot be changed.
 	Name() string
 
-	// Type returns the MessageType of the Message. The returned value should be one
-	// of the constants defined for MessageType.
-	Type() MessageType
-
-	// PacketId returns the packet ID of the Message. The returned value is 0 if
-	// there's no packet ID for this message type. Otherwise non-0.
-	PacketId() uint16
-
 	// Encode writes the message bytes into the byte array from the argument. It
 	// returns the number of bytes encoded and whether there's any errors along
 	// the way. If there's any errors, then the byte slice and count should be
@@ -209,6 +201,24 @@ type Message interface {
 	Len() int
 }
 
+var clientIdRegexp *regexp.Regexp
+
+func init() {
+	// Added space for Paho compliance test
+	// Added underscore (_) for MQTT C client test
+	clientIdRegexp = regexp.MustCompile("^[0-9a-zA-Z _]*$")
+}
+
+// ValidClientId checks the client ID, which is a slice of bytes, to see if it's valid.
+// Client ID is valid if it meets the requirement from the MQTT spec:
+// 		The Server MUST allow ClientIds which are between 1 and 23 UTF-8 encoded bytes in length,
+//		and that contain only the characters
+//
+//		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+func ValidClientId(cid []byte) bool {
+	return clientIdRegexp.Match(cid)
+}
+
 // ValidTopic checks the topic, which is a slice of bytes, to see if it's valid. Topic is
 // considered valid if it's longer than 0 bytes, and doesn't contain any wildcard characters
 // such as + and #.
@@ -218,7 +228,7 @@ func ValidTopic(topic []byte) bool {
 
 // ValidQos checks the QoS value to see if it's valid. Valid QoS are QosAtMostOnce,
 // QosAtLeastOnce, and QosExactlyOnce.
-func ValidQos(qos byte) bool {
+func ValidQoS(qos byte) bool {
 	return qos == QosAtMostOnce || qos == QosAtLeastOnce || qos == QosExactlyOnce
 }
 
@@ -226,12 +236,6 @@ func ValidQos(qos byte) bool {
 func ValidVersion(v byte) bool {
 	_, ok := SupportedVersions[v]
 	return ok
-}
-
-// ValidConnackError checks to see if the error is a Connack Error or not.
-func ValidConnackError(err error) bool {
-	return err == ErrInvalidProtocolVersion || err == ErrIdentifierRejected ||
-		err == ErrServerUnavailable || err == ErrBadUsernameOrPassword || err == ErrNotAuthorized
 }
 
 /*

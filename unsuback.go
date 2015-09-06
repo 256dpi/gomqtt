@@ -25,7 +25,6 @@ var _ Message = (*UnsubackMessage)(nil)
 // NewUnsubackMessage creates a new UNSUBACK message.
 func NewUnsubackMessage() *UnsubackMessage {
 	msg := &UnsubackMessage{}
-	msg.setType(UNSUBACK)
-
+	msg.Type = UNSUBACK
 	return msg
 }

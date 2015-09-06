@@ -14,7 +14,10 @@
 
 package message
 
-import "fmt"
+import (
+	"fmt"
+	"encoding/binary"
+)
 
 // A SUBACK Packet is sent by the Server to the Client to confirm receipt and processing
 // of a SUBSCRIBE Packet.
@@ -24,7 +27,7 @@ import "fmt"
 type SubackMessage struct {
 	header
 
-	returnCodes []byte
+	ReturnCodes []byte
 }
 
 var _ Message = (*SubackMessage)(nil)
@@ -32,67 +35,38 @@ var _ Message = (*SubackMessage)(nil)
 // NewSubackMessage creates a new SUBACK message.
 func NewSubackMessage() *SubackMessage {
 	msg := &SubackMessage{}
-	msg.setType(SUBACK)
-
+	msg.Type = SUBACK
 	return msg
 }
 
 // String returns a string representation of the message.
 func (this SubackMessage) String() string {
-	return fmt.Sprintf("%s, Packet ID=%d, Return Codes=%v", this.header, this.PacketId(), this.returnCodes)
-}
-
-// ReturnCodes returns the list of QoS returns from the subscriptions sent in the SUBSCRIBE message.
-func (this *SubackMessage) ReturnCodes() []byte {
-	return this.returnCodes
-}
-
-// AddReturnCodes sets the list of QoS returns from the subscriptions sent in the SUBSCRIBE message.
-// An error is returned if any of the QoS values are not valid.
-func (this *SubackMessage) AddReturnCodes(ret []byte) error {
-	for _, c := range ret {
-		if c != QosAtMostOnce && c != QosAtLeastOnce && c != QosExactlyOnce && c != QosFailure {
-			return fmt.Errorf(this.Name() + "/AddReturnCode: Invalid return code %d. Must be 0, 1, 2, 0x80.", c)
-		}
-
-		this.returnCodes = append(this.returnCodes, c)
-	}
-
-	return nil
-}
-
-// AddReturnCode adds a single QoS return value.
-func (this *SubackMessage) AddReturnCode(ret byte) error {
-	return this.AddReturnCodes([]byte{ret})
+	return fmt.Sprintf("%s, Packet ID=%d, Return Codes=%v", this.header, this.PacketId, this.ReturnCodes)
 }
 
 func (this *SubackMessage) Len() int {
 	ml := this.msglen()
-
-	if err := this.setRemainingLength(int32(ml)); err != nil {
-		return 0
-	}
-
-	return this.header.msglen() + ml
+	return this.header.len(ml) + ml
 }
 
+// Decode message from the supplied buffer.
 func (this *SubackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
-	hn, err := this.header.decode(src[total:])
-	total += hn
+	hl, _, rl, err := this.header.decode(src[total:])
+	total += hl
 	if err != nil {
 		return total, err
 	}
 
-	this.packetId = src[total : total+2]
+	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	l := int(this.remlen) - (total - hn)
-	this.returnCodes = src[total : total+l]
-	total += len(this.returnCodes)
+	l := int(rl) - (total - hl)
+	this.ReturnCodes = src[total : total+l]
+	total += len(this.ReturnCodes)
 
-	for i, code := range this.returnCodes {
+	for i, code := range this.ReturnCodes {
 		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
 			return total, fmt.Errorf(this.Name() + "/Decode: Invalid return code %d for topic %d", code, i)
 		}
@@ -101,43 +75,37 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
+// Encode message to the supplied buffer.
 func (this *SubackMessage) Encode(dst []byte) (int, error) {
-	for i, code := range this.returnCodes {
+	for i, code := range this.ReturnCodes {
 		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
 			return 0, fmt.Errorf(this.Name() + "/Encode: Invalid return code %d for topic %d", code, i)
 		}
 	}
 
-	hl := this.header.msglen()
-	ml := this.msglen()
+	l := this.Len()
 
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
-	}
-
-	if err := this.setRemainingLength(int32(ml)); err != nil {
-		return 0, err
+	if len(dst) < l {
+		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	total := 0
 
-	n, err := this.header.encode(dst[total:])
+	n, err := this.header.encode(dst[total:], 0, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	if copy(dst[total:total+2], this.packetId) != 2 {
-		dst[total], dst[total+1] = 0, 0
-	}
+	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
 	total += 2
 
-	copy(dst[total:], this.returnCodes)
-	total += len(this.returnCodes)
+	copy(dst[total:], this.ReturnCodes)
+	total += len(this.ReturnCodes)
 
 	return total, nil
 }
 
 func (this *SubackMessage) msglen() int {
-	return 2 + len(this.returnCodes)
+	return 2 + len(this.ReturnCodes)
 }
