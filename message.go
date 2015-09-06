@@ -261,10 +261,22 @@ func Fuzz(data []byte) int {
 		return 0
 	}
 
-	// Try to encode message again.
-	_, err = msg.Encode(make([]byte, msg.Len()))
+	// Prepare buffer with 255 as zero value
+	buf := make([]byte, msg.Len())
+	for i := 0; i < len(buf); i++ {
+		buf[i] = 255
+	}
+
+	// Try encode the message again.
+	_, err = msg.Encode(buf)
 	if err != nil {
 		panic(err)
+	}
+
+	// Finally try to decode again.
+	_, err = msg.Decode(buf)
+	if err != nil {
+		return 0
 	}
 
 	// Everything was ok!
