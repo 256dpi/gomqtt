@@ -111,7 +111,6 @@ func (this *PublishMessage) SetTopic(v []byte) error {
 	}
 
 	this.topic = v
-	this.dirty = true
 
 	return nil
 }
@@ -124,14 +123,9 @@ func (this *PublishMessage) Payload() []byte {
 // SetPayload sets the application message that's part of the PUBLISH message.
 func (this *PublishMessage) SetPayload(v []byte) {
 	this.payload = v
-	this.dirty = true
 }
 
 func (this *PublishMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
 
 	if err := this.setRemainingLength(int32(ml)); err != nil {
@@ -173,20 +167,10 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	this.payload = src[total : total+l]
 	total += len(this.payload)
 
-	this.dirty = false
-
 	return total, nil
 }
 
 func (this *PublishMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
 	if len(this.topic) == 0 {
 		return 0, fmt.Errorf(this.Name() + "/Encode: Topic name is empty.")
 	}

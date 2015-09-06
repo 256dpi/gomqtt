@@ -59,7 +59,6 @@ func (this *UnsubscribeMessage) AddTopic(topic []byte) {
 	}
 
 	this.topics = append(this.topics, topic)
-	this.dirty = true
 }
 
 // RemoveTopic removes a single topic from the list of existing ones in the message.
@@ -79,8 +78,6 @@ func (this *UnsubscribeMessage) RemoveTopic(topic []byte) {
 	if found {
 		this.topics = append(this.topics[:i], this.topics[i+1:]...)
 	}
-
-	this.dirty = true
 }
 
 // TopicExists checks to see if a topic exists in the list.
@@ -95,10 +92,6 @@ func (this *UnsubscribeMessage) TopicExists(topic []byte) bool {
 }
 
 func (this *UnsubscribeMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
 
 	if err := this.setRemainingLength(int32(ml)); err != nil {
@@ -136,20 +129,10 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 		return 0, fmt.Errorf(this.Name() + "/Decode: Empty topic list")
 	}
 
-	this.dirty = false
-
 	return total, nil
 }
 
 func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
 	hl := this.header.msglen()
 	ml := this.msglen()
 

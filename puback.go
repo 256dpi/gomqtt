@@ -36,10 +36,6 @@ func (this PubackMessage) String() string {
 }
 
 func (this *PubackMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
 
 	if err := this.setRemainingLength(int32(ml)); err != nil {
@@ -61,20 +57,10 @@ func (this *PubackMessage) Decode(src []byte) (int, error) {
 	this.packetId = src[total : total+2]
 	total += 2
 
-	this.dirty = false
-
 	return total, nil
 }
 
 func (this *PubackMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
 	hl := this.header.msglen()
 	ml := this.msglen()
 

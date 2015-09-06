@@ -58,8 +58,6 @@ func (this *SubackMessage) AddReturnCodes(ret []byte) error {
 		this.returnCodes = append(this.returnCodes, c)
 	}
 
-	this.dirty = true
-
 	return nil
 }
 
@@ -69,10 +67,6 @@ func (this *SubackMessage) AddReturnCode(ret byte) error {
 }
 
 func (this *SubackMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
 
 	if err := this.setRemainingLength(int32(ml)); err != nil {
@@ -104,20 +98,10 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 		}
 	}
 
-	this.dirty = false
-
 	return total, nil
 }
 
 func (this *SubackMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
 	for i, code := range this.returnCodes {
 		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
 			return 0, fmt.Errorf(this.Name() + "/Encode: Invalid return code %d for topic %d", code, i)

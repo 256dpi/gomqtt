@@ -83,7 +83,6 @@ func (this *SubscribeMessage) AddTopic(topic []byte, qos byte) error {
 
 	this.topics = append(this.topics, topic)
 	this.qos = append(this.qos, qos)
-	this.dirty = true
 
 	return nil
 }
@@ -106,8 +105,6 @@ func (this *SubscribeMessage) RemoveTopic(topic []byte) {
 		this.topics = append(this.topics[:i], this.topics[i+1:]...)
 		this.qos = append(this.qos[:i], this.qos[i+1:]...)
 	}
-
-	this.dirty = true
 }
 
 // TopicExists checks to see if a topic exists in the list.
@@ -139,10 +136,6 @@ func (this *SubscribeMessage) Qos() []byte {
 }
 
 func (this *SubscribeMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
 
 	if err := this.setRemainingLength(int32(ml)); err != nil {
@@ -184,20 +177,10 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 		return 0, fmt.Errorf(this.Name() + "/Decode: Empty topic list")
 	}
 
-	this.dirty = false
-
 	return total, nil
 }
 
 func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
 	hl := this.header.msglen()
 	ml := this.msglen()
 

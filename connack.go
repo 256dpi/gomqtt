@@ -52,13 +52,7 @@ func (this *ConnackMessage) SessionPresent() bool {
 
 // SetSessionPresent sets the value of the session present flag.
 func (this *ConnackMessage) SetSessionPresent(v bool) {
-	if v {
-		this.sessionPresent = true
-	} else {
-		this.sessionPresent = false
-	}
-
-	this.dirty = true
+	this.sessionPresent = v
 }
 
 // ReturnCode returns the return code received for the CONNECT message.
@@ -68,14 +62,9 @@ func (this *ConnackMessage) ReturnCode() ConnackCode {
 
 func (this *ConnackMessage) SetReturnCode(ret ConnackCode) {
 	this.returnCode = ret
-	this.dirty = true
 }
 
 func (this *ConnackMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
 
 	if err := this.setRemainingLength(int32(ml)); err != nil {
@@ -114,20 +103,10 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	this.returnCode = ConnackCode(b)
 	total++
 
-	this.dirty = false
-
 	return total, nil
 }
 
 func (this *ConnackMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
 	// CONNACK remaining length fixed at 2 bytes
 	hl := this.header.msglen()
 	ml := this.msglen()

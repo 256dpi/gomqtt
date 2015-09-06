@@ -37,12 +37,6 @@ type header struct {
 
 	// Some messages need packet ID, 2 byte uint16
 	packetId []byte
-
-	// Points to the decoding buffer
-	dbuf []byte
-
-	// Whether the message has changed since last decode
-	dirty bool
 }
 
 // String returns a string representation of the message.
@@ -63,7 +57,6 @@ func (this *header) Type() MessageType {
 	//return this.mtype
 	if len(this.mtypeflags) != 1 {
 		this.mtypeflags = make([]byte, 1)
-		this.dirty = true
 	}
 
 	return MessageType(this.mtypeflags[0] >> 4)
@@ -82,7 +75,6 @@ func (this *header) setType(mtype MessageType) error {
 	// backing buffer anyway.
 	if len(this.mtypeflags) != 1 {
 		this.mtypeflags = make([]byte, 1)
-		this.dirty = true
 	}
 
 	this.mtypeflags[0] = byte(mtype)<<4 | (mtype.DefaultFlags() & 0xf)
@@ -110,7 +102,6 @@ func (this *header) setRemainingLength(remlen int32) error {
 	}
 
 	this.remlen = remlen
-	this.dirty = true
 
 	return nil
 }
@@ -139,7 +130,6 @@ func (this *header) SetPacketId(v uint16) {
 	// make dirty. Then we encode the packet ID into the buffer.
 	if len(this.packetId) != 2 {
 		this.packetId = make([]byte, 2)
-		this.dirty = true
 	}
 
 	// Notice we don't set the message to be dirty when we are not allocating a new
@@ -177,8 +167,6 @@ func (this *header) encode(dst []byte) (int, error) {
 
 func (this *header) decode(src []byte) (int, error) {
 	total := 0
-
-	this.dbuf = src
 
 	mtype := this.Type()
 
