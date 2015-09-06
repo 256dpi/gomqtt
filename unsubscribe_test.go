@@ -156,9 +156,8 @@ func TestUnsubscribeDecodeEncodeEquiv(t *testing.T) {
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
 	msg := NewUnsubscribeMessage()
-	msg.SetPacketId(7)
-	msg.AddTopic([]byte("/a/b/#/c"))
-	msg.AddTopic([]byte("/a/b/#/cdd"))
+	msg.SetPacketId(1)
+	msg.AddTopic([]byte("t"))
 
 	buf := make([]byte, msg.Len())
 
@@ -170,18 +169,12 @@ func BenchmarkUnsubscribeEncode(b *testing.B) {
 func BenchmarkUnsubscribeDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
-		33,
+		5,
 		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		1, // packet ID LSB (7)
 		0, // topic name MSB (0)
-		7, // topic name LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // topic name MSB (0)
-		8, // topic name LSB (8)
-		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		0,  // topic name MSB (0)
-		10, // topic name LSB (10)
-		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
+		1, // topic name LSB (7)
+		't',
 	}
 
 	msg := NewUnsubscribeMessage()

@@ -109,7 +109,7 @@ func TestPubackDecodeEncodeEquiv(t *testing.T) {
 
 func BenchmarkPubackEncode(b *testing.B) {
 	msg := NewPubackMessage()
-	msg.SetPacketId(7)
+	msg.SetPacketId(1)
 
 	buf := make([]byte, msg.Len())
 
@@ -123,7 +123,7 @@ func BenchmarkPubackDecode(b *testing.B) {
 		byte(PUBACK << 4),
 		2,
 		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		1, // packet ID LSB (7)
 	}
 
 	msg := NewPubackMessage()

@@ -163,8 +163,7 @@ func TestSubscribeDecodeEncodeEquiv(t *testing.T) {
 func BenchmarkSubscribeEncode(b *testing.B) {
 	msg := NewSubscribeMessage()
 	msg.SetPacketId(7)
-	msg.AddTopic([]byte("/a/b/#/c"), 1)
-	msg.AddTopic([]byte("/a/b/#/cdd"), 2)
+	msg.AddTopic([]byte("t"), 0)
 
 	buf := make([]byte, msg.Len())
 
@@ -176,21 +175,13 @@ func BenchmarkSubscribeEncode(b *testing.B) {
 func BenchmarkSubscribeDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
-		36,
+		6,
 		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		1, // packet ID LSB (7)
 		0, // topic name MSB (0)
-		7, // topic name LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		1, // topic name LSB (7)
+		't',
 		0, // QoS
-		0, // topic name MSB (0)
-		8, // topic name LSB (8)
-		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		1,  // QoS
-		0,  // topic name MSB (0)
-		10, // topic name LSB (10)
-		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-		2, // QoS
 	}
 
 	msg := NewSubscribeMessage()

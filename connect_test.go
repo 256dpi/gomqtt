@@ -377,12 +377,12 @@ func BenchmarkConnectEncode(b *testing.B) {
 	msg.SetWillQos(1)
 	msg.SetVersion(4)
 	msg.SetCleanSession(true)
-	msg.SetClientId([]byte("surgemq"))
+	msg.SetClientId([]byte("i"))
 	msg.SetKeepAlive(10)
-	msg.SetWillTopic([]byte("will"))
-	msg.SetWillMessage([]byte("send me home"))
-	msg.SetUsername([]byte("surgemq"))
-	msg.SetPassword([]byte("verysecret"))
+	msg.SetWillTopic([]byte("w"))
+	msg.SetWillMessage([]byte("m"))
+	msg.SetUsername([]byte("u"))
+	msg.SetPassword([]byte("p"))
 
 	buf := make([]byte, msg.Len())
 
@@ -394,7 +394,7 @@ func BenchmarkConnectEncode(b *testing.B) {
 func BenchmarkConnectDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
-		60,
+		26,
 		0, // Length MSB (0)
 		4, // Length LSB (4)
 		'M', 'Q', 'T', 'T',
@@ -403,20 +403,20 @@ func BenchmarkConnectDecode(b *testing.B) {
 		0,   // Keep Alive MSB (0)
 		10,  // Keep Alive LSB (10)
 		0,   // Client ID MSB (0)
-		7,   // Client ID LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6,   // Client ID LSB (7)
+		'i',
 		0, // Will Topic MSB (0)
-		4, // Will Topic LSB (4)
-		'w', 'i', 'l', 'l',
+		1, // Will Topic LSB (4)
+		'w',
 		0,  // Will Message MSB (0)
-		12, // Will Message LSB (12)
-		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
+		1, // Will Message LSB (12)
+		'm',
 		0, // Username ID MSB (0)
-		7, // Username ID LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		1, // Username ID LSB (7)
+		'u',
 		0,  // Password ID MSB (0)
-		10, // Password ID LSB (10)
-		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
+		1, // Password ID LSB (10)
+		'p',
 	}
 
 	msg := NewConnectMessage()
