@@ -51,17 +51,17 @@ func (this ConnackCode) Valid() bool {
 // Error returns the corresponding error string for the ConnackCode.
 func (this ConnackCode) Error() string {
 	switch this {
-	case 0:
+	case ConnectionAccepted:
 		return "Connection accepted"
-	case 1:
+	case ErrInvalidProtocolVersion:
 		return "Connection Refused, unacceptable protocol version"
-	case 2:
+	case ErrIdentifierRejected:
 		return "Connection Refused, identifier rejected"
-	case 3:
+	case ErrServerUnavailable:
 		return "Connection Refused, Server unavailable"
-	case 4:
+	case ErrBadUsernameOrPassword:
 		return "Connection Refused, bad user name or password"
-	case 5:
+	case ErrNotAuthorized:
 		return "Connection Refused, not authorized"
 	}
 
