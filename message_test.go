@@ -68,11 +68,3 @@ func TestFixedHeaderFlags(t *testing.T) {
 		}
 	}
 }
-
-func TestSupportedVersions(t *testing.T) {
-	for k, v := range SupportedVersions {
-		if k == 0x03 && v != "MQIsdp" {
-			t.Errorf("Protocol version and name mismatch. Expect %s, got %s.", "MQIsdp", v)
-		}
-	}
-}

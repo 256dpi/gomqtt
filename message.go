@@ -170,13 +170,6 @@ const (
 	QosFailure = 0x80
 )
 
-// SupportedVersions is a map of the version number (0x3 or 0x4) to the version string,
-// "MQIsdp" for 0x3, and "MQTT" for 0x4.
-var SupportedVersions map[byte]string = map[byte]string{
-	0x3: "MQIsdp",
-	0x4: "MQTT",
-}
-
 // Message is an interface defined for all MQTT message types.
 type Message interface {
 	// Name returns a string representation of the message type. Examples include
@@ -230,12 +223,6 @@ func ValidTopic(topic []byte) bool {
 // QosAtLeastOnce, and QosExactlyOnce.
 func ValidQoS(qos byte) bool {
 	return qos == QosAtMostOnce || qos == QosAtLeastOnce || qos == QosExactlyOnce
-}
-
-// ValidVersion checks to see if the version is valid. Current supported versions include 0x3 and 0x4.
-func ValidVersion(v byte) bool {
-	_, ok := SupportedVersions[v]
-	return ok
 }
 
 /*
