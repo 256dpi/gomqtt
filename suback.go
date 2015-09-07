@@ -66,7 +66,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total + 2 {
-		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + rl, len(src))
+		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
 	}
 
 	// read packet id
@@ -78,7 +78,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total + rcl {
-		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + rl, len(src))
+		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + rcl, len(src))
 	}
 
 	// read return codes
