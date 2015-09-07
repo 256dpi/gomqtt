@@ -61,32 +61,31 @@ func (this *header) len(rl int) int {
 
 // Encodes the fixed header.
 func (this *header) encode(dst []byte, flags byte, rl int) (int, error) {
-	if rl > maxRemainingLength || rl < 0 {
-		return 0, fmt.Errorf(this.Name()+"/Encode: remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
-	}
-
-	hl := this.len(rl)
-
-	if len(dst) < hl {
-		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", hl, len(dst))
-	}
-
 	total := 0
 
+	// check remaining length
 	if rl > maxRemainingLength || rl < 0 {
-		return total, fmt.Errorf(this.Name()+"/Encode: Remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
+		return total, fmt.Errorf(this.Name()+"/Encode: remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
 	}
 
+	// check header length
+	hl := this.len(rl)
+	if len(dst) < hl {
+		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", hl, len(dst))
+	}
+
+	// validate message type
 	if !this.Type.Valid() {
 		return total, fmt.Errorf(this.Name()+"/Encode: Invalid message type %d", this.Type)
 	}
 
+	// write type and flags
 	typeAndFlags := byte(this.Type)<<4 | (this.Type.defaultFlags() & 0xf)
 	typeAndFlags |= flags
-
 	dst[total] = typeAndFlags
 	total += 1
 
+	// write remaining length
 	n := binary.PutUvarint(dst[total:], uint64(rl))
 	total += n
 
@@ -97,6 +96,11 @@ func (this *header) encode(dst []byte, flags byte, rl int) (int, error) {
 func (this *header) decode(src []byte) (int, byte, int, error) {
 	total := 0
 
+	// check buffer size
+	if len(src) < 2 {
+		return total, 0, 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", 2, len(src))
+	}
+
 	// cache old type
 	oldType := this.Type
 
@@ -104,6 +108,7 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 	typeAndFlags := src[total : total+1]
 	this.Type = MessageType(typeAndFlags[0] >> 4)
 	flags := typeAndFlags[0] & 0x0f
+	total++
 
 	// check new type
 	if !this.Type.Valid() {
@@ -125,16 +130,17 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Invalid QoS (%d) for PUBLISH message.", (flags>>1)&0x3)
 	}
 
-	total++
-
+	// read remaining length
 	_rl, m := binary.Uvarint(src[total:])
 	rl := int(_rl)
 	total += m
 
+	// check resulting remaining length
 	if rl > maxRemainingLength || rl < 0 {
 		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
 	}
 
+	// check remaining buffer
 	if rl > len(src[total:]) {
 		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Remaining length (%d) is greater than remaining buffer (%d)", rl, len(src[total:]))
 	}
