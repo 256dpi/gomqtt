@@ -17,7 +17,7 @@ package message
 // The UNSUBACK Packet is sent by the Server to the Client to confirm receipt of an
 // UNSUBSCRIBE Packet.
 type UnsubackMessage struct {
-	PubackMessage
+	identifiedMessage
 }
 
 var _ Message = (*UnsubackMessage)(nil)
