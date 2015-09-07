@@ -237,11 +237,17 @@ func Fuzz(data []byte) int {
 		return 1
 	}
 
-	// Extract the type from the first byte.
-	t := MessageType(data[0] >> 4)
+	// Detect message.
+	l, mt := DetectMessage(data)
+
+	// Check length
+	if l == 0 {
+		// for testing purposes we will not cancel
+		// on incomplete buffers
+	}
 
 	// Create a new message
-	msg, err := t.New()
+	msg, err := mt.New()
 	if err != nil {
 		return 0
 	}
