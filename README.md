@@ -41,7 +41,7 @@ l, mt := DetectMessage(buf)
 
 // Check length
 if l == 0 {
-    // message too short
+    // buffer not complete yet
 }
 
 // Create message.

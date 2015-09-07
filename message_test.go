@@ -88,7 +88,7 @@ func TestReadmeExample(t *testing.T) {
 
 	// Check length
 	if l == 0 {
-		// message too short
+		// buffer not complete yet
 	}
 
 	// Create message.
