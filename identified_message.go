@@ -46,17 +46,24 @@ func (this *identifiedMessage) Len() int {
 func (this *identifiedMessage) Decode(src []byte) (int, error) {
 	total := 0
 
-	hl, _, rl, err := this.header.decode(src[total:])
-
-	if rl != 2 {
-		return hl, fmt.Errorf(this.Name() + "/Decode: Expected remaining length to be 2.")
-	}
-
+	// decode header
+	hl, _, rl, err := this.header.decode(src)
 	total += hl
 	if err != nil {
 		return total, err
 	}
 
+	// check remaining length
+	if rl != 2 {
+		return total, fmt.Errorf(this.Name() + "/Decode: Expected remaining length to be 2.")
+	}
+
+	// check buffer length
+	if len(src) < total + 2 {
+		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
+	}
+
+	// read packet id
 	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
@@ -68,20 +75,22 @@ func (this *identifiedMessage) Decode(src []byte) (int, error) {
 // the way. If there's any errors, then the byte slice and count should be
 // considered invalid.
 func (this *identifiedMessage) Encode(dst []byte) (int, error) {
-	l := this.Len()
-
-	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	total := 0
 
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+	}
+
+	// encode header
 	n, err := this.header.encode(dst[total:], 0, 2)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
+	// write packet id
 	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
 	total += 2
 
