@@ -95,8 +95,11 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	}
 
 	l := int(rl) - (total - hl)
-	this.Payload = src[total : total+l]
-	total += len(this.Payload)
+
+	if l > 0 {
+		this.Payload = src[total : total+l]
+		total += len(this.Payload)
+	}
 
 	return total, nil
 }
