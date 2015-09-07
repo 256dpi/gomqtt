@@ -82,7 +82,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total + 2 {
-		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
+		return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
 	}
 
 	// read flags
@@ -102,7 +102,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	if this.QoS != 0 {
 		// check buffer length
 		if len(src) < total + 2 {
-			return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
+			return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
 		}
 
 		// read packet id
@@ -116,7 +116,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	if l > 0 {
 		// check buffer length
 		if len(src) < total + l {
-			return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + l, len(src))
+			return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + l, len(src))
 		}
 
 		// read payload
