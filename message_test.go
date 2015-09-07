@@ -92,7 +92,7 @@ func TestReadmeExample(t *testing.T) {
 	}
 
 	// Create message.
-	msg2, err := mt.New();
+	msg2, err := mt.New()
 	if err != nil {
 		panic(err)
 	}
