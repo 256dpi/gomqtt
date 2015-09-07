@@ -107,10 +107,6 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 		return 0, fmt.Errorf(this.Name() + "/Encode: Topic name is empty.")
 	}
 
-	if len(this.Payload) == 0 {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Payload is empty.")
-	}
-
 	l := this.Len()
 
 	if len(dst) < l {
