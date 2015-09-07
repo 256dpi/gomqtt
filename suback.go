@@ -69,6 +69,11 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 		return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
 	}
 
+	// check remaining length
+	if rl <= 2 {
+		return total, fmt.Errorf(this.Name() + "/Decode: Expected remaining length to be greater that 2, got.", rl)
+	}
+
 	// read packet id
 	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
