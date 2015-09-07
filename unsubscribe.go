@@ -35,6 +35,7 @@ func NewUnsubscribeMessage() *UnsubscribeMessage {
 	return msg
 }
 
+// String returns a string representation of the message.
 func (this UnsubscribeMessage) String() string {
 	msgstr := fmt.Sprintf("%s", this.header)
 

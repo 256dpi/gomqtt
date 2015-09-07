@@ -62,7 +62,7 @@ func NewConnectMessage() *ConnectMessage {
 	return msg
 }
 
-// String returns a string representation of the CONNECT message
+// String returns a string representation of the message.
 func (this ConnectMessage) String() string {
 	return fmt.Sprintf("%s, Version=%d, KeepAlive=%d, Client ID=%q, Will Topic=%q, Will Message=%q, Username=%q, Password=%q",
 		this.header,

@@ -46,6 +46,7 @@ func NewSubscribeMessage() *SubscribeMessage {
 	return msg
 }
 
+// String returns a string representation of the message.
 func (this SubscribeMessage) String() string {
 	msgstr := fmt.Sprintf("%s, Packet ID=%d", this.header, this.PacketId)
 

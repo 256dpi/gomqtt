@@ -54,6 +54,7 @@ func NewPublishMessage() *PublishMessage {
 	return msg
 }
 
+// String returns a string representation of the message.
 func (this PublishMessage) String() string {
 	return fmt.Sprintf("%s, Topic=%q, Packet ID=%d, QoS=%d, Retained=%t, Dup=%t, Payload=%v",
 		this.header, this.Topic, this.PacketId, this.QoS, this.Retain, this.Dup, this.Payload)
