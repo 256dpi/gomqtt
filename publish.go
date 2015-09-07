@@ -73,34 +73,53 @@ func (this *PublishMessage) Len() int {
 func (this *PublishMessage) Decode(src []byte) (int, error) {
 	total := 0
 
+	// decode header
 	hl, flags, rl, err := this.header.decode(src[total:])
 	total += hl
 	if err != nil {
 		return total, err
 	}
 
+	// check buffer length
+	if len(src) < total + 2 {
+		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
+	}
+
+	// read flags
 	this.Dup = ((flags >> 3) & 0x1) == 1
 	this.Retain = (flags & 0x1) == 1
 	this.QoS = (flags >> 1) & 0x3
 
 	n := 0
 
+	// read topic
 	this.Topic, n, err = readLPBytes(src[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	// The packet identifier field is only present in the PUBLISH packets where the
-	// QoS level is 1 or 2
 	if this.QoS != 0 {
+		// check buffer length
+		if len(src) < total + 2 {
+			return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
+		}
+
+		// read packet id
 		this.PacketId = binary.BigEndian.Uint16(src[total:])
 		total += 2
 	}
 
+	// calculate payload length
 	l := int(rl) - (total - hl)
 
 	if l > 0 {
+		// check buffer length
+		if len(src) < total + l {
+			return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + l, len(src))
+		}
+
+		// read payload
 		this.Payload = src[total : total+l]
 		total += len(this.Payload)
 	}
@@ -113,17 +132,18 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 // the way. If there's any errors, then the byte slice and count should be
 // considered invalid.
 func (this *PublishMessage) Encode(dst []byte) (int, error) {
-	if len(this.Topic) == 0 {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Topic name is empty.")
-	}
-
-	l := this.Len()
-
-	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	total := 0
+
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+	}
+
+	// check topic length
+	if len(this.Topic) == 0 {
+		return total, fmt.Errorf(this.Name() + "/Encode: Topic name is empty.")
+	}
 
 	flags := byte(0)
 
@@ -149,24 +169,27 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	// set qos
 	flags = (flags & 249) | (this.QoS << 1) // 249 = 11111001
 
+	// encode header
 	n, err := this.header.encode(dst[total:], flags, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
+	// write topic
 	n, err = writeLPBytes(dst[total:], this.Topic)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	// The packet identifier field is only present in the PUBLISH packets where the QoS level is 1 or 2
+	// write packet id
 	if this.QoS != 0 {
 		binary.BigEndian.PutUint16(dst[total:], this.PacketId)
 		total += 2
 	}
 
+	// write payload
 	copy(dst[total:], this.Payload)
 	total += len(this.Payload)
 
