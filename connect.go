@@ -17,14 +17,15 @@ package message
 import (
 	"encoding/binary"
 	"fmt"
+	"bytes"
 )
 
-const (
+var (
 	// 0x3
-	ProtocolV3Name = "MQIsdp"
+	ProtocolV3Name = []byte{ 'M', 'Q', 'I', 's', 'd', 'p' }
 
 	// 0x4
-	ProtocolV4Name = "MQTT"
+	ProtocolV4Name = []byte{ 'M', 'Q', 'T', 'T' }
 )
 
 // After a Network Connection is established by a Client to a Server, the first Packet
@@ -135,7 +136,7 @@ func (this *ConnectMessage) encodeMessage(dst []byte) (int, error) {
 	// write 0x3 name
 	if this.Version == 0x3 {
 		// write version string
-		n, err := writeLPBytes(dst[total:], []byte(ProtocolV3Name))
+		n, err := writeLPBytes(dst[total:], ProtocolV3Name)
 		total += n
 		if err != nil {
 			return total, err
@@ -145,7 +146,7 @@ func (this *ConnectMessage) encodeMessage(dst []byte) (int, error) {
 	// write 0x4 name
 	if this.Version == 0x4 {
 		// write version string
-		n, err := writeLPBytes(dst[total:], []byte(ProtocolV4Name))
+		n, err := writeLPBytes(dst[total:], ProtocolV4Name)
 		total += n
 		if err != nil {
 			return total, err
@@ -272,7 +273,7 @@ func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
 	}
 
 	// check protocol version string
-	if (this.Version == 0x3 && string(protoName) != ProtocolV3Name) || (this.Version == 0x4 && string(protoName) != ProtocolV4Name) {
+	if (this.Version == 0x3 && !bytes.Equal(protoName, ProtocolV3Name)) || (this.Version == 0x4 && !bytes.Equal(protoName, ProtocolV4Name)) {
 		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: Invalid Protocol version description (%s) ", protoName)
 	}
 
