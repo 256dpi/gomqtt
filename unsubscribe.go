@@ -59,29 +59,43 @@ func (this *UnsubscribeMessage) Len() int {
 func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
 
+	// decode header
 	hl, _, rl, err := this.header.decode(src[total:])
 	total += hl
 	if err != nil {
 		return total, err
 	}
 
+	// check buffer length
+	if len(src) < total + 2 {
+		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
+	}
+
+	// read packet id
 	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	remlen := int(rl) - (total - hl)
-	for remlen > 0 {
+	// prepare counter
+	tl := int(rl) - 2
+
+	for tl > 0 {
+		// read topic
 		t, n, err := readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 
+		// append to list
 		this.Topics = append(this.Topics, t)
-		remlen = remlen - n - 1
+
+		// decrement counter
+		tl = tl - n - 1
 	}
 
+	// check for empty list
 	if len(this.Topics) == 0 {
-		return 0, fmt.Errorf(this.Name() + "/Decode: Empty topic list")
+		return total, fmt.Errorf(this.Name() + "/Decode: Empty topic list")
 	}
 
 	return total, nil
@@ -92,24 +106,27 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 // the way. If there's any errors, then the byte slice and count should be
 // considered invalid.
 func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
-	l := this.Len()
-
-	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	total := 0
 
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+	}
+
+	// encode header
 	n, err := this.header.encode(dst[total:], 0, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
+	// write packet id
 	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
 	total += 2
 
 	for _, t := range this.Topics {
+		// write topic
 		n, err := writeLPBytes(dst[total:], t)
 		total += n
 		if err != nil {
