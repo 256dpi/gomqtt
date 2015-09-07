@@ -89,16 +89,136 @@ func (this *ConnectMessage) Len() int {
 func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	total := 0
 
+	// decode header
 	hl, _, _, err := this.header.decode(src[total:])
+	total += hl
 	if err != nil {
-		return total + hl, err
+		return total, err
 	}
-	total += hl
 
-	if hl, err = this.decodeMessage(src[total:]); err != nil {
-		return total + hl, err
+	// read protocol string
+	protoName, n, err := readLPBytes(src[total:])
+	total += n
+	if err != nil {
+		return total, err
 	}
-	total += hl
+
+	// check buffer length
+	if len(src) < total + 1 {
+		return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + 1, len(src))
+	}
+
+	// read version
+	this.Version = src[total]
+	total++
+
+	// check protocol string and version
+	if this.Version != 0x3 && this.Version != 0x4 {
+		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version (%d) ", this.Version)
+	}
+
+	// check protocol version string
+	if (this.Version == 0x3 && !bytes.Equal(protoName, protocolV3Name)) || (this.Version == 0x4 && !bytes.Equal(protoName, protocolV4Name)) {
+		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version description (%s) ", protoName)
+	}
+
+	// check buffer length
+	if len(src) < total + 1 {
+		return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + 1, len(src))
+	}
+
+	// read connect flags
+	connectFlags := src[total]
+	total++
+
+	// read existence flags
+	usernameFlag := ((connectFlags >> 7) & 0x1) == 1
+	passwordFlag := ((connectFlags >> 6) & 0x1) == 1
+	willFlag := ((connectFlags >> 2) & 0x1) == 1
+
+	// read other flags
+	this.WillRetain = ((connectFlags >> 5) & 0x1) == 1
+	this.WillQoS = (connectFlags >> 3) & 0x3
+	this.CleanSession = ((connectFlags >> 1) & 0x1) == 1
+
+	// check reserved bit
+	if connectFlags&0x1 != 0 {
+		return total, fmt.Errorf(this.Name() + "/decodeMessage: Connect Flags reserved bit 0 is not 0")
+	}
+
+	// check will qos
+	if !ValidQoS(this.WillQoS) {
+		return total, fmt.Errorf(this.Name()+"/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQoS, this.Name())
+	}
+
+	// check will flags
+	if !willFlag && (this.WillRetain || this.WillQoS != 0) {
+		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, this.WillQoS, this.WillRetain)
+	}
+
+	// check auth flags
+	if !usernameFlag && passwordFlag {
+		return total, fmt.Errorf(this.Name() + "/decodeMessage: Password flag is set but Username flag is not set")
+	}
+
+	// check buffer length
+	if len(src[total:]) < 2 {
+		return 0, fmt.Errorf(this.Name()+"/decodeMessage: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
+	}
+
+	// check buffer length
+	if len(src) < total + 2 {
+		return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
+	}
+
+	// read keep alive
+	this.KeepAlive = binary.BigEndian.Uint16(src[total:])
+	total += 2
+
+	// read client id
+	this.ClientId, n, err = readLPBytes(src[total:])
+	total += n
+	if err != nil {
+		return total, err
+	}
+
+	// if the client supplies a zero-byte ClientId, the Client MUST also set CleanSession to 1
+	if len(this.ClientId) == 0 && !this.CleanSession {
+		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: Clean session must be 1 if client id is zero length.")
+	}
+
+	// read will topic and payload
+	if willFlag {
+		this.WillTopic, n, err = readLPBytes(src[total:])
+		total += n
+		if err != nil {
+			return total, err
+		}
+
+		this.WillMessage, n, err = readLPBytes(src[total:])
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
+
+	// read username
+	if usernameFlag {
+		this.Username, n, err = readLPBytes(src[total:])
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
+
+	// read password
+	if passwordFlag {
+		this.Password, n, err = readLPBytes(src[total:])
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
 
 	return total, nil
 }
@@ -108,39 +228,28 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 // the way. If there's any errors, then the byte slice and count should be
 // considered invalid.
 func (this *ConnectMessage) Encode(dst []byte) (int, error) {
+	total := 0
+
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+	}
+
+	// check version
 	if this.Version != 0x3 && this.Version != 0x4 {
 		return 0, fmt.Errorf(this.Name()+"/Encode: Protocol violation: Invalid Protocol Version (%d) ", this.Version)
 	}
 
-	l := this.Len()
-
-	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
-	total := 0
-
+	// encode header
 	n, err := this.header.encode(dst[total:], 0, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	n, err = this.encodeMessage(dst[total:])
-	total += n
-	if err != nil {
-		return total, err
-	}
-
-	return total, nil
-}
-
-func (this *ConnectMessage) encodeMessage(dst []byte) (int, error) {
-	total := 0
-
-	// write 0x3 name
 	if this.Version == 0x3 {
-		// write version string
+		// write 0x3 protocol name
 		n, err := writeLPBytes(dst[total:], protocolV3Name)
 		total += n
 		if err != nil {
@@ -148,9 +257,8 @@ func (this *ConnectMessage) encodeMessage(dst []byte) (int, error) {
 		}
 	}
 
-	// write 0x4 name
 	if this.Version == 0x4 {
-		// write version string
+		// write 0x4 protocol name
 		n, err := writeLPBytes(dst[total:], protocolV4Name)
 		total += n
 		if err != nil {
@@ -216,7 +324,7 @@ func (this *ConnectMessage) encodeMessage(dst []byte) (int, error) {
 	total += 2
 
 	// write client id
-	n, err := writeLPBytes(dst[total:], this.ClientId)
+	n, err = writeLPBytes(dst[total:], this.ClientId)
 	total += n
 	if err != nil {
 		return total, err
@@ -249,121 +357,6 @@ func (this *ConnectMessage) encodeMessage(dst []byte) (int, error) {
 	// write password
 	if len(this.Password) > 0 {
 		n, err = writeLPBytes(dst[total:], this.Password)
-		total += n
-		if err != nil {
-			return total, err
-		}
-	}
-
-	return total, nil
-}
-
-func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
-	total := 0
-
-	// read protocol string
-	protoName, n, err := readLPBytes(src[total:])
-	total += n
-	if err != nil {
-		return total, err
-	}
-
-	// read version
-	this.Version = src[total]
-	total++
-
-	// check protocol string and version
-	if this.Version != 0x3 && this.Version != 0x4 {
-		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version (%d) ", this.Version)
-	}
-
-	// check protocol version string
-	if (this.Version == 0x3 && !bytes.Equal(protoName, protocolV3Name)) || (this.Version == 0x4 && !bytes.Equal(protoName, protocolV4Name)) {
-		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version description (%s) ", protoName)
-	}
-
-	// read connect flags
-	connectFlags := src[total]
-	total++
-
-	// read existence flags
-	usernameFlag := ((connectFlags >> 7) & 0x1) == 1
-	passwordFlag := ((connectFlags >> 6) & 0x1) == 1
-	willFlag := ((connectFlags >> 2) & 0x1) == 1
-
-	// read other flags
-	this.WillRetain = ((connectFlags >> 5) & 0x1) == 1
-	this.WillQoS = (connectFlags >> 3) & 0x3
-	this.CleanSession = ((connectFlags >> 1) & 0x1) == 1
-
-	// check reserved bit
-	if connectFlags&0x1 != 0 {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Connect Flags reserved bit 0 is not 0")
-	}
-
-	// check will qos
-	if !ValidQoS(this.WillQoS) {
-		return total, fmt.Errorf(this.Name()+"/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQoS, this.Name())
-	}
-
-	// check will flags
-	if !willFlag && (this.WillRetain || this.WillQoS != 0) {
-		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, this.WillQoS, this.WillRetain)
-	}
-
-	// check auth flags
-	if !usernameFlag && passwordFlag {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Password flag is set but Username flag is not set")
-	}
-
-	// check buffer length
-	if len(src[total:]) < 2 {
-		return 0, fmt.Errorf(this.Name()+"/decodeMessage: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
-	}
-
-	// read keep alive
-	this.KeepAlive = binary.BigEndian.Uint16(src[total:])
-	total += 2
-
-	// read client id
-	this.ClientId, n, err = readLPBytes(src[total:])
-	total += n
-	if err != nil {
-		return total, err
-	}
-
-	// if the client supplies a zero-byte ClientId, the Client MUST also set CleanSession to 1
-	if len(this.ClientId) == 0 && !this.CleanSession {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: Clean session must be 1 if client id is zero length.")
-	}
-
-	// read will topic and payload
-	if willFlag {
-		this.WillTopic, n, err = readLPBytes(src[total:])
-		total += n
-		if err != nil {
-			return total, err
-		}
-
-		this.WillMessage, n, err = readLPBytes(src[total:])
-		total += n
-		if err != nil {
-			return total, err
-		}
-	}
-
-	// read username
-	if usernameFlag {
-		this.Username, n, err = readLPBytes(src[total:])
-		total += n
-		if err != nil {
-			return total, err
-		}
-	}
-
-	// read password
-	if passwordFlag {
-		this.Password, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
