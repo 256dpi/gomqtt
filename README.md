@@ -29,6 +29,7 @@ buf := make([]byte, msg1.Len())
 
 // Encode the message.
 if _, err := msg1.Encode(buf); err != nil {
+    // there was an error while encoding
     panic(err)
 }
 ```
@@ -42,17 +43,20 @@ l, mt := DetectMessage(buf)
 // Check length
 if l == 0 {
     // buffer not complete yet
+    return
 }
 
 // Create message.
-msg2, err := mt.New();
+msg2, err := mt.New()
 if err != nil {
+    // message type is invalid
     panic(err)
 }
 
 // Decode message.
 _, err = msg2.Decode(buf)
 if err != nil {
+    // there was an error while decoding
     panic(err)
 }
 ```
