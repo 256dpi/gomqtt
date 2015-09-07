@@ -70,31 +70,54 @@ func (this *SubscribeMessage) Len() int {
 func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
 
+	// decode header
 	hl, _, rl, err := this.header.decode(src[total:])
 	total += hl
 	if err != nil {
 		return total, err
 	}
 
+	// check buffer length
+	if len(src) < total + 2 {
+		return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + 2, len(src))
+	}
+
+	// check remaining length
+	if rl <= 2 {
+		return total, fmt.Errorf(this.Name() + "/Decode: Expected remaining length to be greater that 2, got.", rl)
+	}
+
+	// read packet id
 	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	remlen := int(rl) - (total - hl)
-	for remlen > 0 {
+	// calculate number of subscriptions
+	sl := int(rl) - 2
+
+	for sl > 0 {
+		// read topic
 		t, n, err := readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 
+		// check buffer length
+		if len(src) < total + 1 {
+			return total, fmt.Errorf(this.Name() + "/Decode: Insufficient buffer size. Expecting %d, got %d.", total + 1, len(src))
+		}
+
+		// read qos and add subscription
 		this.Subscriptions = append(this.Subscriptions, Subscription{t, src[total]})
 		total++
 
-		remlen = remlen - n - 1
+		// decrement counter
+		sl = sl - n - 1
 	}
 
+	// check for empty subscription list
 	if len(this.Subscriptions) == 0 {
-		return 0, fmt.Errorf(this.Name() + "/Decode: Empty subscription list")
+		return total, fmt.Errorf(this.Name() + "/Decode: Empty subscription list")
 	}
 
 	return total, nil
@@ -105,31 +128,36 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 // the way. If there's any errors, then the byte slice and count should be
 // considered invalid.
 func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
-	l := this.Len()
-
-	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	total := 0
 
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+	}
+
+	// encode header
 	n, err := this.header.encode(dst[total:], 0, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
+	// write packet it
 	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
 	total += 2
 
 	for _, t := range this.Subscriptions {
+		// write topic
 		n, err := writeLPBytes(dst[total:], t.Topic)
 		total += n
 		if err != nil {
 			return total, err
 		}
 
+		// write qos
 		dst[total] = t.QoS
+
 		total++
 	}
 
