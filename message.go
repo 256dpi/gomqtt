@@ -136,11 +136,6 @@ If you don't know what type of message is coming down the pipe, you can do somet
 */
 package message
 
-import (
-	"bytes"
-	"regexp"
-)
-
 const (
 	// QoS 0: At most once delivery
 	// The message is delivered according to the capabilities of the underlying network.
