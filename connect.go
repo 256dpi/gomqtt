@@ -57,6 +57,8 @@ var _ Message = (*ConnectMessage)(nil)
 func NewConnectMessage() *ConnectMessage {
 	msg := &ConnectMessage{}
 	msg.Type = CONNECT
+	msg.Version = 4
+	msg.CleanSession = true
 	return msg
 }
 
