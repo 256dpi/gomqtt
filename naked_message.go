@@ -41,8 +41,10 @@ func (this *nakedMessage) Len() int {
 // the process. The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *nakedMessage) Decode(src []byte) (int, error) {
+	// decode header
 	hl, _, rl, err := this.header.decode(src)
 
+	// check remaining length
 	if rl != 0 {
 		return hl, fmt.Errorf(this.Name() + "/Decode: Expected zero remaining length.")
 	}
@@ -55,5 +57,6 @@ func (this *nakedMessage) Decode(src []byte) (int, error) {
 // the way. If there's any errors, then the byte slice and count should be
 // considered invalid.
 func (this *nakedMessage) Encode(dst []byte) (int, error) {
+	// encode header
 	return this.header.encode(dst, 0, 0)
 }
