@@ -19,11 +19,9 @@ import (
 	"fmt"
 )
 
-const (
-	maxLPString uint16 = 65535
-)
+const maxLPLength uint16 = 65535
 
-// Read length prefixed bytes
+// Read length prefixed bytes.
 func readLPBytes(buf []byte) ([]byte, int, error) {
 	if len(buf) < 2 {
 		return nil, 0, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting 2, got %d.", len(buf))
@@ -34,6 +32,10 @@ func readLPBytes(buf []byte) ([]byte, int, error) {
 	n = int(binary.BigEndian.Uint16(buf))
 	total += 2
 
+	if n > int(maxLPLength) {
+		return nil, total, fmt.Errorf("utils/readLPBytes: Length (%d) greater than %d bytes.", n, maxLPLength)
+	}
+
 	if len(buf) < n {
 		return nil, total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d.", n, len(buf))
 	}
@@ -43,12 +45,12 @@ func readLPBytes(buf []byte) ([]byte, int, error) {
 	return buf[2:total], total, nil
 }
 
-// Write length prefixed bytes
+// Write length prefixed bytes.
 func writeLPBytes(buf []byte, b []byte) (int, error) {
 	total, n := 0, len(b)
 
-	if n > int(maxLPString) {
-		return 0, fmt.Errorf("utils/writeLPBytes: Length (%d) greater than %d bytes.", n, maxLPString)
+	if n > int(maxLPLength) {
+		return 0, fmt.Errorf("utils/writeLPBytes: Length (%d) greater than %d bytes.", n, maxLPLength)
 	}
 
 	if len(buf) < 2+n {
