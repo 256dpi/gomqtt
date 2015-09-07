@@ -68,3 +68,38 @@ func TestFixedHeaderFlags(t *testing.T) {
 		}
 	}
 }
+
+func TestReadmeExample(t *testing.T) {
+	// Create new message.
+	msg1 := NewConnectMessage()
+	msg1.Username = []byte("gomqtt")
+	msg1.Password = []byte("amazing!")
+
+	// Allocate buffer.
+	buf := make([]byte, msg1.Len())
+
+	// Encode the message.
+	if _, err := msg1.Encode(buf); err != nil {
+		panic(err)
+	}
+
+	// Detect message.
+	l, mt := DetectMessage(buf)
+
+	// Check length
+	if l == 0 {
+		// message too short
+	}
+
+	// Create message.
+	msg2, err := mt.New();
+	if err != nil {
+		panic(err)
+	}
+
+	// Decode message.
+	_, err = msg2.Decode(buf)
+	if err != nil {
+		panic(err)
+	}
+}
