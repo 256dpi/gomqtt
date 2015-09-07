@@ -23,14 +23,12 @@ type identifiedMessage struct {
 	header
 }
 
-var _ Message = (*identifiedMessage)(nil)
-
-
 func (this identifiedMessage) String() string {
 	return fmt.Sprintf("%s, Packet ID=%d", this.header, this.PacketId)
 }
 
 // Name returns a string representation of the message type.
+// TODO: Needed for proper documentation generation.
 func (this *identifiedMessage) Name() string {
 	return this.header.Name()
 }
