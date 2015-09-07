@@ -15,8 +15,8 @@
 package message
 
 import (
-	"fmt"
 	"encoding/binary"
+	"fmt"
 )
 
 type identifiedMessage struct {
@@ -44,7 +44,7 @@ func (this *identifiedMessage) Decode(src []byte) (int, error) {
 
 	hl, _, rl, err := this.header.decode(src[total:])
 
-	if(rl != 2) {
+	if rl != 2 {
 		return hl, fmt.Errorf(this.Name() + "/Decode: Expected remaining length to be 2.")
 	}
 
@@ -64,7 +64,7 @@ func (this *identifiedMessage) Encode(dst []byte) (int, error) {
 	l := this.Len()
 
 	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	total := 0

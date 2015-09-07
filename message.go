@@ -142,8 +142,8 @@ import (
 )
 
 const (
-	maxFixedHeaderLength int    = 5
-	maxRemainingLength   int  = 268435455 // bytes, or 256 MB
+	maxFixedHeaderLength int = 5
+	maxRemainingLength   int = 268435455 // bytes, or 256 MB
 )
 
 const (

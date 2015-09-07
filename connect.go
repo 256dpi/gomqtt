@@ -15,17 +15,17 @@
 package message
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
-	"bytes"
 )
 
 var (
 	// 0x3
-	ProtocolV3Name = []byte{ 'M', 'Q', 'I', 's', 'd', 'p' }
+	ProtocolV3Name = []byte{'M', 'Q', 'I', 's', 'd', 'p'}
 
 	// 0x4
-	ProtocolV4Name = []byte{ 'M', 'Q', 'T', 'T' }
+	ProtocolV4Name = []byte{'M', 'Q', 'T', 'T'}
 )
 
 // After a Network Connection is established by a Client to a Server, the first Packet
@@ -38,18 +38,18 @@ var (
 type ConnectMessage struct {
 	header
 
-	Version byte
-	ClientId []byte
+	Version   byte
+	ClientId  []byte
 	KeepAlive uint16
 
-	Username []byte
-	Password []byte
+	Username     []byte
+	Password     []byte
 	CleanSession bool
 
-	WillTopic []byte
+	WillTopic   []byte
 	WillMessage []byte
-	WillQoS byte
-	WillRetain bool
+	WillQoS     byte
+	WillRetain  bool
 
 	//TODO: add documentationt to fields
 }
@@ -103,14 +103,14 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 // Encode encodes the CONNECT message in the supplied buffer.
 func (this *ConnectMessage) Encode(dst []byte) (int, error) {
-	if this.Version != 0x3 && this.Version != 0x4  {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Protocol violation: Invalid Protocol Version (%d) ", this.Version)
+	if this.Version != 0x3 && this.Version != 0x4 {
+		return 0, fmt.Errorf(this.Name()+"/Encode: Protocol violation: Invalid Protocol Version (%d) ", this.Version)
 	}
 
 	l := this.Len()
 
 	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	total := 0
@@ -178,7 +178,7 @@ func (this *ConnectMessage) encodeMessage(dst []byte) (int, error) {
 		connectFlags |= 0x4 // 00000100
 
 		if !ValidQoS(this.WillQoS) {
-			return total, fmt.Errorf(this.Name() + "/Encode: Invalid will QoS level %d", this.WillQoS)
+			return total, fmt.Errorf(this.Name()+"/Encode: Invalid will QoS level %d", this.WillQoS)
 		}
 
 		// set will qos flag
@@ -269,12 +269,12 @@ func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
 
 	// check protocol string and version
 	if this.Version != 0x3 && this.Version != 0x4 {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: Invalid Protocol version (%d) ", this.Version)
+		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version (%d) ", this.Version)
 	}
 
 	// check protocol version string
 	if (this.Version == 0x3 && !bytes.Equal(protoName, ProtocolV3Name)) || (this.Version == 0x4 && !bytes.Equal(protoName, ProtocolV4Name)) {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: Invalid Protocol version description (%s) ", protoName)
+		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version description (%s) ", protoName)
 	}
 
 	// read connect flags
@@ -298,12 +298,12 @@ func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
 
 	// check will qos
 	if !ValidQoS(this.WillQoS) {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQoS, this.Name())
+		return total, fmt.Errorf(this.Name()+"/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQoS, this.Name())
 	}
 
 	// check will flags
 	if !willFlag && (this.WillRetain || this.WillQoS != 0) {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, this.WillQoS, this.WillRetain)
+		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, this.WillQoS, this.WillRetain)
 	}
 
 	// check auth flags
@@ -313,7 +313,7 @@ func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src[total:]) < 2 {
-		return 0, fmt.Errorf(this.Name() + "/decodeMessage: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
+		return 0, fmt.Errorf(this.Name()+"/decodeMessage: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
 	}
 
 	// read keep alive
@@ -346,7 +346,6 @@ func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
 			return total, err
 		}
 	}
-
 
 	// read username
 	if usernameFlag {

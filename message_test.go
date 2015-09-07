@@ -15,8 +15,8 @@
 package message
 
 import (
-	"testing"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestQosCodes(t *testing.T) {

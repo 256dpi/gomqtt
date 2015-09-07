@@ -106,7 +106,7 @@ func BenchmarkNakedMessageDecode(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)
 		if err != nil {
-			panic(err);
+			panic(err)
 		}
 	}
 }

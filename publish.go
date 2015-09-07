@@ -15,8 +15,8 @@
 package message
 
 import (
-	"fmt"
 	"encoding/binary"
+	"fmt"
 )
 
 // A PUBLISH Control Packet is sent from a Client to a Server or from Server to a Client
@@ -107,7 +107,6 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 		return 0, fmt.Errorf(this.Name() + "/Encode: Topic name is empty.")
 	}
 
-
 	if len(this.Payload) == 0 {
 		return 0, fmt.Errorf(this.Name() + "/Encode: Payload is empty.")
 	}
@@ -115,7 +114,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	l := this.Len()
 
 	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	total := 0
@@ -138,7 +137,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 
 	// check qos
 	if !ValidQoS(this.QoS) {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Invalid QoS %d.", this.QoS)
+		return 0, fmt.Errorf(this.Name()+"/Encode: Invalid QoS %d.", this.QoS)
 	}
 
 	// set qos

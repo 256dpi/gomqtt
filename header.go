@@ -59,23 +59,23 @@ func (this *header) len(rl int) int {
 // Encodes the fixed header.
 func (this *header) encode(dst []byte, flags byte, rl int) (int, error) {
 	if rl > maxRemainingLength || rl < 0 {
-		return 0, fmt.Errorf(this.Name() + "/Encode: remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
+		return 0, fmt.Errorf(this.Name()+"/Encode: remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
 	}
 
 	hl := this.len(rl)
 
 	if len(dst) < hl {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl, len(dst))
+		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", hl, len(dst))
 	}
 
 	total := 0
 
 	if rl > maxRemainingLength || rl < 0 {
-		return total, fmt.Errorf(this.Name() + "/Encode: Remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
+		return total, fmt.Errorf(this.Name()+"/Encode: Remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
 	}
 
 	if !this.Type.Valid() {
-		return total, fmt.Errorf(this.Name() + "/Encode: Invalid message type %d", this.Type)
+		return total, fmt.Errorf(this.Name()+"/Encode: Invalid message type %d", this.Type)
 	}
 
 	typeAndFlags := byte(this.Type)<<4 | (this.Type.defaultFlags() & 0xf)
@@ -104,22 +104,22 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 
 	// check new type
 	if !this.Type.Valid() {
-		return total, 0, 0, fmt.Errorf(this.Name() + "/Decode: Invalid message type %d.", this.Type)
+		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Invalid message type %d.", this.Type)
 	}
 
 	// check against old type
 	if oldType != this.Type {
-		return total, 0, 0, fmt.Errorf(this.Name() + "/Decode: Invalid message type %d. Expecting %d.", this.Type, oldType)
+		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Invalid message type %d. Expecting %d.", this.Type, oldType)
 	}
 
 	//TODO: check this in message implementation
 	if this.Type != PUBLISH && flags != this.Type.defaultFlags() {
-		return total, 0, 0, fmt.Errorf(this.Name() + "/Decode: Invalid message (%d) flags. Expecting %d, got %d", this.Type, this.Type.defaultFlags(), flags)
+		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Invalid message (%d) flags. Expecting %d, got %d", this.Type, this.Type.defaultFlags(), flags)
 	}
 
 	//TODO: check this in message implementation
 	if this.Type == PUBLISH && !ValidQoS((flags>>1)&0x3) {
-		return total, 0, 0, fmt.Errorf(this.Name() + "/Decode: Invalid QoS (%d) for PUBLISH message.", (flags>>1)&0x3)
+		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Invalid QoS (%d) for PUBLISH message.", (flags>>1)&0x3)
 	}
 
 	total++
@@ -129,11 +129,11 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 	total += m
 
 	if rl > maxRemainingLength || rl < 0 {
-		return total, 0, 0, fmt.Errorf(this.Name() + "/Decode: Remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
+		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
 	}
 
 	if rl > len(src[total:]) {
-		return total, 0, 0, fmt.Errorf(this.Name() + "/Decode: Remaining length (%d) is greater than remaining buffer (%d)", rl, len(src[total:]))
+		return total, 0, 0, fmt.Errorf(this.Name()+"/Decode: Remaining length (%d) is greater than remaining buffer (%d)", rl, len(src[total:]))
 	}
 
 	return total, flags, rl, nil

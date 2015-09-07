@@ -26,7 +26,7 @@ func TestIdentifiedMessageFields(t *testing.T) {
 	msg := &PubackMessage{}
 	msg.Type = imType
 
-	msg.PacketId= 100
+	msg.PacketId = 100
 
 	require.Equal(t, 100, int(msg.PacketId))
 }
@@ -141,8 +141,7 @@ func BenchmarkIdentifiedMessageDecode(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)
 		if err != nil {
-			panic(err);
+			panic(err)
 		}
 	}
 }
-

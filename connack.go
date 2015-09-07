@@ -66,7 +66,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	}
 
 	// check remaining length
-	if(rl != 2) {
+	if rl != 2 {
 		return hl, fmt.Errorf(this.Name() + "/Decode: Expected remaining length to be 2.")
 	}
 
@@ -86,7 +86,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check return code
 	if !this.ReturnCode.Valid() {
-		return 0, fmt.Errorf(this.Name() + "/Decode: Invalid CONNACK return code (%d)", this.ReturnCode)
+		return 0, fmt.Errorf(this.Name()+"/Decode: Invalid CONNACK return code (%d)", this.ReturnCode)
 	}
 
 	return total, nil
@@ -99,7 +99,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 
 	// check buffer length
 	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	// encode header
@@ -119,7 +119,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 
 	// check return code
 	if !this.ReturnCode.Valid() {
-		return total, fmt.Errorf(this.Name() + "/Encode: Invalid CONNACK return code (%d)", this.ReturnCode)
+		return total, fmt.Errorf(this.Name()+"/Encode: Invalid CONNACK return code (%d)", this.ReturnCode)
 	}
 
 	// set return code

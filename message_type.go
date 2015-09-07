@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+
 import "fmt"
 
 // MessageType is the type representing the MQTT packet types. In the MQTT spec,

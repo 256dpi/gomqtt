@@ -15,8 +15,8 @@
 package message
 
 import (
-	"fmt"
 	"encoding/binary"
+	"fmt"
 )
 
 const (

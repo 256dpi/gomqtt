@@ -134,9 +134,9 @@ func BenchmarkSubackDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		3,
-		0,    // packet ID MSB (0)
-		1,    // packet ID LSB (7)
-		0,    // return code 1
+		0, // packet ID MSB (0)
+		1, // packet ID LSB (7)
+		0, // return code 1
 	}
 
 	msg := NewSubackMessage()
@@ -144,7 +144,7 @@ func BenchmarkSubackDecode(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)
 		if err != nil {
-			panic(err);
+			panic(err)
 		}
 	}
 }

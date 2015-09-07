@@ -15,8 +15,8 @@
 package message
 
 import (
-	"fmt"
 	"encoding/binary"
+	"fmt"
 )
 
 // A SUBACK Packet is sent by the Server to the Client to confirm receipt and processing
@@ -68,7 +68,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	for i, code := range this.ReturnCodes {
 		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
-			return total, fmt.Errorf(this.Name() + "/Decode: Invalid return code %d for topic %d", code, i)
+			return total, fmt.Errorf(this.Name()+"/Decode: Invalid return code %d for topic %d", code, i)
 		}
 	}
 
@@ -79,14 +79,14 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	for i, code := range this.ReturnCodes {
 		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Invalid return code %d for topic %d", code, i)
+			return 0, fmt.Errorf(this.Name()+"/Encode: Invalid return code %d for topic %d", code, i)
 		}
 	}
 
 	l := this.Len()
 
 	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	total := 0

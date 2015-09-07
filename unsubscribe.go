@@ -15,8 +15,8 @@
 package message
 
 import (
-	"fmt"
 	"encoding/binary"
+	"fmt"
 )
 
 // An UNSUBSCRIBE Packet is sent by the Client to the Server, to unsubscribe from topics.
@@ -85,7 +85,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	l := this.Len()
 
 	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	total := 0

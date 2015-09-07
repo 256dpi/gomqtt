@@ -40,7 +40,7 @@ func (this *nakedMessage) Len() int {
 func (this *nakedMessage) Decode(src []byte) (int, error) {
 	hl, _, rl, err := this.header.decode(src)
 
-	if(rl != 0) {
+	if rl != 0 {
 		return hl, fmt.Errorf(this.Name() + "/Decode: Expected zero remaining length.")
 	}
 

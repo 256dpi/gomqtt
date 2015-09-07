@@ -300,13 +300,13 @@ func BenchmarkConnectDecode(b *testing.B) {
 		0, // Will Topic MSB (0)
 		1, // Will Topic LSB (1)
 		'w',
-		0,  // Will Message MSB (0)
+		0, // Will Message MSB (0)
 		1, // Will Message LSB (1)
 		'm',
 		0, // Username ID MSB (0)
 		1, // Username ID LSB (1)
 		'u',
-		0,  // Password ID MSB (0)
+		0, // Password ID MSB (0)
 		1, // Password ID LSB (1)
 		'p',
 	}
@@ -316,7 +316,7 @@ func BenchmarkConnectDecode(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)
 		if err != nil {
-			panic(err);
+			panic(err)
 		}
 	}
 }
