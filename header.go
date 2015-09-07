@@ -126,7 +126,7 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 	}
 
 	//TODO: check this in message implementation
-	if this.Type == PUBLISH && !ValidQoS((flags>>1)&0x3) {
+	if this.Type == PUBLISH && !validQoS((flags>>1)&0x3) {
 		return total, 0, 0, fmt.Errorf(this.Name()+"/decode: Invalid QoS (%d) for PUBLISH message.", (flags>>1)&0x3)
 	}
 

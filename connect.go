@@ -147,7 +147,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	}
 
 	// check will qos
-	if !ValidQoS(this.WillQoS) {
+	if !validQoS(this.WillQoS) {
 		return total, fmt.Errorf(this.Name()+"/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQoS, this.Name())
 	}
 
@@ -290,7 +290,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	if len(this.WillTopic) > 0 {
 		connectFlags |= 0x4 // 00000100
 
-		if !ValidQoS(this.WillQoS) {
+		if !validQoS(this.WillQoS) {
 			return total, fmt.Errorf(this.Name()+"/Encode: Invalid will QoS level %d", this.WillQoS)
 		}
 

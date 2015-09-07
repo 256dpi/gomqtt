@@ -162,7 +162,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// check qos
-	if !ValidQoS(this.QoS) {
+	if !validQoS(this.QoS) {
 		return 0, fmt.Errorf(this.Name()+"/Encode: Invalid QoS %d.", this.QoS)
 	}
 

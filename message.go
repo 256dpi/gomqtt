@@ -188,37 +188,8 @@ type Message interface {
 	Len() int
 }
 
-var clientIdRegexp *regexp.Regexp
-
-func init() {
-	clientIdRegexp = regexp.MustCompile("^[0-9a-zA-Z _]*$")
-}
-
-// ValidClientId checks the client ID, which is a slice of bytes, to see if it's valid.
-// Client ID is valid if it meets the requirement from the MQTT spec:
-// 		The Server MUST allow ClientIds which are between 1 and 23 UTF-8 encoded bytes in length,
-//		and that contain only the characters
-//
-//		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-func ValidClientId(cid []byte) bool {
-	return clientIdRegexp.Match(cid)
-}
-
-// ValidTopic checks the topic, which is a slice of bytes, to see if it's valid. Topic is
-// considered valid if it's longer than 0 bytes, and doesn't contain any wildcard characters
-// such as + and #.
-func ValidTopic(topic []byte) bool {
-	return len(topic) > 0 && bytes.IndexByte(topic, '#') == -1 && bytes.IndexByte(topic, '+') == -1
-}
-
-// ValidQos checks the QoS value to see if it's valid. Valid QoS are QosAtMostOnce,
-// QosAtLeastOnce, and QosExactlyOnce.
-func ValidQoS(qos byte) bool {
-	return qos == QosAtMostOnce || qos == QosAtLeastOnce || qos == QosExactlyOnce
-}
-
 /*
-A basic fuzzing test that works with `https://github.com/dvyukov/go-fuzz`:
+A basic fuzzing test that works with https://github.com/dvyukov/go-fuzz:
 
 	$ go-fuzz-build github.com/gomqtt/message
 	$ go-fuzz -bin=./message-fuzz.zip -workdir=./fuzz
