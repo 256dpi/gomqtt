@@ -172,20 +172,19 @@ type Message interface {
 	// the message types and cannot be changed.
 	Name() string
 
+	// Decode reads the bytes in the byte slice from the argument. It returns the
+	// total number of bytes decoded, and whether there have been any errors during
+	// the process. The byte slice MUST NOT be modified during the duration of this
+	// message being available since the byte slice never gets copied.
+	Decode([]byte) (int, error)
+
 	// Encode writes the message bytes into the byte array from the argument. It
 	// returns the number of bytes encoded and whether there's any errors along
 	// the way. If there's any errors, then the byte slice and count should be
 	// considered invalid.
 	Encode([]byte) (int, error)
 
-	// Decode reads the bytes in the byte slice from the argument. It returns the
-	// total number of bytes decoded, and whether there's any errors during the
-	// process. The byte slice MUST NOT be modified during the duration of this
-	// message being available since the byte slice is internally stored for
-	// references.
-	Decode([]byte) (int, error)
-
-	// Len returns the messages length in bytes.
+	// Len returns the byte length of the message.
 	Len() int
 }
 

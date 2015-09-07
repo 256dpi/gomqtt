@@ -50,12 +50,15 @@ func (this ConnackMessage) String() string {
 	return fmt.Sprintf("%s, Session Present=%t, Return code=%q\n", this.header, this.SessionPresent, this.ReturnCode)
 }
 
-// Len returns the byte length of the CONNACK message.
+// Len returns the byte length of the message.
 func (this *ConnackMessage) Len() int {
 	return this.header.len(2) + 2
 }
 
-// Decode decodes the ConnackMessage from the passed buffer.
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
 func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -98,7 +101,10 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode encodes the ConnackMessage in the passed buffer.
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
 func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	total := 0
 

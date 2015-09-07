@@ -76,13 +76,16 @@ func (this ConnectMessage) String() string {
 	)
 }
 
-// Len returns the byte length of the CONNECT message.
+// Len returns the byte length of the message.
 func (this *ConnectMessage) Len() int {
 	ml := this.msglen()
 	return this.header.len(ml) + ml
 }
 
-// Decode decodes the CONNECT message from the supplied buffer.
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
 func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -100,7 +103,10 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode encodes the CONNECT message in the supplied buffer.
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
 func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	if this.Version != 0x3 && this.Version != 0x4 {
 		return 0, fmt.Errorf(this.Name()+"/Encode: Protocol violation: Invalid Protocol Version (%d) ", this.Version)

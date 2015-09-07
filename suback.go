@@ -44,12 +44,16 @@ func (this SubackMessage) String() string {
 	return fmt.Sprintf("%s, Packet ID=%d, Return Codes=%v", this.header, this.PacketId, this.ReturnCodes)
 }
 
+// Len returns the byte length of the message.
 func (this *SubackMessage) Len() int {
 	ml := this.msglen()
 	return this.header.len(ml) + ml
 }
 
-// Decode message from the supplied buffer.
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
 func (this *SubackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -91,7 +95,10 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode message to the supplied buffer.
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
 func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
