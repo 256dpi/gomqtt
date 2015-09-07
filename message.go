@@ -259,7 +259,7 @@ func Fuzz(data []byte) int {
 	// Try encode the message again.
 	_, err = msg.Encode(buf)
 	if err != nil {
-		panic(err)
+		// ignore protocol level errors
 	}
 
 	// Finally try to decode again.
