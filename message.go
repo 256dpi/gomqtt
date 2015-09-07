@@ -142,11 +142,6 @@ import (
 )
 
 const (
-	maxFixedHeaderLength int = 5
-	maxRemainingLength   int = 268435455 // bytes, or 256 MB
-)
-
-const (
 	// QoS 0: At most once delivery
 	// The message is delivered according to the capabilities of the underlying network.
 	// No response is sent by the receiver and no retry is performed by the sender. The
@@ -197,8 +192,6 @@ type Message interface {
 var clientIdRegexp *regexp.Regexp
 
 func init() {
-	// Added space for Paho compliance test
-	// Added underscore (_) for MQTT C client test
 	clientIdRegexp = regexp.MustCompile("^[0-9a-zA-Z _]*$")
 }
 

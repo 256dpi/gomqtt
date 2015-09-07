@@ -74,6 +74,7 @@ const (
 	RESERVED2
 )
 
+// String returns the name of the MessageType.
 func (this MessageType) String() string {
 	return this.Name()
 }

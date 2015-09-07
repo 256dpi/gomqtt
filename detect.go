@@ -43,5 +43,5 @@ func DetectMessage(src []byte) (int, MessageType) {
 		return 0, 0
 	}
 
-	return rl + n + 1, mt
+	return 1 + n + rl, mt
 }
