@@ -53,22 +53,38 @@ func (this *SubackMessage) Len() int {
 func (this *SubackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
+	// decode header
 	hl, _, rl, err := this.header.decode(src[total:])
 	total += hl
 	if err != nil {
 		return total, err
 	}
 
+	// check buffer length
+	if len(src) < total + 2 {
+		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + rl, len(src))
+	}
+
+	// read packet id
 	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	l := int(rl) - (total - hl)
-	this.ReturnCodes = src[total : total+l]
+	// calculate number of return codes
+	rcl := int(rl) - 2
+
+	// check buffer length
+	if len(src) < total + rcl {
+		return total, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", total + rl, len(src))
+	}
+
+	// read return codes
+	this.ReturnCodes = src[total : total + rcl]
 	total += len(this.ReturnCodes)
 
+	// validate return codes
 	for i, code := range this.ReturnCodes {
-		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
-			return total, fmt.Errorf(this.Name()+"/Decode: Invalid return code %d for topic %d", code, i)
+		if !ValidQoS(code) && code != 0x80 {
+			return total, fmt.Errorf(this.Name() + "/Decode: Invalid return code %d for topic %d", code, i)
 		}
 	}
 
@@ -77,29 +93,33 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 // Encode message to the supplied buffer.
 func (this *SubackMessage) Encode(dst []byte) (int, error) {
+	total := 0
+
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+	}
+
+	// check return codes
 	for i, code := range this.ReturnCodes {
-		if code != 0x00 && code != 0x01 && code != 0x02 && code != 0x80 {
-			return 0, fmt.Errorf(this.Name()+"/Encode: Invalid return code %d for topic %d", code, i)
+		if !ValidQoS(code) && code != 0x80 {
+			return total, fmt.Errorf(this.Name()+"/Encode: Invalid return code %d for topic %d", code, i)
 		}
 	}
 
-	l := this.Len()
-
-	if len(dst) < l {
-		return 0, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
-	total := 0
-
+	// encode header
 	n, err := this.header.encode(dst[total:], 0, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
+	// write packet id
 	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
 	total += 2
 
+	// write return codes
 	copy(dst[total:], this.ReturnCodes)
 	total += len(this.ReturnCodes)
 
