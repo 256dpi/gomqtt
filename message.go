@@ -93,11 +93,6 @@ const (
 
 // Message is an interface defined for all MQTT message types.
 type Message interface {
-	// Name returns a string representation of the message type. Examples include
-	// "PUBLISH", "SUBSCRIBE", and others. This is statically defined for each of
-	// the message types and cannot be changed.
-	Name() string
-
 	// Decode reads the bytes in the byte slice from the argument. It returns the
 	// total number of bytes decoded, and whether there have been any errors during
 	// the process. The byte slice MUST NOT be modified during the duration of this

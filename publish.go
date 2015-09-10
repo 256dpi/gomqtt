@@ -85,7 +85,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf(this.Name()+"/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
 	}
 
 	// read flags
@@ -95,7 +95,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 
 	// check qos
 	if !validQoS(this.QoS) {
-		return total, fmt.Errorf(this.Name()+"/Decode: Invalid QoS (%d).", this.QoS)
+		return total, fmt.Errorf("%s/Decode: Invalid QoS (%d).", this.Type, this.QoS)
 	}
 
 	n := 0
@@ -110,7 +110,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	if this.QoS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
-			return total, fmt.Errorf(this.Name()+"/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
+			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
 		}
 
 		// read packet id
@@ -124,7 +124,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	if l > 0 {
 		// check buffer length
 		if len(src) < total+l {
-			return total, fmt.Errorf(this.Name()+"/Decode: Insufficient buffer size. Expecting %d, got %d.", total+l, len(src))
+			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+l, len(src))
 		}
 
 		// read payload
@@ -145,12 +145,12 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
 	}
 
 	// check topic length
 	if len(this.Topic) == 0 {
-		return total, fmt.Errorf(this.Name() + "/Encode: Topic name is empty.")
+		return total, fmt.Errorf("%s/Encode: Topic name is empty.", this.Type)
 	}
 
 	flags := byte(0)
@@ -171,7 +171,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 
 	// check qos
 	if !validQoS(this.QoS) {
-		return 0, fmt.Errorf(this.Name()+"/Encode: Invalid QoS %d.", this.QoS)
+		return 0, fmt.Errorf("%s/Encode: Invalid QoS %d.", this.Type, this.QoS)
 	}
 
 	// set qos

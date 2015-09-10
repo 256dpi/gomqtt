@@ -71,12 +71,12 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, fmt.Errorf(this.Name() + "/Decode: Expected remaining length to be 2.")
+		return total, fmt.Errorf("%s/Decode: Expected remaining length to be 2.", this.Type)
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf(this.Name()+"/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
 	}
 
 	// read connack flags
@@ -86,7 +86,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check flags
 	if connackFlags&254 != 0 {
-		return 0, fmt.Errorf(this.Name() + "/Decode: Bits 7-1 in Connack Acknowledge Flags byte (1) are not 0")
+		return 0, fmt.Errorf("%s/Decode: Bits 7-1 in acknowledge flags byte (1) are not 0.", this.Type)
 	}
 
 	// read return code
@@ -95,7 +95,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check return code
 	if !this.ReturnCode.Valid() {
-		return 0, fmt.Errorf(this.Name()+"/Decode: Invalid CONNACK return code (%d)", this.ReturnCode)
+		return 0, fmt.Errorf("%s/Decode: Invalid return code (%d)", this.Type, this.ReturnCode)
 	}
 
 	return total, nil
@@ -111,7 +111,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
 	}
 
 	// encode header
@@ -131,7 +131,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 
 	// check return code
 	if !this.ReturnCode.Valid() {
-		return total, fmt.Errorf(this.Name()+"/Encode: Invalid CONNACK return code (%d)", this.ReturnCode)
+		return total, fmt.Errorf("%s/Encode: Invalid return code (%d).", this.Type, this.ReturnCode)
 	}
 
 	// set return code

@@ -59,12 +59,12 @@ func TestFixedHeaderFlags(t *testing.T) {
 	}
 
 	for m, d := range details {
-		if m.Name() != d.name {
-			t.Errorf("Name mismatch. Expecting %s, got %s.", d.name, m.Name())
+		if m.String() != d.name {
+			t.Errorf("Name mismatch. Expecting %s, got %s.", d.name, m)
 		}
 
 		if m.defaultFlags() != d.flags {
-			t.Errorf("Flag mismatch for %s. Expecting %d, got %d.", m.Name(), d.flags, m.defaultFlags())
+			t.Errorf("Flag mismatch for %s. Expecting %d, got %d.", m, d.flags, m.defaultFlags())
 		}
 	}
 }

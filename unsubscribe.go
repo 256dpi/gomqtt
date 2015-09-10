@@ -72,7 +72,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf(this.Name()+"/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
 	}
 
 	// read packet id
@@ -99,7 +99,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check for empty list
 	if len(this.Topics) == 0 {
-		return total, fmt.Errorf(this.Name() + "/Decode: Empty topic list")
+		return total, fmt.Errorf("%s/Decode: Empty topic list.", this.Type)
 	}
 
 	return total, nil
@@ -115,7 +115,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
 	}
 
 	// encode header

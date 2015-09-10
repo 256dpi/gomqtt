@@ -22,13 +22,7 @@ type nakedMessage struct {
 
 // String returns a string representation of the message.
 func (this nakedMessage) String() string {
-	return fmt.Sprintf("Type=%q", this.Name())
-}
-
-// Name returns a string representation of the message type.
-// TODO: Needed for proper documentation generation.
-func (this *nakedMessage) Name() string {
-	return this.header.Name()
+	return fmt.Sprintf("Type=%s", this.Type)
 }
 
 // Len returns the byte length of the message.
@@ -46,7 +40,7 @@ func (this *nakedMessage) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl != 0 {
-		return hl, fmt.Errorf(this.Name() + "/Decode: Expected zero remaining length.")
+		return hl, fmt.Errorf("%s/Decode: Expected zero remaining length.")
 	}
 
 	return hl, err

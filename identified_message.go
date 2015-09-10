@@ -31,12 +31,6 @@ func (this identifiedMessage) String() string {
 	return fmt.Sprintf("%s, Packet ID=%d", this.header, this.PacketId)
 }
 
-// Name returns a string representation of the message type.
-// TODO: Needed for proper documentation generation.
-func (this *identifiedMessage) Name() string {
-	return this.header.Name()
-}
-
 // Len returns the byte length of the message.
 func (this *identifiedMessage) Len() int {
 	return this.header.len(2) + 2
@@ -58,12 +52,12 @@ func (this *identifiedMessage) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, fmt.Errorf(this.Name() + "/Decode: Expected remaining length to be 2.")
+		return total, fmt.Errorf("%s/Decode: Expected remaining length to be 2.", this.Type)
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf(this.Name()+"/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
 	}
 
 	// read packet id
@@ -83,7 +77,7 @@ func (this *identifiedMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf(this.Name()+"/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
 	}
 
 	// encode header

@@ -74,15 +74,10 @@ const (
 	RESERVED2
 )
 
-// String returns the name of the MessageType.
-func (this MessageType) String() string {
-	return this.Name()
-}
-
 // Name returns the name of the message type. It should correspond to one of the
 // constant values defined for MessageType. It is statically defined and cannot
 // be changed.
-func (this MessageType) Name() string {
+func (this MessageType) String() string {
 	switch this {
 	case RESERVED:
 		return "RESERVED"
@@ -195,7 +190,7 @@ func (this MessageType) New() (Message, error) {
 		return NewDisconnectMessage(), nil
 	}
 
-	return nil, fmt.Errorf("MessageType/NewMessage: Invalid message type %d", this)
+	return nil, fmt.Errorf("MessageType/NewMessage: Invalid message type %d.", this)
 }
 
 // Valid returns a boolean indicating whether the message type is valid or not.
