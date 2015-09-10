@@ -47,7 +47,7 @@ func NewConnackMessage() *ConnackMessage {
 
 // String returns a string representation of the message.
 func (this ConnackMessage) String() string {
-	return fmt.Sprintf("%s, Session Present=%t, Return code=%q\n", this.header, this.SessionPresent, this.ReturnCode)
+	return fmt.Sprintf("%s: SessionPresent=%t ReturnCode=%q\n", this.Type, this.SessionPresent, this.ReturnCode)
 }
 
 // Len returns the byte length of the message.

@@ -59,8 +59,8 @@ func NewPublishMessage() *PublishMessage {
 
 // String returns a string representation of the message.
 func (this PublishMessage) String() string {
-	return fmt.Sprintf("%s, Topic=%q, Packet ID=%d, QoS=%d, Retained=%t, Dup=%t, Payload=%v",
-		this.header, this.Topic, this.PacketId, this.QoS, this.Retain, this.Dup, this.Payload)
+	return fmt.Sprintf("%s: Topic=%q PacketId=%d QoS=%d Retained=%t Dup=%t Payload=%v",
+		this.Type, this.Topic, this.PacketId, this.QoS, this.Retain, this.Dup, this.Payload)
 }
 
 // Len returns the byte length of the message.

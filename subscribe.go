@@ -55,10 +55,10 @@ func NewSubscribeMessage() *SubscribeMessage {
 
 // String returns a string representation of the message.
 func (this SubscribeMessage) String() string {
-	msgstr := fmt.Sprintf("%s, Packet ID=%d", this.header, this.PacketId)
+	msgstr := fmt.Sprintf("%s: PacketId=%d", this.Type, this.PacketId)
 
 	for i, t := range this.Subscriptions {
-		msgstr = fmt.Sprintf("%s, Topic[%d]=%q/%d", msgstr, i, string(t.Topic), t.QoS)
+		msgstr = fmt.Sprintf("%s Topic[%d]=%q/%d", msgstr, i, string(t.Topic), t.QoS)
 	}
 
 	return msgstr

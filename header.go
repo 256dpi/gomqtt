@@ -27,11 +27,6 @@ type header struct {
 	Type MessageType
 }
 
-// String returns a string representation of the message.
-func (this header) String() string {
-	return fmt.Sprintf("Type=%s", this.Type)
-}
-
 // Returns the length of the fixed header in bytes.
 func (this *header) len(rl int) int {
 	// message type and flag byte

@@ -22,7 +22,7 @@ type nakedMessage struct {
 
 // String returns a string representation of the message.
 func (this nakedMessage) String() string {
-	return fmt.Sprintf("Type=%s", this.Type)
+	return fmt.Sprintf("%s", this.Type)
 }
 
 // Len returns the byte length of the message.

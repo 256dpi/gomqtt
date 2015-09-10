@@ -45,7 +45,7 @@ func NewSubackMessage() *SubackMessage {
 
 // String returns a string representation of the message.
 func (this SubackMessage) String() string {
-	return fmt.Sprintf("%s, Packet ID=%d, Return Codes=%v", this.header, this.PacketId, this.ReturnCodes)
+	return fmt.Sprintf("%s: PacketId=%d ReturnCodes=%v", this.Type, this.PacketId, this.ReturnCodes)
 }
 
 // Len returns the byte length of the message.

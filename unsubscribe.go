@@ -41,10 +41,10 @@ func NewUnsubscribeMessage() *UnsubscribeMessage {
 
 // String returns a string representation of the message.
 func (this UnsubscribeMessage) String() string {
-	msgstr := fmt.Sprintf("%s", this.header)
+	msgstr := fmt.Sprintf("%s:", this.Type)
 
 	for i, t := range this.Topics {
-		msgstr = fmt.Sprintf("%s, Topic%d=%s", msgstr, i, string(t))
+		msgstr = fmt.Sprintf("%s Topic[%d]=%s", msgstr, i, string(t))
 	}
 
 	return msgstr

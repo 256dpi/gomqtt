@@ -28,7 +28,7 @@ type identifiedMessage struct {
 
 // String returns a string representation of the message.
 func (this identifiedMessage) String() string {
-	return fmt.Sprintf("%s, Packet ID=%d", this.header, this.PacketId)
+	return fmt.Sprintf("%s: PacketId=%d", this.Type, this.PacketId)
 }
 
 // Len returns the byte length of the message.
