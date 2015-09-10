@@ -35,20 +35,35 @@ var (
 type ConnectMessage struct {
 	header
 
-	Version   byte
-	ClientId  []byte
+	// The protocol version (3 or 4).
+	Version byte
+
+	// The clients client id.
+	ClientId []byte
+
+	// The keep alive value.
 	KeepAlive uint16
 
-	Username     []byte
-	Password     []byte
+	// The authentication username.
+	Username []byte
+
+	// The authentication password.
+	Password []byte
+
+	// The clean session flag.
 	CleanSession bool
 
-	WillTopic   []byte
-	WillPayload []byte
-	WillQoS     byte
-	WillRetain  bool
+	// The topic of the will message.
+	WillTopic []byte
 
-	//TODO: add documentationt to fields
+	// The payload of the will message.
+	WillPayload []byte
+
+	// The qos of the will message.
+	WillQoS byte
+
+	// The retain setting of the will message.
+	WillRetain bool
 }
 
 var _ Message = (*ConnectMessage)(nil)

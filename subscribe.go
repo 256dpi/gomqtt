@@ -21,8 +21,11 @@ import (
 
 // A single subscription in a SubscribeMessage.
 type Subscription struct {
+	// The topic to subscribe to.
 	Topic []byte
-	QoS   byte
+
+	// The qos level for receiving the messages.
+	QoS byte
 }
 
 // The SUBSCRIBE Packet is sent from the Client to the Server to create one or more
@@ -34,6 +37,7 @@ type Subscription struct {
 type SubscribeMessage struct {
 	header
 
+	// The subscriptions.
 	Subscriptions []Subscription
 
 	// Shared message identifier.

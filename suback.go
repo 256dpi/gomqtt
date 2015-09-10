@@ -27,6 +27,7 @@ import (
 type SubackMessage struct {
 	header
 
+	// The granted QoS levels for the requested subscriptions.
 	ReturnCodes []byte
 
 	// Shared message identifier.

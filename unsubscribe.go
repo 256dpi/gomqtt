@@ -23,6 +23,7 @@ import (
 type UnsubscribeMessage struct {
 	header
 
+	// The topics to unsubscribe from.
 	Topics [][]byte
 
 	// Shared message identifier.
