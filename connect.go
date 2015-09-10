@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	version31Name = []byte{'M', 'Q', 'I', 's', 'd', 'p'}
+	version31Name  = []byte{'M', 'Q', 'I', 's', 'd', 'p'}
 	version311Name = []byte{'M', 'Q', 'T', 'T'}
 )
 
@@ -129,12 +129,12 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// check protocol string and version
 	if this.Version != Version31 && this.Version != Version311 {
-		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version (%d) ", this.Version)
+		return total, fmt.Errorf(this.Name()+"/Decode: Protocol violation: Invalid Protocol version (%d) ", this.Version)
 	}
 
 	// check protocol version string
 	if (this.Version == Version31 && !bytes.Equal(protoName, version31Name)) || (this.Version == Version311 && !bytes.Equal(protoName, version311Name)) {
-		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version description (%s) ", protoName)
+		return total, fmt.Errorf(this.Name()+"/Decode: Protocol violation: Invalid Protocol version description (%s) ", protoName)
 	}
 
 	// check buffer length
@@ -158,27 +158,27 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Connect Flags reserved bit 0 is not 0")
+		return total, fmt.Errorf(this.Name() + "/Decode: Connect Flags reserved bit 0 is not 0")
 	}
 
 	// check will qos
 	if !validQoS(this.WillQoS) {
-		return total, fmt.Errorf(this.Name()+"/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQoS, this.Name())
+		return total, fmt.Errorf(this.Name()+"/Decode: Invalid QoS level (%d) for %s message", this.WillQoS, this.Name())
 	}
 
 	// check will flags
 	if !willFlag && (this.WillRetain || this.WillQoS != 0) {
-		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, this.WillQoS, this.WillRetain)
+		return total, fmt.Errorf(this.Name()+"/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, this.WillQoS, this.WillRetain)
 	}
 
 	// check auth flags
 	if !usernameFlag && passwordFlag {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Password flag is set but Username flag is not set")
+		return total, fmt.Errorf(this.Name() + "/Decode: Password flag is set but Username flag is not set")
 	}
 
 	// check buffer length
 	if len(src[total:]) < 2 {
-		return 0, fmt.Errorf(this.Name()+"/decodeMessage: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
+		return 0, fmt.Errorf(this.Name()+"/Decode: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
 	}
 
 	// check buffer length
@@ -199,7 +199,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// if the client supplies a zero-byte ClientId, the Client MUST also set CleanSession to 1
 	if len(this.ClientId) == 0 && !this.CleanSession {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: Clean session must be 1 if client id is zero length.")
+		return total, fmt.Errorf(this.Name() + "/Decode: Protocol violation: Clean session must be 1 if client id is zero length.")
 	}
 
 	// read will topic and payload
