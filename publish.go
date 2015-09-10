@@ -93,6 +93,11 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	this.Retain = (flags & 0x1) == 1
 	this.QoS = (flags >> 1) & 0x3
 
+	// check qos
+	if !validQoS(this.QoS) {
+		return total, fmt.Errorf(this.Name()+"/Decode: Invalid QoS (%d).", this.QoS)
+	}
+
 	n := 0
 
 	// read topic

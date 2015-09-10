@@ -121,11 +121,6 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 		return total, 0, 0, fmt.Errorf(this.Name()+"/decode: Invalid message (%d) flags. Expecting %d, got %d", this.Type, this.Type.defaultFlags(), flags)
 	}
 
-	//TODO: check this in message implementation
-	if this.Type == PUBLISH && !validQoS((flags>>1)&0x3) {
-		return total, 0, 0, fmt.Errorf(this.Name()+"/decode: Invalid QoS (%d) for PUBLISH message.", (flags>>1)&0x3)
-	}
-
 	// read remaining length
 	_rl, m := binary.Uvarint(src[total:])
 	rl := int(_rl)
