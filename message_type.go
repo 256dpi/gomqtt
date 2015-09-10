@@ -122,7 +122,7 @@ func (this MessageType) Name() string {
 }
 
 // DefaultFlags returns the default flag values for the message type, as defined by
-// the MQTT spec.
+// the MQTT spec, except for PUBLISH.
 func (this MessageType) defaultFlags() byte {
 	switch this {
 	case RESERVED:
@@ -131,22 +131,20 @@ func (this MessageType) defaultFlags() byte {
 		return 0
 	case CONNACK:
 		return 0
-	case PUBLISH:
-		return 0
 	case PUBACK:
 		return 0
 	case PUBREC:
 		return 0
 	case PUBREL:
-		return 2
+		return 2 // 00000010
 	case PUBCOMP:
 		return 0
 	case SUBSCRIBE:
-		return 2
+		return 2 // 00000010
 	case SUBACK:
 		return 0
 	case UNSUBSCRIBE:
-		return 2
+		return 2 // 00000010
 	case UNSUBACK:
 		return 0
 	case PINGREQ:
@@ -197,7 +195,7 @@ func (this MessageType) New() (Message, error) {
 		return NewDisconnectMessage(), nil
 	}
 
-	return nil, fmt.Errorf("msgtype/NewMessage: Invalid message type %d", this)
+	return nil, fmt.Errorf("MessageType/NewMessage: Invalid message type %d", this)
 }
 
 // Valid returns a boolean indicating whether the message type is valid or not.

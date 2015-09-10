@@ -116,7 +116,7 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 		return total, 0, 0, fmt.Errorf(this.Name()+"/decode: Invalid message type %d. Expecting %d.", this.Type, oldType)
 	}
 
-	//TODO: check this in message implementation
+	// check flags except for publish messages
 	if this.Type != PUBLISH && flags != this.Type.defaultFlags() {
 		return total, 0, 0, fmt.Errorf(this.Name()+"/decode: Invalid message (%d) flags. Expecting %d, got %d", this.Type, this.Type.defaultFlags(), flags)
 	}
