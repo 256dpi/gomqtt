@@ -83,6 +83,14 @@ const (
 	QosFailure = 0x80
 )
 
+const (
+	// MQTT protocol version 3.1.
+	Version31 byte = 3
+
+	// MQTT protocol version 3.1.1.
+	Version311 byte = 4
+)
+
 // Message is an interface defined for all MQTT message types.
 type Message interface {
 	// Name returns a string representation of the message type. Examples include

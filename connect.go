@@ -21,8 +21,8 @@ import (
 )
 
 var (
-	protocolV3Name = []byte{'M', 'Q', 'I', 's', 'd', 'p'}
-	protocolV4Name = []byte{'M', 'Q', 'T', 'T'}
+	version31Name = []byte{'M', 'Q', 'I', 's', 'd', 'p'}
+	version311Name = []byte{'M', 'Q', 'T', 'T'}
 )
 
 // After a Network Connection is established by a Client to a Server, the first Packet
@@ -128,12 +128,12 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	total++
 
 	// check protocol string and version
-	if this.Version != 0x3 && this.Version != 0x4 {
+	if this.Version != Version31 && this.Version != Version311 {
 		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version (%d) ", this.Version)
 	}
 
 	// check protocol version string
-	if (this.Version == 0x3 && !bytes.Equal(protoName, protocolV3Name)) || (this.Version == 0x4 && !bytes.Equal(protoName, protocolV4Name)) {
+	if (this.Version == Version31 && !bytes.Equal(protoName, version31Name)) || (this.Version == Version311 && !bytes.Equal(protoName, version311Name)) {
 		return total, fmt.Errorf(this.Name()+"/decodeMessage: Protocol violation: Invalid Protocol version description (%s) ", protoName)
 	}
 
@@ -265,7 +265,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 
 	if this.Version == 0x3 {
 		// write 0x3 protocol name
-		n, err := writeLPBytes(dst[total:], protocolV3Name)
+		n, err := writeLPBytes(dst[total:], version31Name)
 		total += n
 		if err != nil {
 			return total, err
@@ -274,7 +274,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 
 	if this.Version == 0x4 {
 		// write 0x4 protocol name
-		n, err := writeLPBytes(dst[total:], protocolV4Name)
+		n, err := writeLPBytes(dst[total:], version311Name)
 		total += n
 		if err != nil {
 			return total, err
@@ -385,9 +385,9 @@ func (this *ConnectMessage) msglen() int {
 	total := 0
 
 	vl := 0
-	if this.Version == 0x3 {
+	if this.Version == Version31 {
 		vl = 6
-	} else if this.Version == 0x4 {
+	} else if this.Version == Version311 {
 		vl = 4
 	} else {
 		return total
