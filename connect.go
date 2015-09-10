@@ -44,7 +44,7 @@ type ConnectMessage struct {
 	CleanSession bool
 
 	WillTopic   []byte
-	WillMessage []byte
+	WillPayload []byte
 	WillQoS     byte
 	WillRetain  bool
 
@@ -70,7 +70,7 @@ func (this ConnectMessage) String() string {
 		this.KeepAlive,
 		this.ClientId,
 		this.WillTopic,
-		this.WillMessage,
+		this.WillPayload,
 		this.Username,
 		this.Password,
 	)
@@ -195,7 +195,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 			return total, err
 		}
 
-		this.WillMessage, n, err = readLPBytes(src[total:])
+		this.WillPayload, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -338,7 +338,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 			return total, err
 		}
 
-		n, err = writeLPBytes(dst[total:], this.WillMessage)
+		n, err = writeLPBytes(dst[total:], this.WillPayload)
 		total += n
 		if err != nil {
 			return total, err
@@ -390,7 +390,7 @@ func (this *ConnectMessage) msglen() int {
 
 	// add the will topic and will message length
 	if len(this.WillTopic) > 0 {
-		total += 2 + len(this.WillTopic) + 2 + len(this.WillMessage)
+		total += 2 + len(this.WillTopic) + 2 + len(this.WillPayload)
 	}
 
 	// add the username length

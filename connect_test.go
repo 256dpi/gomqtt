@@ -56,7 +56,7 @@ func TestConnectMessageDecode(t *testing.T) {
 	require.Equal(t, 10, int(msg.KeepAlive), "Incorrect KeepAlive value.")
 	require.Equal(t, "surgemq", string(msg.ClientId), "Incorrect client ID value.")
 	require.Equal(t, "will", string(msg.WillTopic), "Incorrect will topic value.")
-	require.Equal(t, "send me home", string(msg.WillMessage), "Incorrect will message value.")
+	require.Equal(t, "send me home", string(msg.WillPayload), "Incorrect will message value.")
 	require.Equal(t, "surgemq", string(msg.Username), "Incorrect username value.")
 	require.Equal(t, "verysecret", string(msg.Password), "Incorrect password value.")
 }
@@ -202,7 +202,7 @@ func TestConnectMessageEncode(t *testing.T) {
 	msg.ClientId = []byte("surgemq")
 	msg.KeepAlive = 10
 	msg.WillTopic = []byte("will")
-	msg.WillMessage = []byte("send me home")
+	msg.WillPayload = []byte("send me home")
 	msg.Username = []byte("surgemq")
 	msg.Password = []byte("verysecret")
 
@@ -269,7 +269,7 @@ func BenchmarkConnectEncode(b *testing.B) {
 	msg.ClientId = []byte("i")
 	msg.KeepAlive = 10
 	msg.WillTopic = []byte("w")
-	msg.WillMessage = []byte("m")
+	msg.WillPayload = []byte("m")
 	msg.Username = []byte("u")
 	msg.Password = []byte("p")
 
