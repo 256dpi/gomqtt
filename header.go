@@ -25,10 +25,6 @@ const maxRemainingLength int = 268435455 // bytes, or 256 MB
 type header struct {
 	// The message type of the message.
 	Type MessageType
-
-	// TODO: move to messages that have a packet Id?
-	// Some messages need a packet ID.
-	PacketId uint16
 }
 
 // String returns a string representation of the message.

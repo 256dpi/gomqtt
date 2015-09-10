@@ -28,6 +28,9 @@ type SubackMessage struct {
 	header
 
 	ReturnCodes []byte
+
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*SubackMessage)(nil)

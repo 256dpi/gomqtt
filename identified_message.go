@@ -21,6 +21,9 @@ import (
 
 type identifiedMessage struct {
 	header
+
+	// Shared message identifier.
+	PacketId uint16
 }
 
 // String returns a string representation of the message.

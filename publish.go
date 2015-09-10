@@ -43,6 +43,9 @@ type PublishMessage struct {
 	// set to true, it indicates that this might be re-delivery of an earlier attempt to send
 	// the Packet.
 	Dup bool
+
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*PublishMessage)(nil)

@@ -24,6 +24,9 @@ type UnsubscribeMessage struct {
 	header
 
 	Topics [][]byte
+
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*UnsubscribeMessage)(nil)

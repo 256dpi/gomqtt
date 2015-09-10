@@ -35,6 +35,9 @@ type SubscribeMessage struct {
 	header
 
 	Subscriptions []Subscription
+
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*SubscribeMessage)(nil)
