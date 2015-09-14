@@ -15,10 +15,18 @@
 package message
 
 import (
-	"bytes"
+	"encoding/binary"
 	"fmt"
-	"sync/atomic"
 )
+
+// A single subscription in a SubscribeMessage.
+type Subscription struct {
+	// The topic to subscribe to.
+	Topic []byte
+
+	// The qos level for receiving the messages.
+	QoS byte
+}
 
 // The SUBSCRIBE Packet is sent from the Client to the Server to create one or more
 // Subscriptions. Each Subscription registers a Client’s interest in one or more
@@ -29,8 +37,11 @@ import (
 type SubscribeMessage struct {
 	header
 
-	topics [][]byte
-	qos    []byte
+	// The subscriptions.
+	Subscriptions []Subscription
+
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*SubscribeMessage)(nil)
@@ -38,200 +49,122 @@ var _ Message = (*SubscribeMessage)(nil)
 // NewSubscribeMessage creates a new SUBSCRIBE message.
 func NewSubscribeMessage() *SubscribeMessage {
 	msg := &SubscribeMessage{}
-	msg.SetType(SUBSCRIBE)
-
+	msg.Type = SUBSCRIBE
 	return msg
 }
 
+// String returns a string representation of the message.
 func (this SubscribeMessage) String() string {
-	msgstr := fmt.Sprintf("%s, Packet ID=%d", this.header, this.PacketId())
+	msgstr := fmt.Sprintf("%s: PacketId=%d", this.Type, this.PacketId)
 
-	for i, t := range this.topics {
-		msgstr = fmt.Sprintf("%s, Topic[%d]=%q/%d", msgstr, i, string(t), this.qos[i])
+	for i, t := range this.Subscriptions {
+		msgstr = fmt.Sprintf("%s Topic[%d]=%q/%d", msgstr, i, string(t.Topic), t.QoS)
 	}
 
 	return msgstr
 }
 
-// Topics returns a list of topics sent by the Client.
-func (this *SubscribeMessage) Topics() [][]byte {
-	return this.topics
-}
-
-// AddTopic adds a single topic to the message, along with the corresponding QoS.
-// An error is returned if QoS is invalid.
-func (this *SubscribeMessage) AddTopic(topic []byte, qos byte) error {
-	if !ValidQos(qos) {
-		return fmt.Errorf("Invalid QoS %d", qos)
-	}
-
-	var i int
-	var t []byte
-	var found bool
-
-	for i, t = range this.topics {
-		if bytes.Equal(t, topic) {
-			found = true
-			break
-		}
-	}
-
-	if found {
-		this.qos[i] = qos
-		return nil
-	}
-
-	this.topics = append(this.topics, topic)
-	this.qos = append(this.qos, qos)
-	this.dirty = true
-
-	return nil
-}
-
-// RemoveTopic removes a single topic from the list of existing ones in the message.
-// If topic does not exist it just does nothing.
-func (this *SubscribeMessage) RemoveTopic(topic []byte) {
-	var i int
-	var t []byte
-	var found bool
-
-	for i, t = range this.topics {
-		if bytes.Equal(t, topic) {
-			found = true
-			break
-		}
-	}
-
-	if found {
-		this.topics = append(this.topics[:i], this.topics[i+1:]...)
-		this.qos = append(this.qos[:i], this.qos[i+1:]...)
-	}
-
-	this.dirty = true
-}
-
-// TopicExists checks to see if a topic exists in the list.
-func (this *SubscribeMessage) TopicExists(topic []byte) bool {
-	for _, t := range this.topics {
-		if bytes.Equal(t, topic) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// TopicQos returns the QoS level of a topic. If topic does not exist, QosFailure
-// is returned.
-func (this *SubscribeMessage) TopicQos(topic []byte) byte {
-	for i, t := range this.topics {
-		if bytes.Equal(t, topic) {
-			return this.qos[i]
-		}
-	}
-
-	return QosFailure
-}
-
-// Qos returns the list of QoS current in the message.
-func (this *SubscribeMessage) Qos() []byte {
-	return this.qos
-}
-
+// Len returns the byte length of the message.
 func (this *SubscribeMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
-
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
-		return 0
-	}
-
-	return this.header.msglen() + ml
+	return this.header.len(ml) + ml
 }
 
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
 func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
 
-	hn, err := this.header.decode(src[total:])
-	total += hn
+	// decode header
+	hl, _, rl, err := this.header.decode(src[total:])
+	total += hl
 	if err != nil {
 		return total, err
 	}
 
-	this.packetId = src[total : total+2]
+	// check buffer length
+	if len(src) < total+2 {
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+	}
+
+	// check remaining length
+	if rl <= 2 {
+		return total, fmt.Errorf("%s/Decode: Expected remaining length to be greater that 2, got.", this.Type, rl)
+	}
+
+	// read packet id
+	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	remlen := int(this.remlen) - (total - hn)
-	for remlen > 0 {
+	// calculate number of subscriptions
+	sl := int(rl) - 2
+
+	for sl > 0 {
+		// read topic
 		t, n, err := readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		this.topics = append(this.topics, t)
+		// check buffer length
+		if len(src) < total+1 {
+			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+1, len(src))
+		}
 
-		this.qos = append(this.qos, src[total])
+		// read qos and add subscription
+		this.Subscriptions = append(this.Subscriptions, Subscription{t, src[total]})
 		total++
 
-		remlen = remlen - n - 1
+		// decrement counter
+		sl = sl - n - 1
 	}
 
-	if len(this.topics) == 0 {
-		return 0, fmt.Errorf(this.Name() + "/Decode: Empty topic list")
+	// check for empty subscription list
+	if len(this.Subscriptions) == 0 {
+		return total, fmt.Errorf("%s/Decode: Empty subscription list.", this.Type)
 	}
-
-	this.dirty = false
 
 	return total, nil
 }
 
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
 func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
-	hl := this.header.msglen()
-	ml := this.msglen()
-
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
-	}
-
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
-		return 0, err
-	}
-
 	total := 0
 
-	n, err := this.header.encode(dst[total:])
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+	}
+
+	// encode header
+	n, err := this.header.encode(dst[total:], 0, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	if this.PacketId() == 0 {
-		this.SetPacketId(uint16(atomic.AddUint64(&gPacketId, 1) & 0xffff))
-	}
+	// write packet it
+	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
+	total += 2
 
-	n = copy(dst[total:], this.packetId)
-	total += n
-
-	for i, t := range this.topics {
-		n, err := writeLPBytes(dst[total:], t)
+	for _, t := range this.Subscriptions {
+		// write topic
+		n, err := writeLPBytes(dst[total:], t.Topic)
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		dst[total] = this.qos[i]
+		// write qos
+		dst[total] = t.QoS
+
 		total++
 	}
 
@@ -242,8 +175,8 @@ func (this *SubscribeMessage) msglen() int {
 	// packet ID
 	total := 2
 
-	for _, t := range this.topics {
-		total += 2 + len(t) + 1
+	for _, t := range this.Subscriptions {
+		total += 2 + len(t.Topic) + 1
 	}
 
 	return total

@@ -17,7 +17,7 @@ package message
 // The UNSUBACK Packet is sent by the Server to the Client to confirm receipt of an
 // UNSUBSCRIBE Packet.
 type UnsubackMessage struct {
-	PubackMessage
+	identifiedMessage
 }
 
 var _ Message = (*UnsubackMessage)(nil)
@@ -25,7 +25,6 @@ var _ Message = (*UnsubackMessage)(nil)
 // NewUnsubackMessage creates a new UNSUBACK message.
 func NewUnsubackMessage() *UnsubackMessage {
 	msg := &UnsubackMessage{}
-	msg.SetType(UNSUBACK)
-
+	msg.Type = UNSUBACK
 	return msg
 }

@@ -14,16 +14,34 @@
 
 package message
 
-// A PUBACK Packet is the response to a PUBLISH Packet with QoS level 1.
-type PubackMessage struct {
-	identifiedMessage
-}
+import (
+	"encoding/binary"
+)
 
-var _ Message = (*PubackMessage)(nil)
+// DetectMessage tries to detect the next message in a buffer. It returns a
+// length greater than zero if the message has been detected as well as its
+// MessageType.
+func DetectMessage(src []byte) (int, MessageType) {
+	// check for minimum size
+	if len(src) < 2 {
+		return 0, 0
+	}
 
-// NewPubackMessage creates a new PUBACK message.
-func NewPubackMessage() *PubackMessage {
-	msg := &PubackMessage{}
-	msg.Type = PUBACK
-	return msg
+	// get type
+	mt := MessageType(src[0] >> 4)
+
+	// get remaining length
+	_rl, n := binary.Uvarint(src[1:])
+	rl := int(_rl)
+
+	if n <= 0 {
+		return 0, 0
+	}
+
+	// check remaining length
+	if rl > maxRemainingLength || rl < 0 {
+		return 0, 0
+	}
+
+	return 1 + n + rl, mt
 }

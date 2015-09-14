@@ -15,18 +15,15 @@
 package message
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
-	"regexp"
 )
 
-var clientIdRegexp *regexp.Regexp
-
-func init() {
-	// Added space for Paho compliance test
-	// Added underscore (_) for MQTT C client test
-	clientIdRegexp = regexp.MustCompile("^[0-9a-zA-Z _]*$")
-}
+var (
+	version31Name  = []byte{'M', 'Q', 'I', 's', 'd', 'p'}
+	version311Name = []byte{'M', 'Q', 'T', 'T'}
+)
 
 // After a Network Connection is established by a Client to a Server, the first Packet
 // sent from the Client to the Server MUST be a CONNECT Packet [MQTT-3.1.0-1].
@@ -38,25 +35,35 @@ func init() {
 type ConnectMessage struct {
 	header
 
-	// 7: username flag
-	// 6: password flag
-	// 5: will retain
-	// 4-3: will QoS
-	// 2: will flag
-	// 1: clean session
-	// 0: reserved
-	connectFlags byte
+	// The protocol version (3 or 4).
+	Version byte
 
-	version byte
+	// The clients client id.
+	ClientId []byte
 
-	keepAlive uint16
+	// The keep alive value.
+	KeepAlive uint16
 
-	protoName,
-	clientId,
-	willTopic,
-	willMessage,
-	username,
-	password []byte
+	// The authentication username.
+	Username []byte
+
+	// The authentication password.
+	Password []byte
+
+	// The clean session flag.
+	CleanSession bool
+
+	// The topic of the will message.
+	WillTopic []byte
+
+	// The payload of the will message.
+	WillPayload []byte
+
+	// The qos of the will message.
+	WillQoS byte
+
+	// The retain setting of the will message.
+	WillRetain bool
 }
 
 var _ Message = (*ConnectMessage)(nil)
@@ -64,508 +71,307 @@ var _ Message = (*ConnectMessage)(nil)
 // NewConnectMessage creates a new CONNECT message.
 func NewConnectMessage() *ConnectMessage {
 	msg := &ConnectMessage{}
-	msg.SetType(CONNECT)
-
+	msg.Type = CONNECT
+	msg.Version = 4
+	msg.CleanSession = true
 	return msg
 }
 
-// String returns a string representation of the CONNECT message
+// String returns a string representation of the message.
 func (this ConnectMessage) String() string {
-	return fmt.Sprintf("%s, Connect Flags=%08b, Version=%d, KeepAlive=%d, Client ID=%q, Will Topic=%q, Will Message=%q, Username=%q, Password=%q",
-		this.header,
-		this.connectFlags,
-		this.Version(),
-		this.KeepAlive(),
-		this.ClientId(),
-		this.WillTopic(),
-		this.WillMessage(),
-		this.Username(),
-		this.Password(),
+	return fmt.Sprintf("%s: Version=%d KeepAlive=%d ClientId=%q WillTopic=%q WillPayload=%q Username=%q Password=%q",
+		this.Type,
+		this.Version,
+		this.KeepAlive,
+		this.ClientId,
+		this.WillTopic,
+		this.WillPayload,
+		this.Username,
+		this.Password,
 	)
 }
 
-// Version returns the the 8 bit unsigned value that represents the revision level
-// of the protocol used by the Client. The value of the Protocol Level field for
-// the version 3.1.1 of the protocol is 4 (0x04).
-func (this *ConnectMessage) Version() byte {
-	return this.version
-}
-
-// SetVersion sets the version value of the CONNECT message
-func (this *ConnectMessage) SetVersion(v byte) error {
-	if _, ok := SupportedVersions[v]; !ok {
-		return fmt.Errorf(this.Name() + "/SetVersion: Invalid version number %d", v)
-	}
-
-	this.version = v
-	this.dirty = true
-
-	return nil
-}
-
-// CleanSession returns the bit that specifies the handling of the Session state.
-// The Client and Server can store Session state to enable reliable messaging to
-// continue across a sequence of Network Connections. This bit is used to control
-// the lifetime of the Session state.
-func (this *ConnectMessage) CleanSession() bool {
-	return ((this.connectFlags >> 1) & 0x1) == 1
-}
-
-// SetCleanSession sets the bit that specifies the handling of the Session state.
-func (this *ConnectMessage) SetCleanSession(v bool) {
-	if v {
-		this.connectFlags |= 0x2 // 00000010
-	} else {
-		this.connectFlags &= 253 // 11111101
-	}
-
-	this.dirty = true
-}
-
-// WillFlag returns the bit that specifies whether a Will Message should be stored
-// on the server. If the Will Flag is set to 1 this indicates that, if the Connect
-// request is accepted, a Will Message MUST be stored on the Server and associated
-// with the Network Connection.
-func (this *ConnectMessage) WillFlag() bool {
-	return ((this.connectFlags >> 2) & 0x1) == 1
-}
-
-// SetWillFlag sets the bit that specifies whether a Will Message should be stored
-// on the server.
-func (this *ConnectMessage) SetWillFlag(v bool) {
-	if v {
-		this.connectFlags |= 0x4 // 00000100
-	} else {
-		this.connectFlags &= 251 // 11111011
-	}
-
-	this.dirty = true
-}
-
-// WillQos returns the two bits that specify the QoS level to be used when publishing
-// the Will Message.
-func (this *ConnectMessage) WillQos() byte {
-	return (this.connectFlags >> 3) & 0x3
-}
-
-// SetWillQos sets the two bits that specify the QoS level to be used when publishing
-// the Will Message.
-func (this *ConnectMessage) SetWillQos(qos byte) error {
-	if qos != QosAtMostOnce && qos != QosAtLeastOnce && qos != QosExactlyOnce {
-		return fmt.Errorf(this.Name() + "/SetWillQos: Invalid QoS level %d", qos)
-	}
-
-	this.connectFlags = (this.connectFlags & 231) | (qos << 3) // 231 = 11100111
-	this.dirty = true
-
-	return nil
-}
-
-// WillRetain returns the bit specifies if the Will Message is to be Retained when it
-// is published.
-func (this *ConnectMessage) WillRetain() bool {
-	return ((this.connectFlags >> 5) & 0x1) == 1
-}
-
-// SetWillRetain sets the bit specifies if the Will Message is to be Retained when it
-// is published.
-func (this *ConnectMessage) SetWillRetain(v bool) {
-	if v {
-		this.connectFlags |= 32 // 00100000
-	} else {
-		this.connectFlags &= 223 // 11011111
-	}
-
-	this.dirty = true
-}
-
-// UsernameFlag returns the bit that specifies whether a user name is present in the
-// payload.
-func (this *ConnectMessage) UsernameFlag() bool {
-	return ((this.connectFlags >> 7) & 0x1) == 1
-}
-
-// SetUsernameFlag sets the bit that specifies whether a user name is present in the
-// payload.
-func (this *ConnectMessage) SetUsernameFlag(v bool) {
-	if v {
-		this.connectFlags |= 128 // 10000000
-	} else {
-		this.connectFlags &= 127 // 01111111
-	}
-
-	this.dirty = true
-}
-
-// PasswordFlag returns the bit that specifies whether a password is present in the
-// payload.
-func (this *ConnectMessage) PasswordFlag() bool {
-	return ((this.connectFlags >> 6) & 0x1) == 1
-}
-
-// SetPasswordFlag sets the bit that specifies whether a password is present in the
-// payload.
-func (this *ConnectMessage) SetPasswordFlag(v bool) {
-	if v {
-		this.connectFlags |= 64 // 01000000
-	} else {
-		this.connectFlags &= 191 // 10111111
-	}
-
-	this.dirty = true
-}
-
-// KeepAlive returns a time interval measured in seconds. Expressed as a 16-bit word,
-// it is the maximum time interval that is permitted to elapse between the point at
-// which the Client finishes transmitting one Control Packet and the point it starts
-// sending the next.
-func (this *ConnectMessage) KeepAlive() uint16 {
-	return this.keepAlive
-}
-
-// SetKeepAlive sets the time interval in which the server should keep the connection
-// alive.
-func (this *ConnectMessage) SetKeepAlive(v uint16) {
-	this.keepAlive = v
-
-	this.dirty = true
-}
-
-// ClientId returns an ID that identifies the Client to the Server. Each Client
-// connecting to the Server has a unique ClientId. The ClientId MUST be used by
-// Clients and by Servers to identify state that they hold relating to this MQTT
-// Session between the Client and the Server
-func (this *ConnectMessage) ClientId() []byte {
-	return this.clientId
-}
-
-// SetClientId sets an ID that identifies the Client to the Server.
-func (this *ConnectMessage) SetClientId(v []byte) error {
-	if len(v) > 0 && !this.validClientId(v) {
-		return ErrIdentifierRejected
-	}
-
-	this.clientId = v
-	this.dirty = true
-
-	return nil
-}
-
-// WillTopic returns the topic in which the Will Message should be published to.
-// If the Will Flag is set to 1, the Will Topic must be in the payload.
-func (this *ConnectMessage) WillTopic() []byte {
-	return this.willTopic
-}
-
-// SetWillTopic sets the topic in which the Will Message should be published to.
-func (this *ConnectMessage) SetWillTopic(v []byte) {
-	this.willTopic = v
-
-	if len(v) > 0 {
-		this.SetWillFlag(true)
-	} else if len(this.willMessage) == 0 {
-		this.SetWillFlag(false)
-	}
-
-	this.dirty = true
-}
-
-// WillMessage returns the Will Message that is to be published to the Will Topic.
-func (this *ConnectMessage) WillMessage() []byte {
-	return this.willMessage
-}
-
-// SetWillMessage sets the Will Message that is to be published to the Will Topic.
-func (this *ConnectMessage) SetWillMessage(v []byte) {
-	this.willMessage = v
-
-	if len(v) > 0 {
-		this.SetWillFlag(true)
-	} else if len(this.willTopic) == 0 {
-		this.SetWillFlag(false)
-	}
-
-	this.dirty = true
-}
-
-// Username returns the username from the payload. If the User Name Flag is set to 1,
-// this must be in the payload. It can be used by the Server for authentication and
-// authorization.
-func (this *ConnectMessage) Username() []byte {
-	return this.username
-}
-
-// SetUsername sets the username for authentication.
-func (this *ConnectMessage) SetUsername(v []byte) {
-	this.username = v
-
-	if len(v) > 0 {
-		this.SetUsernameFlag(true)
-	} else {
-		this.SetUsernameFlag(false)
-	}
-
-	this.dirty = true
-}
-
-// Password returns the password from the payload. If the Password Flag is set to 1,
-// this must be in the payload. It can be used by the Server for authentication and
-// authorization.
-func (this *ConnectMessage) Password() []byte {
-	return this.password
-}
-
-// SetPassword sets the username for authentication.
-func (this *ConnectMessage) SetPassword(v []byte) {
-	this.password = v
-
-	if len(v) > 0 {
-		this.SetPasswordFlag(true)
-	} else {
-		this.SetPasswordFlag(false)
-	}
-
-	this.dirty = true
-}
-
+// Len returns the byte length of the message.
 func (this *ConnectMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
-
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
-		return 0
-	}
-
-	return this.header.msglen() + ml
+	return this.header.len(ml) + ml
 }
 
-// For the CONNECT message, the error returned could be a ConnackReturnCode, so
-// be sure to check that. Otherwise it's a generic error. If a generic error is
-// returned, this Message should be considered invalid.
-//
-// Caller should call ValidConnackError(err) to see if the returned error is
-// a Connack error. If so, caller should send the Client back the corresponding
-// CONNACK message.
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
 func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	total := 0
 
-	n, err := this.header.decode(src[total:])
+	// decode header
+	hl, _, _, err := this.header.decode(src[total:])
+	total += hl
 	if err != nil {
-		return total + n, err
-	}
-	total += n
-
-	if n, err = this.decodeMessage(src[total:]); err != nil {
-		return total + n, err
-	}
-	total += n
-
-	this.dirty = false
-
-	return total, nil
-}
-
-func (this *ConnectMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
+		return total, err
 	}
 
-	if this.Type() != CONNECT {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Invalid message type. Expecting %d, got %d", CONNECT, this.Type())
-	}
-
-	_, ok := SupportedVersions[this.version]
-	if !ok {
-		return 0, ErrInvalidProtocolVersion
-	}
-
-	hl := this.header.msglen()
-	ml := this.msglen()
-
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
-	}
-
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
-		return 0, err
-	}
-
-	total := 0
-
-	n, err := this.header.encode(dst[total:])
+	// read protocol string
+	protoName, n, err := readLPBytes(src[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	n, err = this.encodeMessage(dst[total:])
-	total += n
-	if err != nil {
-		return total, err
+	// check buffer length
+	if len(src) < total+1 {
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+1, len(src))
 	}
 
-	return total, nil
-}
-
-func (this *ConnectMessage) encodeMessage(dst []byte) (int, error) {
-	total := 0
-
-	n, err := writeLPBytes(dst[total:], []byte(SupportedVersions[this.version]))
-	total += n
-	if err != nil {
-		return total, err
-	}
-
-	dst[total] = this.version
-	total += 1
-
-	dst[total] = this.connectFlags
-	total += 1
-
-	binary.BigEndian.PutUint16(dst[total:], this.keepAlive)
-	total += 2
-
-	n, err = writeLPBytes(dst[total:], this.clientId)
-	total += n
-	if err != nil {
-		return total, err
-	}
-
-	if this.WillFlag() {
-		n, err = writeLPBytes(dst[total:], this.willTopic)
-		total += n
-		if err != nil {
-			return total, err
-		}
-
-		n, err = writeLPBytes(dst[total:], this.willMessage)
-		total += n
-		if err != nil {
-			return total, err
-		}
-	}
-
-	// According to the 3.1 spec, it's possible that the usernameFlag is set,
-	// but the username string is missing.
-	if this.UsernameFlag() && len(this.username) > 0 {
-		n, err = writeLPBytes(dst[total:], this.username)
-		total += n
-		if err != nil {
-			return total, err
-		}
-	}
-
-	// According to the 3.1 spec, it's possible that the passwordFlag is set,
-	// but the password string is missing.
-	if this.PasswordFlag() && len(this.password) > 0 {
-		n, err = writeLPBytes(dst[total:], this.password)
-		total += n
-		if err != nil {
-			return total, err
-		}
-	}
-
-	return total, nil
-}
-
-func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
-	var err error
-	n, total := 0, 0
-
-	this.protoName, n, err = readLPBytes(src[total:])
-	total += n
-	if err != nil {
-		return total, err
-	}
-
-	this.version = src[total]
+	// read version
+	this.Version = src[total]
 	total++
 
-	if verstr, ok := SupportedVersions[this.version]; !ok {
-		return total, ErrInvalidProtocolVersion
-	} else if verstr != string(this.protoName) {
-		return total, ErrInvalidProtocolVersion
+	// check protocol string and version
+	if this.Version != Version31 && this.Version != Version311 {
+		return total, fmt.Errorf("%s/Decode: Protocol violation: Invalid protocol version (%d).", this.Type, this.Version)
 	}
 
-	this.connectFlags = src[total]
+	// check protocol version string
+	if (this.Version == Version31 && !bytes.Equal(protoName, version31Name)) || (this.Version == Version311 && !bytes.Equal(protoName, version311Name)) {
+		return total, fmt.Errorf("%s/Decode: Protocol violation: Invalid protocol version description (%s).", this.Type, protoName)
+	}
+
+	// check buffer length
+	if len(src) < total+1 {
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+1, len(src))
+	}
+
+	// read connect flags
+	connectFlags := src[total]
 	total++
 
-	if this.connectFlags&0x1 != 0 {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Connect Flags reserved bit 0 is not 0")
+	// read existence flags
+	usernameFlag := ((connectFlags >> 7) & 0x1) == 1
+	passwordFlag := ((connectFlags >> 6) & 0x1) == 1
+	willFlag := ((connectFlags >> 2) & 0x1) == 1
+
+	// read other flags
+	this.WillRetain = ((connectFlags >> 5) & 0x1) == 1
+	this.WillQoS = (connectFlags >> 3) & 0x3
+	this.CleanSession = ((connectFlags >> 1) & 0x1) == 1
+
+	// check reserved bit
+	if connectFlags&0x1 != 0 {
+		return total, fmt.Errorf("%s/Decode: Reserved bit 0 is not 0", this.Type)
 	}
 
-	if this.WillQos() > QosExactlyOnce {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Invalid QoS level (%d) for %s message", this.WillQos(), this.Name())
+	// check will qos
+	if !validQoS(this.WillQoS) {
+		return total, fmt.Errorf("%s/Decode: Invalid QoS level (%d) for will message.", this.Type, this.WillQoS)
 	}
 
-	if !this.WillFlag() && (this.WillRetain() || this.WillQos() != QosAtMostOnce) {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", this.WillFlag(), this.WillQos(), this.WillRetain())
+	// check will flags
+	if !willFlag && (this.WillRetain || this.WillQoS != 0) {
+		return total, fmt.Errorf("%s/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero.", this.Type, willFlag, this.WillQoS, this.WillRetain)
 	}
 
-	if this.UsernameFlag() && !this.PasswordFlag() {
-		return total, fmt.Errorf(this.Name() + "/decodeMessage: Username flag is set but Password flag is not set")
+	// check auth flags
+	if !usernameFlag && passwordFlag {
+		return total, fmt.Errorf("%s/Decode: Password flag is set but Username flag is not set.", this.Type)
 	}
 
+	// check buffer length
 	if len(src[total:]) < 2 {
-		return 0, fmt.Errorf(this.Name() + "/decodeMessage: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
+		return 0, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, 2, len(src[total:]))
 	}
 
-	this.keepAlive = binary.BigEndian.Uint16(src[total:])
+	// check buffer length
+	if len(src) < total+2 {
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+	}
+
+	// read keep alive
+	this.KeepAlive = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	this.clientId, n, err = readLPBytes(src[total:])
+	// read client id
+	this.ClientId, n, err = readLPBytes(src[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	// If the Client supplies a zero-byte ClientId, the Client MUST also set CleanSession to 1
-	if len(this.clientId) == 0 && !this.CleanSession() {
-		return total, ErrIdentifierRejected
+	// if the client supplies a zero-byte ClientId, the Client MUST also set CleanSession to 1
+	if len(this.ClientId) == 0 && !this.CleanSession {
+		return total, fmt.Errorf("%s/Decode: Protocol violation: Clean session must be 1 if client id is zero length.", this.Type)
 	}
 
-	// The ClientId must contain only characters 0-9, a-z, and A-Z
-	// We also support ClientId longer than 23 encoded bytes
-	// We do not support ClientId outside of the above characters
-	if len(this.clientId) > 0 && !this.validClientId(this.clientId) {
-		return total, ErrIdentifierRejected
-	}
-
-	if this.WillFlag() {
-		this.willTopic, n, err = readLPBytes(src[total:])
+	// read will topic and payload
+	if willFlag {
+		this.WillTopic, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		this.willMessage, n, err = readLPBytes(src[total:])
+		this.WillPayload, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 	}
 
-	// According to the 3.1 spec, it's possible that the passwordFlag is set,
-	// but the password string is missing.
-	if this.UsernameFlag() && len(src[total:]) > 0 {
-		this.username, n, err = readLPBytes(src[total:])
+	// read username
+	if usernameFlag {
+		this.Username, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 	}
 
-	// According to the 3.1 spec, it's possible that the passwordFlag is set,
-	// but the password string is missing.
-	if this.PasswordFlag() && len(src[total:]) > 0 {
-		this.password, n, err = readLPBytes(src[total:])
+	// read password
+	if passwordFlag {
+		this.Password, n, err = readLPBytes(src[total:])
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
+
+	return total, nil
+}
+
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
+func (this *ConnectMessage) Encode(dst []byte) (int, error) {
+	total := 0
+
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+	}
+
+	// check version
+	if this.Version != 0x3 && this.Version != 0x4 {
+		return 0, fmt.Errorf("%s/Encode: Protocol violation: Invalid protocol version (%d).", this.Type, this.Version)
+	}
+
+	// encode header
+	n, err := this.header.encode(dst[total:], 0, this.msglen())
+	total += n
+	if err != nil {
+		return total, err
+	}
+
+	if this.Version == 0x3 {
+		// write 0x3 protocol name
+		n, err := writeLPBytes(dst[total:], version31Name)
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
+
+	if this.Version == 0x4 {
+		// write 0x4 protocol name
+		n, err := writeLPBytes(dst[total:], version311Name)
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
+
+	// write version value
+	dst[total] = this.Version
+	total += 1
+
+	var connectFlags byte
+
+	// set username flag
+	if len(this.Username) > 0 {
+		connectFlags |= 128 // 10000000
+	} else {
+		connectFlags &= 127 // 01111111
+	}
+
+	// set password flag
+	if len(this.Password) > 0 {
+		connectFlags |= 64 // 01000000
+	} else {
+		connectFlags &= 191 // 10111111
+	}
+
+	// set will flag
+	if len(this.WillTopic) > 0 {
+		connectFlags |= 0x4 // 00000100
+
+		if !validQoS(this.WillQoS) {
+			return total, fmt.Errorf("%s/Encode: Invalid Will QoS level %d.", this.Type, this.WillQoS)
+		}
+
+		// set will qos flag
+		connectFlags = (connectFlags & 231) | (this.WillQoS << 3) // 231 = 11100111
+
+		// set will retain flag
+		if this.WillRetain {
+			connectFlags |= 32 // 00100000
+		} else {
+			connectFlags &= 223 // 11011111
+		}
+
+	} else {
+		connectFlags &= 251 // 11111011
+	}
+
+	// set clean session flag
+	if this.CleanSession {
+		connectFlags |= 0x2 // 00000010
+	} else {
+		connectFlags &= 253 // 11111101
+	}
+
+	// write connect flags
+	dst[total] = connectFlags
+	total += 1
+
+	// write keep alive
+	binary.BigEndian.PutUint16(dst[total:], this.KeepAlive)
+	total += 2
+
+	// write client id
+	n, err = writeLPBytes(dst[total:], this.ClientId)
+	total += n
+	if err != nil {
+		return total, err
+	}
+
+	// write will topic and payload
+	if len(this.WillTopic) > 0 {
+		n, err = writeLPBytes(dst[total:], this.WillTopic)
+		total += n
+		if err != nil {
+			return total, err
+		}
+
+		n, err = writeLPBytes(dst[total:], this.WillPayload)
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
+
+	// write username
+	if len(this.Username) > 0 {
+		n, err = writeLPBytes(dst[total:], this.Username)
+		total += n
+		if err != nil {
+			return total, err
+		}
+	}
+
+	// write password
+	if len(this.Password) > 0 {
+		n, err = writeLPBytes(dst[total:], this.Password)
 		total += n
 		if err != nil {
 			return total, err
@@ -578,8 +384,12 @@ func (this *ConnectMessage) decodeMessage(src []byte) (int, error) {
 func (this *ConnectMessage) msglen() int {
 	total := 0
 
-	verstr, ok := SupportedVersions[this.version]
-	if !ok {
+	vl := 0
+	if this.Version == Version31 {
+		vl = 6
+	} else if this.Version == Version311 {
+		vl = 4
+	} else {
 		return total
 	}
 
@@ -588,43 +398,25 @@ func (this *ConnectMessage) msglen() int {
 	// 1 byte protocol version
 	// 1 byte connect flags
 	// 2 bytes keep alive timer
-	total += 2 + len(verstr) + 1 + 1 + 2
+	total += 2 + vl + 1 + 1 + 2
 
-	// Add the clientID length, 2 is the length prefix
-	total += 2 + len(this.clientId)
+	// add the clientID length
+	total += 2 + len(this.ClientId)
 
-	// Add the will topic and will message length, and the length prefixes
-	if this.WillFlag() {
-		total += 2 + len(this.willTopic) + 2 + len(this.willMessage)
+	// add the will topic and will message length
+	if len(this.WillTopic) > 0 {
+		total += 2 + len(this.WillTopic) + 2 + len(this.WillPayload)
 	}
 
-	// Add the username length
-	// According to the 3.1 spec, it's possible that the usernameFlag is set,
-	// but the user name string is missing.
-	if this.UsernameFlag() && len(this.username) > 0 {
-		total += 2 + len(this.username)
+	// add the username length
+	if len(this.Username) > 0 {
+		total += 2 + len(this.Username)
 	}
 
-	// Add the password length
-	// According to the 3.1 spec, it's possible that the passwordFlag is set,
-	// but the password string is missing.
-	if this.PasswordFlag() && len(this.password) > 0 {
-		total += 2 + len(this.password)
+	// add the password length
+	if len(this.Password) > 0 {
+		total += 2 + len(this.Password)
 	}
 
 	return total
-}
-
-// validClientId checks the client ID, which is a slice of bytes, to see if it's valid.
-// Client ID is valid if it meets the requirement from the MQTT spec:
-// 		The Server MUST allow ClientIds which are between 1 and 23 UTF-8 encoded bytes in length,
-//		and that contain only the characters
-//
-//		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-func (this *ConnectMessage) validClientId(cid []byte) bool {
-	if this.Version() == 0x3 {
-		return true
-	}
-
-	return clientIdRegexp.Match(cid)
 }

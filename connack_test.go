@@ -20,19 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConnackMessageFields(t *testing.T) {
-	msg := NewConnackMessage()
-
-	msg.SetSessionPresent(true)
-	require.True(t, msg.SessionPresent(), "Error setting session present flag.")
-
-	msg.SetSessionPresent(false)
-	require.False(t, msg.SessionPresent(), "Error setting session present flag.")
-
-	msg.SetReturnCode(ConnectionAccepted)
-	require.Equal(t, ConnectionAccepted, msg.ReturnCode(), "Error setting return code.")
-}
-
 func TestConnackMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
@@ -47,15 +34,15 @@ func TestConnackMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.False(t, msg.SessionPresent(), "Error decoding session present flag.")
-	require.Equal(t, ConnectionAccepted, msg.ReturnCode(), "Error decoding return code.")
+	require.False(t, msg.SessionPresent, "Error decoding session present flag.")
+	require.Equal(t, ConnectionAccepted, msg.ReturnCode, "Error decoding return code.")
 }
 
 // testing wrong message length
 func TestConnackMessageDecode2(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
-		3,
+		3, // <- wrong size
 		0, // session not present
 		0, // connection accepted
 	}
@@ -85,7 +72,7 @@ func TestConnackMessageDecode4(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
-		64, // <- wrong size
+		64, // <- wrong value
 		0,  // connection accepted
 	}
 
@@ -119,8 +106,8 @@ func TestConnackMessageEncode(t *testing.T) {
 	}
 
 	msg := NewConnackMessage()
-	msg.SetReturnCode(ConnectionAccepted)
-	msg.SetSessionPresent(true)
+	msg.ReturnCode = ConnectionAccepted
+	msg.SessionPresent = true
 
 	dst := make([]byte, 10)
 	n, err := msg.Encode(dst)
@@ -130,9 +117,7 @@ func TestConnackMessageEncode(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n], "Error encoding connack message.")
 }
 
-// test to ensure encoding and decoding are the same
-// decode, encode, and decode again
-func TestConnackDecodeEncodeEquiv(t *testing.T) {
+func TestConnackEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -160,11 +145,17 @@ func TestConnackDecodeEncodeEquiv(t *testing.T) {
 }
 
 func BenchmarkConnackEncode(b *testing.B) {
+	msg := NewConnackMessage()
+	msg.ReturnCode = ConnectionAccepted
+	msg.SessionPresent = true
+
+	buf := make([]byte, msg.Len())
+
 	for i := 0; i < b.N; i++ {
-		msg := NewConnackMessage()
-		msg.SetReturnCode(ConnectionAccepted)
-		msg.SetSessionPresent(true)
-		msg.Encode(make([]byte, msg.Len()))
+		_, err := msg.Encode(buf)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -176,8 +167,12 @@ func BenchmarkConnackDecode(b *testing.B) {
 		0, // connection accepted
 	}
 
+	msg := NewConnackMessage()
+
 	for i := 0; i < b.N; i++ {
-		msg := NewConnackMessage()
-		msg.Decode(msgBytes)
+		_, err := msg.Decode(msgBytes)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

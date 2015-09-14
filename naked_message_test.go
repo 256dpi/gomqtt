@@ -20,55 +20,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPubackMessageFields(t *testing.T) {
-	msg := NewPubackMessage()
+var nmType MessageType = 1
 
-	msg.SetPacketId(100)
-
-	require.Equal(t, 100, int(msg.PacketId()))
-}
-
-func TestPubackMessageDecode(t *testing.T) {
+func TestNakedMessageDecode(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBACK << 4),
-		2,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		byte(nmType << 4),
+		0,
 	}
 
-	msg := NewPubackMessage()
+	msg := &nakedMessage{}
+	msg.Type = nmType
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, PUBACK, msg.Type(), "Error decoding message.")
-	require.Equal(t, 7, int(msg.PacketId()), "Error decoding message.")
+	require.Equal(t, nmType, msg.Type, "Error decoding message.")
 }
 
-// test insufficient bytes
-func TestPubackMessageDecode2(t *testing.T) {
+func TestNakedMessageEncode(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBACK << 4),
-		2,
-		7, // packet ID LSB (7)
+		byte(nmType << 4),
+		0,
 	}
 
-	msg := NewPubackMessage()
-	_, err := msg.Decode(msgBytes)
-
-	require.Error(t, err)
-}
-
-func TestPubackMessageEncode(t *testing.T) {
-	msgBytes := []byte{
-		byte(PUBACK << 4),
-		2,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
-	}
-
-	msg := NewPubackMessage()
-	msg.SetPacketId(7)
+	msg := &nakedMessage{}
+	msg.Type = nmType
 
 	dst := make([]byte, 10)
 	n, err := msg.Encode(dst)
@@ -78,17 +54,14 @@ func TestPubackMessageEncode(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
 }
 
-// test to ensure encoding and decoding are the same
-// decode, encode, and decode again
-func TestPubackDecodeEncodeEquiv(t *testing.T) {
+func TestNakedMessageEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBACK << 4),
-		2,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		byte(nmType << 4),
+		0,
 	}
 
-	msg := NewPubackMessage()
+	msg := &nakedMessage{}
+	msg.Type = nmType
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
@@ -107,25 +80,33 @@ func TestPubackDecodeEncodeEquiv(t *testing.T) {
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }
 
-func BenchmarkPubackEncode(b *testing.B) {
+func BenchmarkNakedMessageEncode(b *testing.B) {
+	msg := &nakedMessage{}
+	msg.Type = nmType
+
+	buf := make([]byte, msg.Len())
+
 	for i := 0; i < b.N; i++ {
-		msg := NewPubackMessage()
-		msg.SetPacketId(7)
-		msg.Encode(make([]byte, msg.Len()))
+		_, err := msg.Encode(buf)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
-func BenchmarkPubackDecode(b *testing.B) {
+func BenchmarkNakedMessageDecode(b *testing.B) {
 	msgBytes := []byte{
-		byte(PUBACK << 4),
-		2,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		byte(nmType << 4),
+		0,
 	}
+
+	msg := &nakedMessage{}
+	msg.Type = nmType
 
 	for i := 0; i < b.N; i++ {
-		msg := NewPubackMessage()
-		msg.Decode(msgBytes)
+		_, err := msg.Decode(msgBytes)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
-

@@ -15,78 +15,9 @@
 package message
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"testing"
 )
-
-var (
-	lpstrings []string = []string{
-		"this is a test",
-		"hope it succeeds",
-		"but just in case",
-		"send me your millions",
-		"",
-	}
-
-	lpstringBytes []byte = []byte{
-		0x0, 0xe, 't', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 't', 'e', 's', 't',
-		0x0, 0x10, 'h', 'o', 'p', 'e', ' ', 'i', 't', ' ', 's', 'u', 'c', 'c', 'e', 'e', 'd', 's',
-		0x0, 0x10, 'b', 'u', 't', ' ', 'j', 'u', 's', 't', ' ', 'i', 'n', ' ', 'c', 'a', 's', 'e',
-		0x0, 0x15, 's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'y', 'o', 'u', 'r', ' ', 'm', 'i', 'l', 'l', 'i', 'o', 'n', 's',
-		0x0, 0x0,
-	}
-)
-
-func TestReadLPBytes(t *testing.T) {
-	total := 0
-
-	for _, str := range lpstrings {
-		b, n, err := readLPBytes(lpstringBytes[total:])
-
-		require.NoError(t, err)
-		require.Equal(t, str, string(b))
-		require.Equal(t, len(str)+2, n)
-
-		total += n
-	}
-}
-
-func TestWriteLPBytes(t *testing.T) {
-	total := 0
-	buf := make([]byte, 1000)
-
-	for _, str := range lpstrings {
-		n, err := writeLPBytes(buf[total:], []byte(str))
-
-		require.NoError(t, err)
-		require.Equal(t, 2+len(str), n)
-
-		total += n
-	}
-
-	require.Equal(t, lpstringBytes, buf[:total])
-}
-
-func TestMessageTypes(t *testing.T) {
-	if CONNECT != 1 ||
-		CONNACK != 2 ||
-		PUBLISH != 3 ||
-		PUBACK != 4 ||
-		PUBREC != 5 ||
-		PUBREL != 6 ||
-		PUBCOMP != 7 ||
-		SUBSCRIBE != 8 ||
-		SUBACK != 9 ||
-		UNSUBSCRIBE != 10 ||
-		UNSUBACK != 11 ||
-		PINGREQ != 12 ||
-		PINGRESP != 13 ||
-		DISCONNECT != 14 {
-
-		t.Errorf("Message types have invalid code")
-	}
-}
 
 func TestQosCodes(t *testing.T) {
 	if QosAtMostOnce != 0 || QosAtLeastOnce != 1 || QosExactlyOnce != 2 {
@@ -96,13 +27,9 @@ func TestQosCodes(t *testing.T) {
 
 func TestConnackReturnCodes(t *testing.T) {
 	require.Equal(t, ErrInvalidProtocolVersion.Error(), ConnackCode(1).Error(), "Incorrect ConnackCode error value.")
-
 	require.Equal(t, ErrIdentifierRejected.Error(), ConnackCode(2).Error(), "Incorrect ConnackCode error value.")
-
 	require.Equal(t, ErrServerUnavailable.Error(), ConnackCode(3).Error(), "Incorrect ConnackCode error value.")
-
 	require.Equal(t, ErrBadUsernameOrPassword.Error(), ConnackCode(4).Error(), "Incorrect ConnackCode error value.")
-
 	require.Equal(t, ErrNotAuthorized.Error(), ConnackCode(5).Error(), "Incorrect ConnackCode error value.")
 }
 
@@ -132,20 +59,51 @@ func TestFixedHeaderFlags(t *testing.T) {
 	}
 
 	for m, d := range details {
-		if m.Name() != d.name {
-			t.Errorf("Name mismatch. Expecting %s, got %s.", d.name, m.Name())
+		if m.String() != d.name {
+			t.Errorf("Name mismatch. Expecting %s, got %s.", d.name, m)
 		}
 
-		if m.DefaultFlags() != d.flags {
-			t.Errorf("Flag mismatch for %s. Expecting %d, got %d.", m.Name(), d.flags, m.DefaultFlags())
+		if m.defaultFlags() != d.flags {
+			t.Errorf("Flag mismatch for %s. Expecting %d, got %d.", m, d.flags, m.defaultFlags())
 		}
 	}
 }
 
-func TestSupportedVersions(t *testing.T) {
-	for k, v := range SupportedVersions {
-		if k == 0x03 && v != "MQIsdp" {
-			t.Errorf("Protocol version and name mismatch. Expect %s, got %s.", "MQIsdp", v)
-		}
+func TestReadmeExample(t *testing.T) {
+	// Create new message.
+	msg1 := NewConnectMessage()
+	msg1.Username = []byte("gomqtt")
+	msg1.Password = []byte("amazing!")
+
+	// Allocate buffer.
+	buf := make([]byte, msg1.Len())
+
+	// Encode the message.
+	if _, err := msg1.Encode(buf); err != nil {
+		// there was an error while encoding
+		panic(err)
+	}
+
+	// Detect message.
+	l, mt := DetectMessage(buf)
+
+	// Check length
+	if l == 0 {
+		// buffer not complete yet
+		return
+	}
+
+	// Create message.
+	msg2, err := mt.New()
+	if err != nil {
+		// message type is invalid
+		panic(err)
+	}
+
+	// Decode message.
+	_, err = msg2.Decode(buf)
+	if err != nil {
+		// there was an error while decoding
+		panic(err)
 	}
 }

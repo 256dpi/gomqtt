@@ -26,143 +26,117 @@ import "fmt"
 type ConnackMessage struct {
 	header
 
-	sessionPresent bool
-	returnCode     ConnackCode
+	// The Session Present flag enables a Client to establish whether the Client and
+	// Server have a consistent view about whether there is already stored Session state.
+	SessionPresent bool
+
+	// If a well formed CONNECT Packet is received by the Server, but the Server is unable
+	// to process it for some reason, then the Server SHOULD attempt to send a CONNACK packet
+	// containing the appropriate non-zero Connect return code.
+	ReturnCode ConnackCode
 }
 
 var _ Message = (*ConnackMessage)(nil)
 
-// NewConnackMessage creates a new CONNACK message
+// NewConnackMessage creates a new CONNACK message.
 func NewConnackMessage() *ConnackMessage {
 	msg := &ConnackMessage{}
-	msg.SetType(CONNACK)
-
+	msg.Type = CONNACK
 	return msg
 }
 
-// String returns a string representation of the CONNACK message
+// String returns a string representation of the message.
 func (this ConnackMessage) String() string {
-	return fmt.Sprintf("%s, Session Present=%t, Return code=%q\n", this.header, this.sessionPresent, this.returnCode)
+	return fmt.Sprintf("%s: SessionPresent=%t ReturnCode=%q", this.Type, this.SessionPresent, this.ReturnCode)
 }
 
-// SessionPresent returns the session present flag value
-func (this *ConnackMessage) SessionPresent() bool {
-	return this.sessionPresent
-}
-
-// SetSessionPresent sets the value of the session present flag
-func (this *ConnackMessage) SetSessionPresent(v bool) {
-	if v {
-		this.sessionPresent = true
-	} else {
-		this.sessionPresent = false
-	}
-
-	this.dirty = true
-}
-
-// ReturnCode returns the return code received for the CONNECT message. The return
-// type is an error
-func (this *ConnackMessage) ReturnCode() ConnackCode {
-	return this.returnCode
-}
-
-func (this *ConnackMessage) SetReturnCode(ret ConnackCode) {
-	this.returnCode = ret
-	this.dirty = true
-}
-
+// Len returns the byte length of the message.
 func (this *ConnackMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
-	ml := this.msglen()
-
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
-		return 0
-	}
-
-	return this.header.msglen() + ml
+	return this.header.len(2) + 2
 }
 
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
 func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
-	n, err := this.header.decode(src)
+	// decode header
+	hl, _, rl, err := this.header.decode(src)
+	total += hl
+	if err != nil {
+		return total, err
+	}
+
+	// check remaining length
+	if rl != 2 {
+		return total, fmt.Errorf("%s/Decode: Expected remaining length to be 2.", this.Type)
+	}
+
+	// check buffer length
+	if len(src) < total+2 {
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+	}
+
+	// read connack flags
+	connackFlags := src[total]
+	this.SessionPresent = connackFlags&0x1 == 1
+	total++
+
+	// check flags
+	if connackFlags&254 != 0 {
+		return 0, fmt.Errorf("%s/Decode: Bits 7-1 in acknowledge flags byte (1) are not 0.", this.Type)
+	}
+
+	// read return code
+	this.ReturnCode = ConnackCode(src[total])
+	total++
+
+	// check return code
+	if !this.ReturnCode.Valid() {
+		return 0, fmt.Errorf("%s/Decode: Invalid return code (%d)", this.Type, this.ReturnCode)
+	}
+
+	return total, nil
+}
+
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
+func (this *ConnackMessage) Encode(dst []byte) (int, error) {
+	total := 0
+
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+	}
+
+	// encode header
+	n, err := this.header.encode(dst[total:], 0, 2)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	b := src[total]
-
-	if b&254 != 0 {
-		return 0, fmt.Errorf(this.Name() + "/Decode: Bits 7-1 in Connack Acknowledge Flags byte (1) are not 0")
-	}
-
-	this.sessionPresent = b&0x1 == 1
-	total++
-
-	b = src[total]
-
-	// Read return code
-	if b > 5 {
-		return 0, fmt.Errorf(this.Name() + "/Decode: Invalid CONNACK return code (%d)", b)
-	}
-
-	this.returnCode = ConnackCode(b)
-	total++
-
-	this.dirty = false
-
-	return total, nil
-}
-
-func (this *ConnackMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
-	// CONNACK remaining length fixed at 2 bytes
-	hl := this.header.msglen()
-	ml := this.msglen()
-
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
-	}
-
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
-		return 0, err
-	}
-
-	total := 0
-
-	n, err := this.header.encode(dst[total:])
-	total += n
-	if err != nil {
-		return 0, err
-	}
-
-	if this.sessionPresent {
-		dst[total] = 1
+	// set session present flag
+	if this.SessionPresent {
+		dst[total] = 1 // 00000001
+	} else {
+		dst[total] = 0 // 00000000
 	}
 	total++
 
-	if this.returnCode > 5 {
-		return total, fmt.Errorf(this.Name() + "/Encode: Invalid CONNACK return code (%d)", this.returnCode)
+	// check return code
+	if !this.ReturnCode.Valid() {
+		return total, fmt.Errorf("%s/Encode: Invalid return code (%d).", this.Type, this.ReturnCode)
 	}
 
-	dst[total] = this.returnCode.Value()
+	// set return code
+	dst[total] = byte(this.ReturnCode)
 	total++
 
 	return total, nil
-}
-
-func (this *ConnackMessage) msglen() int {
-	return 2
 }

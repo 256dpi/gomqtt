@@ -15,8 +15,8 @@
 package message
 
 import (
+	"encoding/binary"
 	"fmt"
-	"sync/atomic"
 )
 
 // A PUBLISH Control Packet is sent from a Client to a Server or from Server to a Client
@@ -24,8 +24,28 @@ import (
 type PublishMessage struct {
 	header
 
-	topic   []byte
-	payload []byte
+	// The Topic of the message.
+	Topic []byte
+
+	// The Payload of the message.
+	Payload []byte
+
+	// The QoS indicates the level of assurance for delivery of a message.
+	QoS byte
+
+	// If the RETAIN flag is set to true, in a PUBLISH Packet sent by a Client to a
+	// Server, the Server MUST store the Application Message and its QoS, so that it can be
+	// delivered to future subscribers whose subscriptions match its topic name.
+	Retain bool
+
+	// If the DUP flag is set to false, it indicates that this is the first occasion that the
+	// Client or Server has attempted to send this MQTT PUBLISH Packet. If the DUP flag is
+	// set to true, it indicates that this might be re-delivery of an earlier attempt to send
+	// the Packet.
+	Dup bool
+
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*PublishMessage)(nil)
@@ -33,213 +53,160 @@ var _ Message = (*PublishMessage)(nil)
 // NewPublishMessage creates a new PUBLISH message.
 func NewPublishMessage() *PublishMessage {
 	msg := &PublishMessage{}
-	msg.SetType(PUBLISH)
-
+	msg.Type = PUBLISH
 	return msg
 }
 
+// String returns a string representation of the message.
 func (this PublishMessage) String() string {
-	return fmt.Sprintf("%s, Topic=%q, Packet ID=%d, QoS=%d, Retained=%t, Dup=%t, Payload=%v",
-		this.header, this.topic, this.packetId, this.QoS(), this.Retain(), this.Dup(), this.payload)
+	return fmt.Sprintf("%s: Topic=%q PacketId=%d QoS=%d Retained=%t Dup=%t Payload=%v",
+		this.Type, this.Topic, this.PacketId, this.QoS, this.Retain, this.Dup, this.Payload)
 }
 
-// Dup returns the value specifying the duplicate delivery of a PUBLISH Control Packet.
-// If the DUP flag is set to 0, it indicates that this is the first occasion that the
-// Client or Server has attempted to send this MQTT PUBLISH Packet. If the DUP flag is
-// set to 1, it indicates that this might be re-delivery of an earlier attempt to send
-// the Packet.
-func (this *PublishMessage) Dup() bool {
-	return ((this.Flags() >> 3) & 0x1) == 1
-}
-
-// SetDup sets the value specifying the duplicate delivery of a PUBLISH Control Packet.
-func (this *PublishMessage) SetDup(v bool) {
-	if v {
-		this.mtypeflags[0] |= 0x8 // 00001000
-	} else {
-		this.mtypeflags[0] &= 247 // 11110111
-	}
-}
-
-// Retain returns the value of the RETAIN flag. This flag is only used on the PUBLISH
-// Packet. If the RETAIN flag is set to 1, in a PUBLISH Packet sent by a Client to a
-// Server, the Server MUST store the Application Message and its QoS, so that it can be
-// delivered to future subscribers whose subscriptions match its topic name.
-func (this *PublishMessage) Retain() bool {
-	return (this.Flags() & 0x1) == 1
-}
-
-// SetRetain sets the value of the RETAIN flag.
-func (this *PublishMessage) SetRetain(v bool) {
-	if v {
-		this.mtypeflags[0] |= 0x1 // 00000001
-	} else {
-		this.mtypeflags[0] &= 254 // 11111110
-	}
-}
-
-// QoS returns the field that indicates the level of assurance for delivery of an
-// Application Message. The values are QosAtMostOnce, QosAtLeastOnce and QosExactlyOnce.
-func (this *PublishMessage) QoS() byte {
-	return (this.Flags() >> 1) & 0x3
-}
-
-// SetQoS sets the field that indicates the level of assurance for delivery of an
-// Application Message. The values are QosAtMostOnce, QosAtLeastOnce and QosExactlyOnce.
-// An error is returned if the value is not one of these.
-func (this *PublishMessage) SetQoS(v byte) error {
-	if v != 0x0 && v != 0x1 && v != 0x2 {
-		return fmt.Errorf(this.Name() + "/SetQoS: Invalid QoS %d.", v)
-	}
-
-	this.mtypeflags[0] = (this.mtypeflags[0] & 249) | (v << 1) // 249 = 11111001
-
-	return nil
-}
-
-// Topic returns the the topic name that identifies the information channel to which
-// payload data is published.
-func (this *PublishMessage) Topic() []byte {
-	return this.topic
-}
-
-// SetTopic sets the the topic name that identifies the information channel to which
-// payload data is published. An error is returned if ValidTopic() is falbase.
-func (this *PublishMessage) SetTopic(v []byte) error {
-	if !ValidTopic(v) {
-		return fmt.Errorf(this.Name() + "/SetTopic: Invalid topic name (%s). Must not be empty or contain wildcard characters", string(v))
-	}
-
-	this.topic = v
-	this.dirty = true
-
-	return nil
-}
-
-// Payload returns the application message that's part of the PUBLISH message.
-func (this *PublishMessage) Payload() []byte {
-	return this.payload
-}
-
-// SetPayload sets the application message that's part of the PUBLISH message.
-func (this *PublishMessage) SetPayload(v []byte) {
-	this.payload = v
-	this.dirty = true
-}
-
+// Len returns the byte length of the message.
 func (this *PublishMessage) Len() int {
-	if !this.dirty {
-		return len(this.dbuf)
-	}
-
 	ml := this.msglen()
-
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
-		return 0
-	}
-
-	return this.header.msglen() + ml
+	return this.header.len(ml) + ml
 }
 
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
 func (this *PublishMessage) Decode(src []byte) (int, error) {
 	total := 0
 
-	hn, err := this.header.decode(src[total:])
-	total += hn
+	// decode header
+	hl, flags, rl, err := this.header.decode(src[total:])
+	total += hl
 	if err != nil {
 		return total, err
+	}
+
+	// check buffer length
+	if len(src) < total+2 {
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+	}
+
+	// read flags
+	this.Dup = ((flags >> 3) & 0x1) == 1
+	this.Retain = (flags & 0x1) == 1
+	this.QoS = (flags >> 1) & 0x3
+
+	// check qos
+	if !validQoS(this.QoS) {
+		return total, fmt.Errorf("%s/Decode: Invalid QoS (%d).", this.Type, this.QoS)
 	}
 
 	n := 0
 
-	this.topic, n, err = readLPBytes(src[total:])
+	// read topic
+	this.Topic, n, err = readLPBytes(src[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	if !ValidTopic(this.topic) {
-		return total, fmt.Errorf(this.Name() + "/Decode: Invalid topic name (%s). Must not be empty or contain wildcard characters", string(this.topic))
-	}
+	if this.QoS != 0 {
+		// check buffer length
+		if len(src) < total+2 {
+			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+		}
 
-	// The packet identifier field is only present in the PUBLISH packets where the
-	// QoS level is 1 or 2
-	if this.QoS() != 0 {
-		this.packetId = src[total : total+2]
+		// read packet id
+		this.PacketId = binary.BigEndian.Uint16(src[total:])
 		total += 2
 	}
 
-	l := int(this.remlen) - (total - hn)
-	this.payload = src[total : total+l]
-	total += len(this.payload)
+	// calculate payload length
+	l := int(rl) - (total - hl)
 
-	this.dirty = false
+	if l > 0 {
+		// check buffer length
+		if len(src) < total+l {
+			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+l, len(src))
+		}
+
+		// read payload
+		this.Payload = src[total : total+l]
+		total += len(this.Payload)
+	}
 
 	return total, nil
 }
 
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
 func (this *PublishMessage) Encode(dst []byte) (int, error) {
-	if !this.dirty {
-		if len(dst) < len(this.dbuf) {
-			return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", len(this.dbuf), len(dst))
-		}
-
-		return copy(dst, this.dbuf), nil
-	}
-
-	if len(this.topic) == 0 {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Topic name is empty.")
-	}
-
-	if len(this.payload) == 0 {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Payload is empty.")
-	}
-
-	ml := this.msglen()
-
-	if err := this.SetRemainingLength(int32(ml)); err != nil {
-		return 0, err
-	}
-
-	hl := this.header.msglen()
-
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf(this.Name() + "/Encode: Insufficient buffer size. Expecting %d, got %d.", hl+ml, len(dst))
-	}
-
 	total := 0
 
-	n, err := this.header.encode(dst[total:])
+	// check buffer length
+	l := this.Len()
+	if len(dst) < l {
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+	}
+
+	// check topic length
+	if len(this.Topic) == 0 {
+		return total, fmt.Errorf("%s/Encode: Topic name is empty.", this.Type)
+	}
+
+	flags := byte(0)
+
+	// set dup flag
+	if this.Dup {
+		flags |= 0x8 // 00001000
+	} else {
+		flags &= 247 // 11110111
+	}
+
+	// set retain flag
+	if this.Retain {
+		flags |= 0x1 // 00000001
+	} else {
+		flags &= 254 // 11111110
+	}
+
+	// check qos
+	if !validQoS(this.QoS) {
+		return 0, fmt.Errorf("%s/Encode: Invalid QoS %d.", this.Type, this.QoS)
+	}
+
+	// set qos
+	flags = (flags & 249) | (this.QoS << 1) // 249 = 11111001
+
+	// encode header
+	n, err := this.header.encode(dst[total:], flags, this.msglen())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	n, err = writeLPBytes(dst[total:], this.topic)
+	// write topic
+	n, err = writeLPBytes(dst[total:], this.Topic)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	// The packet identifier field is only present in the PUBLISH packets where the QoS level is 1 or 2
-	if this.QoS() != 0 {
-		if this.PacketId() == 0 {
-			this.SetPacketId(uint16(atomic.AddUint64(&gPacketId, 1) & 0xffff))
-		}
-
-		n = copy(dst[total:], this.packetId)
-		total += n
+	// write packet id
+	if this.QoS != 0 {
+		binary.BigEndian.PutUint16(dst[total:], this.PacketId)
+		total += 2
 	}
 
-	copy(dst[total:], this.payload)
-	total += len(this.payload)
+	// write payload
+	copy(dst[total:], this.Payload)
+	total += len(this.Payload)
 
 	return total, nil
 }
 
 func (this *PublishMessage) msglen() int {
-	total := 2 + len(this.topic) + len(this.payload)
-	if this.QoS() != 0 {
+	total := 2 + len(this.Topic) + len(this.Payload)
+	if this.QoS != 0 {
 		total += 2
 	}
 

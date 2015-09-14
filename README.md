@@ -4,9 +4,7 @@
 [![GoDoc](https://godoc.org/github.com/gomqtt/message?status.svg)](http://godoc.org/github.com/gomqtt/message)
 [![Release](https://img.shields.io/github/release/gomqtt/message.svg)](https://github.com/gomqtt/message/releases)
 
-This go package is an encoder/decoder library for
-[MQTT 3.1](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html)
-and [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
+This go package is an encoder/decoder library for [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
 
 ## Installation
 
@@ -22,58 +20,44 @@ Create a new message and encode it:
 
 ```go
 // Create new message.
-msg := NewConnectMessage()
+msg1 := NewConnectMessage()
+msg1.Username = []byte("gomqtt")
+msg1.Password = []byte("amazing!")
 
-msg.SetWillQos(1)
-msg.SetVersion(4)
-msg.SetCleanSession(true)
-msg.SetClientId([]byte("gomqtt"))
-msg.SetKeepAlive(10)
-msg.SetWillTopic([]byte("will"))
-msg.SetWillMessage([]byte("send me home"))
-msg.SetUsername([]byte("gomqtt"))
-msg.SetPassword([]byte("verysecret"))
+// Allocate buffer.
+buf := make([]byte, msg1.Len())
 
-// Encode the message and get an io.Reader.
-r, n, err := msg.Encode()
-if err == nil {
-    return err
+// Encode the message.
+if _, err := msg1.Encode(buf); err != nil {
+    // there was an error while encoding
+    panic(err)
 }
-
-// Write bytes into a connection.
-m, err := io.CopyN(conn, r, int64(n))
-if err != nil {
-    return err
-}
-
-fmt.Printf("Sent %d bytes of %s message", m, msg.Name())
 ```
 
-Receive bytes and decode them:
+Decode bytes to a message:
 
 ```go
-// Create a buffered IO reader for a connection.
-br := bufio.NewReader(conn)
+// Detect message.
+l, mt := DetectMessage(buf)
 
-// Peek at the first byte, which contains the message type.
-b, err := br.Peek(1)
-if err != nil {
-    return err
+// Check length
+if l == 0 {
+    // buffer not complete yet
+    return
 }
 
-// Extract the type from the first byte.
-t := MessageType(b[0] >> 4)
-
-// Create a new message
-msg, err := t.New()
+// Create message.
+msg2, err := mt.New()
 if err != nil {
-    return err
+    // message type is invalid
+    panic(err)
 }
 
-// Decode it from the bufio.Reader.
-n, err := msg.Decode(br)
+// Decode message.
+_, err = msg2.Decode(buf)
 if err != nil {
-    return err
+    // there was an error while decoding
+    panic(err)
 }
 ```
 
@@ -81,5 +65,5 @@ More details can be found in the [documentation](http://godoc.org/github.com/gom
 
 ## Credits
 
-This package has been extracted and contributed by @zhenjl from the
+This package has been originally extracted and contributed by @zhenjl from the
 [surgemq](https://github.com/surgemq/surgemq) project.

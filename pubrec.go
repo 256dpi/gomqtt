@@ -17,7 +17,7 @@ package message
 // A PUBREC Packet is the response to a PUBLISH Packet with QoS 2. It is the second
 // packet of the QoS 2 protocol exchange.
 type PubrecMessage struct {
-	PubackMessage
+	identifiedMessage
 }
 
 var _ Message = (*PubrecMessage)(nil)
@@ -25,7 +25,6 @@ var _ Message = (*PubrecMessage)(nil)
 // NewPubrecMessage creates a new PUBREC message.
 func NewPubrecMessage() *PubrecMessage {
 	msg := &PubrecMessage{}
-	msg.SetType(PUBREC)
-
+	msg.Type = PUBREC
 	return msg
 }

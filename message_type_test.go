@@ -14,16 +14,26 @@
 
 package message
 
-// A PUBACK Packet is the response to a PUBLISH Packet with QoS level 1.
-type PubackMessage struct {
-	identifiedMessage
-}
+import (
+	"testing"
+)
 
-var _ Message = (*PubackMessage)(nil)
+func TestMessageTypes(t *testing.T) {
+	if CONNECT != 1 ||
+		CONNACK != 2 ||
+		PUBLISH != 3 ||
+		PUBACK != 4 ||
+		PUBREC != 5 ||
+		PUBREL != 6 ||
+		PUBCOMP != 7 ||
+		SUBSCRIBE != 8 ||
+		SUBACK != 9 ||
+		UNSUBSCRIBE != 10 ||
+		UNSUBACK != 11 ||
+		PINGREQ != 12 ||
+		PINGRESP != 13 ||
+		DISCONNECT != 14 {
 
-// NewPubackMessage creates a new PUBACK message.
-func NewPubackMessage() *PubackMessage {
-	msg := &PubackMessage{}
-	msg.Type = PUBACK
-	return msg
+		t.Errorf("Message types have invalid code")
+	}
 }
