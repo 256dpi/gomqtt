@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+import "fmt"
 
 // A PUBREC Packet is the response to a PUBLISH Packet with QoS 2. It is the second
 // packet of the QoS 2 protocol exchange.
@@ -46,4 +47,9 @@ func (this *PubrecMessage) Decode(src []byte) (int, error) {
 
 func (this *PubrecMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, PUBREC)
+}
+
+// String returns a string representation of the message.
+func (this PubrecMessage) String() string {
+	return fmt.Sprintf("PUBREC: PacketId=%d", this.PacketId)
 }

@@ -45,3 +45,7 @@ func (this *PingreqMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, PINGREQ)
 }
 
+// String returns a string representation of the message.
+func (this PingreqMessage) String() string {
+	return PINGREQ.String()
+}

@@ -93,6 +93,8 @@ const (
 
 // Message is an interface defined for all MQTT message types.
 type Message interface {
+
+
 	Type() MessageType
 
 	// Len returns the byte length of the message.
@@ -109,6 +111,8 @@ type Message interface {
 	// the way. If there's any errors, then the byte slice and count should be
 	// considered invalid.
 	Encode([]byte) (int, error)
+
+	String() string
 }
 
 /*

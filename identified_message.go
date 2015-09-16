@@ -19,25 +19,12 @@ import (
 	"fmt"
 )
 
-//type identifiedMessage struct {
-//	// Shared message identifier.
-//	PacketId uint16
-//}
-
-// String returns a string representation of the message.
-//func (this identifiedMessage) String() string {
-//	return fmt.Sprintf("%s: PacketId=%d", mt, this.PacketId)
-//}
-
 // Len returns the byte length of the message.
 func identifiedMessageLen() int {
 	return headerLen(2) + 2
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
+// Decodes a identified message.
 func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 	total := 0
 
@@ -50,12 +37,12 @@ func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, 0, fmt.Errorf("%s/Decode: Expected remaining length to be 2.", mt)
+		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Expected remaining length to be 2.", mt)
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, 0, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", mt, total+2, len(src))
+		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Insufficient buffer size. Expecting %d, got %d.", mt, total+2, len(src))
 	}
 
 	// read packet id
@@ -65,17 +52,14 @@ func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 	return total, packetId, nil
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
-// returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// Encodes a identified message.
 func identifiedMessageEncode(dst []byte, packetId uint16, mt MessageType) (int, error) {
 	total := 0
 
 	// check buffer length
 	l := identifiedMessageLen()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", mt, l, len(dst))
+		return total, fmt.Errorf("%s/identifiedMessageEncode: Insufficient buffer size. Expecting %d, got %d.", mt, l, len(dst))
 	}
 
 	// encode header

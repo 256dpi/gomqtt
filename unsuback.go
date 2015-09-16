@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+import "fmt"
 
 // The UNSUBACK Packet is sent by the Server to the Client to confirm receipt of an
 // UNSUBSCRIBE Packet.
@@ -45,4 +46,9 @@ func (this *UnsubackMessage) Decode(src []byte) (int, error) {
 
 func (this *UnsubackMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, UNSUBACK)
+}
+
+// String returns a string representation of the message.
+func (this UnsubackMessage) String() string {
+	return fmt.Sprintf("UNSUBACK: PacketId=%d", this.PacketId)
 }

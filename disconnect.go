@@ -41,3 +41,8 @@ func (this *DisconnectMessage) Decode(src []byte) (int, error) {
 func (this *DisconnectMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, DISCONNECT)
 }
+
+// String returns a string representation of the message.
+func (this DisconnectMessage) String() string {
+	return DISCONNECT.String()
+}

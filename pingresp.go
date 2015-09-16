@@ -41,3 +41,8 @@ func (this *PingrespMessage) Decode(src []byte) (int, error) {
 func (this *PingrespMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, PINGRESP)
 }
+
+// String returns a string representation of the message.
+func (this PingrespMessage) String() string {
+	return PINGRESP.String()
+}

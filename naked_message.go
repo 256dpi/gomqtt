@@ -16,37 +16,25 @@ package message
 
 import "fmt"
 
-
-// String returns a string representation of the message.
-//func (this nakedMessage) String() string {
-//	return fmt.Sprintf("%s", this.messageType)
-//}
-
 // Len returns the byte length of the message.
 func nakedMessageLen() int {
 	return headerLen(0)
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
+// Decodes a naked message.
 func nakedMessageDecode(src []byte, mt MessageType) (int, error) {
 	// decode header
 	hl, _, rl, err := headerDecode(src, mt)
 
 	// check remaining length
 	if rl != 0 {
-		return hl, fmt.Errorf("%s/Decode: Expected zero remaining length.")
+		return hl, fmt.Errorf("%s/nakedMessageDecode: Expected zero remaining length.", mt)
 	}
 
 	return hl, err
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
-// returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// Encodes a naked message.
 func nakedMessageEncode(dst []byte, mt MessageType) (int, error) {
 	// encode header
 	return headerEncode(dst, 0, 0, mt)

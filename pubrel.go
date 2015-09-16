@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+import "fmt"
 
 // A PUBREL Packet is the response to a PUBREC Packet. It is the third packet of the
 // QoS 2 protocol exchange.
@@ -46,4 +47,9 @@ func (this *PubrelMessage) Decode(src []byte) (int, error) {
 
 func (this *PubrelMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, PUBREL)
+}
+
+// String returns a string representation of the message.
+func (this PubrelMessage) String() string {
+	return fmt.Sprintf("PUBREL: PacketId=%d", this.PacketId)
 }

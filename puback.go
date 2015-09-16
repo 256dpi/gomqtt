@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+import "fmt"
 
 // A PUBACK Packet is the response to a PUBLISH Packet with QoS level 1.
 type PubackMessage struct {
@@ -44,4 +45,9 @@ func (this *PubackMessage) Decode(src []byte) (int, error) {
 
 func (this *PubackMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, PUBACK)
+}
+
+// String returns a string representation of the message.
+func (this PubackMessage) String() string {
+	return fmt.Sprintf("PUBACK: PacketId=%d", this.PacketId)
 }

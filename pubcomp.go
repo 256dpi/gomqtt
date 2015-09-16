@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+import "fmt"
 
 // The PUBCOMP Packet is the response to a PUBREL Packet. It is the fourth and
 // final packet of the QoS 2 protocol exchange.
@@ -42,6 +43,11 @@ func (this *PubcompMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBCOMP)
 	this.PacketId = pid
 	return n, err
+}
+
+// String returns a string representation of the message.
+func (this PubcompMessage) String() string {
+	return fmt.Sprintf("PUBCOMP: PacketId=%d", this.PacketId)
 }
 
 func (this *PubcompMessage) Encode(dst []byte) (int, error) {
