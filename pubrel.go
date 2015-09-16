@@ -27,8 +27,7 @@ var _ Message = (*PubrelMessage)(nil)
 
 // NewPubrelMessage creates a new PUBREL message.
 func NewPubrelMessage() *PubrelMessage {
-	msg := &PubrelMessage{}
-	return msg
+	return &PubrelMessage{}
 }
 
 // Type return the messages message type.

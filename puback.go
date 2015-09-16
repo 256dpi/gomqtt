@@ -26,8 +26,7 @@ var _ Message = (*PubackMessage)(nil)
 
 // NewPubackMessage creates a new PUBACK message.
 func NewPubackMessage() *PubackMessage {
-	msg := &PubackMessage{}
-	return msg
+	return &PubackMessage{}
 }
 
 // Type return the messages message type.

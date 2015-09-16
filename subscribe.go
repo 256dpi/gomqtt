@@ -46,8 +46,7 @@ var _ Message = (*SubscribeMessage)(nil)
 
 // NewSubscribeMessage creates a new SUBSCRIBE message.
 func NewSubscribeMessage() *SubscribeMessage {
-	msg := &SubscribeMessage{}
-	return msg
+	return &SubscribeMessage{}
 }
 
 // Type return the messages message type.

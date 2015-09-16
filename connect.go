@@ -68,10 +68,7 @@ var _ Message = (*ConnectMessage)(nil)
 
 // NewConnectMessage creates a new CONNECT message.
 func NewConnectMessage() *ConnectMessage {
-	msg := &ConnectMessage{}
-	msg.Version = 4
-	msg.CleanSession = true
-	return msg
+	return &ConnectMessage{ Version: Version311, CleanSession: true}
 }
 
 // Type return the messages message type.

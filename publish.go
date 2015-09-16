@@ -50,8 +50,7 @@ var _ Message = (*PublishMessage)(nil)
 
 // NewPublishMessage creates a new PUBLISH message.
 func NewPublishMessage() *PublishMessage {
-	msg := &PublishMessage{}
-	return msg
+	return &PublishMessage{}
 }
 
 // Type return the messages message type.

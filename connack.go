@@ -38,8 +38,7 @@ var _ Message = (*ConnackMessage)(nil)
 
 // NewConnackMessage creates a new CONNACK message.
 func NewConnackMessage() *ConnackMessage {
-	msg := &ConnackMessage{}
-	return msg
+	return &ConnackMessage{}
 }
 
 // Type return the messages message type.

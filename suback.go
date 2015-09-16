@@ -36,8 +36,7 @@ var _ Message = (*SubackMessage)(nil)
 
 // NewSubackMessage creates a new SUBACK message.
 func NewSubackMessage() *SubackMessage {
-	msg := &SubackMessage{}
-	return msg
+	return &SubackMessage{}
 }
 
 // Type return the messages message type.
