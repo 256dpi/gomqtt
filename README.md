@@ -14,6 +14,14 @@ Get it using go's standard toolset:
 $ go get github.com/gomqtt/message
 ```
 
+## Features
+
+- Extremely simple to use.
+- Zero allocation encoding/decoding.
+- Builtin message detection.
+- No overflows thanks to input fuzzing. 
+- Non-intrusive design.
+
 ## Usage
 
 Create a new message and encode it:

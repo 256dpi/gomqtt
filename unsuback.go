@@ -14,17 +14,51 @@
 
 package message
 
+import "fmt"
+
 // The UNSUBACK Packet is sent by the Server to the Client to confirm receipt of an
 // UNSUBSCRIBE Packet.
 type UnsubackMessage struct {
-	identifiedMessage
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*UnsubackMessage)(nil)
 
 // NewUnsubackMessage creates a new UNSUBACK message.
 func NewUnsubackMessage() *UnsubackMessage {
-	msg := &UnsubackMessage{}
-	msg.Type = UNSUBACK
-	return msg
+	return &UnsubackMessage{}
+}
+
+// Type return the messages message type.
+func (this UnsubackMessage) Type() MessageType {
+	return UNSUBACK
+}
+
+// Len returns the byte length of the message.
+func (this *UnsubackMessage) Len() int {
+	return identifiedMessageLen()
+}
+
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
+func (this *UnsubackMessage) Decode(src []byte) (int, error) {
+	n, pid, err := identifiedMessageDecode(src, UNSUBACK)
+	this.PacketId = pid
+	return n, err
+}
+
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
+func (this *UnsubackMessage) Encode(dst []byte) (int, error) {
+	return identifiedMessageEncode(dst, this.PacketId, UNSUBACK)
+}
+
+// String returns a string representation of the message.
+func (this UnsubackMessage) String() string {
+	return fmt.Sprintf("UNSUBACK: PacketId=%d", this.PacketId)
 }

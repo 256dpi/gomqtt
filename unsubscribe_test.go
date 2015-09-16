@@ -42,7 +42,6 @@ func TestUnsubscribeMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, UNSUBSCRIBE, msg.Type, "Error decoding message.")
 	require.Equal(t, 3, len(msg.Topics), "Error decoding topics.")
 	require.Equal(t, []byte("surgemq"), msg.Topics[0], "Topic 'surgemq' should exist.")
 	require.Equal(t, []byte("/a/b/#/c"), msg.Topics[1], "Topic '/a/b/#/c' should exist.")

@@ -16,15 +16,42 @@ package message
 
 // The DISCONNECT Packet is the final Control Packet sent from the Client to the Server.
 // It indicates that the Client is disconnecting cleanly.
-type DisconnectMessage struct {
-	nakedMessage
-}
+type DisconnectMessage struct{}
 
 var _ Message = (*DisconnectMessage)(nil)
 
 // NewDisconnectMessage creates a new DISCONNECT message.
 func NewDisconnectMessage() *DisconnectMessage {
-	msg := &DisconnectMessage{}
-	msg.Type = DISCONNECT
-	return msg
+	return &DisconnectMessage{}
+}
+
+// Type return the messages message type.
+func (this DisconnectMessage) Type() MessageType {
+	return DISCONNECT
+}
+
+// Len returns the byte length of the message.
+func (this *DisconnectMessage) Len() int {
+	return nakedMessageLen()
+}
+
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
+func (this *DisconnectMessage) Decode(src []byte) (int, error) {
+	return nakedMessageDecode(src, DISCONNECT)
+}
+
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
+func (this *DisconnectMessage) Encode(dst []byte) (int, error) {
+	return nakedMessageEncode(dst, DISCONNECT)
+}
+
+// String returns a string representation of the message.
+func (this DisconnectMessage) String() string {
+	return DISCONNECT.String()
 }

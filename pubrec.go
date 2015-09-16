@@ -14,17 +14,51 @@
 
 package message
 
+import "fmt"
+
 // A PUBREC Packet is the response to a PUBLISH Packet with QoS 2. It is the second
 // packet of the QoS 2 protocol exchange.
 type PubrecMessage struct {
-	identifiedMessage
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*PubrecMessage)(nil)
 
 // NewPubrecMessage creates a new PUBREC message.
 func NewPubrecMessage() *PubrecMessage {
-	msg := &PubrecMessage{}
-	msg.Type = PUBREC
-	return msg
+	return &PubrecMessage{}
+}
+
+// Type return the messages message type.
+func (this PubrecMessage) Type() MessageType {
+	return PUBREC
+}
+
+// Len returns the byte length of the message.
+func (this *PubrecMessage) Len() int {
+	return identifiedMessageLen()
+}
+
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
+func (this *PubrecMessage) Decode(src []byte) (int, error) {
+	n, pid, err := identifiedMessageDecode(src, PUBREC)
+	this.PacketId = pid
+	return n, err
+}
+
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
+func (this *PubrecMessage) Encode(dst []byte) (int, error) {
+	return identifiedMessageEncode(dst, this.PacketId, PUBREC)
+}
+
+// String returns a string representation of the message.
+func (this PubrecMessage) String() string {
+	return fmt.Sprintf("PUBREC: PacketId=%d", this.PacketId)
 }

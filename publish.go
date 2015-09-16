@@ -22,8 +22,6 @@ import (
 // A PUBLISH Control Packet is sent from a Client to a Server or from Server to a Client
 // to transport an Application Message.
 type PublishMessage struct {
-	header
-
 	// The Topic of the message.
 	Topic []byte
 
@@ -52,21 +50,24 @@ var _ Message = (*PublishMessage)(nil)
 
 // NewPublishMessage creates a new PUBLISH message.
 func NewPublishMessage() *PublishMessage {
-	msg := &PublishMessage{}
-	msg.Type = PUBLISH
-	return msg
+	return &PublishMessage{}
+}
+
+// Type return the messages message type.
+func (this PublishMessage) Type() MessageType {
+	return PUBLISH
 }
 
 // String returns a string representation of the message.
 func (this PublishMessage) String() string {
-	return fmt.Sprintf("%s: Topic=%q PacketId=%d QoS=%d Retained=%t Dup=%t Payload=%v",
-		this.Type, this.Topic, this.PacketId, this.QoS, this.Retain, this.Dup, this.Payload)
+	return fmt.Sprintf("PUBLISH: Topic=%q PacketId=%d QoS=%d Retained=%t Dup=%t Payload=%v",
+		this.Topic, this.PacketId, this.QoS, this.Retain, this.Dup, this.Payload)
 }
 
 // Len returns the byte length of the message.
 func (this *PublishMessage) Len() int {
 	ml := this.msglen()
-	return this.header.len(ml) + ml
+	return headerLen(ml) + ml
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -77,7 +78,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, flags, rl, err := this.header.decode(src[total:])
+	hl, flags, rl, err := headerDecode(src[total:], PUBLISH)
 	total += hl
 	if err != nil {
 		return total, err
@@ -85,7 +86,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+		return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 	}
 
 	// read flags
@@ -95,7 +96,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 
 	// check qos
 	if !validQoS(this.QoS) {
-		return total, fmt.Errorf("%s/Decode: Invalid QoS (%d).", this.Type, this.QoS)
+		return total, fmt.Errorf("PUBLISH/Decode: Invalid QoS (%d).", this.QoS)
 	}
 
 	n := 0
@@ -110,7 +111,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	if this.QoS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
-			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+			return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 		}
 
 		// read packet id
@@ -124,7 +125,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	if l > 0 {
 		// check buffer length
 		if len(src) < total+l {
-			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+l, len(src))
+			return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d.", total+l, len(src))
 		}
 
 		// read payload
@@ -145,12 +146,12 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+		return total, fmt.Errorf("PUBLISH/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	// check topic length
 	if len(this.Topic) == 0 {
-		return total, fmt.Errorf("%s/Encode: Topic name is empty.", this.Type)
+		return total, fmt.Errorf("PUBLISH/Encode: Topic name is empty.")
 	}
 
 	flags := byte(0)
@@ -171,14 +172,14 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 
 	// check qos
 	if !validQoS(this.QoS) {
-		return 0, fmt.Errorf("%s/Encode: Invalid QoS %d.", this.Type, this.QoS)
+		return 0, fmt.Errorf("PUBLISH/Encode: Invalid QoS %d.", this.QoS)
 	}
 
 	// set qos
 	flags = (flags & 249) | (this.QoS << 1) // 249 = 11111001
 
 	// encode header
-	n, err := this.header.encode(dst[total:], flags, this.msglen())
+	n, err := headerEncode(dst[total:], flags, this.msglen(), PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
@@ -204,6 +205,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
+// Returns the payload length.
 func (this *PublishMessage) msglen() int {
 	total := 2 + len(this.Topic) + len(this.Payload)
 	if this.QoS != 0 {

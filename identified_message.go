@@ -19,76 +19,58 @@ import (
 	"fmt"
 )
 
-type identifiedMessage struct {
-	header
-
-	// Shared message identifier.
-	PacketId uint16
-}
-
-// String returns a string representation of the message.
-func (this identifiedMessage) String() string {
-	return fmt.Sprintf("%s: PacketId=%d", this.Type, this.PacketId)
-}
-
 // Len returns the byte length of the message.
-func (this *identifiedMessage) Len() int {
-	return this.header.len(2) + 2
+func identifiedMessageLen() int {
+	return headerLen(2) + 2
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
-func (this *identifiedMessage) Decode(src []byte) (int, error) {
+// Decodes a identified message.
+func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 	total := 0
 
 	// decode header
-	hl, _, rl, err := this.header.decode(src)
+	hl, _, rl, err := headerDecode(src, mt)
 	total += hl
 	if err != nil {
-		return total, err
+		return total, 0, err
 	}
 
 	// check remaining length
 	if rl != 2 {
-		return total, fmt.Errorf("%s/Decode: Expected remaining length to be 2.", this.Type)
+		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Expected remaining length to be 2.", mt)
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Insufficient buffer size. Expecting %d, got %d.", mt, total+2, len(src))
 	}
 
 	// read packet id
-	this.PacketId = binary.BigEndian.Uint16(src[total:])
+	packetId := binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	return total, nil
+	return total, packetId, nil
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
-// returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
-func (this *identifiedMessage) Encode(dst []byte) (int, error) {
+// Encodes a identified message.
+func identifiedMessageEncode(dst []byte, packetId uint16, mt MessageType) (int, error) {
 	total := 0
 
 	// check buffer length
-	l := this.Len()
+	l := identifiedMessageLen()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+		return total, fmt.Errorf("%s/identifiedMessageEncode: Insufficient buffer size. Expecting %d, got %d.", mt, l, len(dst))
 	}
 
 	// encode header
-	n, err := this.header.encode(dst[total:], 0, 2)
+	n, err := headerEncode(dst[total:], 0, 2, mt)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
+	binary.BigEndian.PutUint16(dst[total:], packetId)
 	total += 2
 
 	return total, nil

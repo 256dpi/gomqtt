@@ -25,8 +25,6 @@ import (
 // A SUBACK Packet contains a list of return codes, that specify the maximum QoS level
 // that was granted in each Subscription that was requested by the SUBSCRIBE.
 type SubackMessage struct {
-	header
-
 	// The granted QoS levels for the requested subscriptions.
 	ReturnCodes []byte
 
@@ -38,20 +36,23 @@ var _ Message = (*SubackMessage)(nil)
 
 // NewSubackMessage creates a new SUBACK message.
 func NewSubackMessage() *SubackMessage {
-	msg := &SubackMessage{}
-	msg.Type = SUBACK
-	return msg
+	return &SubackMessage{}
+}
+
+// Type return the messages message type.
+func (this SubackMessage) Type() MessageType {
+	return SUBACK
 }
 
 // String returns a string representation of the message.
 func (this SubackMessage) String() string {
-	return fmt.Sprintf("%s: PacketId=%d ReturnCodes=%v", this.Type, this.PacketId, this.ReturnCodes)
+	return fmt.Sprintf("SUBACK: PacketId=%d ReturnCodes=%v", this.PacketId, this.ReturnCodes)
 }
 
 // Len returns the byte length of the message.
 func (this *SubackMessage) Len() int {
 	ml := this.msglen()
-	return this.header.len(ml) + ml
+	return headerLen(ml) + ml
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -62,7 +63,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, _, rl, err := this.header.decode(src[total:])
+	hl, _, rl, err := headerDecode(src[total:], SUBACK)
 	total += hl
 	if err != nil {
 		return total, err
@@ -70,12 +71,12 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+		return total, fmt.Errorf("SUBACK/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 	}
 
 	// check remaining length
 	if rl <= 2 {
-		return total, fmt.Errorf("%s/Decode: Expected remaining length to be greater that 2, got.", this.Type, rl)
+		return total, fmt.Errorf("SUBACK/Decode: Expected remaining length to be greater that 2, got.", rl)
 	}
 
 	// read packet id
@@ -87,7 +88,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+rcl {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+rcl, len(src))
+		return total, fmt.Errorf("SUBACK/Decode: Insufficient buffer size. Expecting %d, got %d.", total+rcl, len(src))
 	}
 
 	// read return codes
@@ -97,7 +98,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 	// validate return codes
 	for i, code := range this.ReturnCodes {
 		if !validQoS(code) && code != 0x80 {
-			return total, fmt.Errorf("%s/Decode: Invalid return code %d for topic %d.", this.Type, code, i)
+			return total, fmt.Errorf("SUBACK/Decode: Invalid return code %d for topic %d.", code, i)
 		}
 	}
 
@@ -114,18 +115,18 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+		return total, fmt.Errorf("SUBACK/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	// check return codes
 	for i, code := range this.ReturnCodes {
 		if !validQoS(code) && code != 0x80 {
-			return total, fmt.Errorf("%s/Encode: Invalid return code %d for topic %d.", this.Type, code, i)
+			return total, fmt.Errorf("SUBACK/Encode: Invalid return code %d for topic %d.", code, i)
 		}
 	}
 
 	// encode header
-	n, err := this.header.encode(dst[total:], 0, this.msglen())
+	n, err := headerEncode(dst[total:], 0, this.msglen(), SUBACK)
 	total += n
 	if err != nil {
 		return total, err
@@ -142,6 +143,7 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
+// Returns the payload length.
 func (this *SubackMessage) msglen() int {
 	return 2 + len(this.ReturnCodes)
 }

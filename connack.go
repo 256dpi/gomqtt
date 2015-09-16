@@ -24,8 +24,6 @@ import "fmt"
 // amount of time, the Client SHOULD close the Network Connection. A "reasonable" amount
 // of time depends on the type of application and the communications infrastructure.
 type ConnackMessage struct {
-	header
-
 	// The Session Present flag enables a Client to establish whether the Client and
 	// Server have a consistent view about whether there is already stored Session state.
 	SessionPresent bool
@@ -40,19 +38,22 @@ var _ Message = (*ConnackMessage)(nil)
 
 // NewConnackMessage creates a new CONNACK message.
 func NewConnackMessage() *ConnackMessage {
-	msg := &ConnackMessage{}
-	msg.Type = CONNACK
-	return msg
+	return &ConnackMessage{}
+}
+
+// Type return the messages message type.
+func (this ConnackMessage) Type() MessageType {
+	return CONNACK
 }
 
 // String returns a string representation of the message.
 func (this ConnackMessage) String() string {
-	return fmt.Sprintf("%s: SessionPresent=%t ReturnCode=%q", this.Type, this.SessionPresent, this.ReturnCode)
+	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q", this.SessionPresent, this.ReturnCode)
 }
 
 // Len returns the byte length of the message.
 func (this *ConnackMessage) Len() int {
-	return this.header.len(2) + 2
+	return headerLen(2) + 2
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -63,7 +64,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, _, rl, err := this.header.decode(src)
+	hl, _, rl, err := headerDecode(src, CONNACK)
 	total += hl
 	if err != nil {
 		return total, err
@@ -71,12 +72,12 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, fmt.Errorf("%s/Decode: Expected remaining length to be 2.", this.Type)
+		return total, fmt.Errorf("CONNACK/Decode: Expected remaining length to be 2.")
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+		return total, fmt.Errorf("CONNACK/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 	}
 
 	// read connack flags
@@ -86,7 +87,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check flags
 	if connackFlags&254 != 0 {
-		return 0, fmt.Errorf("%s/Decode: Bits 7-1 in acknowledge flags byte (1) are not 0.", this.Type)
+		return 0, fmt.Errorf("CONNACK/Decode: Bits 7-1 in acknowledge flags byte (1) are not 0.")
 	}
 
 	// read return code
@@ -95,7 +96,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check return code
 	if !this.ReturnCode.Valid() {
-		return 0, fmt.Errorf("%s/Decode: Invalid return code (%d)", this.Type, this.ReturnCode)
+		return 0, fmt.Errorf("CONNACK/Decode: Invalid return code (%d)", this.ReturnCode)
 	}
 
 	return total, nil
@@ -111,11 +112,11 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+		return total, fmt.Errorf("CONNACK/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	// encode header
-	n, err := this.header.encode(dst[total:], 0, 2)
+	n, err := headerEncode(dst[total:], 0, 2, CONNACK)
 	total += n
 	if err != nil {
 		return total, err
@@ -131,7 +132,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 
 	// check return code
 	if !this.ReturnCode.Valid() {
-		return total, fmt.Errorf("%s/Encode: Invalid return code (%d).", this.Type, this.ReturnCode)
+		return total, fmt.Errorf("CONNACK/Encode: Invalid return code (%d).", this.ReturnCode)
 	}
 
 	// set return code

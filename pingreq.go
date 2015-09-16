@@ -19,15 +19,42 @@ package message
 //    Control Packets being sent from the Client to the Server.
 // 2. Request that the Server responds to confirm that it is alive.
 // 3. Exercise the network to indicate that the Network Connection is active.
-type PingreqMessage struct {
-	nakedMessage
-}
+type PingreqMessage struct{}
 
 var _ Message = (*PingreqMessage)(nil)
 
 // NewPingreqMessage creates a new PINGREQ message.
 func NewPingreqMessage() *PingreqMessage {
-	msg := &PingreqMessage{}
-	msg.Type = PINGREQ
-	return msg
+	return &PingreqMessage{}
+}
+
+// Type return the messages message type.
+func (this PingreqMessage) Type() MessageType {
+	return PINGREQ
+}
+
+// Len returns the byte length of the message.
+func (this *PingreqMessage) Len() int {
+	return nakedMessageLen()
+}
+
+// Decode reads the bytes in the byte slice from the argument. It returns the
+// total number of bytes decoded, and whether there have been any errors during
+// the process. The byte slice MUST NOT be modified during the duration of this
+// message being available since the byte slice never gets copied.
+func (this *PingreqMessage) Decode(src []byte) (int, error) {
+	return nakedMessageDecode(src, PINGREQ)
+}
+
+// Encode writes the message bytes into the byte array from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there's any errors, then the byte slice and count should be
+// considered invalid.
+func (this *PingreqMessage) Encode(dst []byte) (int, error) {
+	return nakedMessageEncode(dst, PINGREQ)
+}
+
+// String returns a string representation of the message.
+func (this PingreqMessage) String() string {
+	return PINGREQ.String()
 }

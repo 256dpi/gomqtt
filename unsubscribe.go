@@ -21,8 +21,6 @@ import (
 
 // An UNSUBSCRIBE Packet is sent by the Client to the Server, to unsubscribe from topics.
 type UnsubscribeMessage struct {
-	header
-
 	// The topics to unsubscribe from.
 	Topics [][]byte
 
@@ -34,14 +32,17 @@ var _ Message = (*UnsubscribeMessage)(nil)
 
 // NewUnsubscribeMessage creates a new UNSUBSCRIBE message.
 func NewUnsubscribeMessage() *UnsubscribeMessage {
-	msg := &UnsubscribeMessage{}
-	msg.Type = UNSUBSCRIBE
-	return msg
+	return &UnsubscribeMessage{}
+}
+
+// Type return the messages message type.
+func (this UnsubscribeMessage) Type() MessageType {
+	return UNSUBSCRIBE
 }
 
 // String returns a string representation of the message.
 func (this UnsubscribeMessage) String() string {
-	msgstr := fmt.Sprintf("%s:", this.Type)
+	msgstr := "UNSUBSCRIBE:"
 
 	for i, t := range this.Topics {
 		msgstr = fmt.Sprintf("%s Topic[%d]=%s", msgstr, i, string(t))
@@ -53,7 +54,7 @@ func (this UnsubscribeMessage) String() string {
 // Len returns the byte length of the message.
 func (this *UnsubscribeMessage) Len() int {
 	ml := this.msglen()
-	return this.header.len(ml) + ml
+	return headerLen(ml) + ml
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -64,7 +65,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, _, rl, err := this.header.decode(src[total:])
+	hl, _, rl, err := headerDecode(src[total:], UNSUBSCRIBE)
 	total += hl
 	if err != nil {
 		return total, err
@@ -72,7 +73,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 	}
 
 	// read packet id
@@ -81,6 +82,9 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// prepare counter
 	tl := int(rl) - 2
+
+	// reset topics
+	this.Topics = this.Topics[:0]
 
 	for tl > 0 {
 		// read topic
@@ -99,7 +103,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check for empty list
 	if len(this.Topics) == 0 {
-		return total, fmt.Errorf("%s/Decode: Empty topic list.", this.Type)
+		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Empty topic list.")
 	}
 
 	return total, nil
@@ -115,11 +119,11 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+		return total, fmt.Errorf("UNSUBSCRIBE/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	// encode header
-	n, err := this.header.encode(dst[total:], 0, this.msglen())
+	n, err := headerEncode(dst[total:], 0, this.msglen(), UNSUBSCRIBE)
 	total += n
 	if err != nil {
 		return total, err
@@ -141,6 +145,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
+// Returns the payload length.
 func (this *UnsubscribeMessage) msglen() int {
 	// packet ID
 	total := 2

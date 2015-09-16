@@ -28,13 +28,10 @@ func TestNakedMessageDecode(t *testing.T) {
 		0,
 	}
 
-	msg := &nakedMessage{}
-	msg.Type = nmType
-	n, err := msg.Decode(msgBytes)
+	n, err := nakedMessageDecode(msgBytes, nmType)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, nmType, msg.Type, "Error decoding message.")
 }
 
 func TestNakedMessageEncode(t *testing.T) {
@@ -43,11 +40,8 @@ func TestNakedMessageEncode(t *testing.T) {
 		0,
 	}
 
-	msg := &nakedMessage{}
-	msg.Type = nmType
-
 	dst := make([]byte, 10)
-	n, err := msg.Encode(dst)
+	n, err := nakedMessageEncode(dst, nmType)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
@@ -60,34 +54,29 @@ func TestNakedMessageEqualDecodeEncode(t *testing.T) {
 		0,
 	}
 
-	msg := &nakedMessage{}
-	msg.Type = nmType
-	n, err := msg.Decode(msgBytes)
+	n, err := nakedMessageDecode(msgBytes, nmType)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 
 	dst := make([]byte, 100)
-	n2, err := msg.Encode(dst)
+	n2, err := nakedMessageEncode(dst, nmType)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
-	n3, err := msg.Decode(dst)
+	n3, err := nakedMessageDecode(dst, nmType)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }
 
 func BenchmarkNakedMessageEncode(b *testing.B) {
-	msg := &nakedMessage{}
-	msg.Type = nmType
-
-	buf := make([]byte, msg.Len())
+	buf := make([]byte, nakedMessageLen())
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Encode(buf)
+		_, err := nakedMessageEncode(buf, nmType)
 		if err != nil {
 			panic(err)
 		}
@@ -100,11 +89,8 @@ func BenchmarkNakedMessageDecode(b *testing.B) {
 		0,
 	}
 
-	msg := &nakedMessage{}
-	msg.Type = nmType
-
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Decode(msgBytes)
+		_, err := nakedMessageDecode(msgBytes, nmType)
 		if err != nil {
 			panic(err)
 		}
