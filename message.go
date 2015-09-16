@@ -13,8 +13,8 @@
 // limitations under the License.
 
 /*
-This go package is an encoder/decoder library for
-[MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.
+This go package is an encoder/decoder library for MQTT 3.1.1
+(http://docs.oasis-open.org/mqtt/mqtt/v3.1.1) messages.
 
 Create a new message and encode it:
 
