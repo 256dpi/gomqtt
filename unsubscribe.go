@@ -45,7 +45,7 @@ func (this UnsubscribeMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (this UnsubscribeMessage) String() string {
-	msgstr := fmt.Sprintf("%s:", this.messageType)
+	msgstr := "UNSUBSCRIBE:"
 
 	for i, t := range this.Topics {
 		msgstr = fmt.Sprintf("%s Topic[%d]=%s", msgstr, i, string(t))
@@ -76,7 +76,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, total+2, len(src))
+		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 	}
 
 	// read packet id
@@ -103,7 +103,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check for empty list
 	if len(this.Topics) == 0 {
-		return total, fmt.Errorf("%s/Decode: Empty topic list.", this.messageType)
+		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Empty topic list.")
 	}
 
 	return total, nil
@@ -119,7 +119,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, l, len(dst))
+		return total, fmt.Errorf("UNSUBSCRIBE/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	// encode header

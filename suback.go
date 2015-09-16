@@ -49,7 +49,7 @@ func (this SubackMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (this SubackMessage) String() string {
-	return fmt.Sprintf("%s: PacketId=%d ReturnCodes=%v", this.messageType, this.PacketId, this.ReturnCodes)
+	return fmt.Sprintf("SUBACK: PacketId=%d ReturnCodes=%v", this.PacketId, this.ReturnCodes)
 }
 
 // Len returns the byte length of the message.
@@ -74,12 +74,12 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, total+2, len(src))
+		return total, fmt.Errorf("SUBACK/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 	}
 
 	// check remaining length
 	if rl <= 2 {
-		return total, fmt.Errorf("%s/Decode: Expected remaining length to be greater that 2, got.", this.messageType, rl)
+		return total, fmt.Errorf("SUBACK/Decode: Expected remaining length to be greater that 2, got.", rl)
 	}
 
 	// read packet id
@@ -91,7 +91,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+rcl {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, total+rcl, len(src))
+		return total, fmt.Errorf("SUBACK/Decode: Insufficient buffer size. Expecting %d, got %d.", total+rcl, len(src))
 	}
 
 	// read return codes
@@ -101,7 +101,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 	// validate return codes
 	for i, code := range this.ReturnCodes {
 		if !validQoS(code) && code != 0x80 {
-			return total, fmt.Errorf("%s/Decode: Invalid return code %d for topic %d.", this.messageType, code, i)
+			return total, fmt.Errorf("SUBACK/Decode: Invalid return code %d for topic %d.", code, i)
 		}
 	}
 
@@ -118,13 +118,13 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, l, len(dst))
+		return total, fmt.Errorf("SUBACK/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
 	}
 
 	// check return codes
 	for i, code := range this.ReturnCodes {
 		if !validQoS(code) && code != 0x80 {
-			return total, fmt.Errorf("%s/Encode: Invalid return code %d for topic %d.", this.messageType, code, i)
+			return total, fmt.Errorf("SUBACK/Encode: Invalid return code %d for topic %d.", code, i)
 		}
 	}
 
