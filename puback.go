@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+
 import "fmt"
 
 // A PUBACK Packet is the response to a PUBLISH Packet with QoS level 1.

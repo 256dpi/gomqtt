@@ -19,7 +19,7 @@ package message
 //    Control Packets being sent from the Client to the Server.
 // 2. Request that the Server responds to confirm that it is alive.
 // 3. Exercise the network to indicate that the Network Connection is active.
-type PingreqMessage struct {}
+type PingreqMessage struct{}
 
 var _ Message = (*PingreqMessage)(nil)
 

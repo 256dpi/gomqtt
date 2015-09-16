@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+
 import "fmt"
 
 // A PUBREL Packet is the response to a PUBREC Packet. It is the third packet of the

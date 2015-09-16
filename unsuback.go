@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+
 import "fmt"
 
 // The UNSUBACK Packet is sent by the Server to the Client to confirm receipt of an

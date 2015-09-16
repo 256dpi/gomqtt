@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+
 import "fmt"
 
 // A PUBREC Packet is the response to a PUBLISH Packet with QoS 2. It is the second

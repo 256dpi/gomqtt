@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package message
+
 import "fmt"
 
 // The PUBCOMP Packet is the response to a PUBREL Packet. It is the fourth and
