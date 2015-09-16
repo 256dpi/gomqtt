@@ -29,12 +29,12 @@ func TestNakedMessageDecode(t *testing.T) {
 	}
 
 	msg := &nakedMessage{}
-	msg.Type = nmType
+	msg.messageType = nmType
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, nmType, msg.Type, "Error decoding message.")
+	require.Equal(t, nmType, msg.messageType, "Error decoding message.")
 }
 
 func TestNakedMessageEncode(t *testing.T) {
@@ -44,7 +44,7 @@ func TestNakedMessageEncode(t *testing.T) {
 	}
 
 	msg := &nakedMessage{}
-	msg.Type = nmType
+	msg.messageType = nmType
 
 	dst := make([]byte, 10)
 	n, err := msg.Encode(dst)
@@ -61,7 +61,7 @@ func TestNakedMessageEqualDecodeEncode(t *testing.T) {
 	}
 
 	msg := &nakedMessage{}
-	msg.Type = nmType
+	msg.messageType = nmType
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
@@ -82,7 +82,7 @@ func TestNakedMessageEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkNakedMessageEncode(b *testing.B) {
 	msg := &nakedMessage{}
-	msg.Type = nmType
+	msg.messageType = nmType
 
 	buf := make([]byte, msg.Len())
 
@@ -101,7 +101,7 @@ func BenchmarkNakedMessageDecode(b *testing.B) {
 	}
 
 	msg := &nakedMessage{}
-	msg.Type = nmType
+	msg.messageType = nmType
 
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)

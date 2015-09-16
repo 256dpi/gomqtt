@@ -28,6 +28,10 @@ var _ Message = (*PingreqMessage)(nil)
 // NewPingreqMessage creates a new PINGREQ message.
 func NewPingreqMessage() *PingreqMessage {
 	msg := &PingreqMessage{}
-	msg.Type = PINGREQ
+	msg.messageType = PINGREQ
 	return msg
+}
+
+func (this PingreqMessage) Type() MessageType {
+	return PINGREQ
 }

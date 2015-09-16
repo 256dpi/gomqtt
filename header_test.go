@@ -48,7 +48,7 @@ func TestMessageHeaderDecode3(t *testing.T) {
 
 func TestMessageHeaderDecode4(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
-	header := &header{Type: 6}
+	header := &header{messageType: 6}
 
 	n, _, _, err := header.decode(buf)
 
@@ -58,7 +58,7 @@ func TestMessageHeaderDecode4(t *testing.T) {
 
 func TestMessageHeaderDecode5(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0x7f}
-	header := &header{Type: 6}
+	header := &header{messageType: 6}
 
 	n, _, _, err := header.decode(buf)
 	require.Error(t, err)
@@ -69,7 +69,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 	header := &header{}
 	headerBytes := []byte{0x62, 193, 2}
 
-	header.Type = PUBREL
+	header.messageType = PUBREL
 
 	buf := make([]byte, 3)
 	n, err := header.encode(buf, 0, 321)
@@ -82,7 +82,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 func TestMessageHeaderEncode2(t *testing.T) {
 	header := &header{}
 
-	header.Type = PUBREL
+	header.messageType = PUBREL
 
 	buf := make([]byte, 5)
 	_, err := header.encode(buf, 0, 268435456)
@@ -94,7 +94,7 @@ func TestMessageHeaderEncode3(t *testing.T) {
 	header := &header{}
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
-	header.Type = PUBREL
+	header.messageType = PUBREL
 
 	buf := make([]byte, 5)
 	n, err := header.encode(buf, 0, maxRemainingLength)
@@ -105,7 +105,7 @@ func TestMessageHeaderEncode3(t *testing.T) {
 }
 
 func TestMessageHeaderEncode4(t *testing.T) {
-	header := &header{Type: RESERVED2}
+	header := &header{messageType: RESERVED2}
 
 	buf := make([]byte, 5)
 	_, err := header.encode(buf, 0, 0)

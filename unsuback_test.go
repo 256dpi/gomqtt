@@ -41,7 +41,7 @@ func TestUnsubackMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, UNSUBACK, msg.Type, "Error decoding message.")
+	require.Equal(t, UNSUBACK, msg.messageType, "Error decoding message.")
 	require.Equal(t, 7, int(msg.PacketId), "Error decoding message.")
 }
 

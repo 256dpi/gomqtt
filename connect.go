@@ -71,16 +71,20 @@ var _ Message = (*ConnectMessage)(nil)
 // NewConnectMessage creates a new CONNECT message.
 func NewConnectMessage() *ConnectMessage {
 	msg := &ConnectMessage{}
-	msg.Type = CONNECT
+	msg.messageType = CONNECT
 	msg.Version = 4
 	msg.CleanSession = true
 	return msg
 }
 
+func (this ConnectMessage) Type() MessageType {
+	return CONNECT
+}
+
 // String returns a string representation of the message.
 func (this ConnectMessage) String() string {
 	return fmt.Sprintf("%s: Version=%d KeepAlive=%d ClientId=%q WillTopic=%q WillPayload=%q Username=%q Password=%q",
-		this.Type,
+		this.messageType,
 		this.Version,
 		this.KeepAlive,
 		this.ClientId,
@@ -120,7 +124,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+1, len(src))
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, total+1, len(src))
 	}
 
 	// read version
@@ -129,17 +133,17 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// check protocol string and version
 	if this.Version != Version31 && this.Version != Version311 {
-		return total, fmt.Errorf("%s/Decode: Protocol violation: Invalid protocol version (%d).", this.Type, this.Version)
+		return total, fmt.Errorf("%s/Decode: Protocol violation: Invalid protocol version (%d).", this.messageType, this.Version)
 	}
 
 	// check protocol version string
 	if (this.Version == Version31 && !bytes.Equal(protoName, version31Name)) || (this.Version == Version311 && !bytes.Equal(protoName, version311Name)) {
-		return total, fmt.Errorf("%s/Decode: Protocol violation: Invalid protocol version description (%s).", this.Type, protoName)
+		return total, fmt.Errorf("%s/Decode: Protocol violation: Invalid protocol version description (%s).", this.messageType, protoName)
 	}
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+1, len(src))
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, total+1, len(src))
 	}
 
 	// read connect flags
@@ -158,32 +162,32 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
-		return total, fmt.Errorf("%s/Decode: Reserved bit 0 is not 0", this.Type)
+		return total, fmt.Errorf("%s/Decode: Reserved bit 0 is not 0", this.messageType)
 	}
 
 	// check will qos
 	if !validQoS(this.WillQoS) {
-		return total, fmt.Errorf("%s/Decode: Invalid QoS level (%d) for will message.", this.Type, this.WillQoS)
+		return total, fmt.Errorf("%s/Decode: Invalid QoS level (%d) for will message.", this.messageType, this.WillQoS)
 	}
 
 	// check will flags
 	if !willFlag && (this.WillRetain || this.WillQoS != 0) {
-		return total, fmt.Errorf("%s/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero.", this.Type, willFlag, this.WillQoS, this.WillRetain)
+		return total, fmt.Errorf("%s/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero.", this.messageType, willFlag, this.WillQoS, this.WillRetain)
 	}
 
 	// check auth flags
 	if !usernameFlag && passwordFlag {
-		return total, fmt.Errorf("%s/Decode: Password flag is set but Username flag is not set.", this.Type)
+		return total, fmt.Errorf("%s/Decode: Password flag is set but Username flag is not set.", this.messageType)
 	}
 
 	// check buffer length
 	if len(src[total:]) < 2 {
-		return 0, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, 2, len(src[total:]))
+		return 0, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, 2, len(src[total:]))
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, total+2, len(src))
 	}
 
 	// read keep alive
@@ -199,7 +203,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// if the client supplies a zero-byte ClientId, the Client MUST also set CleanSession to 1
 	if len(this.ClientId) == 0 && !this.CleanSession {
-		return total, fmt.Errorf("%s/Decode: Protocol violation: Clean session must be 1 if client id is zero length.", this.Type)
+		return total, fmt.Errorf("%s/Decode: Protocol violation: Clean session must be 1 if client id is zero length.", this.messageType)
 	}
 
 	// read will topic and payload
@@ -248,12 +252,12 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, l, len(dst))
 	}
 
 	// check version
 	if this.Version != 0x3 && this.Version != 0x4 {
-		return 0, fmt.Errorf("%s/Encode: Protocol violation: Invalid protocol version (%d).", this.Type, this.Version)
+		return 0, fmt.Errorf("%s/Encode: Protocol violation: Invalid protocol version (%d).", this.messageType, this.Version)
 	}
 
 	// encode header
@@ -306,7 +310,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 		connectFlags |= 0x4 // 00000100
 
 		if !validQoS(this.WillQoS) {
-			return total, fmt.Errorf("%s/Encode: Invalid Will QoS level %d.", this.Type, this.WillQoS)
+			return total, fmt.Errorf("%s/Encode: Invalid Will QoS level %d.", this.messageType, this.WillQoS)
 		}
 
 		// set will qos flag

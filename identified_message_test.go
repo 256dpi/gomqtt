@@ -24,7 +24,7 @@ var imType MessageType = 1
 
 func TestIdentifiedMessageFields(t *testing.T) {
 	msg := &PubackMessage{}
-	msg.Type = imType
+	msg.messageType = imType
 
 	msg.PacketId = 100
 
@@ -40,12 +40,12 @@ func TestIdentifiedMessageDecode(t *testing.T) {
 	}
 
 	msg := &PubackMessage{}
-	msg.Type = imType
+	msg.messageType = imType
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, imType, msg.Type, "Error decoding message.")
+	require.Equal(t, imType, msg.messageType, "Error decoding message.")
 	require.Equal(t, 7, int(msg.PacketId), "Error decoding message.")
 }
 
@@ -58,7 +58,7 @@ func TestIdentifiedMessageDecode2(t *testing.T) {
 	}
 
 	msg := &PubackMessage{}
-	msg.Type = imType
+	msg.messageType = imType
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
@@ -73,7 +73,7 @@ func TestIdentifiedMessageEncode(t *testing.T) {
 	}
 
 	msg := &PubackMessage{}
-	msg.Type = imType
+	msg.messageType = imType
 	msg.PacketId = 7
 
 	dst := make([]byte, 10)
@@ -93,7 +93,7 @@ func TestIdentifiedMessageEqualDecodeEncode(t *testing.T) {
 	}
 
 	msg := &PubackMessage{}
-	msg.Type = imType
+	msg.messageType = imType
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
@@ -114,7 +114,7 @@ func TestIdentifiedMessageEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkIdentifiedMessageEncode(b *testing.B) {
 	msg := &PubackMessage{}
-	msg.Type = imType
+	msg.messageType = imType
 	msg.PacketId = 1
 
 	buf := make([]byte, msg.Len())
@@ -136,7 +136,7 @@ func BenchmarkIdentifiedMessageDecode(b *testing.B) {
 	}
 
 	msg := &PubackMessage{}
-	msg.Type = imType
+	msg.messageType = imType
 
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)

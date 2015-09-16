@@ -24,7 +24,7 @@ const maxRemainingLength int = 268435455 // bytes, or 256 MB
 // fixed header
 type header struct {
 	// The message type of the message.
-	Type MessageType
+	messageType MessageType
 }
 
 // Returns the length of the fixed header in bytes.
@@ -51,22 +51,22 @@ func (this *header) encode(dst []byte, flags byte, rl int) (int, error) {
 
 	// check remaining length
 	if rl > maxRemainingLength || rl < 0 {
-		return total, fmt.Errorf("%s/encode: remaining length (%d) out of bound (max %d, min 0).", this.Type, rl, maxRemainingLength)
+		return total, fmt.Errorf("%s/encode: remaining length (%d) out of bound (max %d, min 0).", this.messageType, rl, maxRemainingLength)
 	}
 
 	// check header length
 	hl := this.len(rl)
 	if len(dst) < hl {
-		return total, fmt.Errorf("%s/encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, hl, len(dst))
+		return total, fmt.Errorf("%s/encode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, hl, len(dst))
 	}
 
 	// validate message type
-	if !this.Type.Valid() {
-		return total, fmt.Errorf("%s/encode: Invalid message type %d", this.Type, this.Type)
+	if !this.messageType.Valid() {
+		return total, fmt.Errorf("%s/encode: Invalid message type %d", this.messageType, this.messageType)
 	}
 
 	// write type and flags
-	typeAndFlags := byte(this.Type)<<4 | (this.Type.defaultFlags() & 0xf)
+	typeAndFlags := byte(this.messageType)<<4 | (this.messageType.defaultFlags() & 0xf)
 	typeAndFlags |= flags
 	dst[total] = typeAndFlags
 	total += 1
@@ -84,31 +84,31 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 
 	// check buffer size
 	if len(src) < 2 {
-		return total, 0, 0, fmt.Errorf("%s/encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, 2, len(src))
+		return total, 0, 0, fmt.Errorf("%s/encode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, 2, len(src))
 	}
 
 	// cache old type
-	oldType := this.Type
+	oldType := this.messageType
 
 	// read type and flags
 	typeAndFlags := src[total : total+1]
-	this.Type = MessageType(typeAndFlags[0] >> 4)
+	this.messageType = MessageType(typeAndFlags[0] >> 4)
 	flags := typeAndFlags[0] & 0x0f
 	total++
 
 	// check new type
-	if !this.Type.Valid() {
-		return total, 0, 0, fmt.Errorf("%s/decode: Invalid message type.", this.Type)
+	if !this.messageType.Valid() {
+		return total, 0, 0, fmt.Errorf("%s/decode: Invalid message type.", this.messageType)
 	}
 
 	// check against old type
-	if oldType != this.Type {
-		return total, 0, 0, fmt.Errorf("%s/decode: Invalid message type. Expecting %d.", this.Type, oldType)
+	if oldType != this.messageType {
+		return total, 0, 0, fmt.Errorf("%s/decode: Invalid message type. Expecting %d.", this.messageType, oldType)
 	}
 
 	// check flags except for publish messages
-	if this.Type != PUBLISH && flags != this.Type.defaultFlags() {
-		return total, 0, 0, fmt.Errorf("%s/decode: Invalid message flags. Expecting %d, got %d", this.Type, this.Type.defaultFlags(), flags)
+	if this.messageType != PUBLISH && flags != this.messageType.defaultFlags() {
+		return total, 0, 0, fmt.Errorf("%s/decode: Invalid message flags. Expecting %d, got %d", this.messageType, this.messageType.defaultFlags(), flags)
 	}
 
 	// read remaining length
@@ -118,12 +118,12 @@ func (this *header) decode(src []byte) (int, byte, int, error) {
 
 	// check resulting remaining length
 	if rl > maxRemainingLength || rl < 0 {
-		return total, 0, 0, fmt.Errorf("%s/decode: Remaining length (%d) out of bound (max %d, min 0).", this.Type, rl, maxRemainingLength)
+		return total, 0, 0, fmt.Errorf("%s/decode: Remaining length (%d) out of bound (max %d, min 0).", this.messageType, rl, maxRemainingLength)
 	}
 
 	// check remaining buffer
 	if rl > len(src[total:]) {
-		return total, 0, 0, fmt.Errorf("%s/decode: Remaining length (%d) is greater than remaining buffer (%d).", this.Type, rl, len(src[total:]))
+		return total, 0, 0, fmt.Errorf("%s/decode: Remaining length (%d) is greater than remaining buffer (%d).", this.messageType, rl, len(src[total:]))
 	}
 
 	return total, flags, rl, nil

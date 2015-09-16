@@ -49,13 +49,17 @@ var _ Message = (*SubscribeMessage)(nil)
 // NewSubscribeMessage creates a new SUBSCRIBE message.
 func NewSubscribeMessage() *SubscribeMessage {
 	msg := &SubscribeMessage{}
-	msg.Type = SUBSCRIBE
+	msg.messageType = SUBSCRIBE
 	return msg
+}
+
+func (this SubscribeMessage) Type() MessageType {
+	return SUBSCRIBE
 }
 
 // String returns a string representation of the message.
 func (this SubscribeMessage) String() string {
-	msgstr := fmt.Sprintf("%s: PacketId=%d", this.Type, this.PacketId)
+	msgstr := fmt.Sprintf("%s: PacketId=%d", this.messageType, this.PacketId)
 
 	for i, t := range this.Subscriptions {
 		msgstr = fmt.Sprintf("%s Topic[%d]=%q/%d", msgstr, i, string(t.Topic), t.QoS)
@@ -86,12 +90,12 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+2, len(src))
+		return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, total+2, len(src))
 	}
 
 	// check remaining length
 	if rl <= 2 {
-		return total, fmt.Errorf("%s/Decode: Expected remaining length to be greater that 2, got.", this.Type, rl)
+		return total, fmt.Errorf("%s/Decode: Expected remaining length to be greater that 2, got.", this.messageType, rl)
 	}
 
 	// read packet id
@@ -111,7 +115,7 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 
 		// check buffer length
 		if len(src) < total+1 {
-			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.Type, total+1, len(src))
+			return total, fmt.Errorf("%s/Decode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, total+1, len(src))
 		}
 
 		// read qos and add subscription
@@ -124,7 +128,7 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check for empty subscription list
 	if len(this.Subscriptions) == 0 {
-		return total, fmt.Errorf("%s/Decode: Empty subscription list.", this.Type)
+		return total, fmt.Errorf("%s/Decode: Empty subscription list.", this.messageType)
 	}
 
 	return total, nil
@@ -140,7 +144,7 @@ func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
 	// check buffer length
 	l := this.Len()
 	if len(dst) < l {
-		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.Type, l, len(dst))
+		return total, fmt.Errorf("%s/Encode: Insufficient buffer size. Expecting %d, got %d.", this.messageType, l, len(dst))
 	}
 
 	// encode header

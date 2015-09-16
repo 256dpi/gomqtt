@@ -45,7 +45,7 @@ func TestSubscribeMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, SUBSCRIBE, msg.Type, "Error decoding message.")
+	require.Equal(t, SUBSCRIBE, msg.messageType, "Error decoding message.")
 	require.Equal(t, 3, len(msg.Subscriptions), "Error decoding topics.")
 	require.Equal(t, []byte("surgemq"), msg.Subscriptions[0].Topic, "Topic 'surgemq' should exist.")
 	require.Equal(t, 0, int(msg.Subscriptions[0].QoS), "Incorrect topic qos.")

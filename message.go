@@ -93,6 +93,8 @@ const (
 
 // Message is an interface defined for all MQTT message types.
 type Message interface {
+	Type() MessageType
+
 	// Decode reads the bytes in the byte slice from the argument. It returns the
 	// total number of bytes decoded, and whether there have been any errors during
 	// the process. The byte slice MUST NOT be modified during the duration of this
