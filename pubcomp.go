@@ -17,7 +17,8 @@ package message
 // The PUBCOMP Packet is the response to a PUBREL Packet. It is the fourth and
 // final packet of the QoS 2 protocol exchange.
 type PubcompMessage struct {
-	identifiedMessage
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*PubcompMessage)(nil)
@@ -25,10 +26,24 @@ var _ Message = (*PubcompMessage)(nil)
 // NewPubcompMessage creates a new PUBCOMP message.
 func NewPubcompMessage() *PubcompMessage {
 	msg := &PubcompMessage{}
-	msg.messageType = PUBCOMP
 	return msg
 }
 
 func (this PubcompMessage) Type() MessageType {
 	return PUBCOMP
+}
+
+
+func (this *PubcompMessage) Len() int {
+	return identifiedMessageLen()
+}
+
+func (this *PubcompMessage) Decode(src []byte) (int, error) {
+	n, pid, err := identifiedMessageDecode(src, PUBCOMP)
+	this.PacketId = pid
+	return n, err
+}
+
+func (this *PubcompMessage) Encode(dst []byte) (int, error) {
+	return identifiedMessageEncode(dst, this.PacketId, PUBCOMP)
 }

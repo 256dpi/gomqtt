@@ -17,7 +17,8 @@ package message
 // A PUBREL Packet is the response to a PUBREC Packet. It is the third packet of the
 // QoS 2 protocol exchange.
 type PubrelMessage struct {
-	identifiedMessage
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*PubrelMessage)(nil)
@@ -25,10 +26,24 @@ var _ Message = (*PubrelMessage)(nil)
 // NewPubrelMessage creates a new PUBREL message.
 func NewPubrelMessage() *PubrelMessage {
 	msg := &PubrelMessage{}
-	msg.messageType = PUBREL
 	return msg
 }
 
 func (this PubrelMessage) Type() MessageType {
 	return PUBREL
+}
+
+
+func (this *PubrelMessage) Len() int {
+	return identifiedMessageLen()
+}
+
+func (this *PubrelMessage) Decode(src []byte) (int, error) {
+	n, pid, err := identifiedMessageDecode(src, PUBREL)
+	this.PacketId = pid
+	return n, err
+}
+
+func (this *PubrelMessage) Encode(dst []byte) (int, error) {
+	return identifiedMessageEncode(dst, this.PacketId, PUBREL)
 }

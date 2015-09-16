@@ -21,8 +21,6 @@ import (
 
 // An UNSUBSCRIBE Packet is sent by the Client to the Server, to unsubscribe from topics.
 type UnsubscribeMessage struct {
-	header
-
 	// The topics to unsubscribe from.
 	Topics [][]byte
 
@@ -35,7 +33,6 @@ var _ Message = (*UnsubscribeMessage)(nil)
 // NewUnsubscribeMessage creates a new UNSUBSCRIBE message.
 func NewUnsubscribeMessage() *UnsubscribeMessage {
 	msg := &UnsubscribeMessage{}
-	msg.messageType = UNSUBSCRIBE
 	return msg
 }
 
@@ -57,7 +54,7 @@ func (this UnsubscribeMessage) String() string {
 // Len returns the byte length of the message.
 func (this *UnsubscribeMessage) Len() int {
 	ml := this.msglen()
-	return this.header.len(ml) + ml
+	return headerLen(ml) + ml
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -68,7 +65,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, _, rl, err := this.header.decode(src[total:])
+	hl, _, rl, err := headerDecode(src[total:], UNSUBSCRIBE)
 	total += hl
 	if err != nil {
 		return total, err
@@ -123,7 +120,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := this.header.encode(dst[total:], 0, this.msglen())
+	n, err := headerEncode(dst[total:], 0, this.msglen(), UNSUBSCRIBE)
 	total += n
 	if err != nil {
 		return total, err

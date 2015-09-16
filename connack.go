@@ -24,8 +24,6 @@ import "fmt"
 // amount of time, the Client SHOULD close the Network Connection. A "reasonable" amount
 // of time depends on the type of application and the communications infrastructure.
 type ConnackMessage struct {
-	header
-
 	// The Session Present flag enables a Client to establish whether the Client and
 	// Server have a consistent view about whether there is already stored Session state.
 	SessionPresent bool
@@ -41,7 +39,6 @@ var _ Message = (*ConnackMessage)(nil)
 // NewConnackMessage creates a new CONNACK message.
 func NewConnackMessage() *ConnackMessage {
 	msg := &ConnackMessage{}
-	msg.messageType = CONNACK
 	return msg
 }
 
@@ -56,7 +53,7 @@ func (this ConnackMessage) String() string {
 
 // Len returns the byte length of the message.
 func (this *ConnackMessage) Len() int {
-	return this.header.len(2) + 2
+	return headerLen(2) + 2
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -67,7 +64,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, _, rl, err := this.header.decode(src)
+	hl, _, rl, err := headerDecode(src, CONNACK)
 	total += hl
 	if err != nil {
 		return total, err
@@ -119,7 +116,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := this.header.encode(dst[total:], 0, 2)
+	n, err := headerEncode(dst[total:], 0, 2, CONNACK)
 	total += n
 	if err != nil {
 		return total, err

@@ -16,27 +16,24 @@ package message
 
 import "fmt"
 
-type nakedMessage struct {
-	header
-}
 
 // String returns a string representation of the message.
-func (this nakedMessage) String() string {
-	return fmt.Sprintf("%s", this.messageType)
-}
+//func (this nakedMessage) String() string {
+//	return fmt.Sprintf("%s", this.messageType)
+//}
 
 // Len returns the byte length of the message.
-func (this *nakedMessage) Len() int {
-	return this.header.len(0)
+func nakedMessageLen() int {
+	return headerLen(0)
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
 // total number of bytes decoded, and whether there have been any errors during
 // the process. The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
-func (this *nakedMessage) Decode(src []byte) (int, error) {
+func nakedMessageDecode(src []byte, mt MessageType) (int, error) {
 	// decode header
-	hl, _, rl, err := this.header.decode(src)
+	hl, _, rl, err := headerDecode(src, mt)
 
 	// check remaining length
 	if rl != 0 {
@@ -50,7 +47,7 @@ func (this *nakedMessage) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there's any errors, then the byte slice and count should be
 // considered invalid.
-func (this *nakedMessage) Encode(dst []byte) (int, error) {
+func nakedMessageEncode(dst []byte, mt MessageType) (int, error) {
 	// encode header
-	return this.header.encode(dst, 0, 0)
+	return headerEncode(dst, 0, 0, mt)
 }

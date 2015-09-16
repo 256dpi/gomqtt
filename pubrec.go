@@ -17,7 +17,8 @@ package message
 // A PUBREC Packet is the response to a PUBLISH Packet with QoS 2. It is the second
 // packet of the QoS 2 protocol exchange.
 type PubrecMessage struct {
-	identifiedMessage
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*PubrecMessage)(nil)
@@ -25,10 +26,24 @@ var _ Message = (*PubrecMessage)(nil)
 // NewPubrecMessage creates a new PUBREC message.
 func NewPubrecMessage() *PubrecMessage {
 	msg := &PubrecMessage{}
-	msg.messageType = PUBREC
 	return msg
 }
 
 func (this PubrecMessage) Type() MessageType {
 	return PUBREC
+}
+
+
+func (this *PubrecMessage) Len() int {
+	return identifiedMessageLen()
+}
+
+func (this *PubrecMessage) Decode(src []byte) (int, error) {
+	n, pid, err := identifiedMessageDecode(src, PUBREC)
+	this.PacketId = pid
+	return n, err
+}
+
+func (this *PubrecMessage) Encode(dst []byte) (int, error) {
+	return identifiedMessageEncode(dst, this.PacketId, PUBREC)
 }

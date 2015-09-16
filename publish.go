@@ -22,8 +22,6 @@ import (
 // A PUBLISH Control Packet is sent from a Client to a Server or from Server to a Client
 // to transport an Application Message.
 type PublishMessage struct {
-	header
-
 	// The Topic of the message.
 	Topic []byte
 
@@ -53,7 +51,6 @@ var _ Message = (*PublishMessage)(nil)
 // NewPublishMessage creates a new PUBLISH message.
 func NewPublishMessage() *PublishMessage {
 	msg := &PublishMessage{}
-	msg.messageType = PUBLISH
 	return msg
 }
 
@@ -70,7 +67,7 @@ func (this PublishMessage) String() string {
 // Len returns the byte length of the message.
 func (this *PublishMessage) Len() int {
 	ml := this.msglen()
-	return this.header.len(ml) + ml
+	return headerLen(ml) + ml
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -81,7 +78,7 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, flags, rl, err := this.header.decode(src[total:])
+	hl, flags, rl, err := headerDecode(src[total:], PUBLISH)
 	total += hl
 	if err != nil {
 		return total, err
@@ -182,7 +179,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	flags = (flags & 249) | (this.QoS << 1) // 249 = 11111001
 
 	// encode header
-	n, err := this.header.encode(dst[total:], flags, this.msglen())
+	n, err := headerEncode(dst[total:], flags, this.msglen(), PUBLISH)
 	total += n
 	if err != nil {
 		return total, err

@@ -16,19 +16,28 @@ package message
 
 // The DISCONNECT Packet is the final Control Packet sent from the Client to the Server.
 // It indicates that the Client is disconnecting cleanly.
-type DisconnectMessage struct {
-	nakedMessage
-}
+type DisconnectMessage struct {}
 
 var _ Message = (*DisconnectMessage)(nil)
 
 // NewDisconnectMessage creates a new DISCONNECT message.
 func NewDisconnectMessage() *DisconnectMessage {
 	msg := &DisconnectMessage{}
-	msg.messageType = DISCONNECT
 	return msg
 }
 
 func (this DisconnectMessage) Type() MessageType {
 	return DISCONNECT
+}
+
+func (this *DisconnectMessage) Len() int {
+	return nakedMessageLen()
+}
+
+func (this *DisconnectMessage) Decode(src []byte) (int, error) {
+	return nakedMessageDecode(src, DISCONNECT)
+}
+
+func (this *DisconnectMessage) Encode(dst []byte) (int, error) {
+	return nakedMessageEncode(dst, DISCONNECT)
 }

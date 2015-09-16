@@ -16,19 +16,28 @@ package message
 
 // A PINGRESP Packet is sent by the Server to the Client in response to a PINGREQ
 // Packet. It indicates that the Server is alive.
-type PingrespMessage struct {
-	nakedMessage
-}
+type PingrespMessage struct {}
 
 var _ Message = (*PingrespMessage)(nil)
 
 // NewPingrespMessage creates a new PINGRESP message.
 func NewPingrespMessage() *PingrespMessage {
 	msg := &PingrespMessage{}
-	msg.messageType = PINGRESP
 	return msg
 }
 
 func (this PingrespMessage) Type() MessageType {
 	return PINGRESP
+}
+
+func (this *PingrespMessage) Len() int {
+	return nakedMessageLen()
+}
+
+func (this *PingrespMessage) Decode(src []byte) (int, error) {
+	return nakedMessageDecode(src, PINGRESP)
+}
+
+func (this *PingrespMessage) Encode(dst []byte) (int, error) {
+	return nakedMessageEncode(dst, PINGRESP)
 }

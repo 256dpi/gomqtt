@@ -33,8 +33,6 @@ var (
 // disconnect the Client [MQTT-3.1.0-2].  See section 4.8 for information about
 // handling errors.
 type ConnectMessage struct {
-	header
-
 	// The protocol version (3 or 4).
 	Version byte
 
@@ -71,7 +69,6 @@ var _ Message = (*ConnectMessage)(nil)
 // NewConnectMessage creates a new CONNECT message.
 func NewConnectMessage() *ConnectMessage {
 	msg := &ConnectMessage{}
-	msg.messageType = CONNECT
 	msg.Version = 4
 	msg.CleanSession = true
 	return msg
@@ -97,7 +94,7 @@ func (this ConnectMessage) String() string {
 // Len returns the byte length of the message.
 func (this *ConnectMessage) Len() int {
 	ml := this.msglen()
-	return this.header.len(ml) + ml
+	return headerLen(ml) + ml
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -108,7 +105,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, _, _, err := this.header.decode(src[total:])
+	hl, _, _, err := headerDecode(src[total:], CONNECT)
 	total += hl
 	if err != nil {
 		return total, err
@@ -260,7 +257,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := this.header.encode(dst[total:], 0, this.msglen())
+	n, err := headerEncode(dst[total:], 0, this.msglen(), CONNECT)
 	total += n
 	if err != nil {
 		return total, err

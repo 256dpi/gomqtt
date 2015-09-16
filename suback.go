@@ -25,8 +25,6 @@ import (
 // A SUBACK Packet contains a list of return codes, that specify the maximum QoS level
 // that was granted in each Subscription that was requested by the SUBSCRIBE.
 type SubackMessage struct {
-	header
-
 	// The granted QoS levels for the requested subscriptions.
 	ReturnCodes []byte
 
@@ -39,7 +37,6 @@ var _ Message = (*SubackMessage)(nil)
 // NewSubackMessage creates a new SUBACK message.
 func NewSubackMessage() *SubackMessage {
 	msg := &SubackMessage{}
-	msg.messageType = SUBACK
 	return msg
 }
 
@@ -55,7 +52,7 @@ func (this SubackMessage) String() string {
 // Len returns the byte length of the message.
 func (this *SubackMessage) Len() int {
 	ml := this.msglen()
-	return this.header.len(ml) + ml
+	return headerLen(ml) + ml
 }
 
 // Decode reads the bytes in the byte slice from the argument. It returns the
@@ -66,7 +63,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
-	hl, _, rl, err := this.header.decode(src[total:])
+	hl, _, rl, err := headerDecode(src[total:], SUBACK)
 	total += hl
 	if err != nil {
 		return total, err
@@ -129,7 +126,7 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := this.header.encode(dst[total:], 0, this.msglen())
+	n, err := headerEncode(dst[total:], 0, this.msglen(), SUBACK)
 	total += n
 	if err != nil {
 		return total, err

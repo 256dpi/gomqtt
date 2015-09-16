@@ -16,7 +16,8 @@ package message
 
 // A PUBACK Packet is the response to a PUBLISH Packet with QoS level 1.
 type PubackMessage struct {
-	identifiedMessage
+	// Shared message identifier.
+	PacketId uint16
 }
 
 var _ Message = (*PubackMessage)(nil)
@@ -24,10 +25,23 @@ var _ Message = (*PubackMessage)(nil)
 // NewPubackMessage creates a new PUBACK message.
 func NewPubackMessage() *PubackMessage {
 	msg := &PubackMessage{}
-	msg.messageType = PUBACK
 	return msg
 }
 
 func (this PubackMessage) Type() MessageType {
 	return PUBACK
+}
+
+func (this *PubackMessage) Len() int {
+	return identifiedMessageLen()
+}
+
+func (this *PubackMessage) Decode(src []byte) (int, error) {
+	n, pid, err := identifiedMessageDecode(src, PUBACK)
+	this.PacketId = pid
+	return n, err
+}
+
+func (this *PubackMessage) Encode(dst []byte) (int, error) {
+	return identifiedMessageEncode(dst, this.PacketId, PUBACK)
 }

@@ -19,19 +19,29 @@ package message
 //    Control Packets being sent from the Client to the Server.
 // 2. Request that the Server responds to confirm that it is alive.
 // 3. Exercise the network to indicate that the Network Connection is active.
-type PingreqMessage struct {
-	nakedMessage
-}
+type PingreqMessage struct {}
 
 var _ Message = (*PingreqMessage)(nil)
 
 // NewPingreqMessage creates a new PINGREQ message.
 func NewPingreqMessage() *PingreqMessage {
 	msg := &PingreqMessage{}
-	msg.messageType = PINGREQ
 	return msg
 }
 
 func (this PingreqMessage) Type() MessageType {
 	return PINGREQ
 }
+
+func (this *PingreqMessage) Len() int {
+	return nakedMessageLen()
+}
+
+func (this *PingreqMessage) Decode(src []byte) (int, error) {
+	return nakedMessageDecode(src, PINGREQ)
+}
+
+func (this *PingreqMessage) Encode(dst []byte) (int, error) {
+	return nakedMessageEncode(dst, PINGREQ)
+}
+

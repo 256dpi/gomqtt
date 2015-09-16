@@ -95,6 +95,9 @@ const (
 type Message interface {
 	Type() MessageType
 
+	// Len returns the byte length of the message.
+	Len() int
+
 	// Decode reads the bytes in the byte slice from the argument. It returns the
 	// total number of bytes decoded, and whether there have been any errors during
 	// the process. The byte slice MUST NOT be modified during the duration of this
@@ -106,9 +109,6 @@ type Message interface {
 	// the way. If there's any errors, then the byte slice and count should be
 	// considered invalid.
 	Encode([]byte) (int, error)
-
-	// Len returns the byte length of the message.
-	Len() int
 }
 
 /*

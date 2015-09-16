@@ -37,7 +37,6 @@ func TestSubackMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, SUBACK, msg.messageType, "Error decoding message.")
 	require.Equal(t, 4, len(msg.ReturnCodes), "Error adding return code.")
 }
 
