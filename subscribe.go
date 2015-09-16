@@ -50,6 +50,7 @@ func NewSubscribeMessage() *SubscribeMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this SubscribeMessage) Type() MessageType {
 	return SUBSCRIBE
 }
@@ -172,6 +173,7 @@ func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
+// Returns the payload length.
 func (this *SubscribeMessage) msglen() int {
 	// packet ID
 	total := 2

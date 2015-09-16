@@ -30,6 +30,7 @@ func NewUnsubackMessage() *UnsubackMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this UnsubackMessage) Type() MessageType {
 	return UNSUBACK
 }

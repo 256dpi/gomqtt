@@ -40,6 +40,7 @@ func NewSubackMessage() *SubackMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this SubackMessage) Type() MessageType {
 	return SUBACK
 }
@@ -143,6 +144,7 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
+// Returns the payload length.
 func (this *SubackMessage) msglen() int {
 	return 2 + len(this.ReturnCodes)
 }

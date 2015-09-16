@@ -74,6 +74,7 @@ func NewConnectMessage() *ConnectMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this ConnectMessage) Type() MessageType {
 	return CONNECT
 }
@@ -381,6 +382,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
+// Returns the payload length.
 func (this *ConnectMessage) msglen() int {
 	total := 0
 

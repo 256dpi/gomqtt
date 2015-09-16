@@ -26,6 +26,7 @@ func NewDisconnectMessage() *DisconnectMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this DisconnectMessage) Type() MessageType {
 	return DISCONNECT
 }

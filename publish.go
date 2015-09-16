@@ -54,6 +54,7 @@ func NewPublishMessage() *PublishMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this PublishMessage) Type() MessageType {
 	return PUBLISH
 }
@@ -205,6 +206,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
+// Returns the payload length.
 func (this *PublishMessage) msglen() int {
 	total := 2 + len(this.Topic) + len(this.Payload)
 	if this.QoS != 0 {

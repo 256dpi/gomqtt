@@ -29,6 +29,7 @@ func NewPubackMessage() *PubackMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this PubackMessage) Type() MessageType {
 	return PUBACK
 }

@@ -26,6 +26,7 @@ func NewPingrespMessage() *PingrespMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this PingrespMessage) Type() MessageType {
 	return PINGRESP
 }

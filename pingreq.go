@@ -29,6 +29,7 @@ func NewPingreqMessage() *PingreqMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this PingreqMessage) Type() MessageType {
 	return PINGREQ
 }

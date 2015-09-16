@@ -30,6 +30,7 @@ func NewPubrecMessage() *PubrecMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this PubrecMessage) Type() MessageType {
 	return PUBREC
 }

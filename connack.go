@@ -42,6 +42,7 @@ func NewConnackMessage() *ConnackMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this ConnackMessage) Type() MessageType {
 	return CONNACK
 }

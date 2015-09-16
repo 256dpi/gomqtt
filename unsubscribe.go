@@ -36,6 +36,7 @@ func NewUnsubscribeMessage() *UnsubscribeMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this UnsubscribeMessage) Type() MessageType {
 	return UNSUBSCRIBE
 }
@@ -142,6 +143,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
+// Returns the payload length.
 func (this *UnsubscribeMessage) msglen() int {
 	// packet ID
 	total := 2

@@ -30,6 +30,7 @@ func NewPubcompMessage() *PubcompMessage {
 	return msg
 }
 
+// Type return the messages message type.
 func (this PubcompMessage) Type() MessageType {
 	return PUBCOMP
 }
