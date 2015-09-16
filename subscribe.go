@@ -99,6 +99,9 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 	this.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
+	// reset subscriptions
+	this.Subscriptions = this.Subscriptions[:0]
+
 	// calculate number of subscriptions
 	sl := int(rl) - 2
 

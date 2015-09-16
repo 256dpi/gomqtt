@@ -83,6 +83,9 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	// prepare counter
 	tl := int(rl) - 2
 
+	// reset topics
+	this.Topics = this.Topics[:0]
+
 	for tl > 0 {
 		// read topic
 		t, n, err := readLPBytes(src[total:])
