@@ -67,7 +67,7 @@ func (this SubscribeMessage) String() string {
 
 // Len returns the byte length of the message.
 func (this *SubscribeMessage) Len() int {
-	ml := this.msglen()
+	ml := this.len()
 	return headerLen(ml) + ml
 }
 
@@ -148,7 +148,7 @@ func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.msglen(), SUBSCRIBE)
+	n, err := headerEncode(dst[total:], 0, this.len(), SUBSCRIBE)
 	total += n
 	if err != nil {
 		return total, err
@@ -176,7 +176,7 @@ func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (this *SubscribeMessage) msglen() int {
+func (this *SubscribeMessage) len() int {
 	// packet ID
 	total := 2
 

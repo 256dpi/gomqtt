@@ -91,7 +91,7 @@ func (this ConnectMessage) String() string {
 
 // Len returns the byte length of the message.
 func (this *ConnectMessage) Len() int {
-	ml := this.msglen()
+	ml := this.len()
 	return headerLen(ml) + ml
 }
 
@@ -255,7 +255,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.msglen(), CONNECT)
+	n, err := headerEncode(dst[total:], 0, this.len(), CONNECT)
 	total += n
 	if err != nil {
 		return total, err
@@ -380,7 +380,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (this *ConnectMessage) msglen() int {
+func (this *ConnectMessage) len() int {
 	total := 0
 
 	vl := 0

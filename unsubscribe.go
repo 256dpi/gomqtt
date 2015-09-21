@@ -53,7 +53,7 @@ func (this UnsubscribeMessage) String() string {
 
 // Len returns the byte length of the message.
 func (this *UnsubscribeMessage) Len() int {
-	ml := this.msglen()
+	ml := this.len()
 	return headerLen(ml) + ml
 }
 
@@ -123,7 +123,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.msglen(), UNSUBSCRIBE)
+	n, err := headerEncode(dst[total:], 0, this.len(), UNSUBSCRIBE)
 	total += n
 	if err != nil {
 		return total, err
@@ -146,7 +146,7 @@ func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (this *UnsubscribeMessage) msglen() int {
+func (this *UnsubscribeMessage) len() int {
 	// packet ID
 	total := 2
 

@@ -66,7 +66,7 @@ func (this PublishMessage) String() string {
 
 // Len returns the byte length of the message.
 func (this *PublishMessage) Len() int {
-	ml := this.msglen()
+	ml := this.len()
 	return headerLen(ml) + ml
 }
 
@@ -179,7 +179,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	flags = (flags & 249) | (this.QoS << 1) // 249 = 11111001
 
 	// encode header
-	n, err := headerEncode(dst[total:], flags, this.msglen(), PUBLISH)
+	n, err := headerEncode(dst[total:], flags, this.len(), PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
@@ -206,7 +206,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (this *PublishMessage) msglen() int {
+func (this *PublishMessage) len() int {
 	total := 2 + len(this.Topic) + len(this.Payload)
 	if this.QoS != 0 {
 		total += 2

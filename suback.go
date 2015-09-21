@@ -51,7 +51,7 @@ func (this SubackMessage) String() string {
 
 // Len returns the byte length of the message.
 func (this *SubackMessage) Len() int {
-	ml := this.msglen()
+	ml := this.len()
 	return headerLen(ml) + ml
 }
 
@@ -126,7 +126,7 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.msglen(), SUBACK)
+	n, err := headerEncode(dst[total:], 0, this.len(), SUBACK)
 	total += n
 	if err != nil {
 		return total, err
@@ -144,6 +144,6 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (this *SubackMessage) msglen() int {
+func (this *SubackMessage) len() int {
 	return 2 + len(this.ReturnCodes)
 }
