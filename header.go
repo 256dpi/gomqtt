@@ -94,7 +94,7 @@ func headerDecode(src []byte, mt MessageType) (int, byte, int, error) {
 
 	// check against static type
 	if decodedType != mt {
-		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid message type. Ws %d.", decodedType)
+		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid message type %d.", mt, decodedType)
 	}
 
 	// check flags except for publish messages
