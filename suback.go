@@ -97,7 +97,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// validate return codes
 	for i, code := range this.ReturnCodes {
-		if !validQoS(code) && code != 0x80 {
+		if !validQoS(code) && code != QosFailure {
 			return total, fmt.Errorf("SUBACK/Decode: Invalid return code %d for topic %d.", code, i)
 		}
 	}
@@ -120,7 +120,7 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 
 	// check return codes
 	for i, code := range this.ReturnCodes {
-		if !validQoS(code) && code != 0x80 {
+		if !validQoS(code) && code != QosFailure {
 			return total, fmt.Errorf("SUBACK/Encode: Invalid return code %d for topic %d.", code, i)
 		}
 	}
