@@ -42,13 +42,13 @@ func (this UnsubscribeMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (this UnsubscribeMessage) String() string {
-	msgstr := "UNSUBSCRIBE:"
+	s := "UNSUBSCRIBE:"
 
 	for i, t := range this.Topics {
-		msgstr = fmt.Sprintf("%s Topic[%d]=%s", msgstr, i, string(t))
+		s = fmt.Sprintf("%s Topic[%d]=%s", s, i, string(t))
 	}
 
-	return msgstr
+	return s
 }
 
 // Len returns the byte length of the message.

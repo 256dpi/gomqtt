@@ -56,13 +56,13 @@ func (this SubscribeMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (this SubscribeMessage) String() string {
-	msgstr := fmt.Sprintf("SUBSCRIBE: PacketId=%d", this.PacketId)
+	s := fmt.Sprintf("SUBSCRIBE: PacketId=%d", this.PacketId)
 
 	for i, t := range this.Subscriptions {
-		msgstr = fmt.Sprintf("%s Topic[%d]=%q/%d", msgstr, i, string(t.Topic), t.QoS)
+		s = fmt.Sprintf("%s Topic[%d]=%q/%d", s, i, string(t.Topic), t.QoS)
 	}
 
-	return msgstr
+	return s
 }
 
 // Len returns the byte length of the message.
