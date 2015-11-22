@@ -84,33 +84,37 @@ func (this *Client)Connect(opts *Options) (error) {
 		return err
 	}
 
+	// save conn and create stream
 	this.conn = conn
 	this.stream = stream.NewStream(conn, conn)
 
-	u := ""
-	p := ""
+	// start watcher and processor
+	go this.process()
+	go this.watch()
 
-	if opts.URL.User != nil {
-		u = opts.URL.User.Username()
-		p, _ = opts.URL.User.Password()
-	}
-
+	// prepare connect message
 	m := message.NewConnectMessage()
 	m.Version = message.Version311
 	m.ClientId = []byte(opts.ClientID)
 	m.KeepAlive = uint16(opts.KeepAlive.Seconds())
-	m.Username = []byte(u)
-	m.Password = []byte(p)
 	m.CleanSession = opts.CleanSession
+
+	// check for credentials
+	if opts.URL.User != nil {
+		m.Username = []byte(opts.URL.User.Username())
+		p, _ := opts.URL.User.Password()
+		m.Password = []byte(p)
+	}
+
+	// set will
 	m.WillTopic = []byte(opts.WillTopic)
 	m.WillPayload = opts.WillPayload
 	m.WillQoS = opts.WillQos
 	m.WillRetain = opts.WillRetained
 
-	go this.receive()
-	go this.watch()
-
+	// send connect message
 	this.stream.Out <- m
+
 	return nil
 }
 
@@ -166,7 +170,7 @@ func (this *Client)Disconnect() {
 }
 
 // process incoming messages
-func (this *Client)receive(){
+func (this *Client)process(){
 	for {
 		msg, ok := <- this.stream.In
 
