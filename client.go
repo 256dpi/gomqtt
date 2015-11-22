@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 	"crypto/tls"
+	"time"
 
 	"github.com/gomqtt/stream"
 	"github.com/gomqtt/message"
@@ -17,12 +18,17 @@ type(
 )
 
 type Client struct {
+	opts *Options
 	conn net.Conn
 	stream *stream.Stream
+	quit chan bool
 
 	connectCallback ConnectCallback
 	messageCallback MessageCallback
 	errorCallback ErrorCallback
+
+	lastContact time.Time
+	pingrespPending bool
 }
 
 // NewClient returns a new client.
@@ -97,11 +103,13 @@ func (this *Client)Connect(opts *Options) (error) {
 	}
 
 	// save conn and create stream
+	this.opts = opts
 	this.conn = conn
 	this.stream = stream.NewStream(conn, conn)
 
 	// start watcher and processor
 	go this.process()
+	go this.keepAlive()
 	go this.watch()
 
 	// prepare connect message
@@ -125,21 +133,21 @@ func (this *Client)Connect(opts *Options) (error) {
 	m.WillRetain = opts.WillRetained
 
 	// send connect message
-	this.stream.Out <- m
+	this.send(m)
 
 	return nil
 }
 
-func (this *Client)Publish(topic string, payload []byte, qos int, retain bool) {
+func (this *Client)Publish(topic string, payload []byte, qos byte, retain bool) {
 	m := message.NewPublishMessage()
 	m.Topic = []byte(topic)
 	m.Payload = payload
-	m.QoS = 0x00
+	m.QoS = qos
 	m.Retain = retain
 	m.Dup = false
 	m.PacketId = 1
 
-	this.stream.Out <- m
+	this.send(m)
 }
 
 func (this *Client)Subscribe(topic string, qos byte) {
@@ -160,7 +168,7 @@ func (this *Client)SubscribeMultiple(filters map[string]byte) {
 		})
 	}
 
-	this.stream.Out <- m
+	this.send(m)
 }
 
 func (this *Client)Unsubscribe(topic string) {
@@ -176,43 +184,79 @@ func (this *Client)UnsubscribeMultiple(topics []string) {
 		m.Topics = append(m.Topics, []byte(t))
 	}
 
-	this.stream.Out <- m
+	this.send(m)
 }
 
 func (this *Client)Disconnect() {
 	m := message.NewDisconnectMessage()
 
-	this.stream.Out <- m
+	this.send(m)
 }
 
 // process incoming messages
 func (this *Client)process(){
 	for {
-		msg, ok := <- this.stream.In
+		select {
+		case <-this.quit:
+			return
+		case msg, ok := <- this.stream.In:
+			if !ok {
+				return
+			}
 
-		if !ok {
-			break
-		}
+			this.lastContact = time.Now()
 
-		switch msg.Type() {
-		case message.CONNACK:
-			m, ok := msg.(*message.ConnackMessage)
+			switch msg.Type() {
+			case message.CONNACK:
+				m, ok := msg.(*message.ConnackMessage)
 
-			if ok {
-				if m.ReturnCode == message.ConnectionAccepted {
-					if this.connectCallback != nil {
-						this.connectCallback(m.SessionPresent)
+				if ok {
+					if m.ReturnCode == message.ConnectionAccepted {
+						if this.connectCallback != nil {
+							this.connectCallback(m.SessionPresent)
+						}
+					} else {
+						if this.errorCallback != nil {
+							this.errorCallback(errors.New(m.ReturnCode.Error()))
+						}
 					}
 				} else {
 					if this.errorCallback != nil {
-						this.errorCallback(errors.New(m.ReturnCode.Error()))
+						this.errorCallback(errors.New("failed to convert CONNACK message"))
 					}
 				}
-			} else {
-				if this.errorCallback != nil {
-					this.errorCallback(errors.New("failed to convert CONNACK message"))
+			}
+		}
+	}
+}
+
+func (this *Client)send(msg message.Message) {
+	this.lastContact = time.Now()
+	this.stream.Out <- msg
+}
+
+// manages the sending of ping packets to keep the connection alive
+func (this *Client)keepAlive() {
+	for {
+		select {
+		case <-this.quit:
+			return
+		default:
+			last := uint(time.Since(this.lastContact).Seconds())
+
+			if last > uint(this.opts.KeepAlive.Seconds()) {
+				if !this.pingrespPending {
+					this.pingrespPending = true
+
+					m := message.NewPingrespMessage()
+					this.send(m)
+				} else {
+					// TODO: close connection?
+					// return
 				}
 			}
+
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
@@ -221,12 +265,22 @@ func (this *Client)process(){
 func (this *Client)watch(){
 	for {
 		select {
-		case err := <- this.stream.Error:
+		case <-this.quit:
+			return
+		case err, ok := <- this.stream.Error:
+			if !ok {
+				return
+			}
+
 			if this.errorCallback != nil {
 				this.errorCallback(err)
 			}
-		case <- this.stream.EOF:
-			println("connection closed")
+		case _, ok := <- this.stream.EOF:
+			if !ok {
+				return
+			}
+
+			//TODO: connection closed
 		}
 	}
 }
