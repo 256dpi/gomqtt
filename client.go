@@ -199,7 +199,7 @@ func (this *Client)process(){
 		select {
 		case <-this.quit:
 			return
-		case msg, ok := <- this.stream.In:
+		case msg, ok := <-this.stream.In:
 			if !ok {
 				return
 			}
@@ -216,14 +216,26 @@ func (this *Client)process(){
 							this.connectCallback(m.SessionPresent)
 						}
 					} else {
-						if this.errorCallback != nil {
-							this.errorCallback(errors.New(m.ReturnCode.Error()))
-						}
+						this.error(errors.New(m.ReturnCode.Error()))
 					}
 				} else {
-					if this.errorCallback != nil {
-						this.errorCallback(errors.New("failed to convert CONNACK message"))
-					}
+					this.error(errors.New("failed to convert CONNACK message"))
+				}
+			case message.PINGRESP:
+				_, ok := msg.(*message.PingrespMessage)
+
+				if ok {
+					this.pingrespPending = false
+				} else {
+					this.error(errors.New("failed to convert PINGRESP message"))
+				}
+			case message.PUBLISH:
+				m, ok := msg.(*message.PublishMessage)
+
+				if ok {
+					this.messageCallback(string(m.Topic), m.Payload)
+				} else {
+					this.error(errors.New("failed to convert PUBLISH message"))
 				}
 			}
 		}
@@ -233,6 +245,12 @@ func (this *Client)process(){
 func (this *Client)send(msg message.Message) {
 	this.lastContact = time.Now()
 	this.stream.Out <- msg
+}
+
+func (this *Client)error(err error) {
+	if this.errorCallback != nil {
+		this.errorCallback(err)
+	}
 }
 
 // manages the sending of ping packets to keep the connection alive
@@ -272,9 +290,7 @@ func (this *Client)watch(){
 				return
 			}
 
-			if this.errorCallback != nil {
-				this.errorCallback(err)
-			}
+			this.error(err)
 		case _, ok := <- this.stream.EOF:
 			if !ok {
 				return
