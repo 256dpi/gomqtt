@@ -12,7 +12,7 @@ func TestClientConnect(t *testing.T) {
 
 	done := make(chan bool)
 
-	c.OnConnect(func(sessionPresent bool){
+	c.OnConnect(func(sessionPresent bool) {
 		require.False(t, sessionPresent)
 
 		done <- true
@@ -29,7 +29,7 @@ func TestClientPublishSubscribe(t *testing.T) {
 
 	done := make(chan bool)
 
-	c.OnMessage(func(topic string, payload []byte){
+	c.OnMessage(func(topic string, payload []byte) {
 		require.Equal(t, "test", topic)
 		require.Equal(t, []byte("test"), payload)
 
@@ -57,7 +57,7 @@ func TestClientErrorAuthentication(t *testing.T) {
 
 	done := make(chan bool)
 
-	c.OnError(func(err error){
+	c.OnError(func(err error) {
 		require.Error(t, err)
 
 		done <- true
@@ -66,7 +66,7 @@ func TestClientErrorAuthentication(t *testing.T) {
 	err := c.Connect(&Options{
 		URL: &url.URL{
 			Scheme: "mqtt",
-			Host: "localhost:1883",
+			Host:   "localhost:1883",
 		}, // missing clientID
 	})
 	require.NoError(t, err)

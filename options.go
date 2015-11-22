@@ -6,14 +6,14 @@ import (
 )
 
 type Options struct {
-	URL *url.URL
-	ClientID string
+	URL          *url.URL
+	ClientID     string
 	CleanSession bool
 
-	WillEnabled bool
-	WillTopic string
-	WillPayload []byte
-	WillQos byte
+	WillEnabled  bool
+	WillTopic    string
+	WillPayload  []byte
+	WillQos      byte
 	WillRetained bool
 
 	KeepAlive time.Duration

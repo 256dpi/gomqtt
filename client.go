@@ -1,66 +1,66 @@
 package client
 
 import (
-	"net"
-	"errors"
-	"net/url"
 	"crypto/tls"
+	"errors"
+	"net"
+	"net/url"
 	"time"
 
-	"github.com/gomqtt/stream"
 	"github.com/gomqtt/message"
+	"github.com/gomqtt/stream"
 )
 
-type(
+type (
 	ConnectCallback func(bool)
 	MessageCallback func(string, []byte)
-	ErrorCallback func(error)
+	ErrorCallback   func(error)
 )
 
 type Client struct {
-	opts *Options
-	conn net.Conn
+	opts   *Options
+	conn   net.Conn
 	stream *stream.Stream
-	quit chan bool
+	quit   chan bool
 
 	connectCallback ConnectCallback
 	messageCallback MessageCallback
-	errorCallback ErrorCallback
+	errorCallback   ErrorCallback
 
-	lastContact time.Time
+	lastContact     time.Time
 	pingrespPending bool
 }
 
 // NewClient returns a new client.
-func NewClient() (*Client) {
+func NewClient() *Client {
 	return &Client{}
 }
 
 // OnConnect sets the callback for successful connections.
-func (this *Client)OnConnect(callback ConnectCallback) {
+func (this *Client) OnConnect(callback ConnectCallback) {
 	this.connectCallback = callback
 }
 
 // OnMessage sets the callback for incoming messages.
-func (this *Client)OnMessage(callback MessageCallback) {
+func (this *Client) OnMessage(callback MessageCallback) {
 	this.messageCallback = callback
 }
 
 // OnError sets the callback for failed connection attempts and parsing errors.
-func (this *Client)OnError(callback ErrorCallback) {
+func (this *Client) OnError(callback ErrorCallback) {
 	this.errorCallback = callback
 }
 
 // QuickConnect opens a connection to the broker specified by an URL.
-func (this *Client)QuickConnect(urlString string, clientID string) (error) {
+func (this *Client) QuickConnect(urlString string, clientID string) error {
 	url, err := url.Parse(urlString)
 	if err != nil {
 		return err
 	}
 
 	opts := &Options{
-		URL: url,
-		ClientID: clientID,
+		URL:          url,
+		ClientID:     clientID,
 		CleanSession: true,
 	}
 
@@ -68,7 +68,7 @@ func (this *Client)QuickConnect(urlString string, clientID string) (error) {
 }
 
 // Connect opens the connection to the broker.
-func (this *Client)Connect(opts *Options) (error) {
+func (this *Client) Connect(opts *Options) error {
 	host, port, err := net.SplitHostPort(opts.URL.Host)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (this *Client)Connect(opts *Options) (error) {
 	return nil
 }
 
-func (this *Client)Publish(topic string, payload []byte, qos byte, retain bool) {
+func (this *Client) Publish(topic string, payload []byte, qos byte, retain bool) {
 	m := message.NewPublishMessage()
 	m.Topic = []byte(topic)
 	m.Payload = payload
@@ -150,13 +150,13 @@ func (this *Client)Publish(topic string, payload []byte, qos byte, retain bool) 
 	this.send(m)
 }
 
-func (this *Client)Subscribe(topic string, qos byte) {
+func (this *Client) Subscribe(topic string, qos byte) {
 	this.SubscribeMultiple(map[string]byte{
 		topic: qos,
 	})
 }
 
-func (this *Client)SubscribeMultiple(filters map[string]byte) {
+func (this *Client) SubscribeMultiple(filters map[string]byte) {
 	m := message.NewSubscribeMessage()
 	m.Subscriptions = make([]message.Subscription, 0, len(filters))
 	m.PacketId = 1
@@ -164,18 +164,18 @@ func (this *Client)SubscribeMultiple(filters map[string]byte) {
 	for topic, qos := range filters {
 		m.Subscriptions = append(m.Subscriptions, message.Subscription{
 			Topic: []byte(topic),
-			QoS: qos,
+			QoS:   qos,
 		})
 	}
 
 	this.send(m)
 }
 
-func (this *Client)Unsubscribe(topic string) {
+func (this *Client) Unsubscribe(topic string) {
 	this.UnsubscribeMultiple([]string{topic})
 }
 
-func (this *Client)UnsubscribeMultiple(topics []string) {
+func (this *Client) UnsubscribeMultiple(topics []string) {
 	m := message.NewUnsubscribeMessage()
 	m.Topics = make([][]byte, 0, len(topics))
 	m.PacketId = 1
@@ -187,14 +187,14 @@ func (this *Client)UnsubscribeMultiple(topics []string) {
 	this.send(m)
 }
 
-func (this *Client)Disconnect() {
+func (this *Client) Disconnect() {
 	m := message.NewDisconnectMessage()
 
 	this.send(m)
 }
 
 // process incoming messages
-func (this *Client)process(){
+func (this *Client) process() {
 	for {
 		select {
 		case <-this.quit:
@@ -242,19 +242,19 @@ func (this *Client)process(){
 	}
 }
 
-func (this *Client)send(msg message.Message) {
+func (this *Client) send(msg message.Message) {
 	this.lastContact = time.Now()
 	this.stream.Out <- msg
 }
 
-func (this *Client)error(err error) {
+func (this *Client) error(err error) {
 	if this.errorCallback != nil {
 		this.errorCallback(err)
 	}
 }
 
 // manages the sending of ping packets to keep the connection alive
-func (this *Client)keepAlive() {
+func (this *Client) keepAlive() {
 	for {
 		select {
 		case <-this.quit:
@@ -280,18 +280,18 @@ func (this *Client)keepAlive() {
 }
 
 // watch for EOFs and errors on the stream
-func (this *Client)watch(){
+func (this *Client) watch() {
 	for {
 		select {
 		case <-this.quit:
 			return
-		case err, ok := <- this.stream.Error:
+		case err, ok := <-this.stream.Error:
 			if !ok {
 				return
 			}
 
 			this.error(err)
-		case _, ok := <- this.stream.EOF:
+		case _, ok := <-this.stream.EOF:
 			if !ok {
 				return
 			}
