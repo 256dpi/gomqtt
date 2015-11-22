@@ -2,20 +2,27 @@ package client
 
 import (
 	"net"
-
-	"github.com/gomqtt/stream"
-	"github.com/gomqtt/message"
 	"errors"
 	"net/url"
 	"crypto/tls"
+
+	"github.com/gomqtt/stream"
+	"github.com/gomqtt/message"
+)
+
+type(
+	ConnectCallback func(bool)
+	MessageCallback func(string, []byte)
+	ErrorCallback func(error)
 )
 
 type Client struct {
 	conn net.Conn
 	stream *stream.Stream
 
-	connectCallback func(bool)
-	errorCallback func(error)
+	connectCallback ConnectCallback
+	messageCallback MessageCallback
+	errorCallback ErrorCallback
 }
 
 // NewClient returns a new client.
@@ -24,12 +31,17 @@ func NewClient() (*Client) {
 }
 
 // OnConnect sets the callback for successful connections.
-func (this *Client)OnConnect(callback func(bool)) {
+func (this *Client)OnConnect(callback ConnectCallback) {
 	this.connectCallback = callback
 }
 
+// OnMessage sets the callback for incoming messages.
+func (this *Client)OnMessage(callback MessageCallback) {
+	this.messageCallback = callback
+}
+
 // OnError sets the callback for failed connection attempts and parsing errors.
-func (this *Client)OnError(callback func(error)) {
+func (this *Client)OnError(callback ErrorCallback) {
 	this.errorCallback = callback
 }
 
@@ -118,9 +130,9 @@ func (this *Client)Connect(opts *Options) (error) {
 	return nil
 }
 
-func (this *Client)Publish(topic []byte, payload []byte, qos int, retain bool) {
+func (this *Client)Publish(topic string, payload []byte, qos int, retain bool) {
 	m := message.NewPublishMessage()
-	m.Topic = topic
+	m.Topic = []byte(topic)
 	m.Payload = payload
 	m.QoS = 0x00
 	m.Retain = retain
@@ -151,14 +163,18 @@ func (this *Client)SubscribeMultiple(filters map[string]byte) {
 	this.stream.Out <- m
 }
 
-func (this *Client)Unsubscribe(topic []byte) {
-	this.UnsubscribeMultiple([][]byte{topic})
+func (this *Client)Unsubscribe(topic string) {
+	this.UnsubscribeMultiple([]string{topic})
 }
 
-func (this *Client)UnsubscribeMultiple(topics [][]byte) {
+func (this *Client)UnsubscribeMultiple(topics []string) {
 	m := message.NewUnsubscribeMessage()
-	m.Topics = topics
+	m.Topics = make([][]byte, 0, len(topics))
 	m.PacketId = 1
+
+	for _, t := range topics {
+		m.Topics = append(m.Topics, []byte(t))
+	}
 
 	this.stream.Out <- m
 }
