@@ -9,6 +9,7 @@ import (
 
 	"github.com/gomqtt/message"
 	"github.com/gomqtt/stream"
+	"sync"
 )
 
 type (
@@ -20,7 +21,7 @@ type (
 type Client struct {
 	opts   *Options
 	conn   net.Conn
-	stream *stream.Stream
+	stream stream.Stream
 	quit   chan bool
 
 	connectCallback ConnectCallback
@@ -29,11 +30,14 @@ type Client struct {
 
 	lastContact     time.Time
 	pingrespPending bool
+	start           sync.WaitGroup
 }
 
 // NewClient returns a new client.
 func NewClient() *Client {
-	return &Client{}
+	return &Client{
+		quit: make(chan bool),
+	}
 }
 
 // OnConnect sets the callback for successful connections.
@@ -74,9 +78,6 @@ func (this *Client) Connect(opts *Options) error {
 		return err
 	}
 
-	// prepare conn
-	var conn net.Conn
-
 	// connect based on scheme
 	switch opts.URL.Scheme {
 	case "mqtt", "tcp":
@@ -84,30 +85,34 @@ func (this *Client) Connect(opts *Options) error {
 			port = "1883"
 		}
 
-		conn, err = net.Dial("tcp", net.JoinHostPort(host, port))
+		conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
+		if err != nil {
+			return err
+		}
+
+		this.stream = stream.NewNetStream(conn)
 	case "mqtts":
 		if port == "" {
 			port = "8883"
 		}
 
-		conn, err = tls.Dial("tcp", net.JoinHostPort(host, port), nil)
+		conn, err := tls.Dial("tcp", net.JoinHostPort(host, port), nil)
+		if err != nil {
+			return err
+		}
+
+		this.stream = stream.NewNetStream(conn)
 	case "ws":
 		panic("ws protocol not implemented!")
 	case "wss":
 		panic("wss protocol not implemented!")
 	}
 
-	// check for errors
-	if err != nil {
-		return err
-	}
-
-	// save conn and create stream
+	// save opts
 	this.opts = opts
-	this.conn = conn
-	this.stream = stream.NewStream(conn, conn)
 
 	// start watcher and processor
+	this.start.Add(3)
 	go this.process()
 	go this.keepAlive()
 	go this.watch()
@@ -135,6 +140,7 @@ func (this *Client) Connect(opts *Options) error {
 	// send connect message
 	this.send(m)
 
+	this.start.Wait()
 	return nil
 }
 
@@ -191,15 +197,19 @@ func (this *Client) Disconnect() {
 	m := message.NewDisconnectMessage()
 
 	this.send(m)
+
+	close(this.quit)
 }
 
 // process incoming messages
 func (this *Client) process() {
+	this.start.Done()
+
 	for {
 		select {
 		case <-this.quit:
 			return
-		case msg, ok := <-this.stream.In:
+		case msg, ok := <-this.stream.Incoming():
 			if !ok {
 				return
 			}
@@ -244,7 +254,7 @@ func (this *Client) process() {
 
 func (this *Client) send(msg message.Message) {
 	this.lastContact = time.Now()
-	this.stream.Out <- msg
+	this.stream.Send(msg)
 }
 
 func (this *Client) error(err error) {
@@ -255,6 +265,8 @@ func (this *Client) error(err error) {
 
 // manages the sending of ping packets to keep the connection alive
 func (this *Client) keepAlive() {
+	this.start.Done()
+
 	for {
 		select {
 		case <-this.quit:
@@ -281,22 +293,18 @@ func (this *Client) keepAlive() {
 
 // watch for EOFs and errors on the stream
 func (this *Client) watch() {
+	this.start.Done()
+
 	for {
 		select {
 		case <-this.quit:
 			return
-		case err, ok := <-this.stream.Error:
+		case err, ok := <-this.stream.Error():
 			if !ok {
 				return
 			}
 
 			this.error(err)
-		case _, ok := <-this.stream.EOF:
-			if !ok {
-				return
-			}
-
-			//TODO: connection closed
 		}
 	}
 }

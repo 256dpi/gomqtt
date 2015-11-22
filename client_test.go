@@ -22,6 +22,8 @@ func TestClientConnect(t *testing.T) {
 	require.NoError(t, err)
 
 	<-done
+
+	c.Disconnect()
 }
 
 func TestClientPublishSubscribe(t *testing.T) {
@@ -43,6 +45,8 @@ func TestClientPublishSubscribe(t *testing.T) {
 	c.Publish("test", []byte("test"), 0, false)
 
 	<-done
+
+	c.Disconnect()
 }
 
 func TestClientConnectError(t *testing.T) {
