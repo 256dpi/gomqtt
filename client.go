@@ -3,13 +3,15 @@ package client
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/gomqtt/message"
 	"github.com/gomqtt/stream"
-	"sync"
+	"github.com/gorilla/websocket"
 )
 
 type (
@@ -103,9 +105,31 @@ func (this *Client) Connect(opts *Options) error {
 
 		this.stream = stream.NewNetStream(conn)
 	case "ws":
-		panic("ws protocol not implemented!")
+		if port == "" {
+			port = "80"
+		}
+
+		url := fmt.Sprintf("ws://%s:%s/", host, port)
+
+		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+		if err != nil {
+			return err
+		}
+
+		this.stream = stream.NewWebSocketStream(conn)
 	case "wss":
-		panic("wss protocol not implemented!")
+		if port == "" {
+			port = "443"
+		}
+
+		url := fmt.Sprintf("ws://%s:%s/", host, port)
+
+		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+		if err != nil {
+			return err
+		}
+
+		this.stream = stream.NewWebSocketStream(conn)
 	}
 
 	// save opts

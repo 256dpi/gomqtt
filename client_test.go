@@ -18,7 +18,26 @@ func TestClientConnect(t *testing.T) {
 		done <- true
 	})
 
-	err := c.QuickConnect("mqtt://localhost:1883", "test1")
+	err := c.QuickConnect("mqtt://localhost:1883", "test")
+	require.NoError(t, err)
+
+	<-done
+
+	c.Disconnect()
+}
+
+func TestClientConnectWebSocket(t *testing.T) {
+	c := NewClient()
+
+	done := make(chan bool)
+
+	c.OnConnect(func(sessionPresent bool) {
+		require.False(t, sessionPresent)
+
+		done <- true
+	})
+
+	err := c.QuickConnect("ws://try:try@broker.shiftr.io:80", "test")
 	require.NoError(t, err)
 
 	<-done
@@ -38,7 +57,7 @@ func TestClientPublishSubscribe(t *testing.T) {
 		done <- true
 	})
 
-	err := c.QuickConnect("mqtt://localhost:1883", "test1")
+	err := c.QuickConnect("mqtt://localhost:1883", "test")
 	require.NoError(t, err)
 
 	c.Subscribe("test", 0)
@@ -52,7 +71,7 @@ func TestClientPublishSubscribe(t *testing.T) {
 func TestClientConnectError(t *testing.T) {
 	c := NewClient()
 
-	err := c.QuickConnect("mqtt://localhost:1234", "test2") // wrong port
+	err := c.QuickConnect("mqtt://localhost:1234", "test") // wrong port
 	require.Error(t, err)
 }
 
