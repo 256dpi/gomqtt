@@ -137,11 +137,6 @@ func DetectMessage(src []byte) (int, MessageType) {
 		return 0, 0
 	}
 
-	// check remaining length
-	if rl > maxRemainingLength || rl < 0 {
-		return 0, 0
-	}
-
 	return 1 + n + rl, mt
 }
 
@@ -158,13 +153,10 @@ func Fuzz(data []byte) int {
 	}
 
 	// Detect message.
-	l, mt := DetectMessage(data)
+	_, mt := DetectMessage(data)
 
-	// Check length
-	if l == 0 {
-		// for testing purposes we will not cancel
-		// on incomplete buffers
-	}
+	// For testing purposes we will not cancel
+	// on incomplete buffers
 
 	// Create a new message
 	msg, err := mt.New()
@@ -174,24 +166,6 @@ func Fuzz(data []byte) int {
 
 	// Decode it from the buffer.
 	_, err = msg.Decode(data)
-	if err != nil {
-		return 0
-	}
-
-	// Prepare buffer with 255 as zero value
-	buf := make([]byte, msg.Len())
-	for i := 0; i < len(buf); i++ {
-		buf[i] = 255
-	}
-
-	// Try encode the message again.
-	_, err = msg.Encode(buf)
-	if err != nil {
-		// ignore protocol level errors
-	}
-
-	// Finally try to decode again.
-	_, err = msg.Decode(buf)
 	if err != nil {
 		return 0
 	}

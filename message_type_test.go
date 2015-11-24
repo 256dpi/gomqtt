@@ -16,6 +16,7 @@ package message
 
 import (
 	"testing"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMessageTypes(t *testing.T) {
@@ -35,5 +36,38 @@ func TestMessageTypes(t *testing.T) {
 		DISCONNECT != 14 {
 
 		t.Errorf("Message types have invalid code")
+	}
+}
+
+func TestMessageTypeString(t *testing.T) {
+	require.Equal(t, "UNKNOWN", MessageType(99).String())
+}
+
+func TestMessageTypeValid(t *testing.T) {
+	require.True(t, CONNECT.Valid())
+}
+
+func TestMessageTypeNew(t *testing.T) {
+	list := []MessageType{
+		CONNECT,
+		CONNACK,
+		PUBLISH,
+		PUBACK,
+		PUBREC,
+		PUBREL,
+		PUBCOMP,
+		SUBSCRIBE,
+		SUBACK,
+		UNSUBSCRIBE,
+		UNSUBACK,
+		PINGREQ,
+		PINGRESP,
+		DISCONNECT,
+	}
+
+	for _, mt := range list {
+		m, err := mt.New()
+		require.NotNil(t, m)
+		require.NoError(t, err)
 	}
 }

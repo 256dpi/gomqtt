@@ -147,3 +147,29 @@ func TestDetect5(t *testing.T) {
 	require.Equal(t, 4194308, l)
 	require.Equal(t, 1, int(mt))
 }
+
+func TestDetect6(t *testing.T) {
+	buf := []byte{0x10}
+
+	l, mt := DetectMessage(buf)
+
+	require.Equal(t, 0, l)
+	require.Equal(t, 0, int(mt))
+}
+
+func TestFuzz(t *testing.T) {
+	// too small buffer
+	require.Equal(t, 1, Fuzz([]byte{}))
+
+	// wrong message type
+	b1 := []byte{0<<4, 0x00}
+	require.Equal(t, 0, Fuzz(b1))
+
+	// wrong message format
+	b2 := []byte{2<<4, 0x02, 0x00, 0x06}
+	require.Equal(t, 0, Fuzz(b2))
+
+	// right message format
+	b3 := []byte{2<<4, 0x02, 0x00, 0x01}
+	require.Equal(t, 1, Fuzz(b3))
+}
