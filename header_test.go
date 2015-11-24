@@ -94,9 +94,9 @@ func TestMessageHeaderEncodeError1(t *testing.T) {
 }
 
 func TestMessageHeaderEncodeError2(t *testing.T) {
-	headerBytes := []byte{0x00}
+	headerBytes := []byte{0x00, 0x00}
 
-	buf := make([]byte, 1)
+	buf := make([]byte, 2)
 	// overload max remaining length
 	n, err := headerEncode(buf, 0, maxRemainingLength + 1, 2, PUBREL)
 
