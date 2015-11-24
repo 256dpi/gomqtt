@@ -20,22 +20,22 @@ import "fmt"
 type ConnackCode byte
 
 const (
-// The server has accepted the connection.
+	// The server has accepted the connection.
 	ConnectionAccepted ConnackCode = iota
 
-// The Server does not support the level of the MQTT protocol requested by the Client.
+	// The Server does not support the level of the MQTT protocol requested by the Client.
 	ErrInvalidProtocolVersion
 
-// The Client identifier is correct UTF-8 but not allowed by the server.
+	// The Client identifier is correct UTF-8 but not allowed by the server.
 	ErrIdentifierRejected
 
-// The Network Connection has been made but the MQTT service is unavailable.
+	// The Network Connection has been made but the MQTT service is unavailable.
 	ErrServerUnavailable
 
-// The data in the user name or password is malformed.
+	// The data in the user name or password is malformed.
 	ErrBadUsernameOrPassword
 
-// The Client is not authorized to connect.
+	// The Client is not authorized to connect.
 	ErrNotAuthorized
 )
 
