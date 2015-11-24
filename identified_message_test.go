@@ -38,7 +38,7 @@ func TestIdentifiedMessageDecode(t *testing.T) {
 func TestIdentifiedMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
-		1, // wrong remaining length
+		1, // <- wrong remaining length
 		0, // packet ID MSB (0)
 		7, // packet ID LSB (7)
 	}
@@ -55,7 +55,7 @@ func TestIdentifiedMessageDecodeError2(t *testing.T) {
 		byte(PUBACK << 4),
 		2,
 		7, // packet ID LSB (7)
-		// insufficient bytes
+		// <- insufficient bytes
 	}
 
 	n, pid, err := identifiedMessageDecode(msgBytes, PUBACK)
@@ -73,7 +73,7 @@ func TestIdentifiedMessageEncode(t *testing.T) {
 		7, // packet ID LSB (7)
 	}
 
-	dst := make([]byte, 10)
+	dst := make([]byte, identifiedMessageLen())
 	n, err := identifiedMessageEncode(dst, 7, PUBACK)
 
 	require.NoError(t, err)
@@ -82,7 +82,7 @@ func TestIdentifiedMessageEncode(t *testing.T) {
 }
 
 func TestIdentifiedMessageEncodeError1(t *testing.T) {
-	dst := make([]byte, 3) // insufficient buffer
+	dst := make([]byte, 3) // <- insufficient buffer
 	n, err := identifiedMessageEncode(dst, 7, PUBACK)
 
 	require.Error(t, err)
@@ -91,7 +91,7 @@ func TestIdentifiedMessageEncodeError1(t *testing.T) {
 
 func TestIdentifiedMessageEncodeError2(t *testing.T) {
 	dst := make([]byte, 4)
-	n, err := identifiedMessageEncode(dst, 7, RESERVED)
+	n, err := identifiedMessageEncode(dst, 7, RESERVED) // <- wrong message type
 
 	require.Error(t, err)
 	require.Equal(t, 0, n)

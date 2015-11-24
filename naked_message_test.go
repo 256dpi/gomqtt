@@ -35,7 +35,7 @@ func TestNakedMessageDecode(t *testing.T) {
 func TestNakedMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(DISCONNECT << 4),
-		1, // wrong remaining length
+		1, // <- wrong remaining length
 		0,
 	}
 
