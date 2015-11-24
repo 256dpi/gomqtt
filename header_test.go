@@ -72,13 +72,6 @@ func TestMessageHeaderEncode1(t *testing.T) {
 }
 
 func TestMessageHeaderEncode2(t *testing.T) {
-	buf := make([]byte, 5)
-	_, err := headerEncode(buf, 0, 268435456, 268435456, PUBREL)
-
-	require.Error(t, err)
-}
-
-func TestMessageHeaderEncode3(t *testing.T) {
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
 	buf := make([]byte, 5)
@@ -86,5 +79,28 @@ func TestMessageHeaderEncode3(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 5, n)
+	require.Equal(t, headerBytes, buf)
+}
+
+func TestMessageHeaderEncodeError1(t *testing.T) {
+	headerBytes := []byte{0x00}
+
+	buf := make([]byte, 1) // <- wrong buffer size
+	n, err := headerEncode(buf, 0, 0, 2, PUBREL)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
+	require.Equal(t, headerBytes, buf)
+}
+
+func TestMessageHeaderEncodeError2(t *testing.T) {
+	headerBytes := []byte{0x00}
+
+	buf := make([]byte, 1)
+	// overload max remaining length
+	n, err := headerEncode(buf, 0, maxRemainingLength + 1, 2, PUBREL)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
 	require.Equal(t, headerBytes, buf)
 }
