@@ -20,63 +20,74 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var nmType MessageType = 1
-
 func TestNakedMessageDecode(t *testing.T) {
 	msgBytes := []byte{
-		byte(nmType << 4),
+		byte(DISCONNECT << 4),
 		0,
 	}
 
-	n, err := nakedMessageDecode(msgBytes, nmType)
+	n, err := nakedMessageDecode(msgBytes, DISCONNECT)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 2, n)
+}
+
+func TestNakedMessageDecodeError(t *testing.T) {
+	msgBytes := []byte{
+		byte(DISCONNECT << 4),
+		1, // wrong remaining length
+		0,
+	}
+
+	n, err := nakedMessageDecode(msgBytes, DISCONNECT)
+
+	require.Error(t, err)
+	require.Equal(t, 2, n)
 }
 
 func TestNakedMessageEncode(t *testing.T) {
 	msgBytes := []byte{
-		byte(nmType << 4),
+		byte(DISCONNECT << 4),
 		0,
 	}
 
-	dst := make([]byte, 10)
-	n, err := nakedMessageEncode(dst, nmType)
+	dst := make([]byte, nakedMessageLen())
+	n, err := nakedMessageEncode(dst, DISCONNECT)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 2, n)
+	require.Equal(t, msgBytes, dst[:n])
 }
 
 func TestNakedMessageEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
-		byte(nmType << 4),
+		byte(DISCONNECT << 4),
 		0,
 	}
 
-	n, err := nakedMessageDecode(msgBytes, nmType)
+	n, err := nakedMessageDecode(msgBytes, DISCONNECT)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 2, n)
 
-	dst := make([]byte, 100)
-	n2, err := nakedMessageEncode(dst, nmType)
+	dst := make([]byte, nakedMessageLen())
+	n2, err := nakedMessageEncode(dst, DISCONNECT)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 2, n2)
+	require.Equal(t, msgBytes, dst[:n2])
 
-	n3, err := nakedMessageDecode(dst, nmType)
+	n3, err := nakedMessageDecode(dst, DISCONNECT)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 2, n3)
 }
 
 func BenchmarkNakedMessageEncode(b *testing.B) {
 	buf := make([]byte, nakedMessageLen())
 
 	for i := 0; i < b.N; i++ {
-		_, err := nakedMessageEncode(buf, nmType)
+		_, err := nakedMessageEncode(buf, DISCONNECT)
 		if err != nil {
 			panic(err)
 		}
@@ -85,12 +96,12 @@ func BenchmarkNakedMessageEncode(b *testing.B) {
 
 func BenchmarkNakedMessageDecode(b *testing.B) {
 	msgBytes := []byte{
-		byte(nmType << 4),
+		byte(DISCONNECT << 4),
 		0,
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err := nakedMessageDecode(msgBytes, nmType)
+		_, err := nakedMessageDecode(msgBytes, DISCONNECT)
 		if err != nil {
 			panic(err)
 		}
@@ -104,11 +115,13 @@ func testNakedMessageImplementation(t *testing.T, mt MessageType) {
 	require.NotEmpty(t, msg.String())
 
 	buf := make([]byte, msg.Len())
-	_, err = msg.Encode(buf)
+	n, err := msg.Encode(buf)
 	require.NoError(t, err)
+	require.Equal(t, 2, n)
 
-	_, err = msg.Decode(buf)
+	n, err = msg.Decode(buf)
 	require.NoError(t, err)
+	require.Equal(t, 2, n)
 }
 
 func TestDisconnectImplementation(t *testing.T) {
