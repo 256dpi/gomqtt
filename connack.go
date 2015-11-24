@@ -123,11 +123,6 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 		return total, fmt.Errorf("CONNACK/Decode: Expected remaining length to be 2.")
 	}
 
-	// check buffer length
-	if len(src) < total+2 {
-		return total, fmt.Errorf("CONNACK/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
-	}
-
 	// read connack flags
 	connackFlags := src[total]
 	this.SessionPresent = connackFlags&0x1 == 1
