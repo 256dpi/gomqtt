@@ -53,11 +53,11 @@ func TestMessageHeaderDecodeError4(t *testing.T) {
 }
 
 func TestMessageHeaderDecodeError5(t *testing.T) {
-	buf := []byte{0x62, 0xff, 0x7f}
+	buf := []byte{0x66, 0x00, 0x01} // <- wrong flags
 
 	n, _, _, err := headerDecode(buf, 6)
 	require.Error(t, err)
-	require.Equal(t, 3, n)
+	require.Equal(t, 1, n)
 }
 
 func TestMessageHeaderEncode1(t *testing.T) {
