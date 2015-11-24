@@ -1,6 +1,7 @@
 # gomqtt/message
 
 [![Circle CI](https://img.shields.io/circleci/project/gomqtt/message.svg)](https://circleci.com/gh/gomqtt/message)
+[![Coverage Status](https://coveralls.io/repos/gomqtt/message/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/message?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/message?status.svg)](http://godoc.org/github.com/gomqtt/message)
 [![Release](https://img.shields.io/github/release/gomqtt/message.svg)](https://github.com/gomqtt/message/releases)
 
