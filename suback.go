@@ -76,7 +76,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl <= 2 {
-		return total, fmt.Errorf("SUBACK/Decode: Expected remaining length to be greater that 2, got.", rl)
+		return total, fmt.Errorf("SUBACK/Decode: Expected remaining length to be greater than 2, got %d.", rl)
 	}
 
 	// read packet id
@@ -85,11 +85,6 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 	// calculate number of return codes
 	rcl := int(rl) - 2
-
-	// check buffer length
-	if len(src) < total+rcl {
-		return total, fmt.Errorf("SUBACK/Decode: Insufficient buffer size. Expecting %d, got %d.", total+rcl, len(src))
-	}
 
 	// read return codes
 	this.ReturnCodes = src[total : total+rcl]

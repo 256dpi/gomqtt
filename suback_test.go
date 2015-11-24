@@ -42,13 +42,27 @@ func TestSubackMessageDecode(t *testing.T) {
 	msg := NewSubackMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, 4, len(msg.ReturnCodes), "Error adding return code.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, 4, len(msg.ReturnCodes))
 }
 
-// test with wrong return code
-func TestSubackMessageDecode2(t *testing.T) {
+func TestSubackMessageDecodeError1(t *testing.T) {
+	msgBytes := []byte{
+		byte(SUBACK << 4),
+		1, // <- wrong remaining length
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+		0, // return code 1
+	}
+
+	msg := NewSubackMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestSubackMessageDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
@@ -57,7 +71,35 @@ func TestSubackMessageDecode2(t *testing.T) {
 		0,    // return code 1
 		1,    // return code 2
 		2,    // return code 3
-		0x81, // return code 4
+		0x81, // <- wrong return code
+	}
+
+	msg := NewSubackMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestSubackMessageDecodeError3(t *testing.T) {
+	msgBytes := []byte{
+		byte(SUBACK << 4),
+		1, // <- wrong remaining length
+		0, // packet ID MSB (0)
+	}
+
+	msg := NewSubackMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestSubackMessageDecodeError4(t *testing.T) {
+	msgBytes := []byte{
+		byte(PUBCOMP << 4), // <- wrong message type
+		3,
+		0,    // packet ID MSB (0)
+		7,    // packet ID LSB (7)
+		0,    // return code 1
 	}
 
 	msg := NewSubackMessage()
@@ -85,9 +127,33 @@ func TestSubackMessageEncode(t *testing.T) {
 	dst := make([]byte, 10)
 	n, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, msgBytes, dst[:n])
+}
+
+func TestSubackMessageEncodeError1(t *testing.T) {
+	msg := NewSubackMessage()
+	msg.PacketId = 7
+	msg.ReturnCodes = []byte{0x81}
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
+}
+
+func TestSubackMessageEncodeError2(t *testing.T) {
+	msg := NewSubackMessage()
+	msg.PacketId = 7
+	msg.ReturnCodes = []byte{0x80}
+
+	dst := make([]byte, msg.Len()-1)
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
 }
 
 func TestSubackEqualDecodeEncode(t *testing.T) {
@@ -105,20 +171,20 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 	msg := NewSubackMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
 
 	dst := make([]byte, 100)
 	n2, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n2)
+	require.Equal(t, msgBytes, dst[:n2])
 
 	n3, err := msg.Decode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n3)
 }
 
 func BenchmarkSubackEncode(b *testing.B) {
