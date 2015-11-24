@@ -32,10 +32,6 @@ func readLPBytes(buf []byte) ([]byte, int, error) {
 	n = int(binary.BigEndian.Uint16(buf))
 	total += 2
 
-	if n > int(maxLPLength) {
-		return nil, total, fmt.Errorf("utils/readLPBytes: Length (%d) greater than %d bytes.", n, maxLPLength)
-	}
-
 	if len(buf) < n {
 		return nil, total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d.", n, len(buf))
 	}

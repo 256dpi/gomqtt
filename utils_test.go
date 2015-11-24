@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	lpstrings []string = []string{
+	testStrings []string = []string{
 		"this is a test",
 		"hope it succeeds",
 		"but just in case",
@@ -28,7 +28,7 @@ var (
 		"",
 	}
 
-	lpstringBytes []byte = []byte{
+	testBytes []byte = []byte{
 		0x0, 0xe, 't', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 't', 'e', 's', 't',
 		0x0, 0x10, 'h', 'o', 'p', 'e', ' ', 'i', 't', ' ', 's', 'u', 'c', 'c', 'e', 'e', 'd', 's',
 		0x0, 0x10, 'b', 'u', 't', ' ', 'j', 'u', 's', 't', ' ', 'i', 'n', ' ', 'c', 'a', 's', 'e',
@@ -40,8 +40,8 @@ var (
 func TestReadLPBytes(t *testing.T) {
 	total := 0
 
-	for _, str := range lpstrings {
-		b, n, err := readLPBytes(lpstringBytes[total:])
+	for _, str := range testStrings {
+		b, n, err := readLPBytes(testBytes[total:])
 
 		require.NoError(t, err)
 		require.Equal(t, str, string(b))
@@ -51,11 +51,19 @@ func TestReadLPBytes(t *testing.T) {
 	}
 }
 
+func TestReadLPBytesErrors(t *testing.T) {
+	_, _, err := readLPBytes([]byte{})
+	require.Error(t, err)
+
+	_, _, err = readLPBytes([]byte{0xff, 0xff, 0xff, 0xff})
+	require.Error(t, err)
+}
+
 func TestWriteLPBytes(t *testing.T) {
 	total := 0
 	buf := make([]byte, 127)
 
-	for _, str := range lpstrings {
+	for _, str := range testStrings {
 		n, err := writeLPBytes(buf[total:], []byte(str))
 
 		require.NoError(t, err)
@@ -64,5 +72,13 @@ func TestWriteLPBytes(t *testing.T) {
 		total += n
 	}
 
-	require.Equal(t, lpstringBytes, buf[:total])
+	require.Equal(t, testBytes, buf[:total])
+}
+
+func TestWriteLPBytesErrors(t *testing.T) {
+	_, err := writeLPBytes([]byte{}, make([]byte, 65536))
+	require.Error(t, err)
+
+	_, err = writeLPBytes([]byte{}, make([]byte, 10))
+	require.Error(t, err)
 }
