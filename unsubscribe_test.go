@@ -22,6 +22,7 @@ import (
 
 func TestUnsubscribeInterface(t *testing.T) {
 	msg := NewUnsubscribeMessage()
+	msg.Topics = [][]byte{[]byte("hello")}
 
 	require.Equal(t, msg.Type(), UNSUBSCRIBE)
 	require.NotNil(t, msg.String())
