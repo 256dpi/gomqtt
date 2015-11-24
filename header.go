@@ -82,11 +82,6 @@ func headerDecode(src []byte, mt MessageType) (int, byte, int, error) {
 	flags := typeAndFlags[0] & 0x0f
 	total++
 
-	// check new type
-	if !mt.Valid() {
-		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid message type.", mt)
-	}
-
 	// check against static type
 	if decodedType != mt {
 		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid message type %d.", mt, decodedType)
