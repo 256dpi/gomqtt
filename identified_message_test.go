@@ -151,21 +151,21 @@ func testIdentifiedMessageImplementation(t *testing.T, mt MessageType) {
 }
 
 func TestPubackImplementation(t *testing.T) {
-	testNakedMessageImplementation(t, PUBACK)
+	testIdentifiedMessageImplementation(t, PUBACK)
 }
 
 func TestPubcompImplementation(t *testing.T) {
-	testNakedMessageImplementation(t, PUBCOMP)
+	testIdentifiedMessageImplementation(t, PUBCOMP)
 }
 
 func TestPubrecImplementation(t *testing.T) {
-	testNakedMessageImplementation(t, PUBREC)
+	testIdentifiedMessageImplementation(t, PUBREC)
 }
 
 func TestPubrelImplementation(t *testing.T) {
-	testNakedMessageImplementation(t, PUBREL)
+	testIdentifiedMessageImplementation(t, PUBREL)
 }
 
 func TestUnsubackImplementation(t *testing.T) {
-	testNakedMessageImplementation(t, UNSUBACK)
+	testIdentifiedMessageImplementation(t, UNSUBACK)
 }
