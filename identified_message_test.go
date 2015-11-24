@@ -20,14 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIdentifiedMessageFields(t *testing.T) {
-	msg := &PubackMessage{}
-
-	msg.PacketId = 100
-
-	require.Equal(t, 100, int(msg.PacketId))
-}
-
 func TestIdentifiedMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
@@ -36,26 +28,41 @@ func TestIdentifiedMessageDecode(t *testing.T) {
 		7, // packet ID LSB (7)
 	}
 
-	msg := &PubackMessage{}
-	n, err := msg.Decode(msgBytes)
+	n, pid, err := identifiedMessageDecode(msgBytes, PUBACK)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, 7, int(msg.PacketId), "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
+	require.Equal(t, 7, int(pid))
 }
 
-// test insufficient bytes
-func TestIdentifiedMessageDecode2(t *testing.T) {
+func TestIdentifiedMessageDecodeError(t *testing.T) {
+	msgBytes := []byte{
+		byte(PUBACK << 4),
+		1, // wrong remaining length
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+	}
+
+	n, pid, err := identifiedMessageDecode(msgBytes, PUBACK)
+
+	require.Error(t, err)
+	require.Equal(t, 2, n)
+	require.Equal(t, 0, int(pid))
+}
+
+func TestIdentifiedMessageDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
 		2,
 		7, // packet ID LSB (7)
+		// insufficient bytes
 	}
 
-	msg := &PubackMessage{}
-	_, err := msg.Decode(msgBytes)
+	n, pid, err := identifiedMessageDecode(msgBytes, PUBACK)
 
 	require.Error(t, err)
+	require.Equal(t, 2, n)
+	require.Equal(t, 0, int(pid))
 }
 
 func TestIdentifiedMessageEncode(t *testing.T) {
@@ -66,15 +73,28 @@ func TestIdentifiedMessageEncode(t *testing.T) {
 		7, // packet ID LSB (7)
 	}
 
-	msg := &PubackMessage{}
-	msg.PacketId = 7
-
 	dst := make([]byte, 10)
-	n, err := msg.Encode(dst)
+	n, err := identifiedMessageEncode(dst, 7, PUBACK)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
+	require.Equal(t, msgBytes, dst[:n])
+}
+
+func TestIdentifiedMessageEncodeError1(t *testing.T) {
+	dst := make([]byte, 3) // insufficient buffer
+	n, err := identifiedMessageEncode(dst, 7, PUBACK)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
+}
+
+func TestIdentifiedMessageEncodeError2(t *testing.T) {
+	dst := make([]byte, 4)
+	n, err := identifiedMessageEncode(dst, 7, RESERVED)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
 }
 
 func TestIdentifiedMessageEqualDecodeEncode(t *testing.T) {
@@ -88,20 +108,21 @@ func TestIdentifiedMessageEqualDecodeEncode(t *testing.T) {
 	msg := &PubackMessage{}
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
 
 	dst := make([]byte, 100)
-	n2, err := msg.Encode(dst)
+	n2, err := identifiedMessageEncode(dst, 7, PUBACK)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n2)
+	require.Equal(t, msgBytes, dst[:n2])
 
-	n3, err := msg.Decode(dst)
+	n3, pid, err := identifiedMessageDecode(msgBytes, PUBACK)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n3)
+	require.Equal(t, 7, int(pid))
 }
 
 func BenchmarkIdentifiedMessageEncode(b *testing.B) {
@@ -143,11 +164,13 @@ func testIdentifiedMessageImplementation(t *testing.T, mt MessageType) {
 	require.NotEmpty(t, msg.String())
 
 	buf := make([]byte, msg.Len())
-	_, err = msg.Encode(buf)
+	n, err := msg.Encode(buf)
 	require.NoError(t, err)
+	require.Equal(t, 4, n)
 
-	_, err = msg.Decode(buf)
+	n, err = msg.Decode(buf)
 	require.NoError(t, err)
+	require.Equal(t, 4, n)
 }
 
 func TestPubackImplementation(t *testing.T) {

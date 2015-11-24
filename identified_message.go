@@ -40,11 +40,6 @@ func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Expected remaining length to be 2.", mt)
 	}
 
-	// check buffer length
-	if len(src) < total+2 {
-		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Insufficient buffer size. Expecting %d, got %d.", mt, total+2, len(src))
-	}
-
 	// read packet id
 	packetId := binary.BigEndian.Uint16(src[total:])
 	total += 2
