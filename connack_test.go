@@ -48,14 +48,13 @@ func TestConnackMessageDecode(t *testing.T) {
 
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.False(t, msg.SessionPresent, "Error decoding session present flag.")
-	require.Equal(t, ConnectionAccepted, msg.ReturnCode, "Error decoding return code.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
+	require.False(t, msg.SessionPresent)
+	require.Equal(t, ConnectionAccepted, msg.ReturnCode)
 }
 
-// testing wrong message length
-func TestConnackMessageDecode2(t *testing.T) {
+func TestConnackMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		3, // <- wrong size
@@ -66,25 +65,24 @@ func TestConnackMessageDecode2(t *testing.T) {
 	msg := NewConnackMessage()
 
 	_, err := msg.Decode(msgBytes)
-	require.Error(t, err, "Error decoding message.")
+	require.Error(t, err)
 }
 
-// testing wrong message size
-func TestConnackMessageDecode3(t *testing.T) {
+func TestConnackMessageDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
+		// <- wrong message size
 	}
 
 	msg := NewConnackMessage()
 
 	_, err := msg.Decode(msgBytes)
-	require.Error(t, err, "Error decoding message.")
+	require.Error(t, err)
 }
 
-// testing wrong reserve bits
-func TestConnackMessageDecode4(t *testing.T) {
+func TestConnackMessageDecodeError3(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -95,11 +93,10 @@ func TestConnackMessageDecode4(t *testing.T) {
 	msg := NewConnackMessage()
 
 	_, err := msg.Decode(msgBytes)
-	require.Error(t, err, "Error decoding message.")
+	require.Error(t, err)
 }
 
-// testing invalid return code
-func TestConnackMessageDecode5(t *testing.T) {
+func TestConnackMessageDecodeError4(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -110,7 +107,21 @@ func TestConnackMessageDecode5(t *testing.T) {
 	msg := NewConnackMessage()
 
 	_, err := msg.Decode(msgBytes)
-	require.Error(t, err, "Error decoding message.")
+	require.Error(t, err)
+}
+
+func TestConnackMessageDecodeError5(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNACK << 4),
+		1, // <- wrong remaining length
+		0,
+		6,
+	}
+
+	msg := NewConnackMessage()
+
+	_, err := msg.Decode(msgBytes)
+	require.Error(t, err)
 }
 
 func TestConnackMessageEncode(t *testing.T) {
@@ -125,12 +136,33 @@ func TestConnackMessageEncode(t *testing.T) {
 	msg.ReturnCode = ConnectionAccepted
 	msg.SessionPresent = true
 
-	dst := make([]byte, 10)
+	dst := make([]byte, msg.Len())
 	n, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error encoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error encoding connack message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
+	require.Equal(t, msgBytes, dst[:n])
+}
+
+func TestConnackMessageEncodeError1(t *testing.T) {
+	msg := NewConnackMessage()
+
+	dst := make([]byte, 3) // <- wrong buffer size
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
+}
+
+func TestConnackMessageEncodeError2(t *testing.T) {
+	msg := NewConnackMessage()
+	msg.ReturnCode = 11 // <- wrong return code
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 3, n)
 }
 
 func TestConnackEqualDecodeEncode(t *testing.T) {
@@ -144,20 +176,20 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 	msg := NewConnackMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
 
-	dst := make([]byte, 100)
+	dst := make([]byte, msg.Len())
 	n2, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n2)
+	require.Equal(t, msgBytes, dst[:n2])
 
 	n3, err := msg.Decode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, 4, n3)
 }
 
 func BenchmarkConnackEncode(b *testing.B) {
