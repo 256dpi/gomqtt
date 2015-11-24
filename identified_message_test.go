@@ -35,7 +35,7 @@ func TestIdentifiedMessageDecode(t *testing.T) {
 	require.Equal(t, 7, int(pid))
 }
 
-func TestIdentifiedMessageDecodeError(t *testing.T) {
+func TestIdentifiedMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
 		1, // wrong remaining length

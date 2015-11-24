@@ -32,7 +32,7 @@ func TestNakedMessageDecode(t *testing.T) {
 	require.Equal(t, 2, n)
 }
 
-func TestNakedMessageDecodeError(t *testing.T) {
+func TestNakedMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(DISCONNECT << 4),
 		1, // wrong remaining length
