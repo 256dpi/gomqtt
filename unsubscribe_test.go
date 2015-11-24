@@ -48,21 +48,65 @@ func TestUnsubscribeMessageDecode(t *testing.T) {
 	msg := NewUnsubscribeMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, 3, len(msg.Topics), "Error decoding topics.")
-	require.Equal(t, []byte("surgemq"), msg.Topics[0], "Topic 'surgemq' should exist.")
-	require.Equal(t, []byte("/a/b/#/c"), msg.Topics[1], "Topic '/a/b/#/c' should exist.")
-	require.Equal(t, []byte("/a/b/#/cdd"), msg.Topics[2], "Topic '/a/b/#/c' should exist.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, 3, len(msg.Topics))
+	require.Equal(t, []byte("surgemq"), msg.Topics[0])
+	require.Equal(t, []byte("/a/b/#/c"), msg.Topics[1])
+	require.Equal(t, []byte("/a/b/#/cdd"), msg.Topics[2])
 }
 
-// test empty topic list
-func TestUnsubscribeMessageDecode2(t *testing.T) {
+func TestUnsubscribeMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		2,
 		0, // packet ID MSB (0)
 		7, // packet ID LSB (7)
+		// empty topic list
+	}
+
+	msg := NewUnsubscribeMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestUnsubscribeMessageDecodeError2(t *testing.T) {
+	msgBytes := []byte{
+		byte(UNSUBSCRIBE<<4) | 2,
+		6, // <- wrong remaining length
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+	}
+
+	msg := NewUnsubscribeMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestUnsubscribeMessageDecodeError3(t *testing.T) {
+	msgBytes := []byte{
+		byte(UNSUBSCRIBE<<4) | 2,
+		0,
+		// missing packet id
+	}
+
+	msg := NewUnsubscribeMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestUnsubscribeMessageDecodeError4(t *testing.T) {
+	msgBytes := []byte{
+		byte(UNSUBSCRIBE<<4) | 2,
+		11,
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+		0, // topic name MSB (0)
+		9, // topic name LSB (7) <- wrong size
+		's', 'u', 'r', 'g', 'e', 'm', 'q',
 	}
 
 	msg := NewUnsubscribeMessage()
@@ -99,9 +143,37 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 	dst := make([]byte, 100)
 	n, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, msgBytes, dst[:n])
+}
+
+func TestUnsubscribeMessageEncodeError1(t *testing.T) {
+	msg := NewUnsubscribeMessage()
+	msg.PacketId = 7
+	msg.Topics = [][]byte{
+		[]byte("surgemq"),
+	}
+
+	dst := make([]byte, 1)
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
+}
+
+func TestUnsubscribeMessageEncodeError2(t *testing.T) {
+	msg := NewUnsubscribeMessage()
+	msg.PacketId = 7
+	msg.Topics = [][]byte{
+		make([]byte, 65536),
+	}
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 6, n)
 }
 
 // test to ensure encoding and decoding are the same
@@ -126,20 +198,20 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 	msg := NewUnsubscribeMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
 
 	dst := make([]byte, 100)
 	n2, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n2)
+	require.Equal(t, msgBytes, dst[:n2])
 
 	n3, err := msg.Decode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n3)
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
