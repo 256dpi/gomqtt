@@ -103,8 +103,8 @@ func headerDecode(src []byte, mt MessageType) (int, byte, int, error) {
 	total += m
 
 	// check resulting remaining length
-	if rl > maxRemainingLength || rl < 0 {
-		return total, 0, 0, fmt.Errorf("%s/headerDecode: Remaining length (%d) out of bound (max %d, min 0).", mt, rl, maxRemainingLength)
+	if m <= 0 {
+		return total, 0, 0, fmt.Errorf("%s/headerDecode: Error detecting remaining length.", mt)
 	}
 
 	// check remaining buffer

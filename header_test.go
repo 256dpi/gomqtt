@@ -20,39 +20,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Not enough bytes
-func TestMessageHeaderDecode(t *testing.T) {
-	buf := []byte{0x6f, 193, 2}
+func TestMessageHeaderDecodeError1(t *testing.T) {
+	buf := []byte{0x6f, 193, 2} // <- not enough bytes
 
 	_, _, _, err := headerDecode(buf, 0)
 	require.Error(t, err)
 }
 
-// Remaining length too big
-func TestMessageHeaderDecode2(t *testing.T) {
+func TestMessageHeaderDecodeError2(t *testing.T) {
+	// source to small
+	buf := []byte{0x62}
+
+	_, _, _, err := headerDecode(buf, 0)
+	require.Error(t, err)
+}
+
+func TestMessageHeaderDecodeError3(t *testing.T) {
+	buf := []byte{0x62, 0xff} // <- invalid message type
+
+	_, _, _, err := headerDecode(buf, 0)
+	require.Error(t, err)
+}
+
+func TestMessageHeaderDecodeError4(t *testing.T) {
+	// remaining length to big
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0xff}
-
-	_, _, _, err := headerDecode(buf, 0)
-	require.Error(t, err)
-}
-
-func TestMessageHeaderDecode3(t *testing.T) {
-	buf := []byte{0x62, 0xff}
-
-	_, _, _, err := headerDecode(buf, 0)
-	require.Error(t, err)
-}
-
-func TestMessageHeaderDecode4(t *testing.T) {
-	buf := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
 	n, _, _, err := headerDecode(buf, 6)
 
 	require.Error(t, err)
-	require.Equal(t, 5, n)
+	require.Equal(t, 1, n)
 }
 
-func TestMessageHeaderDecode5(t *testing.T) {
+func TestMessageHeaderDecodeError5(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0x7f}
 
 	n, _, _, err := headerDecode(buf, 6)
@@ -99,6 +99,18 @@ func TestMessageHeaderEncodeError2(t *testing.T) {
 	buf := make([]byte, 2)
 	// overload max remaining length
 	n, err := headerEncode(buf, 0, maxRemainingLength + 1, 2, PUBREL)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
+	require.Equal(t, headerBytes, buf)
+}
+
+func TestMessageHeaderEncodeError3(t *testing.T) {
+	headerBytes := []byte{0x00, 0x00}
+
+	buf := make([]byte, 2)
+	// too small buffer
+	n, err := headerEncode(buf, 0, 2097151, 2, PUBREL)
 
 	require.Error(t, err)
 	require.Equal(t, 0, n)
