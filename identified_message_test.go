@@ -135,3 +135,37 @@ func BenchmarkIdentifiedMessageDecode(b *testing.B) {
 		}
 	}
 }
+
+func testIdentifiedMessageImplementation(t *testing.T, mt MessageType) {
+	msg, err := mt.New()
+	require.NoError(t, err)
+	require.Equal(t, mt, msg.Type())
+	require.NotEmpty(t, msg.String())
+
+	buf := make([]byte, msg.Len())
+	_, err = msg.Encode(buf)
+	require.NoError(t, err)
+
+	_, err = msg.Decode(buf)
+	require.NoError(t, err)
+}
+
+func TestPubackImplementation(t *testing.T) {
+	testNakedMessageImplementation(t, PUBACK)
+}
+
+func TestPubcompImplementation(t *testing.T) {
+	testNakedMessageImplementation(t, PUBCOMP)
+}
+
+func TestPubrecImplementation(t *testing.T) {
+	testNakedMessageImplementation(t, PUBREC)
+}
+
+func TestPubrelImplementation(t *testing.T) {
+	testNakedMessageImplementation(t, PUBREL)
+}
+
+func TestUnsubackImplementation(t *testing.T) {
+	testNakedMessageImplementation(t, UNSUBACK)
+}

@@ -96,3 +96,29 @@ func BenchmarkNakedMessageDecode(b *testing.B) {
 		}
 	}
 }
+
+func testNakedMessageImplementation(t *testing.T, mt MessageType) {
+	msg, err := mt.New()
+	require.NoError(t, err)
+	require.Equal(t, mt, msg.Type())
+	require.NotEmpty(t, msg.String())
+
+	buf := make([]byte, msg.Len())
+	_, err = msg.Encode(buf)
+	require.NoError(t, err)
+
+	_, err = msg.Decode(buf)
+	require.NoError(t, err)
+}
+
+func TestDisconnectImplementation(t *testing.T) {
+	testNakedMessageImplementation(t, DISCONNECT)
+}
+
+func TestPingreqImplementation(t *testing.T) {
+	testNakedMessageImplementation(t, PINGREQ)
+}
+
+func TestPingrespImplementation(t *testing.T) {
+	testNakedMessageImplementation(t, PINGRESP)
+}
