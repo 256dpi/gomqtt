@@ -20,6 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestConnectInterface(t *testing.T) {
+	msg := NewConnectMessage()
+
+	require.Equal(t, msg.Type(), CONNECT)
+	require.NotNil(t, msg.String())
+}
+
 func TestConnectMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),

@@ -20,6 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPublishInterface(t *testing.T) {
+	msg := NewPublishMessage()
+
+	require.Equal(t, msg.Type(), PUBLISH)
+	require.NotNil(t, msg.String())
+}
+
 func TestPublishMessageDecode1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,

@@ -20,6 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestUnsubscribeInterface(t *testing.T) {
+	msg := NewUnsubscribeMessage()
+
+	require.Equal(t, msg.Type(), UNSUBSCRIBE)
+	require.NotNil(t, msg.String())
+}
+
 func TestUnsubscribeMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,

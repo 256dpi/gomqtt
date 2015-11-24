@@ -28,6 +28,13 @@ func TestConnackReturnCodes(t *testing.T) {
 	require.Equal(t, ErrNotAuthorized.Error(), ConnackCode(5).Error(), "Incorrect ConnackCode error value.")
 }
 
+func TestConnackInterface(t *testing.T) {
+	msg := NewConnackMessage()
+
+	require.Equal(t, msg.Type(), CONNACK)
+	require.NotNil(t, msg.String())
+}
+
 func TestConnackMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),

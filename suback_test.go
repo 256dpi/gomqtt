@@ -20,6 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSubackInterface(t *testing.T) {
+	msg := NewSubackMessage()
+
+	require.Equal(t, msg.Type(), SUBACK)
+	require.NotNil(t, msg.String())
+}
+
 func TestSubackMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),

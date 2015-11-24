@@ -20,6 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSubscribeInterface(t *testing.T) {
+	msg := NewSubscribeMessage()
+
+	require.Equal(t, msg.Type(), SUBSCRIBE)
+	require.NotNil(t, msg.String())
+}
+
 func TestSubscribeMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
