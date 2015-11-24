@@ -15,22 +15,15 @@
 package message
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestQosCodes(t *testing.T) {
 	if QosAtMostOnce != 0 || QosAtLeastOnce != 1 || QosExactlyOnce != 2 {
 		t.Errorf("QOS codes invalid")
 	}
-}
-
-func TestConnackReturnCodes(t *testing.T) {
-	require.Equal(t, ErrInvalidProtocolVersion.Error(), ConnackCode(1).Error(), "Incorrect ConnackCode error value.")
-	require.Equal(t, ErrIdentifierRejected.Error(), ConnackCode(2).Error(), "Incorrect ConnackCode error value.")
-	require.Equal(t, ErrServerUnavailable.Error(), ConnackCode(3).Error(), "Incorrect ConnackCode error value.")
-	require.Equal(t, ErrBadUsernameOrPassword.Error(), ConnackCode(4).Error(), "Incorrect ConnackCode error value.")
-	require.Equal(t, ErrNotAuthorized.Error(), ConnackCode(5).Error(), "Incorrect ConnackCode error value.")
 }
 
 func TestFixedHeaderFlags(t *testing.T) {
@@ -106,4 +99,51 @@ func TestReadmeExample(t *testing.T) {
 		// there was an error while decoding
 		panic(err)
 	}
+}
+
+func TestDetect1(t *testing.T) {
+	buf := []byte{0x10, 0x0}
+
+	l, mt := DetectMessage(buf)
+
+	require.Equal(t, 2, l)
+	require.Equal(t, 1, int(mt))
+}
+
+// not enough bytes
+func TestDetect2(t *testing.T) {
+	buf := []byte{0x10, 0xff}
+
+	l, mt := DetectMessage(buf)
+
+	require.Equal(t, 0, l)
+	require.Equal(t, 0, int(mt))
+}
+
+func TestDetect3(t *testing.T) {
+	buf := []byte{0x10, 0xff, 0x0}
+
+	l, mt := DetectMessage(buf)
+
+	require.Equal(t, 130, l)
+	require.Equal(t, 1, int(mt))
+}
+
+// not enough bytes
+func TestDetect4(t *testing.T) {
+	buf := []byte{0x10, 0xff, 0xff}
+
+	l, mt := DetectMessage(buf)
+
+	require.Equal(t, 0, l)
+	require.Equal(t, 0, int(mt))
+}
+
+func TestDetect5(t *testing.T) {
+	buf := []byte{0x10, 0xff, 0xff, 0xff, 0x1}
+
+	l, mt := DetectMessage(buf)
+
+	require.Equal(t, 4194308, l)
+	require.Equal(t, 1, int(mt))
 }

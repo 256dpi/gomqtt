@@ -59,6 +59,8 @@ Decode bytes to a message:
 */
 package message
 
+import "encoding/binary"
+
 const (
 	// QoS 0: At most once delivery
 	// The message is delivered according to the capabilities of the underlying network.
@@ -113,6 +115,34 @@ type Message interface {
 
 	// String returns a string representation of the message.
 	String() string
+}
+
+// DetectMessage tries to detect the next message in a buffer. It returns a
+// length greater than zero if the message has been detected as well as its
+// MessageType.
+func DetectMessage(src []byte) (int, MessageType) {
+	// check for minimum size
+	if len(src) < 2 {
+		return 0, 0
+	}
+
+	// get type
+	mt := MessageType(src[0] >> 4)
+
+	// get remaining length
+	_rl, n := binary.Uvarint(src[1:])
+	rl := int(_rl)
+
+	if n <= 0 {
+		return 0, 0
+	}
+
+	// check remaining length
+	if rl > maxRemainingLength || rl < 0 {
+		return 0, 0
+	}
+
+	return 1 + n + rl, mt
 }
 
 /*
