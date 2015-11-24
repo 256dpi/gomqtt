@@ -143,12 +143,6 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
-	// check buffer length
-	l := this.Len()
-	if len(dst) < l {
-		return total, fmt.Errorf("PUBLISH/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	// check topic length
 	if len(this.Topic) == 0 {
 		return total, fmt.Errorf("PUBLISH/Encode: Topic name is empty.")
@@ -179,7 +173,7 @@ func (this *PublishMessage) Encode(dst []byte) (int, error) {
 	flags = (flags & 249) | (this.QoS << 1) // 249 = 11111001
 
 	// encode header
-	n, err := headerEncode(dst[total:], flags, this.len(), PUBLISH)
+	n, err := headerEncode(dst[total:], flags, this.len(), this.Len(), PUBLISH)
 	total += n
 	if err != nil {
 		return total, err

@@ -64,7 +64,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 	headerBytes := []byte{0x62, 193, 2}
 
 	buf := make([]byte, 3)
-	n, err := headerEncode(buf, 0, 321, PUBREL)
+	n, err := headerEncode(buf, 0, 321, 3, PUBREL)
 
 	require.NoError(t, err)
 	require.Equal(t, 3, n)
@@ -73,7 +73,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 
 func TestMessageHeaderEncode2(t *testing.T) {
 	buf := make([]byte, 5)
-	_, err := headerEncode(buf, 0, 268435456, PUBREL)
+	_, err := headerEncode(buf, 0, 268435456, 268435456, PUBREL)
 
 	require.Error(t, err)
 }
@@ -82,7 +82,7 @@ func TestMessageHeaderEncode3(t *testing.T) {
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
 	buf := make([]byte, 5)
-	n, err := headerEncode(buf, 0, maxRemainingLength, PUBREL)
+	n, err := headerEncode(buf, 0, maxRemainingLength, 5, PUBREL)
 
 	require.NoError(t, err)
 	require.Equal(t, 5, n)

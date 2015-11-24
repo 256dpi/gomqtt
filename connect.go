@@ -243,19 +243,13 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
-	// check buffer length
-	l := this.Len()
-	if len(dst) < l {
-		return total, fmt.Errorf("CONNECT/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	// check version
 	if this.Version != 0x3 && this.Version != 0x4 {
 		return 0, fmt.Errorf("CONNECT/Encode: Protocol violation: Invalid protocol version (%d).", this.Version)
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.len(), CONNECT)
+	n, err := headerEncode(dst[total:], 0, this.len(), this.Len(), CONNECT)
 	total += n
 	if err != nil {
 		return total, err

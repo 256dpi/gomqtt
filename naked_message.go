@@ -37,7 +37,7 @@ func nakedMessageDecode(src []byte, mt MessageType) (int, error) {
 // Encodes a naked message.
 func nakedMessageEncode(dst []byte, mt MessageType) (int, error) {
 	// encode header
-	return headerEncode(dst, 0, 0, mt)
+	return headerEncode(dst, 0, 0, nakedMessageLen(), mt)
 }
 
 // The DISCONNECT Packet is the final Control Packet sent from the Client to the Server.

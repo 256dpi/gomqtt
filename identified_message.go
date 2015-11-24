@@ -51,14 +51,8 @@ func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 func identifiedMessageEncode(dst []byte, packetId uint16, mt MessageType) (int, error) {
 	total := 0
 
-	// check buffer length
-	l := identifiedMessageLen()
-	if len(dst) < l {
-		return total, fmt.Errorf("%s/identifiedMessageEncode: Insufficient buffer size. Expecting %d, got %d.", mt, l, len(dst))
-	}
-
 	// encode header
-	n, err := headerEncode(dst[total:], 0, 2, mt)
+	n, err := headerEncode(dst[total:], 0, 2, identifiedMessageLen(), mt)
 	total += n
 	if err != nil {
 		return total, err

@@ -152,14 +152,8 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
-	// check buffer length
-	l := this.Len()
-	if len(dst) < l {
-		return total, fmt.Errorf("CONNACK/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	// encode header
-	n, err := headerEncode(dst[total:], 0, 2, CONNACK)
+	n, err := headerEncode(dst[total:], 0, 2, this.Len(), CONNACK)
 	total += n
 	if err != nil {
 		return total, err

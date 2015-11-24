@@ -40,8 +40,13 @@ func headerLen(rl int) int {
 }
 
 // Encodes the fixed header.
-func headerEncode(dst []byte, flags byte, rl int, mt MessageType) (int, error) {
+func headerEncode(dst []byte, flags byte, rl int, tl int, mt MessageType) (int, error) {
 	total := 0
+
+	// check buffer length
+	if len(dst) < tl {
+		return total, fmt.Errorf("%s/headerEncode: Insufficient buffer size. Expecting %d, got %d.", mt, tl, len(dst))
+	}
 
 	// check remaining length
 	if rl > maxRemainingLength || rl < 0 {

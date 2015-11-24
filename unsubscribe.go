@@ -116,14 +116,8 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 func (this *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
-	// check buffer length
-	l := this.Len()
-	if len(dst) < l {
-		return total, fmt.Errorf("UNSUBSCRIBE/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.len(), UNSUBSCRIBE)
+	n, err := headerEncode(dst[total:], 0, this.len(), this.Len(), UNSUBSCRIBE)
 	total += n
 	if err != nil {
 		return total, err

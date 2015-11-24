@@ -112,12 +112,6 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
-	// check buffer length
-	l := this.Len()
-	if len(dst) < l {
-		return total, fmt.Errorf("SUBACK/Encode: Insufficient buffer size. Expecting %d, got %d.", l, len(dst))
-	}
-
 	// check return codes
 	for i, code := range this.ReturnCodes {
 		if !validQoS(code) && code != QosFailure {
@@ -126,7 +120,7 @@ func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.len(), SUBACK)
+	n, err := headerEncode(dst[total:], 0, this.len(), this.Len(), SUBACK)
 	total += n
 	if err != nil {
 		return total, err
