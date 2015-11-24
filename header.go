@@ -54,11 +54,6 @@ func headerEncode(dst []byte, flags byte, rl int, mt MessageType) (int, error) {
 		return total, fmt.Errorf("%s/headerEncode: Insufficient buffer size. Expecting %d, got %d.", mt, hl, len(dst))
 	}
 
-	// validate message type
-	if !mt.Valid() {
-		return total, fmt.Errorf("%s/headerEncode: Invalid message type.", mt)
-	}
-
 	// write type and flags
 	typeAndFlags := byte(mt)<<4 | (mt.defaultFlags() & 0xf)
 	typeAndFlags |= flags

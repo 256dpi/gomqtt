@@ -88,9 +88,3 @@ func TestMessageHeaderEncode3(t *testing.T) {
 	require.Equal(t, 5, n)
 	require.Equal(t, headerBytes, buf)
 }
-
-func TestMessageHeaderEncode4(t *testing.T) {
-	buf := make([]byte, 5)
-	_, err := headerEncode(buf, 0, 0, RESERVED2)
-	require.Error(t, err)
-}

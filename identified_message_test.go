@@ -89,14 +89,6 @@ func TestIdentifiedMessageEncodeError1(t *testing.T) {
 	require.Equal(t, 0, n)
 }
 
-func TestIdentifiedMessageEncodeError2(t *testing.T) {
-	dst := make([]byte, 4)
-	n, err := identifiedMessageEncode(dst, 7, RESERVED) // <- wrong message type
-
-	require.Error(t, err)
-	require.Equal(t, 0, n)
-}
-
 func TestIdentifiedMessageEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
