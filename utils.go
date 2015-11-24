@@ -31,12 +31,11 @@ func readLPBytes(buf []byte) ([]byte, int, error) {
 
 	n = int(binary.BigEndian.Uint16(buf))
 	total += 2
-
-	if len(buf) < n {
-		return nil, total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d.", n, len(buf))
-	}
-
 	total += n
+
+	if len(buf) < total {
+		return nil, total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d.", total, len(buf))
+	}
 
 	return buf[2:total], total, nil
 }
