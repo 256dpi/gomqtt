@@ -84,11 +84,6 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 		return total, err
 	}
 
-	// check buffer length
-	if len(src) < total+2 {
-		return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
-	}
-
 	// read flags
 	this.Dup = ((flags >> 3) & 0x1) == 1
 	this.Retain = (flags & 0x1) == 1
@@ -97,6 +92,11 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	// check qos
 	if !validQoS(this.QoS) {
 		return total, fmt.Errorf("PUBLISH/Decode: Invalid QoS (%d).", this.QoS)
+	}
+
+	// check buffer length
+	if len(src) < total+2 {
+		return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 	}
 
 	n := 0
@@ -122,13 +122,8 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	// calculate payload length
 	l := int(rl) - (total - hl)
 
+	// read payload
 	if l > 0 {
-		// check buffer length
-		if len(src) < total+l {
-			return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d.", total+l, len(src))
-		}
-
-		// read payload
 		this.Payload = src[total : total+l]
 		total += len(this.Payload)
 	}

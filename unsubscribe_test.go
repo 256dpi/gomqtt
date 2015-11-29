@@ -155,7 +155,7 @@ func TestUnsubscribeMessageEncodeError1(t *testing.T) {
 		[]byte("surgemq"),
 	}
 
-	dst := make([]byte, 1)
+	dst := make([]byte, 1) // <- too small
 	n, err := msg.Encode(dst)
 
 	require.Error(t, err)

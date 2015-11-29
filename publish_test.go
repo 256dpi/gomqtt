@@ -29,7 +29,7 @@ func TestPublishInterface(t *testing.T) {
 
 func TestPublishMessageDecode1(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBLISH<<4) | 2,
+		byte(PUBLISH << 4) | 11,
 		23,
 		0, // topic name MSB
 		7, // topic name LSB
@@ -42,34 +42,17 @@ func TestPublishMessageDecode1(t *testing.T) {
 	msg := NewPublishMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, 7, int(msg.PacketId), "Error decoding message.")
-	require.Equal(t, "surgemq", string(msg.Topic), "Error deocding topic name.")
-	require.Equal(t, []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}, msg.Payload, "Error deocding payload.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, 7, int(msg.PacketId))
+	require.Equal(t, []byte("surgemq"), msg.Topic)
+	require.Equal(t, []byte("send me home"), msg.Payload)
+	require.Equal(t, 1, int(msg.QoS))
+	require.Equal(t, true, msg.Retain)
+	require.Equal(t, true, msg.Dup)
 }
 
-// test insufficient bytes
 func TestPublishMessageDecode2(t *testing.T) {
-	msgBytes := []byte{
-		byte(PUBLISH<<4) | 2,
-		26,
-		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // packet ID MSB
-		7, // packet ID LSB
-		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-	}
-
-	msg := NewPublishMessage()
-	_, err := msg.Decode(msgBytes)
-
-	require.Error(t, err)
-}
-
-// test qos = 0 and no client id
-func TestPublishMessageDecode3(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH << 4),
 		21,
@@ -80,14 +63,89 @@ func TestPublishMessageDecode3(t *testing.T) {
 	}
 
 	msg := NewPublishMessage()
-	_, err := msg.Decode(msgBytes)
+	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, 0, int(msg.PacketId))
+	require.Equal(t, []byte("surgemq"), msg.Topic)
+	require.Equal(t, []byte("send me home"), msg.Payload)
+	require.Equal(t, 0, int(msg.QoS))
+	require.Equal(t, false, msg.Retain)
+	require.Equal(t, false, msg.Dup)
 }
 
-func TestPublishMessageEncode(t *testing.T) {
+func TestPublishMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBLISH<<4) | 2,
+		byte(PUBLISH << 4),
+		2, // <- too much
+	}
+
+	msg := NewPublishMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestPublishMessageDecodeError2(t *testing.T) {
+	msgBytes := []byte{
+		byte(PUBLISH << 4) | 6, // <- wrong qos
+		0,
+	}
+
+	msg := NewPublishMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestPublishMessageDecodeError3(t *testing.T) {
+	msgBytes := []byte{
+		byte(PUBLISH << 4),
+		0,
+		// <- missing topic stuff
+	}
+
+	msg := NewPublishMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestPublishMessageDecodeError4(t *testing.T) {
+	msgBytes := []byte{
+		byte(PUBLISH << 4),
+		2,
+		0, // topic name MSB
+		1, // topic name LSB
+		// <- missing topic string
+	}
+
+	msg := NewPublishMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestPublishMessageDecodeError5(t *testing.T) {
+	msgBytes := []byte{
+		byte(PUBLISH << 4) | 2,
+		2,
+		0, // topic name MSB
+		1, // topic name LSB
+		't',
+		// <- missing packet id
+	}
+
+	msg := NewPublishMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestPublishMessageEncode1(t *testing.T) {
+	msgBytes := []byte{
+		byte(PUBLISH<<4) | 11,
 		23,
 		0, // topic name MSB
 		7, // topic name LSB
@@ -100,33 +158,22 @@ func TestPublishMessageEncode(t *testing.T) {
 	msg := NewPublishMessage()
 	msg.Topic = []byte("surgemq")
 	msg.QoS = QosAtLeastOnce
+	msg.Retain = true
+	msg.Dup = true
 	msg.PacketId = 7
-	msg.Payload = []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}
+	msg.Payload = []byte("send me home")
 
-	dst := make([]byte, 100)
+	dst := make([]byte, msg.Len())
 	n, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, msgBytes, dst[:n])
 }
 
-// test empty topic name
 func TestPublishMessageEncode2(t *testing.T) {
-	msg := NewPublishMessage()
-	msg.Topic = []byte("")
-	msg.PacketId = 7
-	msg.Payload = []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}
-
-	dst := make([]byte, 100)
-	_, err := msg.Encode(dst)
-	require.Error(t, err)
-}
-
-// test encoding qos = 0 and no packet id
-func TestPublishMessageEncode3(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBLISH << 4),
+		byte(PUBLISH<<4),
 		21,
 		0, // topic name MSB
 		7, // topic name LSB
@@ -136,61 +183,55 @@ func TestPublishMessageEncode3(t *testing.T) {
 
 	msg := NewPublishMessage()
 	msg.Topic = []byte("surgemq")
-	msg.QoS = QosAtMostOnce
-	msg.Payload = []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}
+	msg.Payload = []byte("send me home")
 
-	dst := make([]byte, 100)
+	dst := make([]byte, msg.Len())
 	n, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, msgBytes, dst[:n])
 }
 
-// test large message
-func TestPublishMessageEncode4(t *testing.T) {
-	msgBytes := []byte{
-		byte(PUBLISH << 4),
-		137,
-		8,
-		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
-	}
-
-	payload := make([]byte, 1024)
-	msgBytes = append(msgBytes, payload...)
-
+func TestPublishMessageEncodeError1(t *testing.T) {
 	msg := NewPublishMessage()
-	msg.Topic = []byte("surgemq")
-	msg.QoS = QosAtMostOnce
-	msg.Payload = payload
+	msg.Topic = []byte("") // <- empty topic
 
-	require.Equal(t, len(msgBytes), msg.Len())
+	dst := make([]byte, msg.Len())
+	_, err := msg.Encode(dst)
 
-	dst := make([]byte, 1100)
-	n, err := msg.Encode(dst)
-
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.Error(t, err)
 }
 
-func TestPublishEqualDecodeEncode2(t *testing.T) {
-	msgBytes := []byte{50, 18, 0, 9, 103, 114, 101, 101, 116, 105, 110, 103, 115, 0, 1, 72, 101, 108, 108, 111}
-
+func TestPublishMessageEncodeError2(t *testing.T) {
 	msg := NewPublishMessage()
-	n, err := msg.Decode(msgBytes)
+	msg.Topic = []byte("t")
+	msg.QoS = 3 // <- wrong qos
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	dst := make([]byte, msg.Len())
+	_, err := msg.Encode(dst)
 
-	dst := make([]byte, 100)
-	n2, err := msg.Encode(dst)
+	require.Error(t, err)
+}
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+func TestPublishMessageEncodeError3(t *testing.T) {
+	msg := NewPublishMessage()
+	msg.Topic = []byte("t")
+
+	dst := make([]byte, 1) // <- too small
+	_, err := msg.Encode(dst)
+
+	require.Error(t, err)
+}
+
+func TestPublishMessageEncodeError4(t *testing.T) {
+	msg := NewPublishMessage()
+	msg.Topic = make([]byte, 65536) // <- too big
+
+	dst := make([]byte, msg.Len())
+	_, err := msg.Encode(dst)
+
+	require.Error(t, err)
 }
 
 func TestPublishEqualDecodeEncode(t *testing.T) {
@@ -206,23 +247,22 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 	}
 
 	msg := NewPublishMessage()
-
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
 
-	dst := make([]byte, 100)
+	dst := make([]byte, msg.Len())
 	n2, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n2)
+	require.Equal(t, msgBytes, dst[:n2])
 
 	n3, err := msg.Decode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n3)
 }
 
 func BenchmarkPublishEncode(b *testing.B) {
