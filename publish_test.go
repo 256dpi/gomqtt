@@ -31,11 +31,11 @@ func TestPublishMessageDecode1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		23,
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
@@ -54,11 +54,11 @@ func TestPublishMessageDecode2(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		26,
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
@@ -73,8 +73,8 @@ func TestPublishMessageDecode3(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH << 4),
 		21,
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
@@ -89,11 +89,11 @@ func TestPublishMessageEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		23,
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
@@ -128,8 +128,8 @@ func TestPublishMessageEncode3(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH << 4),
 		21,
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
@@ -153,8 +153,8 @@ func TestPublishMessageEncode4(t *testing.T) {
 		byte(PUBLISH << 4),
 		137,
 		8,
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
 	}
 
@@ -197,11 +197,11 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		23,
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
@@ -246,11 +246,11 @@ func BenchmarkPublishDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		6,
-		0, // topic name MSB (0)
-		1, // topic name LSB (7)
+		0, // topic name MSB
+		1, // topic name LSB
 		't',
-		0, // packet ID MSB (0)
-		1, // packet ID LSB (7)
+		0, // packet ID MSB
+		1, // packet ID LSB
 		'p',
 	}
 

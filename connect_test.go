@@ -71,7 +71,7 @@ func TestConnectMessageDecode(t *testing.T) {
 func TestConnectMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
-		60, // <- remaining length to high
+		60, // <- wrong remaining length
 		0,  // Protocol String MSB
 		5,  // Protocol String LSB
 		'M', 'Q', 'T', 'T',
@@ -393,27 +393,27 @@ func TestConnectMessageEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
 		60,
-		0, // Protocol String MSB (0)
-		4, // Protocol String LSB (4)
+		0, // Protocol String MSB
+		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4,   // Protocol level 4
-		206, // connect flags 11001110, will QoS = 01
-		0,   // Keep Alive MSB (0)
-		10,  // Keep Alive LSB (10)
-		0,   // Client ID MSB (0)
-		7,   // Client ID LSB (7)
+		206, // Connect Flags
+		0,   // Keep Alive MSB
+		10,  // Keep Alive LSB
+		0,   // Client ID MSB
+		7,   // Client ID LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // Will Topic MSB (0)
-		4, // Will Topic LSB (4)
+		0, // Will Topic MSB
+		4, // Will Topic LSB
 		'w', 'i', 'l', 'l',
-		0,  // Will Message MSB (0)
-		12, // Will Message LSB (12)
+		0,  // Will Message MSB
+		12, // Will Message LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		0, // Username ID MSB (0)
-		7, // Username ID LSB (7)
+		0, // Username ID MSB
+		7, // Username ID LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0,  // Password ID MSB (0)
-		10, // Password ID LSB (10)
+		0,  // Password ID MSB
+		10, // Password ID LSB
 		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
 	}
 
@@ -440,27 +440,27 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
 		60,
-		0, // Protocol String MSB (0)
-		4, // Protocol String LSB (4)
+		0, // Protocol String MSB
+		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4,   // Protocol level 4
-		206, // connect flags 11001110, will QoS = 01
-		0,   // Keep Alive MSB (0)
-		10,  // Keep Alive LSB (10)
-		0,   // Client ID MSB (0)
-		7,   // Client ID LSB (7)
+		206, // Connect Flags
+		0,   // Keep Alive MSB
+		10,  // Keep Alive LSB
+		0,   // Client ID MSB
+		7,   // Client ID LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // Will Topic MSB (0)
-		4, // Will Topic LSB (4)
+		0, // Will Topic MSB
+		4, // Will Topic LSB
 		'w', 'i', 'l', 'l',
-		0,  // Will Message MSB (0)
-		12, // Will Message LSB (12)
+		0,  // Will Message MSB
+		12, // Will Message LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		0, // Username ID MSB (0)
-		7, // Username ID LSB (7)
+		0, // Username ID MSB
+		7, // Username ID LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0,  // Password ID MSB (0)
-		10, // Password ID LSB (10)
+		0,  // Password ID MSB
+		10, // Password ID LSB
 		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
 	}
 
@@ -509,27 +509,27 @@ func BenchmarkConnectDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
 		25,
-		0, // Protocol String MSB (0)
-		4, // Protocol String LSB (4)
+		0, // Protocol String MSB
+		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4,   // Protocol level 4
-		206, // connect flags 11001110, will QoS = 01
-		0,   // Keep Alive MSB (0)
-		10,  // Keep Alive LSB (10)
-		0,   // Client ID MSB (0)
-		1,   // Client ID LSB (1)
+		206, // Connect Flags
+		0,   // Keep Alive MSB
+		10,  // Keep Alive LSB
+		0,   // Client ID MSB
+		1,   // Client ID LSB
 		'i',
-		0, // Will Topic MSB (0)
-		1, // Will Topic LSB (1)
+		0, // Will Topic MSB
+		1, // Will Topic LSB
 		'w',
-		0, // Will Message MSB (0)
-		1, // Will Message LSB (1)
+		0, // Will Message MSB
+		1, // Will Message LSB
 		'm',
-		0, // Username ID MSB (0)
-		1, // Username ID LSB (1)
+		0, // Username ID MSB
+		1, // Username ID LSB
 		'u',
-		0, // Password ID MSB (0)
-		1, // Password ID LSB (1)
+		0, // Password ID MSB
+		1, // Password ID LSB
 		'p',
 	}
 

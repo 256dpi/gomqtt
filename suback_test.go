@@ -31,8 +31,8 @@ func TestSubackMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
-		0,    // packet ID MSB (0)
-		7,    // packet ID LSB (7)
+		0,    // packet ID MSB
+		7,    // packet ID LSB
 		0,    // return code 1
 		1,    // return code 2
 		2,    // return code 3
@@ -51,8 +51,8 @@ func TestSubackMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		1, // <- wrong remaining length
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 		0, // return code 1
 	}
 
@@ -66,8 +66,8 @@ func TestSubackMessageDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
-		0,    // packet ID MSB (0)
-		7,    // packet ID LSB (7)
+		0,    // packet ID MSB
+		7,    // packet ID LSB
 		0,    // return code 1
 		1,    // return code 2
 		2,    // return code 3
@@ -84,7 +84,7 @@ func TestSubackMessageDecodeError3(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		1, // <- wrong remaining length
-		0, // packet ID MSB (0)
+		0, // packet ID MSB
 	}
 
 	msg := NewSubackMessage()
@@ -97,8 +97,8 @@ func TestSubackMessageDecodeError4(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBCOMP << 4), // <- wrong message type
 		3,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 		0, // return code 1
 	}
 
@@ -112,8 +112,8 @@ func TestSubackMessageEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
-		0,    // packet ID MSB (0)
-		7,    // packet ID LSB (7)
+		0,    // packet ID MSB
+		7,    // packet ID LSB
 		0,    // return code 1
 		1,    // return code 2
 		2,    // return code 3
@@ -160,8 +160,8 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
-		0,    // packet ID MSB (0)
-		7,    // packet ID LSB (7)
+		0,    // packet ID MSB
+		7,    // packet ID LSB
 		0,    // return code 1
 		1,    // return code 2
 		2,    // return code 3
@@ -206,8 +206,8 @@ func BenchmarkSubackDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		3,
-		0, // packet ID MSB (0)
-		1, // packet ID LSB (7)
+		0, // packet ID MSB
+		1, // packet ID LSB
 		0, // return code 1
 	}
 

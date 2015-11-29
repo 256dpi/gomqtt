@@ -24,8 +24,8 @@ func TestIdentifiedMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
 		2,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 	}
 
 	n, pid, err := identifiedMessageDecode(msgBytes, PUBACK)
@@ -39,8 +39,8 @@ func TestIdentifiedMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
 		1, // <- wrong remaining length
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 	}
 
 	n, pid, err := identifiedMessageDecode(msgBytes, PUBACK)
@@ -54,7 +54,7 @@ func TestIdentifiedMessageDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
 		2,
-		7, // packet ID LSB (7)
+		7, // packet ID LSB
 		// <- insufficient bytes
 	}
 
@@ -69,8 +69,8 @@ func TestIdentifiedMessageEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
 		2,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 	}
 
 	dst := make([]byte, identifiedMessageLen())
@@ -93,8 +93,8 @@ func TestIdentifiedMessageEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
 		2,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 	}
 
 	msg := &PubackMessage{}
@@ -135,8 +135,8 @@ func BenchmarkIdentifiedMessageDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(PUBACK << 4),
 		2,
-		0, // packet ID MSB (0)
-		1, // packet ID LSB (7)
+		0, // packet ID MSB
+		1, // packet ID LSB
 	}
 
 	msg := &PubackMessage{}

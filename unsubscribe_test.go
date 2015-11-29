@@ -32,16 +32,16 @@ func TestUnsubscribeMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // topic name MSB (0)
-		8, // topic name LSB (8)
+		0, // topic name MSB
+		8, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		0,  // topic name MSB (0)
-		10, // topic name LSB (10)
+		0,  // topic name MSB
+		10, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
@@ -60,8 +60,8 @@ func TestUnsubscribeMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		2,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 		// empty topic list
 	}
 
@@ -75,8 +75,8 @@ func TestUnsubscribeMessageDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		6, // <- wrong remaining length
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
 	}
 
 	msg := NewUnsubscribeMessage()
@@ -102,10 +102,10 @@ func TestUnsubscribeMessageDecodeError4(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		11,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
-		0, // topic name MSB (0)
-		9, // topic name LSB (7) <- wrong size
+		0, // packet ID MSB
+		7, // packet ID LSB
+		0, // topic name MSB
+		9, // topic name LSB <- wrong size
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
 	}
 
@@ -119,16 +119,16 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // topic name MSB (0)
-		8, // topic name LSB (8)
+		0, // topic name MSB
+		8, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		0,  // topic name MSB (0)
-		10, // topic name LSB (10)
+		0,  // topic name MSB
+		10, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
@@ -182,16 +182,16 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
-		0, // packet ID MSB (0)
-		7, // packet ID LSB (7)
-		0, // topic name MSB (0)
-		7, // topic name LSB (7)
+		0, // packet ID MSB
+		7, // packet ID LSB
+		0, // topic name MSB
+		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // topic name MSB (0)
-		8, // topic name LSB (8)
+		0, // topic name MSB
+		8, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		0,  // topic name MSB (0)
-		10, // topic name LSB (10)
+		0,  // topic name MSB
+		10, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
@@ -235,10 +235,10 @@ func BenchmarkUnsubscribeDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		5,
-		0, // packet ID MSB (0)
-		1, // packet ID LSB (7)
-		0, // topic name MSB (0)
-		1, // topic name LSB (7)
+		0, // packet ID MSB
+		1, // packet ID LSB
+		0, // topic name MSB
+		1, // topic name LSB
 		't',
 	}
 
