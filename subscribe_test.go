@@ -23,7 +23,7 @@ import (
 func TestSubscribeInterface(t *testing.T) {
 	msg := NewSubscribeMessage()
 	msg.Subscriptions = []Subscription{
-		Subscription{ Topic: []byte("hello"), QoS: QosAtMostOnce },
+		Subscription{Topic: []byte("hello"), QoS: QosAtMostOnce},
 	}
 
 	require.Equal(t, msg.Type(), SUBSCRIBE)

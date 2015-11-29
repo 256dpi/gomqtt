@@ -97,9 +97,9 @@ func TestSubackMessageDecodeError4(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBCOMP << 4), // <- wrong message type
 		3,
-		0,    // packet ID MSB (0)
-		7,    // packet ID LSB (7)
-		0,    // return code 1
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+		0, // return code 1
 	}
 
 	msg := NewSubackMessage()

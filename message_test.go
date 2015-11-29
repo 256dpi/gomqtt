@@ -162,14 +162,14 @@ func TestFuzz(t *testing.T) {
 	require.Equal(t, 1, Fuzz([]byte{}))
 
 	// wrong message type
-	b1 := []byte{0<<4, 0x00}
+	b1 := []byte{0 << 4, 0x00}
 	require.Equal(t, 0, Fuzz(b1))
 
 	// wrong message format
-	b2 := []byte{2<<4, 0x02, 0x00, 0x06}
+	b2 := []byte{2 << 4, 0x02, 0x00, 0x06}
 	require.Equal(t, 0, Fuzz(b2))
 
 	// right message format
-	b3 := []byte{2<<4, 0x02, 0x00, 0x01}
+	b3 := []byte{2 << 4, 0x02, 0x00, 0x01}
 	require.Equal(t, 1, Fuzz(b3))
 }

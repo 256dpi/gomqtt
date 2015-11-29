@@ -98,7 +98,7 @@ func TestMessageHeaderEncodeError2(t *testing.T) {
 
 	buf := make([]byte, 2)
 	// overload max remaining length
-	n, err := headerEncode(buf, 0, maxRemainingLength + 1, 2, PUBREL)
+	n, err := headerEncode(buf, 0, maxRemainingLength+1, 2, PUBREL)
 
 	require.Error(t, err)
 	require.Equal(t, 0, n)

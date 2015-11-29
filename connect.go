@@ -175,11 +175,6 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	}
 
 	// check buffer length
-	if len(src[total:]) < 2 {
-		return 0, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d.", 2, len(src[total:]))
-	}
-
-	// check buffer length
 	if len(src) < total+2 {
 		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
 	}

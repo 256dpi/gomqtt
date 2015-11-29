@@ -31,70 +31,50 @@ func TestConnectMessageDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
 		60,
-		0, // Length MSB (0)
-		4, // Length LSB (4)
+		0, // Protocol String MSB
+		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
-		4,   // Protocol level 4
-		206, // connect flags 11001110, will QoS = 01
-		0,   // Keep Alive MSB (0)
-		10,  // Keep Alive LSB (10)
-		0,   // Client ID MSB (0)
-		7,   // Client ID LSB (7)
+		4,   // Protocol Level
+		206, // Connect Flags
+		0,   // Keep Alive MSB
+		10,  // Keep Alive LSB
+		0,   // Client ID MSB
+		7,   // Client ID LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // Will Topic MSB (0)
-		4, // Will Topic LSB (4)
+		0, // Will Topic MSB
+		4, // Will Topic LSB
 		'w', 'i', 'l', 'l',
-		0,  // Will Message MSB (0)
-		12, // Will Message LSB (12)
+		0,  // Will Message MSB
+		12, // Will Message LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		0, // Username ID MSB (0)
-		7, // Username ID LSB (7)
+		0, // Username ID MSB
+		7, // Username ID LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0,  // Password ID MSB (0)
-		10, // Password ID LSB (10)
+		0,  // Password ID MSB
+		10, // Password ID LSB
 		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
 	}
 
 	msg := NewConnectMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, 10, int(msg.KeepAlive), "Incorrect KeepAlive value.")
-	require.Equal(t, "surgemq", string(msg.ClientId), "Incorrect client ID value.")
-	require.Equal(t, "will", string(msg.WillTopic), "Incorrect will topic value.")
-	require.Equal(t, "send me home", string(msg.WillPayload), "Incorrect will message value.")
-	require.Equal(t, "surgemq", string(msg.Username), "Incorrect username value.")
-	require.Equal(t, "verysecret", string(msg.Password), "Incorrect password value.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, 10, int(msg.KeepAlive))
+	require.Equal(t, "surgemq", string(msg.ClientId))
+	require.Equal(t, "will", string(msg.WillTopic))
+	require.Equal(t, "send me home", string(msg.WillPayload))
+	require.Equal(t, "surgemq", string(msg.Username))
+	require.Equal(t, "verysecret", string(msg.Password))
 }
 
-func TestConnectMessageDecode2(t *testing.T) {
-	// missing last byte 't'
+func TestConnectMessageDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
-		60,
-		0, // Length MSB (0)
-		4, // Length LSB (4)
+		60, // <- remaining length to high
+		0,  // Protocol String MSB
+		5,  // Protocol String LSB
 		'M', 'Q', 'T', 'T',
-		4,   // Protocol level 4
-		206, // connect flags 11001110, will QoS = 01
-		0,   // Keep Alive MSB (0)
-		10,  // Keep Alive LSB (10)
-		0,   // Client ID MSB (0)
-		7,   // Client ID LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // Will Topic MSB (0)
-		4, // Will Topic LSB (4)
-		'w', 'i', 'l', 'l',
-		0,  // Will Message MSB (0)
-		12, // Will Message LSB (12)
-		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		0, // Username ID MSB (0)
-		7, // Username ID LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0,  // Password ID MSB (0)
-		10, // Password ID LSB (10)
-		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e',
 	}
 
 	msg := NewConnectMessage()
@@ -103,69 +83,304 @@ func TestConnectMessageDecode2(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestConnectMessageDecode3(t *testing.T) {
-	// extra bytes
+func TestConnectMessageDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
-		60,
-		0, // Length MSB (0)
-		4, // Length LSB (4)
+		6,
+		0, // Protocol String MSB
+		5, // Protocol String LSB <- invalid size
 		'M', 'Q', 'T', 'T',
-		4,   // Protocol level 4
-		206, // connect flags 11001110, will QoS = 01
-		0,   // Keep Alive MSB (0)
-		10,  // Keep Alive LSB (10)
-		0,   // Client ID MSB (0)
-		7,   // Client ID LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // Will Topic MSB (0)
-		4, // Will Topic LSB (4)
-		'w', 'i', 'l', 'l',
-		0,  // Will Message MSB (0)
-		12, // Will Message LSB (12)
-		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		0, // Username ID MSB (0)
-		7, // Username ID LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0,  // Password ID MSB (0)
-		10, // Password ID LSB (10)
-		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
-		'e', 'x', 't', 'r', 'a',
 	}
 
 	msg := NewConnectMessage()
-	n, err := msg.Decode(msgBytes)
+	_, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, 62, n)
+	require.Error(t, err)
 }
 
-func TestConnectMessageDecode4(t *testing.T) {
-	// missing client Id, clean session == 0
+func TestConnectMessageDecodeError3(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
-		53,
-		0, // Length MSB (0)
-		4, // Length LSB (4)
+		6,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
-		4,   // Protocol level 4
-		204, // connect flags 11001110, will QoS = 01
-		0,   // Keep Alive MSB (0)
-		10,  // Keep Alive LSB (10)
-		0,   // Client ID MSB (0)
-		0,   // Client ID LSB (0)
-		0,   // Will Topic MSB (0)
-		4,   // Will Topic LSB (4)
-		'w', 'i', 'l', 'l',
-		0,  // Will Message MSB (0)
-		12, // Will Message LSB (12)
-		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		0, // Username ID MSB (0)
-		7, // Username ID LSB (7)
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0,  // Password ID MSB (0)
-		10, // Password ID LSB (10)
-		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
+		// Protocol Level <- missing
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError4(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		8,
+		0,                       // Protocol String MSB
+		5,                       // Protocol String LSB
+		'M', 'Q', 'T', 'T', 'X', // <- wrong protocol string
+		4,
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError5(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		7,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		5, // Protocol Level <- wrong id
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError6(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		7,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4, // Protocol Level
+		// Connect Flags <- missing
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError7(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		7,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4, // Protocol Level
+		1, // Connect Flags <- reserved bit set to one
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError8(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		7,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4,  // Protocol Level
+		24, // Connect Flags <- invalid qos
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError9(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		7,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4, // Protocol Level
+		8, // Connect Flags <- will flag set to zero but others not
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError10(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		7,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4,  // Protocol Level
+		64, // Connect Flags <- password flag set but not username
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError11(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		7,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4, // Protocol Level
+		0, // Connect Flags
+		0, // Keep Alive MSB <- missing
+		// Keep Alive LSB <- missing
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError12(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		7,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4, // Protocol Level
+		0, // Connect Flags
+		0, // Keep Alive MSB
+		1, // Keep Alive LSB
+		0, // Client ID MSB
+		2, // Client ID LSB <- wrong size
+		'x',
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError13(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		6,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4, // Protocol Level
+		0, // Connect Flags <- clean session false
+		0, // Keep Alive MSB
+		1, // Keep Alive LSB
+		0, // Client ID MSB
+		0, // Client ID LSB
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError14(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		6,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4, // Protocol Level
+		6, // Connect Flags
+		0, // Keep Alive MSB
+		1, // Keep Alive LSB
+		0, // Client ID MSB
+		0, // Client ID LSB
+		0, // Will Topic MSB
+		1, // Will Topic LSB <- wrong size
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError15(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		6,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4, // Protocol Level
+		6, // Connect Flags
+		0, // Keep Alive MSB
+		1, // Keep Alive LSB
+		0, // Client ID MSB
+		0, // Client ID LSB
+		0, // Will Topic MSB
+		0, // Will Topic LSB
+		0, // Will Payload MSB
+		1, // Will Payload LSB <- wrong size
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError16(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		6,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4,   // Protocol Level
+		194, // Connect Flags
+		0,   // Keep Alive MSB
+		1,   // Keep Alive LSB
+		0,   // Client ID MSB
+		0,   // Client ID LSB
+		0,   // Username MSB
+		1,   // Username LSB <- wrong size
+	}
+
+	msg := NewConnectMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestConnectMessageDecodeError17(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		6,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4,   // Protocol Level
+		194, // Connect Flags
+		0,   // Keep Alive MSB
+		1,   // Keep Alive LSB
+		0,   // Client ID MSB
+		0,   // Client ID LSB
+		0,   // Username MSB
+		0,   // Username LSB
+		0,   // Password MSB
+		1,   // Password LSB <- wrong size
 	}
 
 	msg := NewConnectMessage()
@@ -178,8 +393,8 @@ func TestConnectMessageEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
 		60,
-		0, // Length MSB (0)
-		4, // Length LSB (4)
+		0, // Protocol String MSB (0)
+		4, // Protocol String LSB (4)
 		'M', 'Q', 'T', 'T',
 		4,   // Protocol level 4
 		206, // connect flags 11001110, will QoS = 01
@@ -213,20 +428,20 @@ func TestConnectMessageEncode(t *testing.T) {
 	msg.Username = []byte("surgemq")
 	msg.Password = []byte("verysecret")
 
-	dst := make([]byte, 100)
+	dst := make([]byte, msg.Len())
 	n, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, msgBytes, dst[:n])
 }
 
 func TestConnectEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
 		60,
-		0, // Length MSB (0)
-		4, // Length LSB (4)
+		0, // Protocol String MSB (0)
+		4, // Protocol String LSB (4)
 		'M', 'Q', 'T', 'T',
 		4,   // Protocol level 4
 		206, // connect flags 11001110, will QoS = 01
@@ -252,20 +467,20 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 	msg := NewConnectMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
 
-	dst := make([]byte, 100)
+	dst := make([]byte, msg.Len())
 	n2, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n2)
+	require.Equal(t, msgBytes, dst[:n2])
 
 	n3, err := msg.Decode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n3)
 }
 
 func BenchmarkConnectEncode(b *testing.B) {
@@ -294,8 +509,8 @@ func BenchmarkConnectDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
 		25,
-		0, // Length MSB (0)
-		4, // Length LSB (4)
+		0, // Protocol String MSB (0)
+		4, // Protocol String LSB (4)
 		'M', 'Q', 'T', 'T',
 		4,   // Protocol level 4
 		206, // connect flags 11001110, will QoS = 01
