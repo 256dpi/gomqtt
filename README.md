@@ -76,9 +76,13 @@ if err != nil {
 switch msg2.Type() {
 case CONNECT:
     c := msg2.(*ConnectMessage)
-    println(string(c.Username))
-    println(string(c.Password))
+    fmt.Println(string(c.Username))
+    fmt.Println(string(c.Password))
 }
+
+// Output:
+// gomqtt
+// amazing!
 ```
 
 More details can be found in the [documentation](http://godoc.org/github.com/gomqtt/message).
