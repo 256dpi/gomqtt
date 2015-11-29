@@ -9,9 +9,11 @@
 
 ## Features
 
-- Zero allocation encoding/decoding.
+- Built around plain byte slices.
+- Zero allocation encoding and decoding.
 - Builtin message detection.
 - No overflows thanks to input fuzzing.
+- Full test coverage.
 
 ## Installation
 
@@ -39,11 +41,15 @@ if _, err := msg1.Encode(buf); err != nil {
     // there was an error while encoding
     panic(err)
 }
+
+// Send buffer off the wire.
 ```
 
 Decode bytes to a message:
 
 ```go
+// Get buffer from the wire.
+
 // Detect message.
 l, mt := DetectMessage(buf)
 
@@ -65,6 +71,13 @@ _, err = msg2.Decode(buf)
 if err != nil {
     // there was an error while decoding
     panic(err)
+}
+
+switch msg2.Type() {
+case CONNECT:
+    c := msg2.(*ConnectMessage)
+    println(string(c.Username))
+    println(string(c.Password))
 }
 ```
 

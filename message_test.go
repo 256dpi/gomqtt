@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"fmt"
 )
 
 func TestQosCodes(t *testing.T) {
@@ -62,7 +63,7 @@ func TestFixedHeaderFlags(t *testing.T) {
 	}
 }
 
-func TestReadmeExample(t *testing.T) {
+func ExampleReadme() {
 	// Create new message.
 	msg1 := NewConnectMessage()
 	msg1.Username = []byte("gomqtt")
@@ -76,6 +77,12 @@ func TestReadmeExample(t *testing.T) {
 		// there was an error while encoding
 		panic(err)
 	}
+
+	// Send buffer off the wire.
+
+	// ---
+
+	// Get buffer from the wire.
 
 	// Detect message.
 	l, mt := DetectMessage(buf)
@@ -99,6 +106,17 @@ func TestReadmeExample(t *testing.T) {
 		// there was an error while decoding
 		panic(err)
 	}
+
+	switch msg2.Type() {
+	case CONNECT:
+		c := msg2.(*ConnectMessage)
+		fmt.Println(string(c.Username))
+		fmt.Println(string(c.Password))
+	}
+
+	// Output:
+	// gomqtt
+	// amazing!
 }
 
 func TestDetect1(t *testing.T) {
