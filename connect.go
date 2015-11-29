@@ -21,8 +21,8 @@ import (
 )
 
 var (
-	version31Name  = []byte{'M', 'Q', 'I', 's', 'd', 'p'}
 	version311Name = []byte{'M', 'Q', 'T', 'T'}
+	version311Byte byte = 4
 )
 
 // After a Network Connection is established by a Client to a Server, the first Packet
@@ -33,9 +33,6 @@ var (
 // disconnect the Client [MQTT-3.1.0-2].  See section 4.8 for information about
 // handling errors.
 type ConnectMessage struct {
-	// The protocol version (3 or 4).
-	Version byte
-
 	// The clients client id.
 	ClientId []byte
 
@@ -68,7 +65,7 @@ var _ Message = (*ConnectMessage)(nil)
 
 // NewConnectMessage creates a new CONNECT message.
 func NewConnectMessage() *ConnectMessage {
-	return &ConnectMessage{Version: Version311, CleanSession: true}
+	return &ConnectMessage{CleanSession: true}
 }
 
 // Type return the messages message type.
@@ -78,8 +75,7 @@ func (this ConnectMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (this ConnectMessage) String() string {
-	return fmt.Sprintf("CONNECT: Version=%d KeepAlive=%d ClientId=%q WillTopic=%q WillPayload=%q Username=%q Password=%q",
-		this.Version,
+	return fmt.Sprintf("CONNECT: KeepAlive=%d ClientId=%q WillTopic=%q WillPayload=%q Username=%q Password=%q",
 		this.KeepAlive,
 		this.ClientId,
 		this.WillTopic,
@@ -122,16 +118,16 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	}
 
 	// read version
-	this.Version = src[total]
+	versionByte := src[total]
 	total++
 
 	// check protocol string and version
-	if this.Version != Version31 && this.Version != Version311 {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version (%d).", this.Version)
+	if versionByte != version311Byte {
+		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version (%d).", version311Byte)
 	}
 
 	// check protocol version string
-	if (this.Version == Version31 && !bytes.Equal(protoName, version31Name)) || (this.Version == Version311 && !bytes.Equal(protoName, version311Name)) {
+	if (!bytes.Equal(protoName, version311Name)) {
 		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version description (%s).", protoName)
 	}
 
@@ -238,11 +234,6 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
-	// check version
-	if this.Version != 0x3 && this.Version != 0x4 {
-		return 0, fmt.Errorf("CONNECT/Encode: Protocol violation: Invalid protocol version (%d).", this.Version)
-	}
-
 	// encode header
 	n, err := headerEncode(dst[total:], 0, this.len(), this.Len(), CONNECT)
 	total += n
@@ -250,26 +241,15 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 		return total, err
 	}
 
-	if this.Version == 0x3 {
-		// write 0x3 protocol name
-		n, err := writeLPBytes(dst[total:], version31Name)
-		total += n
-		if err != nil {
-			return total, err
-		}
-	}
-
-	if this.Version == 0x4 {
-		// write 0x4 protocol name
-		n, err := writeLPBytes(dst[total:], version311Name)
-		total += n
-		if err != nil {
-			return total, err
-		}
+	// write version string
+	n, err = writeLPBytes(dst[total:], version311Name)
+	total += n
+	if err != nil {
+		return total, err
 	}
 
 	// write version value
-	dst[total] = this.Version
+	dst[total] = version311Byte
 	total += 1
 
 	var connectFlags byte
@@ -372,21 +352,12 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 func (this *ConnectMessage) len() int {
 	total := 0
 
-	vl := 0
-	if this.Version == Version31 {
-		vl = 6
-	} else if this.Version == Version311 {
-		vl = 4
-	} else {
-		return total
-	}
-
 	// 2 bytes protocol name length
-	// n bytes protocol name
+	// 4 bytes protocol name
 	// 1 byte protocol version
 	// 1 byte connect flags
 	// 2 bytes keep alive timer
-	total += 2 + vl + 1 + 1 + 2
+	total += 2 + 4 + 1 + 1 + 2
 
 	// add the clientID length
 	total += 2 + len(this.ClientId)

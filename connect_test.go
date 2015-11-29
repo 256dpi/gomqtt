@@ -419,7 +419,6 @@ func TestConnectMessageEncode(t *testing.T) {
 
 	msg := NewConnectMessage()
 	msg.WillQoS = QosAtLeastOnce
-	msg.Version = 4
 	msg.CleanSession = true
 	msg.ClientId = []byte("surgemq")
 	msg.KeepAlive = 10
@@ -486,7 +485,6 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 func BenchmarkConnectEncode(b *testing.B) {
 	msg := NewConnectMessage()
 	msg.WillQoS = QosAtLeastOnce
-	msg.Version = 4
 	msg.CleanSession = true
 	msg.ClientId = []byte("i")
 	msg.KeepAlive = 10
