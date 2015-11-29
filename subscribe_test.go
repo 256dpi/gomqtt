@@ -53,24 +53,84 @@ func TestSubscribeMessageDecode(t *testing.T) {
 	msg := NewSubscribeMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, 3, len(msg.Subscriptions), "Error decoding topics.")
-	require.Equal(t, []byte("surgemq"), msg.Subscriptions[0].Topic, "Topic 'surgemq' should exist.")
-	require.Equal(t, 0, int(msg.Subscriptions[0].QoS), "Incorrect topic qos.")
-	require.Equal(t, []byte("/a/b/#/c"), msg.Subscriptions[1].Topic, "Topic '/a/b/#/c' should exist.")
-	require.Equal(t, 1, int(msg.Subscriptions[1].QoS), "Incorrect topic qos.")
-	require.Equal(t, []byte("/a/b/#/cdd"), msg.Subscriptions[2].Topic, "Topic '/a/b/#/c' should exist.")
-	require.Equal(t, 2, int(msg.Subscriptions[2].QoS), "Incorrect topic qos.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, 3, len(msg.Subscriptions))
+	require.Equal(t, []byte("surgemq"), msg.Subscriptions[0].Topic)
+	require.Equal(t, 0, int(msg.Subscriptions[0].QoS))
+	require.Equal(t, []byte("/a/b/#/c"), msg.Subscriptions[1].Topic)
+	require.Equal(t, 1, int(msg.Subscriptions[1].QoS))
+	require.Equal(t, []byte("/a/b/#/cdd"), msg.Subscriptions[2].Topic)
+	require.Equal(t, 2, int(msg.Subscriptions[2].QoS))
 }
 
-// test empty topic list
-func TestSubscribeMessageDecode2(t *testing.T) {
+func TestSubscribeMessageDecodeError1(t *testing.T) {
+	msgBytes := []byte{
+		byte(SUBSCRIBE<<4) | 2,
+		9, // <- too much
+	}
+
+	msg := NewSubscribeMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestSubscribeMessageDecodeError2(t *testing.T) {
+	msgBytes := []byte{
+		byte(SUBSCRIBE<<4) | 2,
+		0,
+		// <- missing packet id
+	}
+
+	msg := NewSubscribeMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestSubscribeMessageDecodeError3(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		2,
 		0, // packet ID MSB
 		7, // packet ID LSB
+		// <- missing subscription
+	}
+
+	msg := NewSubscribeMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestSubscribeMessageDecodeError4(t *testing.T) {
+	msgBytes := []byte{
+		byte(SUBSCRIBE<<4) | 2,
+		5,
+		0, // packet ID MSB
+		7, // packet ID LSB
+		0, // topic name MSB
+		2, // topic name LSB <- wrong size
+		's',
+	}
+
+	msg := NewSubscribeMessage()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestSubscribeMessageDecodeError5(t *testing.T) {
+	msgBytes := []byte{
+		byte(SUBSCRIBE<<4) | 2,
+		5,
+		0, // packet ID MSB
+		7, // packet ID LSB
+		0, // topic name MSB
+		1, // topic name LSB
+		's',
+		// <- missing qos
 	}
 
 	msg := NewSubscribeMessage()
@@ -107,16 +167,35 @@ func TestSubscribeMessageEncode(t *testing.T) {
 		Subscription{[]byte("/a/b/#/cdd"), 2},
 	}
 
-	dst := make([]byte, 100)
+	dst := make([]byte, msg.Len())
 	n, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, msgBytes, dst)
 }
 
-// test to ensure encoding and decoding are the same
-// decode, encode, and decode again
+func TestSubscribeMessageEncodeError1(t *testing.T) {
+	msg := NewSubscribeMessage()
+
+	dst := make([]byte, 1) // <- too small
+	_, err := msg.Encode(dst)
+
+	require.Error(t, err)
+}
+
+func TestSubscribeMessageEncodeError2(t *testing.T) {
+	msg := NewSubscribeMessage()
+	msg.Subscriptions = []Subscription{
+		Subscription{make([]byte, 65536), 0}, // too big
+	}
+
+	dst := make([]byte, msg.Len())
+	_, err := msg.Encode(dst)
+
+	require.Error(t, err)
+}
+
 func TestSubscribeEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
@@ -140,20 +219,20 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 	msg := NewSubscribeMessage()
 	n, err := msg.Decode(msgBytes)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
 
-	dst := make([]byte, 100)
+	dst := make([]byte, msg.Len())
 	n2, err := msg.Encode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
-	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n2)
+	require.Equal(t, msgBytes, dst[:n2])
 
 	n3, err := msg.Decode(dst)
 
-	require.NoError(t, err, "Error decoding message.")
-	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n3)
 }
 
 func BenchmarkSubscribeEncode(b *testing.B) {
