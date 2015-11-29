@@ -389,7 +389,7 @@ func TestConnectMessageDecodeError17(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestConnectMessageEncode(t *testing.T) {
+func TestConnectMessageEncode1(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
 		60,
@@ -397,7 +397,7 @@ func TestConnectMessageEncode(t *testing.T) {
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4,   // Protocol level 4
-		206, // Connect Flags
+		204, // Connect Flags
 		0,   // Keep Alive MSB
 		10,  // Keep Alive LSB
 		0,   // Client ID MSB
@@ -419,7 +419,7 @@ func TestConnectMessageEncode(t *testing.T) {
 
 	msg := NewConnectMessage()
 	msg.WillQoS = QosAtLeastOnce
-	msg.CleanSession = true
+	msg.CleanSession = false
 	msg.ClientId = []byte("surgemq")
 	msg.KeepAlive = 10
 	msg.WillTopic = []byte("will")
@@ -435,6 +435,123 @@ func TestConnectMessageEncode(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n])
 }
 
+func TestConnectMessageEncode2(t *testing.T) {
+	msgBytes := []byte{
+		byte(CONNECT << 4),
+		12,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4,   // Protocol level 4
+		2, // Connect Flags
+		0,   // Keep Alive MSB
+		10,  // Keep Alive LSB
+		0,   // Client ID MSB
+		0,   // Client ID LSB
+	}
+
+	msg := NewConnectMessage()
+	msg.CleanSession = true
+	msg.KeepAlive = 10
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.NoError(t, err)
+	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, msgBytes, dst[:n])
+}
+
+func TestConnectMessageEncodeError1(t *testing.T) {
+	msg := NewConnectMessage()
+
+	dst := make([]byte, 4) // <- too small buffer
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 0, n)
+}
+
+func TestConnectMessageEncodeError2(t *testing.T) {
+	msg := NewConnectMessage()
+	msg.WillTopic = []byte("t")
+	msg.WillQoS = 3 // <- wrong qos
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 9, n)
+}
+
+func TestConnectMessageEncodeError3(t *testing.T) {
+	msg := NewConnectMessage()
+	msg.ClientId = make([]byte, 65536) // <- too big
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 14, n)
+}
+
+func TestConnectMessageEncodeError4(t *testing.T) {
+	msg := NewConnectMessage()
+	msg.WillTopic = make([]byte, 65536) // <- too big
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 16, n)
+}
+
+func TestConnectMessageEncodeError5(t *testing.T) {
+	msg := NewConnectMessage()
+	msg.WillTopic = []byte("t")
+	msg.WillPayload = make([]byte, 65536) // <- too big
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 19, n)
+}
+
+func TestConnectMessageEncodeError6(t *testing.T) {
+	msg := NewConnectMessage()
+	msg.Username = make([]byte, 65536) // <- too big
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 16, n)
+}
+
+func TestConnectMessageEncodeError7(t *testing.T) {
+	msg := NewConnectMessage()
+	msg.Password = []byte("p") // <- missing username
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 14, n)
+}
+
+func TestConnectMessageEncodeError8(t *testing.T) {
+	msg := NewConnectMessage()
+	msg.Username = []byte("u")
+	msg.Password = make([]byte, 65536) // <- too big
+
+	dst := make([]byte, msg.Len())
+	n, err := msg.Encode(dst)
+
+	require.Error(t, err)
+	require.Equal(t, 19, n)
+}
+
 func TestConnectEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNECT << 4),
@@ -443,7 +560,7 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4,   // Protocol level 4
-		206, // Connect Flags
+		238, // Connect Flags
 		0,   // Keep Alive MSB
 		10,  // Keep Alive LSB
 		0,   // Client ID MSB

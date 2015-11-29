@@ -241,12 +241,9 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 		return total, err
 	}
 
-	// write version string
-	n, err = writeLPBytes(dst[total:], version311Name)
+	// write version string, length has been checked beforehand
+	n, _ = writeLPBytes(dst[total:], version311Name)
 	total += n
-	if err != nil {
-		return total, err
-	}
 
 	// write version value
 	dst[total] = version311Byte
@@ -325,6 +322,10 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 		if err != nil {
 			return total, err
 		}
+	}
+
+	if len(this.Username) == 0 && len(this.Password) > 0 {
+		return total, fmt.Errorf("CONNECT/Encode: Protocol violation: Password set without username.")
 	}
 
 	// write username
