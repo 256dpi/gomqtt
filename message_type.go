@@ -16,61 +16,25 @@ package message
 
 import "fmt"
 
-// MessageType is the type representing the MQTT packet types. In the MQTT spec,
-// MQTT control packet type is represented as a 4-bit unsigned value.
+// MessageType is the type representing the MQTT packet types.
 type MessageType byte
 
 const (
-	// RESERVED is a reserved value and should be considered an invalid message type
 	RESERVED MessageType = iota
-
-	// CONNECT: Client to Server. Client request to connect to Server.
 	CONNECT
-
-	// CONNACK: Server to Client. Connect acknowledgement.
 	CONNACK
-
-	// PUBLISH: Client to Server, or Server to Client. Publish message.
 	PUBLISH
-
-	// PUBACK: Client to Server, or Server to Client. Publish acknowledgment for
-	// QoS 1 messages.
 	PUBACK
-
-	// PUBACK: Client to Server, or Server to Client. Publish received for QoS 2 messages.
-	// Assured delivery part 1.
 	PUBREC
-
-	// PUBREL: Client to Server, or Server to Client. Publish release for QoS 2 messages.
-	// Assured delivery part 1.
 	PUBREL
-
-	// PUBCOMP: Client to Server, or Server to Client. Publish complete for QoS 2 messages.
-	// Assured delivery part 3.
 	PUBCOMP
-
-	// SUBSCRIBE: Client to Server. Client subscribe request.
 	SUBSCRIBE
-
-	// SUBACK: Server to Client. Subscribe acknowledgement.
 	SUBACK
-
-	// UNSUBSCRIBE: Client to Server. Unsubscribe request.
 	UNSUBSCRIBE
-
-	// UNSUBACK: Server to Client. Unsubscribe acknowledgment.
 	UNSUBACK
-
-	// PINGREQ: Client to Server. PING request.
 	PINGREQ
-
-	// PINGRESP: Server to Client. PING response.
 	PINGRESP
-
-	// DISCONNECT: Client to Server. Client is disconnecting.
 	DISCONNECT
-
-	// RESERVED2 is a reserved value and should be considered an invalid message type.
 	RESERVED2
 )
 

@@ -71,7 +71,7 @@ const (
 	// QoS 1: At least once delivery
 	// This quality of service ensures that the message arrives at the receiver at least once.
 	// A QoS 1 PUBLISH Packet has a Packet Identifier in its variable header and is acknowledged
-	// by a PUBACK Packet. Section 2.3.1 provides more information about Packet Identifiers.
+	// by a PUBACK Packet.
 	QosAtLeastOnce
 
 	// QoS 2: Exactly once delivery
@@ -93,9 +93,9 @@ type Message interface {
 	// Len returns the byte length of the message.
 	Len() int
 
-	// Decode reads the bytes in the byte slice from the argument. It returns the
-	// total number of bytes decoded, and whether there have been any errors during
-	// the process. The byte slice MUST NOT be modified during the duration of this
+	// Decode reads from the byte slice argument. It returns the total number of bytes
+	// decoded, and whether there have been any errors during the process.
+	// The byte slice MUST NOT be modified during the duration of this
 	// message being available since the byte slice never gets copied.
 	Decode([]byte) (int, error)
 

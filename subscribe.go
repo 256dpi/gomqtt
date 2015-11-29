@@ -71,9 +71,9 @@ func (this *SubscribeMessage) Len() int {
 	return headerLen(ml) + ml
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
@@ -131,8 +131,7 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
 	total := 0
 

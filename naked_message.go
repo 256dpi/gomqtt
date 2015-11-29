@@ -61,9 +61,9 @@ func (this *DisconnectMessage) Len() int {
 	return nakedMessageLen()
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *DisconnectMessage) Decode(src []byte) (int, error) {
 	return nakedMessageDecode(src, DISCONNECT)
@@ -71,8 +71,7 @@ func (this *DisconnectMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *DisconnectMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, DISCONNECT)
 }
@@ -82,11 +81,7 @@ func (this DisconnectMessage) String() string {
 	return DISCONNECT.String()
 }
 
-// The PINGREQ Packet is sent from a Client to the Server. It can be used to:
-// 1. Indicate to the Server that the Client is alive in the absence of any other
-//    Control Packets being sent from the Client to the Server.
-// 2. Request that the Server responds to confirm that it is alive.
-// 3. Exercise the network to indicate that the Network Connection is active.
+// The PINGREQ Packet is sent from a Client to the Server.
 type PingreqMessage struct{}
 
 var _ Message = (*PingreqMessage)(nil)
@@ -106,9 +101,9 @@ func (this *PingreqMessage) Len() int {
 	return nakedMessageLen()
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *PingreqMessage) Decode(src []byte) (int, error) {
 	return nakedMessageDecode(src, PINGREQ)
@@ -116,8 +111,7 @@ func (this *PingreqMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *PingreqMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, PINGREQ)
 }
@@ -148,9 +142,9 @@ func (this *PingrespMessage) Len() int {
 	return nakedMessageLen()
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *PingrespMessage) Decode(src []byte) (int, error) {
 	return nakedMessageDecode(src, PINGRESP)
@@ -158,8 +152,7 @@ func (this *PingrespMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *PingrespMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, PINGRESP)
 }

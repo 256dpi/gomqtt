@@ -88,9 +88,9 @@ func (this *PubackMessage) Len() int {
 	return identifiedMessageLen()
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *PubackMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBACK)
@@ -100,8 +100,7 @@ func (this *PubackMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *PubackMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, PUBACK)
 }
@@ -135,9 +134,9 @@ func (this *PubcompMessage) Len() int {
 	return identifiedMessageLen()
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *PubcompMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBCOMP)
@@ -147,8 +146,7 @@ func (this *PubcompMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *PubcompMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, PUBCOMP)
 }
@@ -182,9 +180,9 @@ func (this *PubrecMessage) Len() int {
 	return identifiedMessageLen()
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *PubrecMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBREC)
@@ -194,8 +192,7 @@ func (this *PubrecMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *PubrecMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, PUBREC)
 }
@@ -229,9 +226,9 @@ func (this *PubrelMessage) Len() int {
 	return identifiedMessageLen()
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *PubrelMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBREL)
@@ -241,8 +238,7 @@ func (this *PubrelMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *PubrelMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, PUBREL)
 }
@@ -276,9 +272,9 @@ func (this *UnsubackMessage) Len() int {
 	return identifiedMessageLen()
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *UnsubackMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, UNSUBACK)
@@ -288,8 +284,7 @@ func (this *UnsubackMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *UnsubackMessage) Encode(dst []byte) (int, error) {
 	return identifiedMessageEncode(dst, this.PacketId, UNSUBACK)
 }

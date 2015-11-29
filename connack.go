@@ -39,7 +39,7 @@ const (
 	ErrNotAuthorized
 )
 
-// Valid checks to see if the ConnackCode is valid.
+// Valid checks if the ConnackCode is valid.
 func (this ConnackCode) Valid() bool {
 	return this <= 5
 }
@@ -65,12 +65,7 @@ func (this ConnackCode) Error() string {
 }
 
 // The CONNACK Packet is the packet sent by the Server in response to a CONNECT Packet
-// received from a Client. The first packet sent from the Server to the Client MUST
-// be a CONNACK Packet [MQTT-3.2.0-1].
-//
-// If the Client does not receive a CONNACK Packet from the Server within a reasonable
-// amount of time, the Client SHOULD close the Network Connection. A "reasonable" amount
-// of time depends on the type of application and the communications infrastructure.
+// received from a Client.
 type ConnackMessage struct {
 	// The Session Present flag enables a Client to establish whether the Client and
 	// Server have a consistent view about whether there is already stored Session state.
@@ -104,9 +99,9 @@ func (this *ConnackMessage) Len() int {
 	return headerLen(2) + 2
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	total := 0
@@ -147,8 +142,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	total := 0
 

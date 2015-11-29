@@ -20,10 +20,8 @@ import (
 )
 
 // A SUBACK Packet is sent by the Server to the Client to confirm receipt and processing
-// of a SUBSCRIBE Packet.
-//
-// A SUBACK Packet contains a list of return codes, that specify the maximum QoS level
-// that was granted in each Subscription that was requested by the SUBSCRIBE.
+// of a SUBSCRIBE Packet. The SUBACK Packet contains a list of return codes, that specify
+// the maximum QoS level that have been granted.
 type SubackMessage struct {
 	// The granted QoS levels for the requested subscriptions.
 	ReturnCodes []byte
@@ -55,9 +53,9 @@ func (this *SubackMessage) Len() int {
 	return headerLen(ml) + ml
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *SubackMessage) Decode(src []byte) (int, error) {
 	total := 0
@@ -102,8 +100,7 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *SubackMessage) Encode(dst []byte) (int, error) {
 	total := 0
 

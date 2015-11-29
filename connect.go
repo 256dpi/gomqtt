@@ -26,12 +26,7 @@ var (
 )
 
 // After a Network Connection is established by a Client to a Server, the first Packet
-// sent from the Client to the Server MUST be a CONNECT Packet [MQTT-3.1.0-1].
-//
-// A Client can only send the CONNECT Packet once over a Network Connection. The Server
-// MUST process a second CONNECT Packet sent from a Client as a protocol violation and
-// disconnect the Client [MQTT-3.1.0-2].  See section 4.8 for information about
-// handling errors.
+// sent from the Client to the Server MUST be a CONNECT Packet.
 type ConnectMessage struct {
 	// The clients client id.
 	ClientId []byte
@@ -91,9 +86,9 @@ func (this *ConnectMessage) Len() int {
 	return headerLen(ml) + ml
 }
 
-// Decode reads the bytes in the byte slice from the argument. It returns the
-// total number of bytes decoded, and whether there have been any errors during
-// the process. The byte slice MUST NOT be modified during the duration of this
+// Decode reads from the byte slice argument. It returns the total number of bytes
+// decoded, and whether there have been any errors during the process.
+// The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
 func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	total := 0
@@ -229,8 +224,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
-// the way. If there's any errors, then the byte slice and count should be
-// considered invalid.
+// the way. If there is an error, the byte slice should be considered invalid.
 func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
