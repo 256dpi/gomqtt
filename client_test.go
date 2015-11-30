@@ -51,7 +51,7 @@ func TestClientConnectWebSocket(t *testing.T) {
 		done <- true
 	})
 
-	err := c.QuickConnect("ws://try:try@broker.shiftr.io:80", "test")
+	err := c.QuickConnect("ws://localhost:1884", "test")
 	require.NoError(t, err)
 
 	<-done

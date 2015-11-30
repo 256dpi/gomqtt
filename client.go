@@ -15,17 +15,13 @@
 package client
 
 import (
-	"crypto/tls"
 	"errors"
-	"fmt"
-	"net"
 	"net/url"
 	"sync"
 	"time"
 
 	"github.com/gomqtt/message"
 	"github.com/gomqtt/stream"
-	"github.com/gorilla/websocket"
 )
 
 type (
@@ -36,7 +32,6 @@ type (
 
 type Client struct {
 	opts   *Options
-	conn   net.Conn
 	stream stream.Stream
 	quit   chan bool
 
@@ -89,61 +84,12 @@ func (this *Client) QuickConnect(urlString string, clientID string) error {
 
 // Connect opens the connection to the broker.
 func (this *Client) Connect(opts *Options) error {
-	host, port, err := net.SplitHostPort(opts.URL.Host)
+	var err error
+
+	// dial broker
+	this.stream, err = dial(opts)
 	if err != nil {
 		return err
-	}
-
-	// connect based on scheme
-	switch opts.URL.Scheme {
-	case "mqtt", "tcp":
-		if port == "" {
-			port = "1883"
-		}
-
-		conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
-		if err != nil {
-			return err
-		}
-
-		this.stream = stream.NewNetStream(conn)
-	case "mqtts":
-		if port == "" {
-			port = "8883"
-		}
-
-		conn, err := tls.Dial("tcp", net.JoinHostPort(host, port), nil)
-		if err != nil {
-			return err
-		}
-
-		this.stream = stream.NewNetStream(conn)
-	case "ws":
-		if port == "" {
-			port = "80"
-		}
-
-		url := fmt.Sprintf("ws://%s:%s/", host, port)
-
-		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
-		if err != nil {
-			return err
-		}
-
-		this.stream = stream.NewWebSocketStream(conn)
-	case "wss":
-		if port == "" {
-			port = "443"
-		}
-
-		url := fmt.Sprintf("ws://%s:%s/", host, port)
-
-		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
-		if err != nil {
-			return err
-		}
-
-		this.stream = stream.NewWebSocketStream(conn)
 	}
 
 	// save opts
@@ -157,7 +103,6 @@ func (this *Client) Connect(opts *Options) error {
 
 	// prepare connect message
 	m := message.NewConnectMessage()
-	m.Version = message.Version311
 	m.ClientId = []byte(opts.ClientID)
 	m.KeepAlive = uint16(opts.KeepAlive.Seconds())
 	m.CleanSession = opts.CleanSession
