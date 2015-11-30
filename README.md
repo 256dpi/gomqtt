@@ -11,13 +11,3 @@ Get it using go's standard toolset:
 ```bash
 $ go get github.com/gomqtt/client
 ```
-
-## Usage
-
-```go
-c := NewClient()
-
-c.Connect("mqtt://try:try@broker@shiftr.io")
-
-c.Publish("hello", "world")
-```
