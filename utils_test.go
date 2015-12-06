@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	testStrings []string = []string{
+	testStrings = []string{
 		"this is a test",
 		"hope it succeeds",
 		"but just in case",
@@ -28,7 +28,7 @@ var (
 		"",
 	}
 
-	testBytes []byte = []byte{
+	testBytes = []byte{
 		0x0, 0xe, 't', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 't', 'e', 's', 't',
 		0x0, 0x10, 'h', 'o', 'p', 'e', ' ', 'i', 't', ' ', 's', 'u', 'c', 'c', 'e', 'e', 'd', 's',
 		0x0, 0x10, 'b', 'u', 't', ' ', 'j', 'u', 's', 't', ' ', 'i', 'n', ' ', 'c', 'a', 's', 'e',
