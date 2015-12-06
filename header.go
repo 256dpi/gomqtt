@@ -27,7 +27,7 @@ func headerLen(rl int) int {
 	total := 1
 
 	if rl <= 127 {
-		total += 1
+		total++
 	} else if rl <= 16383 {
 		total += 2
 	} else if rl <= 2097151 {
@@ -63,7 +63,7 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, mt MessageType) (int, 
 	typeAndFlags := byte(mt)<<4 | (mt.defaultFlags() & 0xf)
 	typeAndFlags |= flags
 	dst[total] = typeAndFlags
-	total += 1
+	total++
 
 	// write remaining length
 	n := binary.PutUvarint(dst[total:], uint64(rl))

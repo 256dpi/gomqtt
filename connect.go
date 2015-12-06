@@ -241,7 +241,7 @@ func (cm *ConnectMessage) Encode(dst []byte) (int, error) {
 
 	// write version value
 	dst[total] = version311Byte
-	total += 1
+	total++
 
 	var connectFlags byte
 
@@ -290,7 +290,7 @@ func (cm *ConnectMessage) Encode(dst []byte) (int, error) {
 
 	// write connect flags
 	dst[total] = connectFlags
-	total += 1
+	total++
 
 	// write keep alive
 	binary.BigEndian.PutUint16(dst[total:], cm.KeepAlive)
