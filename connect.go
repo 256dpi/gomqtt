@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	version311Name = []byte{'M', 'Q', 'T', 'T'}
+	version311Name      = []byte{'M', 'Q', 'T', 'T'}
 	version311Byte byte = 4
 )
 
@@ -122,7 +122,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 	}
 
 	// check protocol version string
-	if (!bytes.Equal(protoName, version311Name)) {
+	if !bytes.Equal(protoName, version311Name) {
 		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version description (%s).", protoName)
 	}
 

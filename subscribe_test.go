@@ -23,7 +23,7 @@ import (
 func TestSubscribeInterface(t *testing.T) {
 	msg := NewSubscribeMessage()
 	msg.Subscriptions = []Subscription{
-		Subscription{Topic: []byte("hello"), QoS: QosAtMostOnce},
+		{Topic: []byte("hello"), QoS: QosAtMostOnce},
 	}
 
 	require.Equal(t, msg.Type(), SUBSCRIBE)
@@ -162,9 +162,9 @@ func TestSubscribeMessageEncode(t *testing.T) {
 	msg := NewSubscribeMessage()
 	msg.PacketId = 7
 	msg.Subscriptions = []Subscription{
-		Subscription{[]byte("surgemq"), 0},
-		Subscription{[]byte("/a/b/#/c"), 1},
-		Subscription{[]byte("/a/b/#/cdd"), 2},
+		{[]byte("surgemq"), 0},
+		{[]byte("/a/b/#/c"), 1},
+		{[]byte("/a/b/#/cdd"), 2},
 	}
 
 	dst := make([]byte, msg.Len())
@@ -187,7 +187,7 @@ func TestSubscribeMessageEncodeError1(t *testing.T) {
 func TestSubscribeMessageEncodeError2(t *testing.T) {
 	msg := NewSubscribeMessage()
 	msg.Subscriptions = []Subscription{
-		Subscription{make([]byte, 65536), 0}, // too big
+		{make([]byte, 65536), 0}, // too big
 	}
 
 	dst := make([]byte, msg.Len())
@@ -239,7 +239,7 @@ func BenchmarkSubscribeEncode(b *testing.B) {
 	msg := NewSubscribeMessage()
 	msg.PacketId = 7
 	msg.Subscriptions = []Subscription{
-		Subscription{[]byte("t"), 0},
+		{[]byte("t"), 0},
 	}
 
 	buf := make([]byte, msg.Len())

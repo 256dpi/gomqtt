@@ -442,12 +442,12 @@ func TestConnectMessageEncode2(t *testing.T) {
 		0, // Protocol String MSB
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
-		4,   // Protocol level 4
-		2, // Connect Flags
-		0,   // Keep Alive MSB
-		10,  // Keep Alive LSB
-		0,   // Client ID MSB
-		0,   // Client ID LSB
+		4,  // Protocol level 4
+		2,  // Connect Flags
+		0,  // Keep Alive MSB
+		10, // Keep Alive LSB
+		0,  // Client ID MSB
+		0,  // Client ID LSB
 	}
 
 	msg := NewConnectMessage()

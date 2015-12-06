@@ -15,10 +15,10 @@
 package message
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"fmt"
 )
 
 func TestQosCodes(t *testing.T) {
@@ -34,22 +34,22 @@ func TestFixedHeaderFlags(t *testing.T) {
 	}
 
 	details := map[MessageType]detail{
-		RESERVED:    detail{"RESERVED", 0},
-		CONNECT:     detail{"CONNECT", 0},
-		CONNACK:     detail{"CONNACK", 0},
-		PUBLISH:     detail{"PUBLISH", 0},
-		PUBACK:      detail{"PUBACK", 0},
-		PUBREC:      detail{"PUBREC", 0},
-		PUBREL:      detail{"PUBREL", 2},
-		PUBCOMP:     detail{"PUBCOMP", 0},
-		SUBSCRIBE:   detail{"SUBSCRIBE", 2},
-		SUBACK:      detail{"SUBACK", 0},
-		UNSUBSCRIBE: detail{"UNSUBSCRIBE", 2},
-		UNSUBACK:    detail{"UNSUBACK", 0},
-		PINGREQ:     detail{"PINGREQ", 0},
-		PINGRESP:    detail{"PINGRESP", 0},
-		DISCONNECT:  detail{"DISCONNECT", 0},
-		RESERVED2:   detail{"RESERVED2", 0},
+		RESERVED:    {"RESERVED", 0},
+		CONNECT:     {"CONNECT", 0},
+		CONNACK:     {"CONNACK", 0},
+		PUBLISH:     {"PUBLISH", 0},
+		PUBACK:      {"PUBACK", 0},
+		PUBREC:      {"PUBREC", 0},
+		PUBREL:      {"PUBREL", 2},
+		PUBCOMP:     {"PUBCOMP", 0},
+		SUBSCRIBE:   {"SUBSCRIBE", 2},
+		SUBACK:      {"SUBACK", 0},
+		UNSUBSCRIBE: {"UNSUBSCRIBE", 2},
+		UNSUBACK:    {"UNSUBACK", 0},
+		PINGREQ:     {"PINGREQ", 0},
+		PINGRESP:    {"PINGRESP", 0},
+		DISCONNECT:  {"DISCONNECT", 0},
+		RESERVED2:   {"RESERVED2", 0},
 	}
 
 	for m, d := range details {

@@ -29,7 +29,7 @@ func TestPublishInterface(t *testing.T) {
 
 func TestPublishMessageDecode1(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBLISH << 4) | 11,
+		byte(PUBLISH<<4) | 11,
 		23,
 		0, // topic name MSB
 		7, // topic name LSB
@@ -89,7 +89,7 @@ func TestPublishMessageDecodeError1(t *testing.T) {
 
 func TestPublishMessageDecodeError2(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBLISH << 4) | 6, // <- wrong qos
+		byte(PUBLISH<<4) | 6, // <- wrong qos
 		0,
 	}
 
@@ -129,7 +129,7 @@ func TestPublishMessageDecodeError4(t *testing.T) {
 
 func TestPublishMessageDecodeError5(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBLISH << 4) | 2,
+		byte(PUBLISH<<4) | 2,
 		2,
 		0, // topic name MSB
 		1, // topic name LSB
@@ -173,7 +173,7 @@ func TestPublishMessageEncode1(t *testing.T) {
 
 func TestPublishMessageEncode2(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBLISH<<4),
+		byte(PUBLISH << 4),
 		21,
 		0, // topic name MSB
 		7, // topic name LSB
