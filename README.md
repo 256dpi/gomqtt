@@ -4,6 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/gomqtt/message/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/message?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/message?status.svg)](http://godoc.org/github.com/gomqtt/message)
 [![Release](https://img.shields.io/github/release/gomqtt/message.svg)](https://github.com/gomqtt/message/releases)
+[![Go Report Card](http://goreportcard.com/badge/gomqtt/message)](http://goreportcard.com/report/gomqtt/message)
 
 **This go package implements functionality for encoding and decoding [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) messages.**
 
