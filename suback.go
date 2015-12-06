@@ -19,20 +19,20 @@ import (
 	"fmt"
 )
 
-// A SubackPacket is sent by the Server to the Client to confirm receipt and processing
-// of a SubscribePacket. The SubackPacket contains a list of return codes, that specify
-// the maximum QOS level that have been granted.
+// A SubackPacket is sent by the server to the client to confirm receipt and
+// processing of a SubscribePacket. The SubackPacket contains a list of return
+// codes, that specify the maximum QOS levels that have been granted.
 type SubackPacket struct {
 	// The granted QOS levels for the requested subscriptions.
 	ReturnCodes []byte
 
-	// Shared packet identifier.
+	// The packet identifier.
 	PacketID uint16
 }
 
 var _ Packet = (*SubackPacket)(nil)
 
-// NewSubackPacket creates a new SUBACK packet.
+// NewSubackPacket creates a new SubackPacket.
 func NewSubackPacket() *SubackPacket {
 	return &SubackPacket{}
 }
@@ -53,10 +53,10 @@ func (sm *SubackPacket) Len() int {
 	return headerLen(ml) + ml
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (sm *SubackPacket) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -69,12 +69,12 @@ func (sm *SubackPacket) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("SUBACK/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 	}
 
 	// check remaining length
 	if rl <= 2 {
-		return total, fmt.Errorf("SUBACK/Decode: Expected remaining length to be greater than 2, got %d", rl)
+		return total, fmt.Errorf("Expected remaining length to be greater than 2, got %d", rl)
 	}
 
 	// read packet id
@@ -91,7 +91,7 @@ func (sm *SubackPacket) Decode(src []byte) (int, error) {
 	// validate return codes
 	for i, code := range sm.ReturnCodes {
 		if !validQOS(code) && code != QOSFailure {
-			return total, fmt.Errorf("SUBACK/Decode: Invalid return code %d for topic %d", code, i)
+			return total, fmt.Errorf("Invalid return code %d for topic %d", code, i)
 		}
 	}
 
@@ -107,7 +107,7 @@ func (sm *SubackPacket) Encode(dst []byte) (int, error) {
 	// check return codes
 	for i, code := range sm.ReturnCodes {
 		if !validQOS(code) && code != QOSFailure {
-			return total, fmt.Errorf("SUBACK/Encode: Invalid return code %d for topic %d", code, i)
+			return total, fmt.Errorf("Invalid return code %d for topic %d", code, i)
 		}
 	}
 

@@ -19,8 +19,8 @@ import (
 	"fmt"
 )
 
-// A PublishPacket is sent from a Client to a Server or from Server to a Client
-// to transport an Application Message.
+// A PublishPacket is sent from a client to a server or from server to a client
+// to transport an application message.
 type PublishPacket struct {
 	// The Topic of the message.
 	Topic []byte
@@ -28,27 +28,28 @@ type PublishPacket struct {
 	// The Payload of the message.
 	Payload []byte
 
-	// The QOS indicates the level of assurance for delivery of a message.
+	// The QOS indicates the level of assurance for delivery.
 	QOS byte
 
-	// If the RETAIN flag is set to true, in a PUBLISH Packet sent by a Client to a
-	// Server, the Server MUST store the Application Message and its QOS, so that it can be
-	// delivered to future subscribers whose subscriptions match its topic name.
+	// If the Retain flag is set to true, in a PublishPacket sent by a client
+	// to a server, the server must store the application message and its QOS,
+	// so that it can be delivered to future subscribers whose subscriptions
+	// match its topic name.
 	Retain bool
 
-	// If the DUP flag is set to false, it indicates that this is the first occasion that the
-	// Client or Server has attempted to send this MQTT PUBLISH Packet. If the DUP flag is
-	// set to true, it indicates that this might be re-delivery of an earlier attempt to send
-	// the Packet.
+	// If the Dup flag is set to false, it indicates that this is the first
+	// occasion that the client or server has attempted to send this
+	// PublishPacket. If the dup flag is set to true, it indicates that this
+	// might be re-delivery of an earlier attempt to send the Packet.
 	Dup bool
 
-	// Shared packet identifier.
+	// The packet identifier.
 	PacketID uint16
 }
 
 var _ Packet = (*PublishPacket)(nil)
 
-// NewPublishPacket creates a new PUBLISH packet.
+// NewPublishPacket creates a new PublishPacket.
 func NewPublishPacket() *PublishPacket {
 	return &PublishPacket{}
 }
@@ -70,10 +71,10 @@ func (pm *PublishPacket) Len() int {
 	return headerLen(ml) + ml
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (pm *PublishPacket) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -91,12 +92,12 @@ func (pm *PublishPacket) Decode(src []byte) (int, error) {
 
 	// check qos
 	if !validQOS(pm.QOS) {
-		return total, fmt.Errorf("PUBLISH/Decode: Invalid QOS (%d)", pm.QOS)
+		return total, fmt.Errorf("Invalid QOS level (%d)", pm.QOS)
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 	}
 
 	n := 0
@@ -111,7 +112,7 @@ func (pm *PublishPacket) Decode(src []byte) (int, error) {
 	if pm.QOS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
-			return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+			return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 		}
 
 		// read packet id
@@ -139,7 +140,7 @@ func (pm *PublishPacket) Encode(dst []byte) (int, error) {
 
 	// check topic length
 	if len(pm.Topic) == 0 {
-		return total, fmt.Errorf("PUBLISH/Encode: Topic name is empty")
+		return total, fmt.Errorf("Topic name is empty")
 	}
 
 	flags := byte(0)
@@ -160,7 +161,7 @@ func (pm *PublishPacket) Encode(dst []byte) (int, error) {
 
 	// check qos
 	if !validQOS(pm.QOS) {
-		return 0, fmt.Errorf("PUBLISH/Encode: Invalid QOS %d", pm.QOS)
+		return 0, fmt.Errorf("Invalid QOS level %d", pm.QOS)
 	}
 
 	// set qos

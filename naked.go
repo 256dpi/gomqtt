@@ -16,7 +16,7 @@ package packet
 
 import "fmt"
 
-// Len returns the byte length of the encoded packet.
+// Returns the byte length of a naked packet.
 func nakedPacketLen() int {
 	return headerLen(0)
 }
@@ -40,13 +40,13 @@ func nakedPacketEncode(dst []byte, t Type) (int, error) {
 	return headerEncode(dst, 0, 0, nakedPacketLen(), t)
 }
 
-// The DisconnectPacket is sent from the Client to the Server.
-// It indicates that the Client is disconnecting cleanly.
+// The DisconnectPacket is sent from the client to the server.
+// It indicates that the client is disconnecting cleanly.
 type DisconnectPacket struct{}
 
 var _ Packet = (*DisconnectPacket)(nil)
 
-// NewDisconnectPacket creates a new DISCONNECT packet.
+// NewDisconnectPacket creates a new DisconnectPacket.
 func NewDisconnectPacket() *DisconnectPacket {
 	return &DisconnectPacket{}
 }
@@ -61,10 +61,10 @@ func (dm *DisconnectPacket) Len() int {
 	return nakedPacketLen()
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (dm *DisconnectPacket) Decode(src []byte) (int, error) {
 	return nakedPacketDecode(src, DISCONNECT)
 }
@@ -81,12 +81,12 @@ func (dm DisconnectPacket) String() string {
 	return DISCONNECT.String()
 }
 
-// The PingreqPacket is sent from a Client to the Server.
+// The PingreqPacket is sent from a client to the server.
 type PingreqPacket struct{}
 
 var _ Packet = (*PingreqPacket)(nil)
 
-// NewPingreqPacket creates a new PINGREQ packet.
+// NewPingreqPacket creates a new PingreqPacket.
 func NewPingreqPacket() *PingreqPacket {
 	return &PingreqPacket{}
 }
@@ -101,10 +101,10 @@ func (pm *PingreqPacket) Len() int {
 	return nakedPacketLen()
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (pm *PingreqPacket) Decode(src []byte) (int, error) {
 	return nakedPacketDecode(src, PINGREQ)
 }
@@ -121,13 +121,13 @@ func (pm PingreqPacket) String() string {
 	return PINGREQ.String()
 }
 
-// A PingrespPacket is sent by the Server to the Client in response to a
-// PingreqPacket. It indicates that the Server is alive.
+// A PingrespPacket is sent by the server to the client in response to a
+// PingreqPacket. It indicates that the server is alive.
 type PingrespPacket struct{}
 
 var _ Packet = (*PingrespPacket)(nil)
 
-// NewPingrespPacket creates a new PINGRESP packet.
+// NewPingrespPacket creates a new PingrespPacket.
 func NewPingrespPacket() *PingrespPacket {
 	return &PingrespPacket{}
 }
@@ -142,10 +142,10 @@ func (pm *PingrespPacket) Len() int {
 	return nakedPacketLen()
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (pm *PingrespPacket) Decode(src []byte) (int, error) {
 	return nakedPacketDecode(src, PINGRESP)
 }

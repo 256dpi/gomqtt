@@ -16,10 +16,10 @@ package packet
 
 import "fmt"
 
-// The ConnackCode represents the return code in the CONNACK packet.
+// The ConnackCode represents the return code in a ConnackPacket.
 type ConnackCode byte
 
-// All ConnackCodes.
+// All available ConnackCodes.
 const (
 	ConnectionAccepted ConnackCode = iota
 	ErrInvalidProtocolVersion
@@ -40,35 +40,37 @@ func (cc ConnackCode) Error() string {
 	case ConnectionAccepted:
 		return "Connection accepted"
 	case ErrInvalidProtocolVersion:
-		return "Connection Refused, unacceptable protocol version"
+		return "Connection refused, unacceptable protocol version"
 	case ErrIdentifierRejected:
-		return "Connection Refused, identifier rejected"
+		return "Connection refused, identifier rejected"
 	case ErrServerUnavailable:
-		return "Connection Refused, Server unavailable"
+		return "Connection refused, Server unavailable"
 	case ErrBadUsernameOrPassword:
-		return "Connection Refused, bad user name or password"
+		return "Connection refused, bad user name or password"
 	case ErrNotAuthorized:
-		return "Connection Refused, not authorized"
+		return "Connection refused, not authorized"
 	}
 
 	return "Unknown error"
 }
 
-// The ConnackPacket is sent by the Server in response to a ConnectPacket received from a Client.
+// A ConnackPacket is sent by the server in response to a ConnectPacket
+// received from a client.
 type ConnackPacket struct {
-	// The Session Present flag enables a Client to establish whether the Client and
-	// Server have a consistent view about whether there is already stored Session state.
+	// The SessionPresent flag enables a client to establish whether the
+	// client and server have a consistent view about whether there is already
+	// stored session state.
 	SessionPresent bool
 
-	// If a well formed ConnectPacket is received by the Server, but the Server is unable
-	// to process it for some reason, then the Server SHOULD attempt to send a CONNACK packet
-	// containing the appropriate non-zero Connect return code.
+	// If a well formed ConnectPacket is received by the server, but the server
+	// is unable to process it for some reason, then the server should attempt
+	// to send a ConnackPacket containing a non-zero ReturnCode.
 	ReturnCode ConnackCode
 }
 
 var _ Packet = (*ConnackPacket)(nil)
 
-// NewConnackPacket creates a new CONNACK packet.
+// NewConnackPacket creates a new ConnackPacket.
 func NewConnackPacket() *ConnackPacket {
 	return &ConnackPacket{}
 }
@@ -80,7 +82,8 @@ func (cm ConnackPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (cm ConnackPacket) String() string {
-	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q", cm.SessionPresent, cm.ReturnCode)
+	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q",
+		cm.SessionPresent, cm.ReturnCode)
 }
 
 // Len returns the byte length of the encoded packet.
@@ -88,10 +91,10 @@ func (cm *ConnackPacket) Len() int {
 	return headerLen(2) + 2
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (cm *ConnackPacket) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -104,7 +107,7 @@ func (cm *ConnackPacket) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, fmt.Errorf("CONNACK/Decode: Expected remaining length to be 2")
+		return total, fmt.Errorf("Expected remaining length to be 2")
 	}
 
 	// read connack flags
@@ -114,7 +117,7 @@ func (cm *ConnackPacket) Decode(src []byte) (int, error) {
 
 	// check flags
 	if connackFlags&254 != 0 {
-		return 0, fmt.Errorf("CONNACK/Decode: Bits 7-1 in acknowledge flags byte (1) are not 0")
+		return 0, fmt.Errorf("Bits 7-1 in acknowledge flags are not 0")
 	}
 
 	// read return code
@@ -123,7 +126,7 @@ func (cm *ConnackPacket) Decode(src []byte) (int, error) {
 
 	// check return code
 	if !cm.ReturnCode.Valid() {
-		return 0, fmt.Errorf("CONNACK/Decode: Invalid return code (%d)", cm.ReturnCode)
+		return 0, fmt.Errorf("Invalid return code (%d)", cm.ReturnCode)
 	}
 
 	return total, nil
@@ -152,7 +155,7 @@ func (cm *ConnackPacket) Encode(dst []byte) (int, error) {
 
 	// check return code
 	if !cm.ReturnCode.Valid() {
-		return total, fmt.Errorf("CONNACK/Encode: Invalid return code (%d)", cm.ReturnCode)
+		return total, fmt.Errorf("Invalid return code (%d)", cm.ReturnCode)
 	}
 
 	// set return code

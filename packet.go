@@ -78,7 +78,7 @@ const (
 	QOSFailure = 0x80
 )
 
-// Packet is an interface defined for all MQTT packet types.
+// Packet is an abstract interface for all MQTT packet types.
 type Packet interface {
 	// Type returns the packets type.
 	Type() Type
@@ -86,10 +86,10 @@ type Packet interface {
 	// Len returns the byte length of the encoded packet.
 	Len() int
 
-	// Decode reads from the byte slice argument. It returns the total number of bytes
-	// decoded, and whether there have been any errors during the process.
-	// The byte slice MUST NOT be modified during the duration of this
-	// packet being available since the byte slice never gets copied.
+	// Decode reads from the byte slice argument. It returns the total number of
+	// bytes decoded, and whether there have been any errors during the process.
+	// The byte slice must not be modified during the duration of this packet
+	// being available since the byte slice never gets copied.
 	Decode([]byte) (int, error)
 
 	// Encode writes the packet bytes into the byte slice from the argument. It
@@ -101,9 +101,8 @@ type Packet interface {
 	String() string
 }
 
-// DetectPacket tries to detect the next packet in a buffer. It returns a
-// length greater than zero if the packet has been detected as well as its
-// PacketType.
+// DetectPacket tries to detect the next packet in a buffer. It returns a length
+// greater than zero if the packet has been detected as well as its Type.
 func DetectPacket(src []byte) (int, Type) {
 	// check for minimum size
 	if len(src) < 2 {

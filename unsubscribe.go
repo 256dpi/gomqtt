@@ -19,18 +19,18 @@ import (
 	"fmt"
 )
 
-// An UnsubscribePacket is sent by the Client to the Server, to unsubscribe from topics.
+// An UnsubscribePacket is sent by the client to the server.
 type UnsubscribePacket struct {
 	// The topics to unsubscribe from.
 	Topics [][]byte
 
-	// Shared packet identifier.
+	// The packet identifier.
 	PacketID uint16
 }
 
 var _ Packet = (*UnsubscribePacket)(nil)
 
-// NewUnsubscribePacket creates a new UNSUBSCRIBE packet.
+// NewUnsubscribePacket creates a new UnsubscribePacket.
 func NewUnsubscribePacket() *UnsubscribePacket {
 	return &UnsubscribePacket{}
 }
@@ -57,10 +57,10 @@ func (um *UnsubscribePacket) Len() int {
 	return headerLen(ml) + ml
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (um *UnsubscribePacket) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -73,7 +73,7 @@ func (um *UnsubscribePacket) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 	}
 
 	// read packet id
@@ -103,7 +103,7 @@ func (um *UnsubscribePacket) Decode(src []byte) (int, error) {
 
 	// check for empty list
 	if len(um.Topics) == 0 {
-		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Empty topic list")
+		return total, fmt.Errorf("Empty topic list")
 	}
 
 	return total, nil

@@ -19,26 +19,23 @@ import (
 	"fmt"
 )
 
-// Subscription is a single subscription in a SubscribePacket.
+// A Subscription is a single subscription in a SubscribePacket.
 type Subscription struct {
-	// The topic to subscribe to.
+	// The topic to subscribe.
 	Topic []byte
 
-	// The QOS level for receiving the messages.
+	// The requested QOS level.
 	QOS byte
 }
 
-// The SubscribePacket is sent from the Client to the Server to create one or more
-// Subscriptions. Each Subscription registers a Client’s interest in one or more
-// Topics. The Server sends PublishPackets to the Client in order to forward
-// Application Messages that were published to Topics that match these Subscriptions.
-// The SubscribePacket also specifies (for each Subscription) the maximum QOS with
-// which the Server can send Application Messages to the Client.
+// A SubscribePacket is sent from the client to the server to create one or
+// more Subscriptions. The server will forward application messages that match
+// these subscriptions using PublishPackets.
 type SubscribePacket struct {
 	// The subscriptions.
 	Subscriptions []Subscription
 
-	// Shared packet identifier.
+	// The packet identifier.
 	PacketID uint16
 }
 
@@ -71,10 +68,10 @@ func (sm *SubscribePacket) Len() int {
 	return headerLen(ml) + ml
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (sm *SubscribePacket) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -87,7 +84,7 @@ func (sm *SubscribePacket) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("SUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 	}
 
 	// read packet id
@@ -110,7 +107,7 @@ func (sm *SubscribePacket) Decode(src []byte) (int, error) {
 
 		// check buffer length
 		if len(src) < total+1 {
-			return total, fmt.Errorf("SUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
+			return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
 		}
 
 		// read qos and add subscription
@@ -123,7 +120,7 @@ func (sm *SubscribePacket) Decode(src []byte) (int, error) {
 
 	// check for empty subscription list
 	if len(sm.Subscriptions) == 0 {
-		return total, fmt.Errorf("SUBSCRIBE/Decode: Empty subscription list")
+		return total, fmt.Errorf("Empty subscription list")
 	}
 
 	return total, nil

@@ -25,8 +25,8 @@ var (
 	version311Byte byte = 4
 )
 
-// The ConnectPacket is sent by a Client to the Server after a Network Connection
-// has been established.
+// A ConnectPacket is sent by a client to the server after a network
+// connection has been established.
 type ConnectPacket struct {
 	// The clients client id.
 	ClientID []byte
@@ -58,7 +58,7 @@ type ConnectPacket struct {
 
 var _ Packet = (*ConnectPacket)(nil)
 
-// NewConnectPacket creates a new CONNECT packet.
+// NewConnectPacket creates a new ConnectPacket.
 func NewConnectPacket() *ConnectPacket {
 	return &ConnectPacket{CleanSession: true}
 }
@@ -70,13 +70,18 @@ func (cm ConnectPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (cm ConnectPacket) String() string {
-	return fmt.Sprintf("CONNECT: KeepAlive=%d ClientID=%q WillTopic=%q WillPayload=%q Username=%q Password=%q",
-		cm.KeepAlive,
+	return fmt.Sprintf("CONNECT: ClientID=%q KeepAlive=%d Username=%q " +
+		"Password=%q CleanSession=%b WillTopic=%q WillPayload=%q WillQOS=%q " +
+		"WillRetain=%q",
 		cm.ClientID,
-		cm.WillTopic,
-		cm.WillPayload,
+		cm.KeepAlive,
 		cm.Username,
 		cm.Password,
+		cm.CleanSession,
+		cm.WillTopic,
+		cm.WillPayload,
+		cm.WillQOS,
+		cm.WillRetain,
 	)
 }
 
@@ -86,10 +91,10 @@ func (cm *ConnectPacket) Len() int {
 	return headerLen(ml) + ml
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -109,7 +114,7 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
+		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
 	}
 
 	// read version
@@ -118,17 +123,17 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check protocol string and version
 	if versionByte != version311Byte {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version (%d)", version311Byte)
+		return total, fmt.Errorf("Protocol violation: Invalid protocol version (%d)", version311Byte)
 	}
 
 	// check protocol version string
 	if !bytes.Equal(protoName, version311Name) {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version description (%s)", protoName)
+		return total, fmt.Errorf("Protocol violation: Invalid protocol version description (%s)", protoName)
 	}
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
+		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
 	}
 
 	// read connect flags
@@ -147,27 +152,27 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
-		return total, fmt.Errorf("CONNECT/Decode: Reserved bit 0 is not 0")
+		return total, fmt.Errorf("Reserved bit 0 is not 0")
 	}
 
 	// check will qos
 	if !validQOS(cm.WillQOS) {
-		return total, fmt.Errorf("CONNECT/Decode: Invalid QOS level (%d) for will message", cm.WillQOS)
+		return total, fmt.Errorf("Invalid QOS level (%d) for will message", cm.WillQOS)
 	}
 
 	// check will flags
 	if !willFlag && (cm.WillRetain || cm.WillQOS != 0) {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cm.WillQOS, cm.WillRetain)
+		return total, fmt.Errorf("Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cm.WillQOS, cm.WillRetain)
 	}
 
 	// check auth flags
 	if !usernameFlag && passwordFlag {
-		return total, fmt.Errorf("CONNECT/Decode: Password flag is set but Username flag is not set")
+		return total, fmt.Errorf("Password flag is set but Username flag is not set")
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 	}
 
 	// read keep alive
@@ -181,9 +186,9 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 		return total, err
 	}
 
-	// if the client supplies a zero-byte ClientID, the Client MUST also set CleanSession to 1
+	// if the client supplies a zero-byte clientID, the client must also set CleanSession to 1
 	if len(cm.ClientID) == 0 && !cm.CleanSession {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Clean session must be 1 if client id is zero length")
+		return total, fmt.Errorf("Protocol violation: Clean session must be 1 if client id is zero length")
 	}
 
 	// read will topic and payload
@@ -264,7 +269,7 @@ func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
 		connectFlags |= 0x4 // 00000100
 
 		if !validQOS(cm.WillQOS) {
-			return total, fmt.Errorf("CONNECT/Encode: Invalid Will QOS level %d", cm.WillQOS)
+			return total, fmt.Errorf("Invalid Will QOS level %d", cm.WillQOS)
 		}
 
 		// set will qos flag
@@ -319,7 +324,7 @@ func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
 	}
 
 	if len(cm.Username) == 0 && len(cm.Password) > 0 {
-		return total, fmt.Errorf("CONNECT/Encode: Protocol violation: Password set without username")
+		return total, fmt.Errorf("Protocol violation: Password set without username")
 	}
 
 	// write username

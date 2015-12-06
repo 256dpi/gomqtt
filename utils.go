@@ -24,7 +24,7 @@ const maxLPLength uint16 = 65535
 // Read length prefixed bytes.
 func readLPBytes(buf []byte) ([]byte, int, error) {
 	if len(buf) < 2 {
-		return nil, 0, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting 2, got %d", len(buf))
+		return nil, 0, fmt.Errorf("Insufficient buffer size. Expecting 2, got %d", len(buf))
 	}
 
 	n, total := 0, 0
@@ -34,7 +34,7 @@ func readLPBytes(buf []byte) ([]byte, int, error) {
 	total += n
 
 	if len(buf) < total {
-		return nil, total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d", total, len(buf))
+		return nil, total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total, len(buf))
 	}
 
 	return buf[2:total], total, nil
@@ -45,11 +45,11 @@ func writeLPBytes(buf []byte, b []byte) (int, error) {
 	total, n := 0, len(b)
 
 	if n > int(maxLPLength) {
-		return 0, fmt.Errorf("utils/writeLPBytes: Length (%d) greater than %d bytes", n, maxLPLength)
+		return 0, fmt.Errorf("Length (%d) greater than %d bytes", n, maxLPLength)
 	}
 
 	if len(buf) < 2+n {
-		return 0, fmt.Errorf("utils/writeLPBytes: Insufficient buffer size. Expecting %d, got %d", 2+n, len(buf))
+		return 0, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", 2+n, len(buf))
 	}
 
 	binary.BigEndian.PutUint16(buf, uint16(n))

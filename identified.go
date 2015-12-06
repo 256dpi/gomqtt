@@ -19,12 +19,12 @@ import (
 	"fmt"
 )
 
-// Len returns the byte length of the encoded packet.
+// Returns the byte length of an identified packet.
 func identifiedPacketLen() int {
 	return headerLen(2) + 2
 }
 
-// Decodes a identified packet.
+// Decodes an identified packet.
 func identifiedPacketDecode(src []byte, t Type) (int, uint16, error) {
 	total := 0
 
@@ -37,7 +37,7 @@ func identifiedPacketDecode(src []byte, t Type) (int, uint16, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, 0, fmt.Errorf("%s/identifiedPacketDecode: Expected remaining length to be 2", t)
+		return total, 0, fmt.Errorf("Expected remaining length to be 2")
 	}
 
 	// read packet id
@@ -47,7 +47,7 @@ func identifiedPacketDecode(src []byte, t Type) (int, uint16, error) {
 	return total, packetID, nil
 }
 
-// Encodes a identified packet.
+// Encodes an identified packet.
 func identifiedPacketEncode(dst []byte, packetID uint16, mt Type) (int, error) {
 	total := 0
 
@@ -67,13 +67,13 @@ func identifiedPacketEncode(dst []byte, packetID uint16, mt Type) (int, error) {
 
 // A PubackPacket is the response to a PublishPacket with QOS level 1.
 type PubackPacket struct {
-	// Shared packet identifier.
+	// The packet identifier.
 	PacketID uint16
 }
 
 var _ Packet = (*PubackPacket)(nil)
 
-// NewPubackPacket creates a new PUBACK packet.
+// NewPubackPacket creates a new PubackPacket.
 func NewPubackPacket() *PubackPacket {
 	return &PubackPacket{}
 }
@@ -88,10 +88,10 @@ func (pm *PubackPacket) Len() int {
 	return identifiedPacketLen()
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (pm *PubackPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, PUBACK)
 	pm.PacketID = pid
@@ -110,16 +110,16 @@ func (pm PubackPacket) String() string {
 	return fmt.Sprintf("PUBACK: PacketID=%d", pm.PacketID)
 }
 
-// The PubcompPacket is the response to a PubrelPacket. It is the fourth and
+// A PubcompPacket is the response to a PubrelPacket. It is the fourth and
 // final packet of the QOS 2 protocol exchange.
 type PubcompPacket struct {
-	// Shared packet identifier.
+	// The packet identifier.
 	PacketID uint16
 }
 
 var _ Packet = (*PubcompPacket)(nil)
 
-// NewPubcompPacket creates a new PUBCOMP packet.
+// NewPubcompPacket creates a new PubcompPacket.
 func NewPubcompPacket() *PubcompPacket {
 	return &PubcompPacket{}
 }
@@ -134,10 +134,10 @@ func (pm *PubcompPacket) Len() int {
 	return identifiedPacketLen()
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (pm *PubcompPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, PUBCOMP)
 	pm.PacketID = pid
@@ -156,8 +156,8 @@ func (pm PubcompPacket) String() string {
 	return fmt.Sprintf("PUBCOMP: PacketID=%d", pm.PacketID)
 }
 
-// A PubrecPacket is the response to a PublishPacket with QOS 2. It is the second
-// packet of the QOS 2 protocol exchange.
+// A PubrecPacket is the response to a PublishPacket with QOS 2. It is the
+// second packet of the QOS 2 protocol exchange.
 type PubrecPacket struct {
 	// Shared packet identifier.
 	PacketID uint16
@@ -165,7 +165,7 @@ type PubrecPacket struct {
 
 var _ Packet = (*PubrecPacket)(nil)
 
-// NewPubrecPacket creates a new PUBREC packet.
+// NewPubrecPacket creates a new PubrecPacket.
 func NewPubrecPacket() *PubrecPacket {
 	return &PubrecPacket{}
 }
@@ -180,10 +180,10 @@ func (pm *PubrecPacket) Len() int {
 	return identifiedPacketLen()
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (pm *PubrecPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, PUBREC)
 	pm.PacketID = pid
@@ -202,8 +202,8 @@ func (pm PubrecPacket) String() string {
 	return fmt.Sprintf("PUBREC: PacketID=%d", pm.PacketID)
 }
 
-// A PubrelPacket is the response to a PubrecPacket. It is the third packet of the
-// QOS 2 protocol exchange.
+// A PubrelPacket is the response to a PubrecPacket. It is the third packet of
+// the QOS 2 protocol exchange.
 type PubrelPacket struct {
 	// Shared packet identifier.
 	PacketID uint16
@@ -211,7 +211,7 @@ type PubrelPacket struct {
 
 var _ Packet = (*PubrelPacket)(nil)
 
-// NewPubrelPacket creates a new PUBREL packet.
+// NewPubrelPacket creates a new PubrelPacket.
 func NewPubrelPacket() *PubrelPacket {
 	return &PubrelPacket{}
 }
@@ -226,10 +226,10 @@ func (pm *PubrelPacket) Len() int {
 	return identifiedPacketLen()
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (pm *PubrelPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, PUBREL)
 	pm.PacketID = pid
@@ -248,8 +248,8 @@ func (pm PubrelPacket) String() string {
 	return fmt.Sprintf("PUBREL: PacketID=%d", pm.PacketID)
 }
 
-// The UnsubackPacket is sent by the Server to the Client to confirm receipt of an
-// UnsubscribePacket.
+// An UnsubackPacket is sent by the server to the client to confirm receipt of
+// an UnsubscribePacket.
 type UnsubackPacket struct {
 	// Shared packet identifier.
 	PacketID uint16
@@ -257,7 +257,7 @@ type UnsubackPacket struct {
 
 var _ Packet = (*UnsubackPacket)(nil)
 
-// NewUnsubackPacket creates a new UNSUBACK packet.
+// NewUnsubackPacket creates a new UnsubackPacket.
 func NewUnsubackPacket() *UnsubackPacket {
 	return &UnsubackPacket{}
 }
@@ -272,10 +272,10 @@ func (um *UnsubackPacket) Len() int {
 	return identifiedPacketLen()
 }
 
-// Decode reads from the byte slice argument. It returns the total number of bytes
-// decoded, and whether there have been any errors during the process.
-// The byte slice MUST NOT be modified during the duration of this
-// packet being available since the byte slice never gets copied.
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+// The byte slice must not be modified during the duration of this packet being
+// available since the byte slice never gets copied.
 func (um *UnsubackPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, UNSUBACK)
 	um.PacketID = pid

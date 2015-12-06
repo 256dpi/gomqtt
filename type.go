@@ -74,8 +74,8 @@ func (t Type) String() string {
 	return "UNKNOWN"
 }
 
-// DefaultFlags returns the default flag values for the packet type, as defined by
-// the MQTT spec, except for PUBLISH.
+// DefaultFlags returns the default flag values for the packet type, as defined
+// by the MQTT spec, except for PUBLISH.
 func (t Type) defaultFlags() byte {
 	switch t {
 	case CONNECT:
@@ -109,8 +109,8 @@ func (t Type) defaultFlags() byte {
 	return 0
 }
 
-// New creates a new packet based on the type. It is a shortcut to call one of the
-// New*Packet functions. If an error is returned then the type is invalid.
+// New creates a new packet based on the type. It is a shortcut to call one of
+// the New*Packet functions. If an error is returned then the type is invalid.
 func (t Type) New() (Packet, error) {
 	switch t {
 	case CONNECT:
