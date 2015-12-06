@@ -26,8 +26,6 @@ $ go get github.com/gomqtt/packet
 
 ## Usage
 
-Create a new packet and encode it:
-
 ```go
 /* Packet Encoding */
 
