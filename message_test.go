@@ -34,7 +34,6 @@ func TestFixedHeaderFlags(t *testing.T) {
 	}
 
 	details := map[MessageType]detail{
-		RESERVED:    {"RESERVED", 0},
 		CONNECT:     {"CONNECT", 0},
 		CONNACK:     {"CONNACK", 0},
 		PUBLISH:     {"PUBLISH", 0},
@@ -49,7 +48,6 @@ func TestFixedHeaderFlags(t *testing.T) {
 		PINGREQ:     {"PINGREQ", 0},
 		PINGRESP:    {"PINGRESP", 0},
 		DISCONNECT:  {"DISCONNECT", 0},
-		RESERVED2:   {"RESERVED2", 0},
 	}
 
 	for m, d := range details {

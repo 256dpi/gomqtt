@@ -20,7 +20,7 @@ import "fmt"
 type MessageType byte
 
 const (
-	RESERVED MessageType = iota
+	_ MessageType = iota
 	CONNECT
 	CONNACK
 	PUBLISH
@@ -35,7 +35,6 @@ const (
 	PINGREQ
 	PINGRESP
 	DISCONNECT
-	RESERVED2
 )
 
 // Name returns the name of the message type. It should correspond to one of the
@@ -43,8 +42,6 @@ const (
 // be changed.
 func (mt MessageType) String() string {
 	switch mt {
-	case RESERVED:
-		return "RESERVED"
 	case CONNECT:
 		return "CONNECT"
 	case CONNACK:
@@ -73,8 +70,6 @@ func (mt MessageType) String() string {
 		return "PINGRESP"
 	case DISCONNECT:
 		return "DISCONNECT"
-	case RESERVED2:
-		return "RESERVED2"
 	}
 
 	return "UNKNOWN"
@@ -84,8 +79,6 @@ func (mt MessageType) String() string {
 // the MQTT spec, except for PUBLISH.
 func (mt MessageType) defaultFlags() byte {
 	switch mt {
-	case RESERVED:
-		return 0
 	case CONNECT:
 		return 0
 	case CONNACK:
@@ -111,8 +104,6 @@ func (mt MessageType) defaultFlags() byte {
 	case PINGRESP:
 		return 0
 	case DISCONNECT:
-		return 0
-	case RESERVED2:
 		return 0
 	}
 
@@ -159,5 +150,5 @@ func (mt MessageType) New() (Message, error) {
 
 // Valid returns a boolean indicating whether the message type is valid or not.
 func (mt MessageType) Valid() bool {
-	return mt > RESERVED && mt < RESERVED2
+	return mt >= CONNECT && mt <= DISCONNECT
 }
