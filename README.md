@@ -29,6 +29,8 @@ $ go get github.com/gomqtt/packet
 Create a new packet and encode it:
 
 ```go
+/* Packet Encoding */
+
 // Create new packet.
 pkt1 := NewConnectPacket()
 pkt1.Username = []byte("gomqtt")
@@ -39,39 +41,29 @@ buf := make([]byte, pkt1.Len())
 
 // Encode the packet.
 if _, err := pkt1.Encode(buf); err != nil {
-    // there was an error while encoding
-    panic(err)
+    panic(err) // error while encoding
 }
 
-// Send buffer off the wire.
-```
-
-Decode bytes to a packet:
-
-```go
-// Get buffer from the wire.
+/* Packet Decoding */
 
 // Detect packet.
-l, t := DetectPacket(buf)
+l, mt := DetectPacket(buf)
 
 // Check length
 if l == 0 {
-    // buffer not complete yet
-    return
+    return // buffer not complete yet
 }
 
 // Create packet.
-pkt2, err := t.New()
+pkt2, err := mt.New();
 if err != nil {
-    // type is invalid
-    panic(err)
+    panic(err) // packet type is invalid
 }
 
 // Decode packet.
 _, err = pkt2.Decode(buf)
 if err != nil {
-    // there was an error while decoding
-    panic(err)
+    panic(err) // there was an error while decoding
 }
 
 switch pkt2.Type() {
