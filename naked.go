@@ -52,12 +52,12 @@ func NewDisconnectPacket() *DisconnectPacket {
 }
 
 // Type returns the packets type.
-func (dm DisconnectPacket) Type() Type {
+func (dp DisconnectPacket) Type() Type {
 	return DISCONNECT
 }
 
 // Len returns the byte length of the encoded packet.
-func (dm *DisconnectPacket) Len() int {
+func (dp *DisconnectPacket) Len() int {
 	return nakedPacketLen()
 }
 
@@ -65,19 +65,19 @@ func (dm *DisconnectPacket) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 // The byte slice must not be modified during the duration of this packet being
 // available since the byte slice never gets copied.
-func (dm *DisconnectPacket) Decode(src []byte) (int, error) {
+func (dp *DisconnectPacket) Decode(src []byte) (int, error) {
 	return nakedPacketDecode(src, DISCONNECT)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (dm *DisconnectPacket) Encode(dst []byte) (int, error) {
+func (dp *DisconnectPacket) Encode(dst []byte) (int, error) {
 	return nakedPacketEncode(dst, DISCONNECT)
 }
 
 // String returns a string representation of the packet.
-func (dm DisconnectPacket) String() string {
+func (dp DisconnectPacket) String() string {
 	return DISCONNECT.String()
 }
 
@@ -92,12 +92,12 @@ func NewPingreqPacket() *PingreqPacket {
 }
 
 // Type returns the packets type.
-func (pm PingreqPacket) Type() Type {
+func (pp PingreqPacket) Type() Type {
 	return PINGREQ
 }
 
 // Len returns the byte length of the encoded packet.
-func (pm *PingreqPacket) Len() int {
+func (pp *PingreqPacket) Len() int {
 	return nakedPacketLen()
 }
 
@@ -105,19 +105,19 @@ func (pm *PingreqPacket) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 // The byte slice must not be modified during the duration of this packet being
 // available since the byte slice never gets copied.
-func (pm *PingreqPacket) Decode(src []byte) (int, error) {
+func (pp *PingreqPacket) Decode(src []byte) (int, error) {
 	return nakedPacketDecode(src, PINGREQ)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pm *PingreqPacket) Encode(dst []byte) (int, error) {
+func (pp *PingreqPacket) Encode(dst []byte) (int, error) {
 	return nakedPacketEncode(dst, PINGREQ)
 }
 
 // String returns a string representation of the packet.
-func (pm PingreqPacket) String() string {
+func (pp PingreqPacket) String() string {
 	return PINGREQ.String()
 }
 
@@ -133,12 +133,12 @@ func NewPingrespPacket() *PingrespPacket {
 }
 
 // Type returns the packets type.
-func (pm PingrespPacket) Type() Type {
+func (pp PingrespPacket) Type() Type {
 	return PINGRESP
 }
 
 // Len returns the byte length of the encoded packet.
-func (pm *PingrespPacket) Len() int {
+func (pp *PingrespPacket) Len() int {
 	return nakedPacketLen()
 }
 
@@ -146,18 +146,18 @@ func (pm *PingrespPacket) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 // The byte slice must not be modified during the duration of this packet being
 // available since the byte slice never gets copied.
-func (pm *PingrespPacket) Decode(src []byte) (int, error) {
+func (pp *PingrespPacket) Decode(src []byte) (int, error) {
 	return nakedPacketDecode(src, PINGRESP)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pm *PingrespPacket) Encode(dst []byte) (int, error) {
+func (pp *PingrespPacket) Encode(dst []byte) (int, error) {
 	return nakedPacketEncode(dst, PINGRESP)
 }
 
 // String returns a string representation of the packet.
-func (pm PingrespPacket) String() string {
+func (pp PingrespPacket) String() string {
 	return PINGRESP.String()
 }

@@ -64,30 +64,30 @@ func NewConnectPacket() *ConnectPacket {
 }
 
 // Type returns the packets type.
-func (cm ConnectPacket) Type() Type {
+func (cp ConnectPacket) Type() Type {
 	return CONNECT
 }
 
 // String returns a string representation of the packet.
-func (cm ConnectPacket) String() string {
+func (cp ConnectPacket) String() string {
 	return fmt.Sprintf("CONNECT: ClientID=%q KeepAlive=%d Username=%q " +
 		"Password=%q CleanSession=%b WillTopic=%q WillPayload=%q WillQOS=%q " +
 		"WillRetain=%q",
-		cm.ClientID,
-		cm.KeepAlive,
-		cm.Username,
-		cm.Password,
-		cm.CleanSession,
-		cm.WillTopic,
-		cm.WillPayload,
-		cm.WillQOS,
-		cm.WillRetain,
+		cp.ClientID,
+		cp.KeepAlive,
+		cp.Username,
+		cp.Password,
+		cp.CleanSession,
+		cp.WillTopic,
+		cp.WillPayload,
+		cp.WillQOS,
+		cp.WillRetain,
 	)
 }
 
 // Len returns the byte length of the encoded packet.
-func (cm *ConnectPacket) Len() int {
-	ml := cm.len()
+func (cp *ConnectPacket) Len() int {
+	ml := cp.len()
 	return headerLen(ml) + ml
 }
 
@@ -95,7 +95,7 @@ func (cm *ConnectPacket) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 // The byte slice must not be modified during the duration of this packet being
 // available since the byte slice never gets copied.
-func (cm *ConnectPacket) Decode(src []byte) (int, error) {
+func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -146,9 +146,9 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 	willFlag := ((connectFlags >> 2) & 0x1) == 1
 
 	// read other flags
-	cm.WillRetain = ((connectFlags >> 5) & 0x1) == 1
-	cm.WillQOS = (connectFlags >> 3) & 0x3
-	cm.CleanSession = ((connectFlags >> 1) & 0x1) == 1
+	cp.WillRetain = ((connectFlags >> 5) & 0x1) == 1
+	cp.WillQOS = (connectFlags >> 3) & 0x3
+	cp.CleanSession = ((connectFlags >> 1) & 0x1) == 1
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
@@ -156,13 +156,13 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 	}
 
 	// check will qos
-	if !validQOS(cm.WillQOS) {
-		return total, fmt.Errorf("Invalid QOS level (%d) for will message", cm.WillQOS)
+	if !validQOS(cp.WillQOS) {
+		return total, fmt.Errorf("Invalid QOS level (%d) for will message", cp.WillQOS)
 	}
 
 	// check will flags
-	if !willFlag && (cm.WillRetain || cm.WillQOS != 0) {
-		return total, fmt.Errorf("Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cm.WillQOS, cm.WillRetain)
+	if !willFlag && (cp.WillRetain || cp.WillQOS != 0) {
+		return total, fmt.Errorf("Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cp.WillQOS, cp.WillRetain)
 	}
 
 	// check auth flags
@@ -176,30 +176,30 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 	}
 
 	// read keep alive
-	cm.KeepAlive = binary.BigEndian.Uint16(src[total:])
+	cp.KeepAlive = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
 	// read client id
-	cm.ClientID, n, err = readLPBytes(src[total:])
+	cp.ClientID, n, err = readLPBytes(src[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// if the client supplies a zero-byte clientID, the client must also set CleanSession to 1
-	if len(cm.ClientID) == 0 && !cm.CleanSession {
+	if len(cp.ClientID) == 0 && !cp.CleanSession {
 		return total, fmt.Errorf("Protocol violation: Clean session must be 1 if client id is zero length")
 	}
 
 	// read will topic and payload
 	if willFlag {
-		cm.WillTopic, n, err = readLPBytes(src[total:])
+		cp.WillTopic, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		cm.WillPayload, n, err = readLPBytes(src[total:])
+		cp.WillPayload, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -208,7 +208,7 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// read username
 	if usernameFlag {
-		cm.Username, n, err = readLPBytes(src[total:])
+		cp.Username, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -217,7 +217,7 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// read password
 	if passwordFlag {
-		cm.Password, n, err = readLPBytes(src[total:])
+		cp.Password, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -230,11 +230,11 @@ func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
+func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, cm.len(), cm.Len(), CONNECT)
+	n, err := headerEncode(dst[total:], 0, cp.len(), cp.Len(), CONNECT)
 	total += n
 	if err != nil {
 		return total, err
@@ -251,32 +251,32 @@ func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
 	var connectFlags byte
 
 	// set username flag
-	if len(cm.Username) > 0 {
+	if len(cp.Username) > 0 {
 		connectFlags |= 128 // 10000000
 	} else {
 		connectFlags &= 127 // 01111111
 	}
 
 	// set password flag
-	if len(cm.Password) > 0 {
+	if len(cp.Password) > 0 {
 		connectFlags |= 64 // 01000000
 	} else {
 		connectFlags &= 191 // 10111111
 	}
 
 	// set will flag
-	if len(cm.WillTopic) > 0 {
+	if len(cp.WillTopic) > 0 {
 		connectFlags |= 0x4 // 00000100
 
-		if !validQOS(cm.WillQOS) {
-			return total, fmt.Errorf("Invalid Will QOS level %d", cm.WillQOS)
+		if !validQOS(cp.WillQOS) {
+			return total, fmt.Errorf("Invalid Will QOS level %d", cp.WillQOS)
 		}
 
 		// set will qos flag
-		connectFlags = (connectFlags & 231) | (cm.WillQOS << 3) // 231 = 11100111
+		connectFlags = (connectFlags & 231) | (cp.WillQOS << 3) // 231 = 11100111
 
 		// set will retain flag
-		if cm.WillRetain {
+		if cp.WillRetain {
 			connectFlags |= 32 // 00100000
 		} else {
 			connectFlags &= 223 // 11011111
@@ -287,7 +287,7 @@ func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// set clean session flag
-	if cm.CleanSession {
+	if cp.CleanSession {
 		connectFlags |= 0x2 // 00000010
 	} else {
 		connectFlags &= 253 // 11111101
@@ -298,38 +298,38 @@ func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
 	total++
 
 	// write keep alive
-	binary.BigEndian.PutUint16(dst[total:], cm.KeepAlive)
+	binary.BigEndian.PutUint16(dst[total:], cp.KeepAlive)
 	total += 2
 
 	// write client id
-	n, err = writeLPBytes(dst[total:], cm.ClientID)
+	n, err = writeLPBytes(dst[total:], cp.ClientID)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write will topic and payload
-	if len(cm.WillTopic) > 0 {
-		n, err = writeLPBytes(dst[total:], cm.WillTopic)
+	if len(cp.WillTopic) > 0 {
+		n, err = writeLPBytes(dst[total:], cp.WillTopic)
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		n, err = writeLPBytes(dst[total:], cm.WillPayload)
+		n, err = writeLPBytes(dst[total:], cp.WillPayload)
 		total += n
 		if err != nil {
 			return total, err
 		}
 	}
 
-	if len(cm.Username) == 0 && len(cm.Password) > 0 {
+	if len(cp.Username) == 0 && len(cp.Password) > 0 {
 		return total, fmt.Errorf("Protocol violation: Password set without username")
 	}
 
 	// write username
-	if len(cm.Username) > 0 {
-		n, err = writeLPBytes(dst[total:], cm.Username)
+	if len(cp.Username) > 0 {
+		n, err = writeLPBytes(dst[total:], cp.Username)
 		total += n
 		if err != nil {
 			return total, err
@@ -337,8 +337,8 @@ func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write password
-	if len(cm.Password) > 0 {
-		n, err = writeLPBytes(dst[total:], cm.Password)
+	if len(cp.Password) > 0 {
+		n, err = writeLPBytes(dst[total:], cp.Password)
 		total += n
 		if err != nil {
 			return total, err
@@ -349,7 +349,7 @@ func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (cm *ConnectPacket) len() int {
+func (cp *ConnectPacket) len() int {
 	total := 0
 
 	// 2 bytes protocol name length
@@ -360,21 +360,21 @@ func (cm *ConnectPacket) len() int {
 	total += 2 + 4 + 1 + 1 + 2
 
 	// add the clientID length
-	total += 2 + len(cm.ClientID)
+	total += 2 + len(cp.ClientID)
 
 	// add the will topic and will message length
-	if len(cm.WillTopic) > 0 {
-		total += 2 + len(cm.WillTopic) + 2 + len(cm.WillPayload)
+	if len(cp.WillTopic) > 0 {
+		total += 2 + len(cp.WillTopic) + 2 + len(cp.WillPayload)
 	}
 
 	// add the username length
-	if len(cm.Username) > 0 {
-		total += 2 + len(cm.Username)
+	if len(cp.Username) > 0 {
+		total += 2 + len(cp.Username)
 	}
 
 	// add the password length
-	if len(cm.Password) > 0 {
-		total += 2 + len(cm.Password)
+	if len(cp.Password) > 0 {
+		total += 2 + len(cp.Password)
 	}
 
 	return total

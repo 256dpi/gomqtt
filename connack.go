@@ -76,18 +76,18 @@ func NewConnackPacket() *ConnackPacket {
 }
 
 // Type returns the packets type.
-func (cm ConnackPacket) Type() Type {
+func (cp ConnackPacket) Type() Type {
 	return CONNACK
 }
 
 // String returns a string representation of the packet.
-func (cm ConnackPacket) String() string {
+func (cp ConnackPacket) String() string {
 	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q",
-		cm.SessionPresent, cm.ReturnCode)
+		cp.SessionPresent, cp.ReturnCode)
 }
 
 // Len returns the byte length of the encoded packet.
-func (cm *ConnackPacket) Len() int {
+func (cp *ConnackPacket) Len() int {
 	return headerLen(2) + 2
 }
 
@@ -95,7 +95,7 @@ func (cm *ConnackPacket) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 // The byte slice must not be modified during the duration of this packet being
 // available since the byte slice never gets copied.
-func (cm *ConnackPacket) Decode(src []byte) (int, error) {
+func (cp *ConnackPacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -112,7 +112,7 @@ func (cm *ConnackPacket) Decode(src []byte) (int, error) {
 
 	// read connack flags
 	connackFlags := src[total]
-	cm.SessionPresent = connackFlags&0x1 == 1
+	cp.SessionPresent = connackFlags&0x1 == 1
 	total++
 
 	// check flags
@@ -121,12 +121,12 @@ func (cm *ConnackPacket) Decode(src []byte) (int, error) {
 	}
 
 	// read return code
-	cm.ReturnCode = ConnackCode(src[total])
+	cp.ReturnCode = ConnackCode(src[total])
 	total++
 
 	// check return code
-	if !cm.ReturnCode.Valid() {
-		return 0, fmt.Errorf("Invalid return code (%d)", cm.ReturnCode)
+	if !cp.ReturnCode.Valid() {
+		return 0, fmt.Errorf("Invalid return code (%d)", cp.ReturnCode)
 	}
 
 	return total, nil
@@ -135,18 +135,18 @@ func (cm *ConnackPacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (cm *ConnackPacket) Encode(dst []byte) (int, error) {
+func (cp *ConnackPacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, 2, cm.Len(), CONNACK)
+	n, err := headerEncode(dst[total:], 0, 2, cp.Len(), CONNACK)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// set session present flag
-	if cm.SessionPresent {
+	if cp.SessionPresent {
 		dst[total] = 1 // 00000001
 	} else {
 		dst[total] = 0 // 00000000
@@ -154,12 +154,12 @@ func (cm *ConnackPacket) Encode(dst []byte) (int, error) {
 	total++
 
 	// check return code
-	if !cm.ReturnCode.Valid() {
-		return total, fmt.Errorf("Invalid return code (%d)", cm.ReturnCode)
+	if !cp.ReturnCode.Valid() {
+		return total, fmt.Errorf("Invalid return code (%d)", cp.ReturnCode)
 	}
 
 	// set return code
-	dst[total] = byte(cm.ReturnCode)
+	dst[total] = byte(cp.ReturnCode)
 	total++
 
 	return total, nil

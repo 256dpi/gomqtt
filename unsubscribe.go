@@ -36,15 +36,15 @@ func NewUnsubscribePacket() *UnsubscribePacket {
 }
 
 // Type returns the packets type.
-func (um UnsubscribePacket) Type() Type {
+func (up UnsubscribePacket) Type() Type {
 	return UNSUBSCRIBE
 }
 
 // String returns a string representation of the packet.
-func (um UnsubscribePacket) String() string {
+func (up UnsubscribePacket) String() string {
 	s := "UNSUBSCRIBE:"
 
-	for i, t := range um.Topics {
+	for i, t := range up.Topics {
 		s = fmt.Sprintf("%s Topic[%d]=%s", s, i, string(t))
 	}
 
@@ -52,8 +52,8 @@ func (um UnsubscribePacket) String() string {
 }
 
 // Len returns the byte length of the encoded packet.
-func (um *UnsubscribePacket) Len() int {
-	ml := um.len()
+func (up *UnsubscribePacket) Len() int {
+	ml := up.len()
 	return headerLen(ml) + ml
 }
 
@@ -61,7 +61,7 @@ func (um *UnsubscribePacket) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 // The byte slice must not be modified during the duration of this packet being
 // available since the byte slice never gets copied.
-func (um *UnsubscribePacket) Decode(src []byte) (int, error) {
+func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -77,14 +77,14 @@ func (um *UnsubscribePacket) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	um.PacketID = binary.BigEndian.Uint16(src[total:])
+	up.PacketID = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
 	// prepare counter
 	tl := int(rl) - 2
 
 	// reset topics
-	um.Topics = um.Topics[:0]
+	up.Topics = up.Topics[:0]
 
 	for tl > 0 {
 		// read topic
@@ -95,14 +95,14 @@ func (um *UnsubscribePacket) Decode(src []byte) (int, error) {
 		}
 
 		// append to list
-		um.Topics = append(um.Topics, t)
+		up.Topics = append(up.Topics, t)
 
 		// decrement counter
 		tl = tl - n - 1
 	}
 
 	// check for empty list
-	if len(um.Topics) == 0 {
+	if len(up.Topics) == 0 {
 		return total, fmt.Errorf("Empty topic list")
 	}
 
@@ -112,21 +112,21 @@ func (um *UnsubscribePacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (um *UnsubscribePacket) Encode(dst []byte) (int, error) {
+func (up *UnsubscribePacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, um.len(), um.Len(), UNSUBSCRIBE)
+	n, err := headerEncode(dst[total:], 0, up.len(), up.Len(), UNSUBSCRIBE)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], um.PacketID)
+	binary.BigEndian.PutUint16(dst[total:], up.PacketID)
 	total += 2
 
-	for _, t := range um.Topics {
+	for _, t := range up.Topics {
 		// write topic
 		n, err := writeLPBytes(dst[total:], t)
 		total += n
@@ -139,11 +139,11 @@ func (um *UnsubscribePacket) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (um *UnsubscribePacket) len() int {
+func (up *UnsubscribePacket) len() int {
 	// packet ID
 	total := 2
 
-	for _, t := range um.Topics {
+	for _, t := range up.Topics {
 		total += 2 + len(t)
 	}
 
