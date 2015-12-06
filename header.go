@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"encoding/binary"
@@ -23,7 +23,7 @@ const maxRemainingLength int = 268435455 // bytes, or 256 MB
 
 // Returns the length of the fixed header in bytes.
 func headerLen(rl int) int {
-	// message type and flag byte
+	// packet type and flag byte
 	total := 1
 
 	if rl <= 127 {
@@ -92,9 +92,9 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid type %d", t, decodedType)
 	}
 
-	// check flags except for publish messages
+	// check flags except for publish packets
 	if t != PUBLISH && flags != t.defaultFlags() {
-		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid message flags. Expecting %d, got %d", t, t.defaultFlags(), flags)
+		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid flags. Expecting %d, got %d", t, t.defaultFlags(), flags)
 	}
 
 	// read remaining length

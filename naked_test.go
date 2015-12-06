@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"testing"
@@ -20,95 +20,95 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNakedMessageDecode(t *testing.T) {
+func TestNakedPacketDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
-	n, err := nakedMessageDecode(msgBytes, DISCONNECT)
+	n, err := nakedPacketDecode(msgBytes, DISCONNECT)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n)
 }
 
-func TestNakedMessageDecodeError1(t *testing.T) {
+func TestNakedPacketDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(DISCONNECT << 4),
 		1, // <- wrong remaining length
 		0,
 	}
 
-	n, err := nakedMessageDecode(msgBytes, DISCONNECT)
+	n, err := nakedPacketDecode(msgBytes, DISCONNECT)
 
 	require.Error(t, err)
 	require.Equal(t, 2, n)
 }
 
-func TestNakedMessageEncode(t *testing.T) {
+func TestNakedPacketEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
-	dst := make([]byte, nakedMessageLen())
-	n, err := nakedMessageEncode(dst, DISCONNECT)
+	dst := make([]byte, nakedPacketLen())
+	n, err := nakedPacketEncode(dst, DISCONNECT)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n)
 	require.Equal(t, msgBytes, dst[:n])
 }
 
-func TestNakedMessageEqualDecodeEncode(t *testing.T) {
+func TestNakedPacketEqualDecodeEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
-	n, err := nakedMessageDecode(msgBytes, DISCONNECT)
+	n, err := nakedPacketDecode(msgBytes, DISCONNECT)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n)
 
-	dst := make([]byte, nakedMessageLen())
-	n2, err := nakedMessageEncode(dst, DISCONNECT)
+	dst := make([]byte, nakedPacketLen())
+	n2, err := nakedPacketEncode(dst, DISCONNECT)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n2)
 	require.Equal(t, msgBytes, dst[:n2])
 
-	n3, err := nakedMessageDecode(dst, DISCONNECT)
+	n3, err := nakedPacketDecode(dst, DISCONNECT)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n3)
 }
 
-func BenchmarkNakedMessageEncode(b *testing.B) {
-	buf := make([]byte, nakedMessageLen())
+func BenchmarkNakedPacketEncode(b *testing.B) {
+	buf := make([]byte, nakedPacketLen())
 
 	for i := 0; i < b.N; i++ {
-		_, err := nakedMessageEncode(buf, DISCONNECT)
+		_, err := nakedPacketEncode(buf, DISCONNECT)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func BenchmarkNakedMessageDecode(b *testing.B) {
+func BenchmarkNakedPacketDecode(b *testing.B) {
 	msgBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err := nakedMessageDecode(msgBytes, DISCONNECT)
+		_, err := nakedPacketDecode(msgBytes, DISCONNECT)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func testNakedMessageImplementation(t *testing.T, _t Type) {
+func testNakedPacketImplementation(t *testing.T, _t Type) {
 	msg, err := _t.New()
 	require.NoError(t, err)
 	require.Equal(t, _t, msg.Type())
@@ -125,13 +125,13 @@ func testNakedMessageImplementation(t *testing.T, _t Type) {
 }
 
 func TestDisconnectImplementation(t *testing.T) {
-	testNakedMessageImplementation(t, DISCONNECT)
+	testNakedPacketImplementation(t, DISCONNECT)
 }
 
 func TestPingreqImplementation(t *testing.T) {
-	testNakedMessageImplementation(t, PINGREQ)
+	testNakedPacketImplementation(t, PINGREQ)
 }
 
 func TestPingrespImplementation(t *testing.T) {
-	testNakedMessageImplementation(t, PINGRESP)
+	testNakedPacketImplementation(t, PINGRESP)
 }

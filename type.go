@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import "fmt"
 
@@ -73,7 +73,7 @@ func (t Type) String() string {
 	return "UNKNOWN"
 }
 
-// DefaultFlags returns the default flag values for the message type, as defined by
+// DefaultFlags returns the default flag values for the packet type, as defined by
 // the MQTT spec, except for PUBLISH.
 func (t Type) defaultFlags() byte {
 	switch t {
@@ -108,38 +108,38 @@ func (t Type) defaultFlags() byte {
 	return 0
 }
 
-// New creates a new message based on the type. It is a shortcut to call one of the
-// New*Message functions. If an error is returned then the type is invalid.
-func (t Type) New() (Message, error) {
+// New creates a new packet based on the type. It is a shortcut to call one of the
+// New*Packet functions. If an error is returned then the type is invalid.
+func (t Type) New() (Packet, error) {
 	switch t {
 	case CONNECT:
-		return NewConnectMessage(), nil
+		return NewConnectPacket(), nil
 	case CONNACK:
-		return NewConnackMessage(), nil
+		return NewConnackPacket(), nil
 	case PUBLISH:
-		return NewPublishMessage(), nil
+		return NewPublishPacket(), nil
 	case PUBACK:
-		return NewPubackMessage(), nil
+		return NewPubackPacket(), nil
 	case PUBREC:
-		return NewPubrecMessage(), nil
+		return NewPubrecPacket(), nil
 	case PUBREL:
-		return NewPubrelMessage(), nil
+		return NewPubrelPacket(), nil
 	case PUBCOMP:
-		return NewPubcompMessage(), nil
+		return NewPubcompPacket(), nil
 	case SUBSCRIBE:
-		return NewSubscribeMessage(), nil
+		return NewSubscribePacket(), nil
 	case SUBACK:
-		return NewSubackMessage(), nil
+		return NewSubackPacket(), nil
 	case UNSUBSCRIBE:
-		return NewUnsubscribeMessage(), nil
+		return NewUnsubscribePacket(), nil
 	case UNSUBACK:
-		return NewUnsubackMessage(), nil
+		return NewUnsubackPacket(), nil
 	case PINGREQ:
-		return NewPingreqMessage(), nil
+		return NewPingreqPacket(), nil
 	case PINGRESP:
-		return NewPingrespMessage(), nil
+		return NewPingrespPacket(), nil
 	case DISCONNECT:
-		return NewDisconnectMessage(), nil
+		return NewDisconnectPacket(), nil
 	}
 
 	return nil, fmt.Errorf("Invalid type %d", t)

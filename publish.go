@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"encoding/binary"
@@ -21,7 +21,7 @@ import (
 
 // A PUBLISH Control Packet is sent from a Client to a Server or from Server to a Client
 // to transport an Application Message.
-type PublishMessage struct {
+type PublishPacket struct {
 	// The Topic of the message.
 	Topic []byte
 
@@ -42,30 +42,30 @@ type PublishMessage struct {
 	// the Packet.
 	Dup bool
 
-	// Shared message identifier.
+	// Shared packet identifier.
 	PacketID uint16
 }
 
-var _ Message = (*PublishMessage)(nil)
+var _ Packet = (*PublishPacket)(nil)
 
-// NewPublishMessage creates a new PUBLISH message.
-func NewPublishMessage() *PublishMessage {
-	return &PublishMessage{}
+// NewPublishPacket creates a new PUBLISH packet.
+func NewPublishPacket() *PublishPacket {
+	return &PublishPacket{}
 }
 
-// Type return the messages message type.
-func (pm PublishMessage) Type() Type {
+// Type returns the packets type.
+func (pm PublishPacket) Type() Type {
 	return PUBLISH
 }
 
-// String returns a string representation of the message.
-func (pm PublishMessage) String() string {
+// String returns a string representation of the packet.
+func (pm PublishPacket) String() string {
 	return fmt.Sprintf("PUBLISH: Topic=%q PacketID=%d QOS=%d Retained=%t Dup=%t Payload=%v",
 		pm.Topic, pm.PacketID, pm.QOS, pm.Retain, pm.Dup, pm.Payload)
 }
 
-// Len returns the byte length of the message.
-func (pm *PublishMessage) Len() int {
+// Len returns the byte length of the encoded packet.
+func (pm *PublishPacket) Len() int {
 	ml := pm.len()
 	return headerLen(ml) + ml
 }
@@ -73,8 +73,8 @@ func (pm *PublishMessage) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of bytes
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
-func (pm *PublishMessage) Decode(src []byte) (int, error) {
+// packet being available since the byte slice never gets copied.
+func (pm *PublishPacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -131,10 +131,10 @@ func (pm *PublishMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
+// Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pm *PublishMessage) Encode(dst []byte) (int, error) {
+func (pm *PublishPacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check topic length
@@ -194,7 +194,7 @@ func (pm *PublishMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (pm *PublishMessage) len() int {
+func (pm *PublishPacket) len() int {
 	total := 2 + len(pm.Topic) + len(pm.Payload)
 	if pm.QOS != 0 {
 		total += 2

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"fmt"
@@ -62,15 +62,15 @@ func TestFixedHeaderFlags(t *testing.T) {
 }
 
 func ExampleReadme() {
-	// Create new message.
-	msg1 := NewConnectMessage()
+	// Create new packet.
+	msg1 := NewConnectPacket()
 	msg1.Username = []byte("gomqtt")
 	msg1.Password = []byte("amazing!")
 
 	// Allocate buffer.
 	buf := make([]byte, msg1.Len())
 
-	// Encode the message.
+	// Encode the packet.
 	if _, err := msg1.Encode(buf); err != nil {
 		// there was an error while encoding
 		panic(err)
@@ -82,8 +82,8 @@ func ExampleReadme() {
 
 	// Get buffer from the wire.
 
-	// Detect message.
-	l, t := DetectMessage(buf)
+	// Detect packet.
+	l, t := DetectPacket(buf)
 
 	// Check length
 	if l == 0 {
@@ -91,14 +91,14 @@ func ExampleReadme() {
 		return
 	}
 
-	// Create message.
+	// Create packet.
 	msg2, err := t.New()
 	if err != nil {
-		// message type is invalid
+		// packet type is invalid
 		panic(err)
 	}
 
-	// Decode message.
+	// Decode packet.
 	_, err = msg2.Decode(buf)
 	if err != nil {
 		// there was an error while decoding
@@ -107,7 +107,7 @@ func ExampleReadme() {
 
 	switch msg2.Type() {
 	case CONNECT:
-		c := msg2.(*ConnectMessage)
+		c := msg2.(*ConnectPacket)
 		fmt.Println(string(c.Username))
 		fmt.Println(string(c.Password))
 	}
@@ -120,7 +120,7 @@ func ExampleReadme() {
 func TestDetect1(t *testing.T) {
 	buf := []byte{0x10, 0x0}
 
-	l, _t := DetectMessage(buf)
+	l, _t := DetectPacket(buf)
 
 	require.Equal(t, 2, l)
 	require.Equal(t, 1, int(_t))
@@ -130,7 +130,7 @@ func TestDetect1(t *testing.T) {
 func TestDetect2(t *testing.T) {
 	buf := []byte{0x10, 0xff}
 
-	l, _t := DetectMessage(buf)
+	l, _t := DetectPacket(buf)
 
 	require.Equal(t, 0, l)
 	require.Equal(t, 0, int(_t))
@@ -139,7 +139,7 @@ func TestDetect2(t *testing.T) {
 func TestDetect3(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0x0}
 
-	l, _t := DetectMessage(buf)
+	l, _t := DetectPacket(buf)
 
 	require.Equal(t, 130, l)
 	require.Equal(t, 1, int(_t))
@@ -149,7 +149,7 @@ func TestDetect3(t *testing.T) {
 func TestDetect4(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0xff}
 
-	l, _t := DetectMessage(buf)
+	l, _t := DetectPacket(buf)
 
 	require.Equal(t, 0, l)
 	require.Equal(t, 0, int(_t))
@@ -158,7 +158,7 @@ func TestDetect4(t *testing.T) {
 func TestDetect5(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0xff, 0xff, 0x1}
 
-	l, _t := DetectMessage(buf)
+	l, _t := DetectPacket(buf)
 
 	require.Equal(t, 4194308, l)
 	require.Equal(t, 1, int(_t))
@@ -167,7 +167,7 @@ func TestDetect5(t *testing.T) {
 func TestDetect6(t *testing.T) {
 	buf := []byte{0x10}
 
-	l, _t := DetectMessage(buf)
+	l, _t := DetectPacket(buf)
 
 	require.Equal(t, 0, l)
 	require.Equal(t, 0, int(_t))
@@ -177,15 +177,15 @@ func TestFuzz(t *testing.T) {
 	// too small buffer
 	require.Equal(t, 1, Fuzz([]byte{}))
 
-	// wrong message type
+	// wrong packet type
 	b1 := []byte{0 << 4, 0x00}
 	require.Equal(t, 0, Fuzz(b1))
 
-	// wrong message format
+	// wrong packet format
 	b2 := []byte{2 << 4, 0x02, 0x00, 0x06}
 	require.Equal(t, 0, Fuzz(b2))
 
-	// right message format
+	// right packet format
 	b3 := []byte{2 << 4, 0x02, 0x00, 0x01}
 	require.Equal(t, 1, Fuzz(b3))
 }

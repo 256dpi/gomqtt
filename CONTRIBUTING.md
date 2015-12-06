@@ -2,7 +2,7 @@
 
 ## Reporting Issues
 
-Before creating a new Issue, please check first if a similar Issue [already exists](https://github.com/gomqtt/message/issues?state=open) or was [recently closed](https://github.com/gomqtt/message/issues?direction=desc&page=1&sort=updated&state=closed).
+Before creating a new Issue, please check first if a similar Issue [already exists](https://github.com/gomqtt/packet/issues?state=open) or was [recently closed](https://github.com/gomqtt/packet/issues?direction=desc&page=1&sort=updated&state=closed).
 
 Please provide the following minimum information:
 * Your package version (or git SHA)

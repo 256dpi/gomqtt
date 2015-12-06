@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"testing"
@@ -20,14 +20,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMessageHeaderDecodeError1(t *testing.T) {
+func TestPacketHeaderDecodeError1(t *testing.T) {
 	buf := []byte{0x6f, 193, 2} // <- not enough bytes
 
 	_, _, _, err := headerDecode(buf, 0)
 	require.Error(t, err)
 }
 
-func TestMessageHeaderDecodeError2(t *testing.T) {
+func TestPacketHeaderDecodeError2(t *testing.T) {
 	// source to small
 	buf := []byte{0x62}
 
@@ -35,14 +35,14 @@ func TestMessageHeaderDecodeError2(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestMessageHeaderDecodeError3(t *testing.T) {
-	buf := []byte{0x62, 0xff} // <- invalid message type
+func TestPacketHeaderDecodeError3(t *testing.T) {
+	buf := []byte{0x62, 0xff} // <- invalid packet type
 
 	_, _, _, err := headerDecode(buf, 0)
 	require.Error(t, err)
 }
 
-func TestMessageHeaderDecodeError4(t *testing.T) {
+func TestPacketHeaderDecodeError4(t *testing.T) {
 	// remaining length to big
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0xff}
 
@@ -52,7 +52,7 @@ func TestMessageHeaderDecodeError4(t *testing.T) {
 	require.Equal(t, 1, n)
 }
 
-func TestMessageHeaderDecodeError5(t *testing.T) {
+func TestPacketHeaderDecodeError5(t *testing.T) {
 	buf := []byte{0x66, 0x00, 0x01} // <- wrong flags
 
 	n, _, _, err := headerDecode(buf, 6)
@@ -60,7 +60,7 @@ func TestMessageHeaderDecodeError5(t *testing.T) {
 	require.Equal(t, 1, n)
 }
 
-func TestMessageHeaderEncode1(t *testing.T) {
+func TestPacketHeaderEncode1(t *testing.T) {
 	headerBytes := []byte{0x62, 193, 2}
 
 	buf := make([]byte, 3)
@@ -71,7 +71,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 	require.Equal(t, headerBytes, buf)
 }
 
-func TestMessageHeaderEncode2(t *testing.T) {
+func TestPacketHeaderEncode2(t *testing.T) {
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
 	buf := make([]byte, 5)
@@ -82,7 +82,7 @@ func TestMessageHeaderEncode2(t *testing.T) {
 	require.Equal(t, headerBytes, buf)
 }
 
-func TestMessageHeaderEncodeError1(t *testing.T) {
+func TestPacketHeaderEncodeError1(t *testing.T) {
 	headerBytes := []byte{0x00}
 
 	buf := make([]byte, 1) // <- wrong buffer size
@@ -93,7 +93,7 @@ func TestMessageHeaderEncodeError1(t *testing.T) {
 	require.Equal(t, headerBytes, buf)
 }
 
-func TestMessageHeaderEncodeError2(t *testing.T) {
+func TestPacketHeaderEncodeError2(t *testing.T) {
 	headerBytes := []byte{0x00, 0x00}
 
 	buf := make([]byte, 2)
@@ -105,7 +105,7 @@ func TestMessageHeaderEncodeError2(t *testing.T) {
 	require.Equal(t, headerBytes, buf)
 }
 
-func TestMessageHeaderEncodeError3(t *testing.T) {
+func TestPacketHeaderEncodeError3(t *testing.T) {
 	headerBytes := []byte{0x00, 0x00}
 
 	buf := make([]byte, 2)

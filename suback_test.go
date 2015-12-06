@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"testing"
@@ -21,13 +21,13 @@ import (
 )
 
 func TestSubackInterface(t *testing.T) {
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 
 	require.Equal(t, msg.Type(), SUBACK)
 	require.NotNil(t, msg.String())
 }
 
-func TestSubackMessageDecode(t *testing.T) {
+func TestSubackPacketDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
@@ -39,7 +39,7 @@ func TestSubackMessageDecode(t *testing.T) {
 		0x80, // return code 4
 	}
 
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err)
@@ -47,7 +47,7 @@ func TestSubackMessageDecode(t *testing.T) {
 	require.Equal(t, 4, len(msg.ReturnCodes))
 }
 
-func TestSubackMessageDecodeError1(t *testing.T) {
+func TestSubackPacketDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		1, // <- wrong remaining length
@@ -56,13 +56,13 @@ func TestSubackMessageDecodeError1(t *testing.T) {
 		0, // return code 1
 	}
 
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestSubackMessageDecodeError2(t *testing.T) {
+func TestSubackPacketDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
@@ -74,41 +74,41 @@ func TestSubackMessageDecodeError2(t *testing.T) {
 		0x81, // <- wrong return code
 	}
 
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestSubackMessageDecodeError3(t *testing.T) {
+func TestSubackPacketDecodeError3(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		1, // <- wrong remaining length
 		0, // packet ID MSB
 	}
 
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestSubackMessageDecodeError4(t *testing.T) {
+func TestSubackPacketDecodeError4(t *testing.T) {
 	msgBytes := []byte{
-		byte(PUBCOMP << 4), // <- wrong message type
+		byte(PUBCOMP << 4), // <- wrong packet type
 		3,
 		0, // packet ID MSB
 		7, // packet ID LSB
 		0, // return code 1
 	}
 
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestSubackMessageEncode(t *testing.T) {
+func TestSubackPacketEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(SUBACK << 4),
 		6,
@@ -120,7 +120,7 @@ func TestSubackMessageEncode(t *testing.T) {
 		0x80, // return code 4
 	}
 
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 	msg.PacketID = 7
 	msg.ReturnCodes = []byte{0, 1, 2, 0x80}
 
@@ -132,8 +132,8 @@ func TestSubackMessageEncode(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n])
 }
 
-func TestSubackMessageEncodeError1(t *testing.T) {
-	msg := NewSubackMessage()
+func TestSubackPacketEncodeError1(t *testing.T) {
+	msg := NewSubackPacket()
 	msg.PacketID = 7
 	msg.ReturnCodes = []byte{0x81}
 
@@ -144,8 +144,8 @@ func TestSubackMessageEncodeError1(t *testing.T) {
 	require.Equal(t, 0, n)
 }
 
-func TestSubackMessageEncodeError2(t *testing.T) {
-	msg := NewSubackMessage()
+func TestSubackPacketEncodeError2(t *testing.T) {
+	msg := NewSubackPacket()
 	msg.PacketID = 7
 	msg.ReturnCodes = []byte{0x80}
 
@@ -168,7 +168,7 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 		0x80, // return code 4
 	}
 
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err)
@@ -188,7 +188,7 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkSubackEncode(b *testing.B) {
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 	msg.PacketID = 1
 	msg.ReturnCodes = []byte{0}
 
@@ -211,7 +211,7 @@ func BenchmarkSubackDecode(b *testing.B) {
 		0, // return code 1
 	}
 
-	msg := NewSubackMessage()
+	msg := NewSubackPacket()
 
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)

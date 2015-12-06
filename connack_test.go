@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"testing"
@@ -30,13 +30,13 @@ func TestConnackReturnCodes(t *testing.T) {
 }
 
 func TestConnackInterface(t *testing.T) {
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 
 	require.Equal(t, msg.Type(), CONNACK)
 	require.NotNil(t, msg.String())
 }
 
-func TestConnackMessageDecode(t *testing.T) {
+func TestConnackPacketDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -44,7 +44,7 @@ func TestConnackMessageDecode(t *testing.T) {
 		0, // connection accepted
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 
 	n, err := msg.Decode(msgBytes)
 
@@ -54,7 +54,7 @@ func TestConnackMessageDecode(t *testing.T) {
 	require.Equal(t, ConnectionAccepted, msg.ReturnCode)
 }
 
-func TestConnackMessageDecodeError1(t *testing.T) {
+func TestConnackPacketDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		3, // <- wrong size
@@ -62,27 +62,27 @@ func TestConnackMessageDecodeError1(t *testing.T) {
 		0, // connection accepted
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 
 	_, err := msg.Decode(msgBytes)
 	require.Error(t, err)
 }
 
-func TestConnackMessageDecodeError2(t *testing.T) {
+func TestConnackPacketDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
-		// <- wrong message size
+		// <- wrong packet size
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 
 	_, err := msg.Decode(msgBytes)
 	require.Error(t, err)
 }
 
-func TestConnackMessageDecodeError3(t *testing.T) {
+func TestConnackPacketDecodeError3(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -90,13 +90,13 @@ func TestConnackMessageDecodeError3(t *testing.T) {
 		0,  // connection accepted
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 
 	_, err := msg.Decode(msgBytes)
 	require.Error(t, err)
 }
 
-func TestConnackMessageDecodeError4(t *testing.T) {
+func TestConnackPacketDecodeError4(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -104,13 +104,13 @@ func TestConnackMessageDecodeError4(t *testing.T) {
 		6, // <- wrong code
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 
 	_, err := msg.Decode(msgBytes)
 	require.Error(t, err)
 }
 
-func TestConnackMessageDecodeError5(t *testing.T) {
+func TestConnackPacketDecodeError5(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		1, // <- wrong remaining length
@@ -118,13 +118,13 @@ func TestConnackMessageDecodeError5(t *testing.T) {
 		6,
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 
 	_, err := msg.Decode(msgBytes)
 	require.Error(t, err)
 }
 
-func TestConnackMessageEncode(t *testing.T) {
+func TestConnackPacketEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -132,7 +132,7 @@ func TestConnackMessageEncode(t *testing.T) {
 		0, // connection accepted
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 	msg.ReturnCode = ConnectionAccepted
 	msg.SessionPresent = true
 
@@ -144,8 +144,8 @@ func TestConnackMessageEncode(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n])
 }
 
-func TestConnackMessageEncodeError1(t *testing.T) {
-	msg := NewConnackMessage()
+func TestConnackPacketEncodeError1(t *testing.T) {
+	msg := NewConnackPacket()
 
 	dst := make([]byte, 3) // <- wrong buffer size
 	n, err := msg.Encode(dst)
@@ -154,8 +154,8 @@ func TestConnackMessageEncodeError1(t *testing.T) {
 	require.Equal(t, 0, n)
 }
 
-func TestConnackMessageEncodeError2(t *testing.T) {
-	msg := NewConnackMessage()
+func TestConnackPacketEncodeError2(t *testing.T) {
+	msg := NewConnackPacket()
 	msg.ReturnCode = 11 // <- wrong return code
 
 	dst := make([]byte, msg.Len())
@@ -173,7 +173,7 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 		0, // connection accepted
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err)
@@ -193,7 +193,7 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkConnackEncode(b *testing.B) {
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 	msg.ReturnCode = ConnectionAccepted
 	msg.SessionPresent = true
 
@@ -215,7 +215,7 @@ func BenchmarkConnackDecode(b *testing.B) {
 		0, // connection accepted
 	}
 
-	msg := NewConnackMessage()
+	msg := NewConnackPacket()
 
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)

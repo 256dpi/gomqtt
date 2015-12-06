@@ -13,29 +13,29 @@
 // limitations under the License.
 
 /*
-This go package is an encoder/decoder library for MQTT 3.1.1
-(http://docs.oasis-open.org/mqtt/mqtt/v3.1.1) messages.
+This go package implements functionality for encoding and decoding MQTT 3.1.1
+(http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.
 
-Create a new message and encode it:
+Create a new packet and encode it:
 
-	// Create new message.
-	msg1 := NewConnectMessage()
+	// Create new packet.
+	msg1 := NewConnectPacket()
 	msg1.Username = []byte("gomqtt")
 	msg1.Password = []byte("amazing!")
 
 	// Allocate buffer.
 	buf := make([]byte, msg1.Len())
 
-	// Encode the message.
+	// Encode the packet.
 	if _, err := msg1.Encode(buf); err != nil {
 		// there was an error while encoding
 		panic(err)
 	}
 
-Decode bytes to a message:
+Decode bytes to a packet:
 
-	// Detect message.
-	l, mt := DetectMessage(buf)
+	// Detect packet.
+	l, mt := DetectPacket(buf)
 
 	// Check length
 	if l == 0 {
@@ -43,41 +43,35 @@ Decode bytes to a message:
 		return
 	}
 
-	// Create message.
+	// Create packet.
 	msg2, err := mt.New();
 	if err != nil {
-		// message type is invalid
+		// packet type is invalid
 		panic(err)
 	}
 
-	// Decode message.
+	// Decode packet.
 	_, err = msg2.Decode(buf)
 	if err != nil {
 		// there was an error while decoding
 		panic(err)
 	}
 */
-package message
+package packet
 
 import "encoding/binary"
 
 const (
-	// QOS 0: At most once delivery
 	// The message is delivered according to the capabilities of the underlying network.
 	// No response is sent by the receiver and no retry is performed by the sender. The
 	// message arrives at the receiver either once or not at all.
 	QOSAtMostOnce byte = iota
 
-	// QOS 1: At least once delivery
 	// This quality of service ensures that the message arrives at the receiver at least once.
-	// A QOS 1 PUBLISH Packet has a Packet Identifier in its variable header and is acknowledged
-	// by a PUBACK Packet.
 	QOSAtLeastOnce
 
-	// QOS 2: Exactly once delivery
 	// This is the highest quality of service, for use when neither loss nor duplication of
-	// messages are acceptable. There is an increased overhead associated with this quality of
-	// service.
+	// messages are acceptable.
 	QOSExactlyOnce
 
 	// QOSFailure is a return value for a subscription if there's a problem while subscribing
@@ -85,33 +79,33 @@ const (
 	QOSFailure = 0x80
 )
 
-// Message is an interface defined for all MQTT message types.
-type Message interface {
-	// Type returns the messages message type.
+// Packet is an interface defined for all MQTT packet types.
+type Packet interface {
+	// Type returns the packets type.
 	Type() Type
 
-	// Len returns the byte length of the message.
+	// Len returns the byte length of the encoded packet.
 	Len() int
 
 	// Decode reads from the byte slice argument. It returns the total number of bytes
 	// decoded, and whether there have been any errors during the process.
 	// The byte slice MUST NOT be modified during the duration of this
-	// message being available since the byte slice never gets copied.
+	// packet being available since the byte slice never gets copied.
 	Decode([]byte) (int, error)
 
-	// Encode writes the message bytes into the byte array from the argument. It
+	// Encode writes the packet bytes into the byte slice from the argument. It
 	// returns the number of bytes encoded and whether there's any errors along
 	// the way. If there is an error, the byte slice should be considered invalid.
 	Encode([]byte) (int, error)
 
-	// String returns a string representation of the message.
+	// String returns a string representation of the packet.
 	String() string
 }
 
-// DetectMessage tries to detect the next message in a buffer. It returns a
-// length greater than zero if the message has been detected as well as its
-// MessageType.
-func DetectMessage(src []byte) (int, Type) {
+// DetectPacket tries to detect the next packet in a buffer. It returns a
+// length greater than zero if the packet has been detected as well as its
+// PacketType.
+func DetectPacket(src []byte) (int, Type) {
 	// check for minimum size
 	if len(src) < 2 {
 		return 0, 0
@@ -134,8 +128,8 @@ func DetectMessage(src []byte) (int, Type) {
 /*
 A basic fuzzing test that works with https://github.com/dvyukov/go-fuzz:
 
-	$ go-fuzz-build github.com/gomqtt/message
-	$ go-fuzz -bin=./message-fuzz.zip -workdir=./fuzz
+	$ go-fuzz-build github.com/gomqtt/packet
+	$ go-fuzz -bin=./packet-fuzz.zip -workdir=./fuzz
 */
 func Fuzz(data []byte) int {
 	// check for zero length data
@@ -143,13 +137,13 @@ func Fuzz(data []byte) int {
 		return 1
 	}
 
-	// Detect message.
-	_, mt := DetectMessage(data)
+	// Detect packet.
+	_, mt := DetectPacket(data)
 
 	// For testing purposes we will not cancel
 	// on incomplete buffers
 
-	// Create a new message
+	// Create a new packet
 	msg, err := mt.New()
 	if err != nil {
 		return 0

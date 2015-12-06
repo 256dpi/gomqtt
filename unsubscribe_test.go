@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"testing"
@@ -21,14 +21,14 @@ import (
 )
 
 func TestUnsubscribeInterface(t *testing.T) {
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	msg.Topics = [][]byte{[]byte("hello")}
 
 	require.Equal(t, msg.Type(), UNSUBSCRIBE)
 	require.NotNil(t, msg.String())
 }
 
-func TestUnsubscribeMessageDecode(t *testing.T) {
+func TestUnsubscribePacketDecode(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
@@ -45,7 +45,7 @@ func TestUnsubscribeMessageDecode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err)
@@ -56,7 +56,7 @@ func TestUnsubscribeMessageDecode(t *testing.T) {
 	require.Equal(t, []byte("/a/b/#/cdd"), msg.Topics[2])
 }
 
-func TestUnsubscribeMessageDecodeError1(t *testing.T) {
+func TestUnsubscribePacketDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		2,
@@ -65,13 +65,13 @@ func TestUnsubscribeMessageDecodeError1(t *testing.T) {
 		// empty topic list
 	}
 
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestUnsubscribeMessageDecodeError2(t *testing.T) {
+func TestUnsubscribePacketDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		6, // <- wrong remaining length
@@ -79,26 +79,26 @@ func TestUnsubscribeMessageDecodeError2(t *testing.T) {
 		7, // packet ID LSB
 	}
 
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestUnsubscribeMessageDecodeError3(t *testing.T) {
+func TestUnsubscribePacketDecodeError3(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		0,
 		// missing packet id
 	}
 
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestUnsubscribeMessageDecodeError4(t *testing.T) {
+func TestUnsubscribePacketDecodeError4(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		11,
@@ -109,13 +109,13 @@ func TestUnsubscribeMessageDecodeError4(t *testing.T) {
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
 	}
 
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestUnsubscribeMessageEncode(t *testing.T) {
+func TestUnsubscribePacketEncode(t *testing.T) {
 	msgBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
@@ -132,7 +132,7 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	msg.PacketID = 7
 	msg.Topics = [][]byte{
 		[]byte("surgemq"),
@@ -148,8 +148,8 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n])
 }
 
-func TestUnsubscribeMessageEncodeError1(t *testing.T) {
-	msg := NewUnsubscribeMessage()
+func TestUnsubscribePacketEncodeError1(t *testing.T) {
+	msg := NewUnsubscribePacket()
 	msg.PacketID = 7
 	msg.Topics = [][]byte{
 		[]byte("surgemq"),
@@ -162,8 +162,8 @@ func TestUnsubscribeMessageEncodeError1(t *testing.T) {
 	require.Equal(t, 0, n)
 }
 
-func TestUnsubscribeMessageEncodeError2(t *testing.T) {
-	msg := NewUnsubscribeMessage()
+func TestUnsubscribePacketEncodeError2(t *testing.T) {
+	msg := NewUnsubscribePacket()
 	msg.PacketID = 7
 	msg.Topics = [][]byte{
 		make([]byte, 65536),
@@ -195,7 +195,7 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err)
@@ -215,7 +215,7 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 	msg.PacketID = 1
 	msg.Topics = [][]byte{
 		[]byte("t"),
@@ -242,7 +242,7 @@ func BenchmarkUnsubscribeDecode(b *testing.B) {
 		't',
 	}
 
-	msg := NewUnsubscribeMessage()
+	msg := NewUnsubscribePacket()
 
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"encoding/binary"
@@ -20,28 +20,28 @@ import (
 )
 
 // An UNSUBSCRIBE Packet is sent by the Client to the Server, to unsubscribe from topics.
-type UnsubscribeMessage struct {
+type UnsubscribePacket struct {
 	// The topics to unsubscribe from.
 	Topics [][]byte
 
-	// Shared message identifier.
+	// Shared packet identifier.
 	PacketID uint16
 }
 
-var _ Message = (*UnsubscribeMessage)(nil)
+var _ Packet = (*UnsubscribePacket)(nil)
 
-// NewUnsubscribeMessage creates a new UNSUBSCRIBE message.
-func NewUnsubscribeMessage() *UnsubscribeMessage {
-	return &UnsubscribeMessage{}
+// NewUnsubscribePacket creates a new UNSUBSCRIBE packet.
+func NewUnsubscribePacket() *UnsubscribePacket {
+	return &UnsubscribePacket{}
 }
 
-// Type return the messages message type.
-func (um UnsubscribeMessage) Type() Type {
+// Type returns the packets type.
+func (um UnsubscribePacket) Type() Type {
 	return UNSUBSCRIBE
 }
 
-// String returns a string representation of the message.
-func (um UnsubscribeMessage) String() string {
+// String returns a string representation of the packet.
+func (um UnsubscribePacket) String() string {
 	s := "UNSUBSCRIBE:"
 
 	for i, t := range um.Topics {
@@ -51,8 +51,8 @@ func (um UnsubscribeMessage) String() string {
 	return s
 }
 
-// Len returns the byte length of the message.
-func (um *UnsubscribeMessage) Len() int {
+// Len returns the byte length of the encoded packet.
+func (um *UnsubscribePacket) Len() int {
 	ml := um.len()
 	return headerLen(ml) + ml
 }
@@ -60,8 +60,8 @@ func (um *UnsubscribeMessage) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of bytes
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
-func (um *UnsubscribeMessage) Decode(src []byte) (int, error) {
+// packet being available since the byte slice never gets copied.
+func (um *UnsubscribePacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -109,10 +109,10 @@ func (um *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
+// Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (um *UnsubscribeMessage) Encode(dst []byte) (int, error) {
+func (um *UnsubscribePacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
@@ -139,7 +139,7 @@ func (um *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (um *UnsubscribeMessage) len() int {
+func (um *UnsubscribePacket) len() int {
 	// packet ID
 	total := 2
 

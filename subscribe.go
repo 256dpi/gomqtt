@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"encoding/binary"
 	"fmt"
 )
 
-// A single subscription in a SubscribeMessage.
+// A single subscription in a SubscribePacket.
 type Subscription struct {
 	// The topic to subscribe to.
 	Topic []byte
@@ -34,28 +34,28 @@ type Subscription struct {
 // Application Messages that were published to Topics that match these Subscriptions.
 // The SUBSCRIBE Packet also specifies (for each Subscription) the maximum QOS with
 // which the Server can send Application Messages to the Client.
-type SubscribeMessage struct {
+type SubscribePacket struct {
 	// The subscriptions.
 	Subscriptions []Subscription
 
-	// Shared message identifier.
+	// Shared packet identifier.
 	PacketID uint16
 }
 
-var _ Message = (*SubscribeMessage)(nil)
+var _ Packet = (*SubscribePacket)(nil)
 
-// NewSubscribeMessage creates a new SUBSCRIBE message.
-func NewSubscribeMessage() *SubscribeMessage {
-	return &SubscribeMessage{}
+// NewSubscribePacket creates a new SUBSCRIBE packet.
+func NewSubscribePacket() *SubscribePacket {
+	return &SubscribePacket{}
 }
 
-// Type return the messages message type.
-func (sm SubscribeMessage) Type() Type {
+// Type returns the packets type.
+func (sm SubscribePacket) Type() Type {
 	return SUBSCRIBE
 }
 
-// String returns a string representation of the message.
-func (sm SubscribeMessage) String() string {
+// String returns a string representation of the packet.
+func (sm SubscribePacket) String() string {
 	s := fmt.Sprintf("SUBSCRIBE: PacketID=%d", sm.PacketID)
 
 	for i, t := range sm.Subscriptions {
@@ -65,8 +65,8 @@ func (sm SubscribeMessage) String() string {
 	return s
 }
 
-// Len returns the byte length of the message.
-func (sm *SubscribeMessage) Len() int {
+// Len returns the byte length of the encoded packet.
+func (sm *SubscribePacket) Len() int {
 	ml := sm.len()
 	return headerLen(ml) + ml
 }
@@ -74,8 +74,8 @@ func (sm *SubscribeMessage) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of bytes
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
-func (sm *SubscribeMessage) Decode(src []byte) (int, error) {
+// packet being available since the byte slice never gets copied.
+func (sm *SubscribePacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -129,10 +129,10 @@ func (sm *SubscribeMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
+// Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (sm *SubscribeMessage) Encode(dst []byte) (int, error) {
+func (sm *SubscribePacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
@@ -164,7 +164,7 @@ func (sm *SubscribeMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (sm *SubscribeMessage) len() int {
+func (sm *SubscribePacket) len() int {
 	// packet ID
 	total := 2
 

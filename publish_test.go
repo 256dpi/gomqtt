@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"testing"
@@ -21,13 +21,13 @@ import (
 )
 
 func TestPublishInterface(t *testing.T) {
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 
 	require.Equal(t, msg.Type(), PUBLISH)
 	require.NotNil(t, msg.String())
 }
 
-func TestPublishMessageDecode1(t *testing.T) {
+func TestPublishPacketDecode1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 11,
 		23,
@@ -39,7 +39,7 @@ func TestPublishMessageDecode1(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err)
@@ -52,7 +52,7 @@ func TestPublishMessageDecode1(t *testing.T) {
 	require.Equal(t, true, msg.Dup)
 }
 
-func TestPublishMessageDecode2(t *testing.T) {
+func TestPublishPacketDecode2(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH << 4),
 		21,
@@ -62,7 +62,7 @@ func TestPublishMessageDecode2(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err)
@@ -75,44 +75,44 @@ func TestPublishMessageDecode2(t *testing.T) {
 	require.Equal(t, false, msg.Dup)
 }
 
-func TestPublishMessageDecodeError1(t *testing.T) {
+func TestPublishPacketDecodeError1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH << 4),
 		2, // <- too much
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestPublishMessageDecodeError2(t *testing.T) {
+func TestPublishPacketDecodeError2(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 6, // <- wrong qos
 		0,
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestPublishMessageDecodeError3(t *testing.T) {
+func TestPublishPacketDecodeError3(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH << 4),
 		0,
 		// <- missing topic stuff
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestPublishMessageDecodeError4(t *testing.T) {
+func TestPublishPacketDecodeError4(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH << 4),
 		2,
@@ -121,13 +121,13 @@ func TestPublishMessageDecodeError4(t *testing.T) {
 		// <- missing topic string
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestPublishMessageDecodeError5(t *testing.T) {
+func TestPublishPacketDecodeError5(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		2,
@@ -137,13 +137,13 @@ func TestPublishMessageDecodeError5(t *testing.T) {
 		// <- missing packet id
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	_, err := msg.Decode(msgBytes)
 
 	require.Error(t, err)
 }
 
-func TestPublishMessageEncode1(t *testing.T) {
+func TestPublishPacketEncode1(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH<<4) | 11,
 		23,
@@ -155,7 +155,7 @@ func TestPublishMessageEncode1(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	msg.Topic = []byte("surgemq")
 	msg.QOS = QOSAtLeastOnce
 	msg.Retain = true
@@ -171,7 +171,7 @@ func TestPublishMessageEncode1(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n])
 }
 
-func TestPublishMessageEncode2(t *testing.T) {
+func TestPublishPacketEncode2(t *testing.T) {
 	msgBytes := []byte{
 		byte(PUBLISH << 4),
 		21,
@@ -181,7 +181,7 @@ func TestPublishMessageEncode2(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	msg.Topic = []byte("surgemq")
 	msg.Payload = []byte("send me home")
 
@@ -193,8 +193,8 @@ func TestPublishMessageEncode2(t *testing.T) {
 	require.Equal(t, msgBytes, dst[:n])
 }
 
-func TestPublishMessageEncodeError1(t *testing.T) {
-	msg := NewPublishMessage()
+func TestPublishPacketEncodeError1(t *testing.T) {
+	msg := NewPublishPacket()
 	msg.Topic = []byte("") // <- empty topic
 
 	dst := make([]byte, msg.Len())
@@ -203,8 +203,8 @@ func TestPublishMessageEncodeError1(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestPublishMessageEncodeError2(t *testing.T) {
-	msg := NewPublishMessage()
+func TestPublishPacketEncodeError2(t *testing.T) {
+	msg := NewPublishPacket()
 	msg.Topic = []byte("t")
 	msg.QOS = 3 // <- wrong qos
 
@@ -214,8 +214,8 @@ func TestPublishMessageEncodeError2(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestPublishMessageEncodeError3(t *testing.T) {
-	msg := NewPublishMessage()
+func TestPublishPacketEncodeError3(t *testing.T) {
+	msg := NewPublishPacket()
 	msg.Topic = []byte("t")
 
 	dst := make([]byte, 1) // <- too small
@@ -224,8 +224,8 @@ func TestPublishMessageEncodeError3(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestPublishMessageEncodeError4(t *testing.T) {
-	msg := NewPublishMessage()
+func TestPublishPacketEncodeError4(t *testing.T) {
+	msg := NewPublishPacket()
 	msg.Topic = make([]byte, 65536) // <- too big
 
 	dst := make([]byte, msg.Len())
@@ -246,7 +246,7 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	n, err := msg.Decode(msgBytes)
 
 	require.NoError(t, err)
@@ -266,7 +266,7 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkPublishEncode(b *testing.B) {
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 	msg.Topic = []byte("t")
 	msg.QOS = QOSAtLeastOnce
 	msg.PacketID = 1
@@ -294,7 +294,7 @@ func BenchmarkPublishDecode(b *testing.B) {
 		'p',
 	}
 
-	msg := NewPublishMessage()
+	msg := NewPublishPacket()
 
 	for i := 0; i < b.N; i++ {
 		_, err := msg.Decode(msgBytes)

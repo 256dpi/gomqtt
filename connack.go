@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import "fmt"
 
-// ConnackCode is the type representing the return code in the CONNACK message.
+// ConnackCode is the type representing the return code in the CONNACK packet.
 type ConnackCode byte
 
 // All existing ConnackCodes.
@@ -56,7 +56,7 @@ func (cc ConnackCode) Error() string {
 
 // The CONNACK Packet is the packet sent by the Server in response to a CONNECT Packet
 // received from a Client.
-type ConnackMessage struct {
+type ConnackPacket struct {
 	// The Session Present flag enables a Client to establish whether the Client and
 	// Server have a consistent view about whether there is already stored Session state.
 	SessionPresent bool
@@ -67,33 +67,33 @@ type ConnackMessage struct {
 	ReturnCode ConnackCode
 }
 
-var _ Message = (*ConnackMessage)(nil)
+var _ Packet = (*ConnackPacket)(nil)
 
-// NewConnackMessage creates a new CONNACK message.
-func NewConnackMessage() *ConnackMessage {
-	return &ConnackMessage{}
+// NewConnackPacket creates a new CONNACK packet.
+func NewConnackPacket() *ConnackPacket {
+	return &ConnackPacket{}
 }
 
-// Type return the messages message type.
-func (cm ConnackMessage) Type() Type {
+// Type returns the packets type.
+func (cm ConnackPacket) Type() Type {
 	return CONNACK
 }
 
-// String returns a string representation of the message.
-func (cm ConnackMessage) String() string {
+// String returns a string representation of the packet.
+func (cm ConnackPacket) String() string {
 	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q", cm.SessionPresent, cm.ReturnCode)
 }
 
-// Len returns the byte length of the message.
-func (cm *ConnackMessage) Len() int {
+// Len returns the byte length of the encoded packet.
+func (cm *ConnackPacket) Len() int {
 	return headerLen(2) + 2
 }
 
 // Decode reads from the byte slice argument. It returns the total number of bytes
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
-func (cm *ConnackMessage) Decode(src []byte) (int, error) {
+// packet being available since the byte slice never gets copied.
+func (cm *ConnackPacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -130,10 +130,10 @@ func (cm *ConnackMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
+// Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (cm *ConnackMessage) Encode(dst []byte) (int, error) {
+func (cm *ConnackPacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header

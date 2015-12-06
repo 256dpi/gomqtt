@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"encoding/binary"
@@ -22,33 +22,33 @@ import (
 // A SUBACK Packet is sent by the Server to the Client to confirm receipt and processing
 // of a SUBSCRIBE Packet. The SUBACK Packet contains a list of return codes, that specify
 // the maximum QOS level that have been granted.
-type SubackMessage struct {
+type SubackPacket struct {
 	// The granted QOS levels for the requested subscriptions.
 	ReturnCodes []byte
 
-	// Shared message identifier.
+	// Shared packet identifier.
 	PacketID uint16
 }
 
-var _ Message = (*SubackMessage)(nil)
+var _ Packet = (*SubackPacket)(nil)
 
-// NewSubackMessage creates a new SUBACK message.
-func NewSubackMessage() *SubackMessage {
-	return &SubackMessage{}
+// NewSubackPacket creates a new SUBACK packet.
+func NewSubackPacket() *SubackPacket {
+	return &SubackPacket{}
 }
 
-// Type return the messages message type.
-func (sm SubackMessage) Type() Type {
+// Type returns the packets type.
+func (sm SubackPacket) Type() Type {
 	return SUBACK
 }
 
-// String returns a string representation of the message.
-func (sm SubackMessage) String() string {
+// String returns a string representation of the packet.
+func (sm SubackPacket) String() string {
 	return fmt.Sprintf("SUBACK: PacketID=%d ReturnCodes=%v", sm.PacketID, sm.ReturnCodes)
 }
 
-// Len returns the byte length of the message.
-func (sm *SubackMessage) Len() int {
+// Len returns the byte length of the encoded packet.
+func (sm *SubackPacket) Len() int {
 	ml := sm.len()
 	return headerLen(ml) + ml
 }
@@ -56,8 +56,8 @@ func (sm *SubackMessage) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of bytes
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
-func (sm *SubackMessage) Decode(src []byte) (int, error) {
+// packet being available since the byte slice never gets copied.
+func (sm *SubackPacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -98,10 +98,10 @@ func (sm *SubackMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
+// Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (sm *SubackMessage) Encode(dst []byte) (int, error) {
+func (sm *SubackPacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check return codes
@@ -130,6 +130,6 @@ func (sm *SubackMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (sm *SubackMessage) len() int {
+func (sm *SubackPacket) len() int {
 	return 2 + len(sm.ReturnCodes)
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package message
+package packet
 
 import (
 	"bytes"
@@ -27,7 +27,7 @@ var (
 
 // After a Network Connection is established by a Client to a Server, the first Packet
 // sent from the Client to the Server MUST be a CONNECT Packet.
-type ConnectMessage struct {
+type ConnectPacket struct {
 	// The clients client id.
 	ClientID []byte
 
@@ -52,24 +52,24 @@ type ConnectMessage struct {
 	// The QOS of the will message.
 	WillQOS byte
 
-	// The retain setting of the will message.
+	// The retain flag of the will message.
 	WillRetain bool
 }
 
-var _ Message = (*ConnectMessage)(nil)
+var _ Packet = (*ConnectPacket)(nil)
 
-// NewConnectMessage creates a new CONNECT message.
-func NewConnectMessage() *ConnectMessage {
-	return &ConnectMessage{CleanSession: true}
+// NewConnectPacket creates a new CONNECT packet.
+func NewConnectPacket() *ConnectPacket {
+	return &ConnectPacket{CleanSession: true}
 }
 
-// Type return the messages message type.
-func (cm ConnectMessage) Type() Type {
+// Type returns the packets type.
+func (cm ConnectPacket) Type() Type {
 	return CONNECT
 }
 
-// String returns a string representation of the message.
-func (cm ConnectMessage) String() string {
+// String returns a string representation of the packet.
+func (cm ConnectPacket) String() string {
 	return fmt.Sprintf("CONNECT: KeepAlive=%d ClientID=%q WillTopic=%q WillPayload=%q Username=%q Password=%q",
 		cm.KeepAlive,
 		cm.ClientID,
@@ -80,8 +80,8 @@ func (cm ConnectMessage) String() string {
 	)
 }
 
-// Len returns the byte length of the message.
-func (cm *ConnectMessage) Len() int {
+// Len returns the byte length of the encoded packet.
+func (cm *ConnectPacket) Len() int {
 	ml := cm.len()
 	return headerLen(ml) + ml
 }
@@ -89,8 +89,8 @@ func (cm *ConnectMessage) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of bytes
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
-// message being available since the byte slice never gets copied.
-func (cm *ConnectMessage) Decode(src []byte) (int, error) {
+// packet being available since the byte slice never gets copied.
+func (cm *ConnectPacket) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -222,10 +222,10 @@ func (cm *ConnectMessage) Decode(src []byte) (int, error) {
 	return total, nil
 }
 
-// Encode writes the message bytes into the byte array from the argument. It
+// Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (cm *ConnectMessage) Encode(dst []byte) (int, error) {
+func (cm *ConnectPacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
@@ -344,7 +344,7 @@ func (cm *ConnectMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (cm *ConnectMessage) len() int {
+func (cm *ConnectPacket) len() int {
 	total := 0
 
 	// 2 bytes protocol name length
