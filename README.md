@@ -52,7 +52,7 @@ Decode bytes to a message:
 // Get buffer from the wire.
 
 // Detect message.
-l, mt := DetectMessage(buf)
+l, t := DetectMessage(buf)
 
 // Check length
 if l == 0 {
@@ -61,9 +61,9 @@ if l == 0 {
 }
 
 // Create message.
-msg2, err := mt.New()
+msg2, err := t.New()
 if err != nil {
-    // message type is invalid
+    // type is invalid
     panic(err)
 }
 

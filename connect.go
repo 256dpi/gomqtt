@@ -64,7 +64,7 @@ func NewConnectMessage() *ConnectMessage {
 }
 
 // Type return the messages message type.
-func (cm ConnectMessage) Type() MessageType {
+func (cm ConnectMessage) Type() Type {
 	return CONNECT
 }
 

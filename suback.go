@@ -38,7 +38,7 @@ func NewSubackMessage() *SubackMessage {
 }
 
 // Type return the messages message type.
-func (sm SubackMessage) Type() MessageType {
+func (sm SubackMessage) Type() Type {
 	return SUBACK
 }
 

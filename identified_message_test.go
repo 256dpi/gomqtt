@@ -149,10 +149,10 @@ func BenchmarkIdentifiedMessageDecode(b *testing.B) {
 	}
 }
 
-func testIdentifiedMessageImplementation(t *testing.T, mt MessageType) {
-	msg, err := mt.New()
+func testIdentifiedMessageImplementation(t *testing.T, _t Type) {
+	msg, err := _t.New()
 	require.NoError(t, err)
-	require.Equal(t, mt, msg.Type())
+	require.Equal(t, _t, msg.Type())
 	require.NotEmpty(t, msg.String())
 
 	buf := make([]byte, msg.Len())

@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-func TestMessageTypes(t *testing.T) {
+func TestTypes(t *testing.T) {
 	if CONNECT != 1 ||
 		CONNACK != 2 ||
 		PUBLISH != 3 ||
@@ -35,20 +35,20 @@ func TestMessageTypes(t *testing.T) {
 		PINGRESP != 13 ||
 		DISCONNECT != 14 {
 
-		t.Errorf("Message types have invalid code")
+		t.Errorf("Types have invalid code")
 	}
 }
 
-func TestMessageTypeString(t *testing.T) {
-	require.Equal(t, "UNKNOWN", MessageType(99).String())
+func TestTypeString(t *testing.T) {
+	require.Equal(t, "UNKNOWN", Type(99).String())
 }
 
-func TestMessageTypeValid(t *testing.T) {
+func TestTypeValid(t *testing.T) {
 	require.True(t, CONNECT.Valid())
 }
 
-func TestMessageTypeNew(t *testing.T) {
-	list := []MessageType{
+func TestTypeNew(t *testing.T) {
+	list := []Type{
 		CONNECT,
 		CONNACK,
 		PUBLISH,
@@ -65,8 +65,8 @@ func TestMessageTypeNew(t *testing.T) {
 		DISCONNECT,
 	}
 
-	for _, mt := range list {
-		m, err := mt.New()
+	for _, _t := range list {
+		m, err := _t.New()
 		require.NotNil(t, m)
 		require.NoError(t, err)
 	}

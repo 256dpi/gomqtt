@@ -88,7 +88,7 @@ const (
 // Message is an interface defined for all MQTT message types.
 type Message interface {
 	// Type returns the messages message type.
-	Type() MessageType
+	Type() Type
 
 	// Len returns the byte length of the message.
 	Len() int
@@ -111,14 +111,14 @@ type Message interface {
 // DetectMessage tries to detect the next message in a buffer. It returns a
 // length greater than zero if the message has been detected as well as its
 // MessageType.
-func DetectMessage(src []byte) (int, MessageType) {
+func DetectMessage(src []byte) (int, Type) {
 	// check for minimum size
 	if len(src) < 2 {
 		return 0, 0
 	}
 
 	// get type
-	mt := MessageType(src[0] >> 4)
+	t := Type(src[0] >> 4)
 
 	// get remaining length
 	_rl, n := binary.Uvarint(src[1:])
@@ -128,7 +128,7 @@ func DetectMessage(src []byte) (int, MessageType) {
 		return 0, 0
 	}
 
-	return 1 + n + rl, mt
+	return 1 + n + rl, t
 }
 
 /*

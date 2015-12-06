@@ -85,7 +85,7 @@ func NewConnackMessage() *ConnackMessage {
 }
 
 // Type return the messages message type.
-func (cm ConnackMessage) Type() MessageType {
+func (cm ConnackMessage) Type() Type {
 	return CONNACK
 }
 

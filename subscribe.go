@@ -50,7 +50,7 @@ func NewSubscribeMessage() *SubscribeMessage {
 }
 
 // Type return the messages message type.
-func (sm SubscribeMessage) Type() MessageType {
+func (sm SubscribeMessage) Type() Type {
 	return SUBSCRIBE
 }
 

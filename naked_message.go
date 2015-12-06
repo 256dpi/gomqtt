@@ -22,22 +22,22 @@ func nakedMessageLen() int {
 }
 
 // Decodes a naked message.
-func nakedMessageDecode(src []byte, mt MessageType) (int, error) {
+func nakedMessageDecode(src []byte, t Type) (int, error) {
 	// decode header
-	hl, _, rl, err := headerDecode(src, mt)
+	hl, _, rl, err := headerDecode(src, t)
 
 	// check remaining length
 	if rl != 0 {
-		return hl, fmt.Errorf("%s/nakedMessageDecode: Expected zero remaining length", mt)
+		return hl, fmt.Errorf("%s/nakedMessageDecode: Expected zero remaining length", t)
 	}
 
 	return hl, err
 }
 
 // Encodes a naked message.
-func nakedMessageEncode(dst []byte, mt MessageType) (int, error) {
+func nakedMessageEncode(dst []byte, t Type) (int, error) {
 	// encode header
-	return headerEncode(dst, 0, 0, nakedMessageLen(), mt)
+	return headerEncode(dst, 0, 0, nakedMessageLen(), t)
 }
 
 // The DISCONNECT Packet is the final Control Packet sent from the Client to the Server.
@@ -52,7 +52,7 @@ func NewDisconnectMessage() *DisconnectMessage {
 }
 
 // Type return the messages message type.
-func (dm DisconnectMessage) Type() MessageType {
+func (dm DisconnectMessage) Type() Type {
 	return DISCONNECT
 }
 
@@ -92,7 +92,7 @@ func NewPingreqMessage() *PingreqMessage {
 }
 
 // Type return the messages message type.
-func (pm PingreqMessage) Type() MessageType {
+func (pm PingreqMessage) Type() Type {
 	return PINGREQ
 }
 
@@ -133,7 +133,7 @@ func NewPingrespMessage() *PingrespMessage {
 }
 
 // Type return the messages message type.
-func (pm PingrespMessage) Type() MessageType {
+func (pm PingrespMessage) Type() Type {
 	return PINGRESP
 }
 

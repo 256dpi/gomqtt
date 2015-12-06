@@ -40,27 +40,27 @@ func headerLen(rl int) int {
 }
 
 // Encodes the fixed header.
-func headerEncode(dst []byte, flags byte, rl int, tl int, mt MessageType) (int, error) {
+func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	total := 0
 
 	// check buffer length
 	if len(dst) < tl {
-		return total, fmt.Errorf("%s/headerEncode: Insufficient buffer size. Expecting %d, got %d", mt, tl, len(dst))
+		return total, fmt.Errorf("%s/headerEncode: Insufficient buffer size. Expecting %d, got %d", t, tl, len(dst))
 	}
 
 	// check remaining length
 	if rl > maxRemainingLength || rl < 0 {
-		return total, fmt.Errorf("%s/headerEncode: remaining length (%d) out of bound (max %d, min 0)", mt, rl, maxRemainingLength)
+		return total, fmt.Errorf("%s/headerEncode: remaining length (%d) out of bound (max %d, min 0)", t, rl, maxRemainingLength)
 	}
 
 	// check header length
 	hl := headerLen(rl)
 	if len(dst) < hl {
-		return total, fmt.Errorf("%s/headerEncode: Insufficient buffer size. Expecting %d, got %d", mt, hl, len(dst))
+		return total, fmt.Errorf("%s/headerEncode: Insufficient buffer size. Expecting %d, got %d", t, hl, len(dst))
 	}
 
 	// write type and flags
-	typeAndFlags := byte(mt)<<4 | (mt.defaultFlags() & 0xf)
+	typeAndFlags := byte(t)<<4 | (t.defaultFlags() & 0xf)
 	typeAndFlags |= flags
 	dst[total] = typeAndFlags
 	total++
@@ -73,28 +73,28 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, mt MessageType) (int, 
 }
 
 // Decodes the fixed header.
-func headerDecode(src []byte, mt MessageType) (int, byte, int, error) {
+func headerDecode(src []byte, t Type) (int, byte, int, error) {
 	total := 0
 
 	// check buffer size
 	if len(src) < 2 {
-		return total, 0, 0, fmt.Errorf("%s/headerEncode: Insufficient buffer size. Expecting %d, got %d", mt, 2, len(src))
+		return total, 0, 0, fmt.Errorf("%s/headerEncode: Insufficient buffer size. Expecting %d, got %d", t, 2, len(src))
 	}
 
 	// read type and flags
 	typeAndFlags := src[total : total+1]
-	decodedType := MessageType(typeAndFlags[0] >> 4)
+	decodedType := Type(typeAndFlags[0] >> 4)
 	flags := typeAndFlags[0] & 0x0f
 	total++
 
 	// check against static type
-	if decodedType != mt {
-		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid message type %d", mt, decodedType)
+	if decodedType != t {
+		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid type %d", t, decodedType)
 	}
 
 	// check flags except for publish messages
-	if mt != PUBLISH && flags != mt.defaultFlags() {
-		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid message flags. Expecting %d, got %d", mt, mt.defaultFlags(), flags)
+	if t != PUBLISH && flags != t.defaultFlags() {
+		return total, 0, 0, fmt.Errorf("%s/headerDecode: Invalid message flags. Expecting %d, got %d", t, t.defaultFlags(), flags)
 	}
 
 	// read remaining length
@@ -104,12 +104,12 @@ func headerDecode(src []byte, mt MessageType) (int, byte, int, error) {
 
 	// check resulting remaining length
 	if m <= 0 {
-		return total, 0, 0, fmt.Errorf("%s/headerDecode: Error detecting remaining length", mt)
+		return total, 0, 0, fmt.Errorf("%s/headerDecode: Error detecting remaining length", t)
 	}
 
 	// check remaining buffer
 	if rl > len(src[total:]) {
-		return total, 0, 0, fmt.Errorf("%s/headerDecode: Remaining length (%d) is greater than remaining buffer (%d)", mt, rl, len(src[total:]))
+		return total, 0, 0, fmt.Errorf("%s/headerDecode: Remaining length (%d) is greater than remaining buffer (%d)", t, rl, len(src[total:]))
 	}
 
 	return total, flags, rl, nil

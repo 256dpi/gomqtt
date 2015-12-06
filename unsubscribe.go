@@ -36,7 +36,7 @@ func NewUnsubscribeMessage() *UnsubscribeMessage {
 }
 
 // Type return the messages message type.
-func (um UnsubscribeMessage) Type() MessageType {
+func (um UnsubscribeMessage) Type() Type {
 	return UNSUBSCRIBE
 }
 

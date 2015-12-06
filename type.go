@@ -16,11 +16,11 @@ package message
 
 import "fmt"
 
-// MessageType is the type representing the MQTT packet types.
-type MessageType byte
+// Type represents the MQTT packet types.
+type Type byte
 
 const (
-	_ MessageType = iota
+	_ Type = iota
 	CONNECT
 	CONNACK
 	PUBLISH
@@ -37,11 +37,9 @@ const (
 	DISCONNECT
 )
 
-// Name returns the name of the message type. It should correspond to one of the
-// constant values defined for MessageType. It is statically defined and cannot
-// be changed.
-func (mt MessageType) String() string {
-	switch mt {
+// String returns the type as a string.
+func (t Type) String() string {
+	switch t {
 	case CONNECT:
 		return "CONNECT"
 	case CONNACK:
@@ -77,8 +75,8 @@ func (mt MessageType) String() string {
 
 // DefaultFlags returns the default flag values for the message type, as defined by
 // the MQTT spec, except for PUBLISH.
-func (mt MessageType) defaultFlags() byte {
-	switch mt {
+func (t Type) defaultFlags() byte {
+	switch t {
 	case CONNECT:
 		return 0
 	case CONNACK:
@@ -110,11 +108,10 @@ func (mt MessageType) defaultFlags() byte {
 	return 0
 }
 
-// New creates a new message based on the message type. It is a shortcut to call
-// one of the New*Message functions. If an error is returned then the message type
-// is invalid.
-func (mt MessageType) New() (Message, error) {
-	switch mt {
+// New creates a new message based on the type. It is a shortcut to call one of the
+// New*Message functions. If an error is returned then the type is invalid.
+func (t Type) New() (Message, error) {
+	switch t {
 	case CONNECT:
 		return NewConnectMessage(), nil
 	case CONNACK:
@@ -145,10 +142,10 @@ func (mt MessageType) New() (Message, error) {
 		return NewDisconnectMessage(), nil
 	}
 
-	return nil, fmt.Errorf("MessageType/NewMessage: Invalid message type %d", mt)
+	return nil, fmt.Errorf("Invalid type %d", t)
 }
 
-// Valid returns a boolean indicating whether the message type is valid or not.
-func (mt MessageType) Valid() bool {
-	return mt >= CONNECT && mt <= DISCONNECT
+// Valid returns a boolean indicating whether the type is valid or not.
+func (t Type) Valid() bool {
+	return t >= CONNECT && t <= DISCONNECT
 }

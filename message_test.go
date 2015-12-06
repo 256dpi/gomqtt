@@ -33,7 +33,7 @@ func TestFixedHeaderFlags(t *testing.T) {
 		flags byte
 	}
 
-	details := map[MessageType]detail{
+	details := map[Type]detail{
 		CONNECT:     {"CONNECT", 0},
 		CONNACK:     {"CONNACK", 0},
 		PUBLISH:     {"PUBLISH", 0},
@@ -83,7 +83,7 @@ func ExampleReadme() {
 	// Get buffer from the wire.
 
 	// Detect message.
-	l, mt := DetectMessage(buf)
+	l, t := DetectMessage(buf)
 
 	// Check length
 	if l == 0 {
@@ -92,7 +92,7 @@ func ExampleReadme() {
 	}
 
 	// Create message.
-	msg2, err := mt.New()
+	msg2, err := t.New()
 	if err != nil {
 		// message type is invalid
 		panic(err)
@@ -120,57 +120,57 @@ func ExampleReadme() {
 func TestDetect1(t *testing.T) {
 	buf := []byte{0x10, 0x0}
 
-	l, mt := DetectMessage(buf)
+	l, _t := DetectMessage(buf)
 
 	require.Equal(t, 2, l)
-	require.Equal(t, 1, int(mt))
+	require.Equal(t, 1, int(_t))
 }
 
 // not enough bytes
 func TestDetect2(t *testing.T) {
 	buf := []byte{0x10, 0xff}
 
-	l, mt := DetectMessage(buf)
+	l, _t := DetectMessage(buf)
 
 	require.Equal(t, 0, l)
-	require.Equal(t, 0, int(mt))
+	require.Equal(t, 0, int(_t))
 }
 
 func TestDetect3(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0x0}
 
-	l, mt := DetectMessage(buf)
+	l, _t := DetectMessage(buf)
 
 	require.Equal(t, 130, l)
-	require.Equal(t, 1, int(mt))
+	require.Equal(t, 1, int(_t))
 }
 
 // not enough bytes
 func TestDetect4(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0xff}
 
-	l, mt := DetectMessage(buf)
+	l, _t := DetectMessage(buf)
 
 	require.Equal(t, 0, l)
-	require.Equal(t, 0, int(mt))
+	require.Equal(t, 0, int(_t))
 }
 
 func TestDetect5(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0xff, 0xff, 0x1}
 
-	l, mt := DetectMessage(buf)
+	l, _t := DetectMessage(buf)
 
 	require.Equal(t, 4194308, l)
-	require.Equal(t, 1, int(mt))
+	require.Equal(t, 1, int(_t))
 }
 
 func TestDetect6(t *testing.T) {
 	buf := []byte{0x10}
 
-	l, mt := DetectMessage(buf)
+	l, _t := DetectMessage(buf)
 
 	require.Equal(t, 0, l)
-	require.Equal(t, 0, int(mt))
+	require.Equal(t, 0, int(_t))
 }
 
 func TestFuzz(t *testing.T) {

@@ -54,7 +54,7 @@ func NewPublishMessage() *PublishMessage {
 }
 
 // Type return the messages message type.
-func (pm PublishMessage) Type() MessageType {
+func (pm PublishMessage) Type() Type {
 	return PUBLISH
 }
 

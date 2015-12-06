@@ -25,11 +25,11 @@ func identifiedMessageLen() int {
 }
 
 // Decodes a identified message.
-func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
+func identifiedMessageDecode(src []byte, t Type) (int, uint16, error) {
 	total := 0
 
 	// decode header
-	hl, _, rl, err := headerDecode(src, mt)
+	hl, _, rl, err := headerDecode(src, t)
 	total += hl
 	if err != nil {
 		return total, 0, err
@@ -37,7 +37,7 @@ func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Expected remaining length to be 2", mt)
+		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Expected remaining length to be 2", t)
 	}
 
 	// read packet id
@@ -48,7 +48,7 @@ func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 }
 
 // Encodes a identified message.
-func identifiedMessageEncode(dst []byte, packetID uint16, mt MessageType) (int, error) {
+func identifiedMessageEncode(dst []byte, packetID uint16, mt Type) (int, error) {
 	total := 0
 
 	// encode header
@@ -79,7 +79,7 @@ func NewPubackMessage() *PubackMessage {
 }
 
 // Type return the messages message type.
-func (pm PubackMessage) Type() MessageType {
+func (pm PubackMessage) Type() Type {
 	return PUBACK
 }
 
@@ -125,7 +125,7 @@ func NewPubcompMessage() *PubcompMessage {
 }
 
 // Type return the messages message type.
-func (pm PubcompMessage) Type() MessageType {
+func (pm PubcompMessage) Type() Type {
 	return PUBCOMP
 }
 
@@ -171,7 +171,7 @@ func NewPubrecMessage() *PubrecMessage {
 }
 
 // Type return the messages message type.
-func (pm PubrecMessage) Type() MessageType {
+func (pm PubrecMessage) Type() Type {
 	return PUBREC
 }
 
@@ -217,7 +217,7 @@ func NewPubrelMessage() *PubrelMessage {
 }
 
 // Type return the messages message type.
-func (pm PubrelMessage) Type() MessageType {
+func (pm PubrelMessage) Type() Type {
 	return PUBREL
 }
 
@@ -263,7 +263,7 @@ func NewUnsubackMessage() *UnsubackMessage {
 }
 
 // Type return the messages message type.
-func (um UnsubackMessage) Type() MessageType {
+func (um UnsubackMessage) Type() Type {
 	return UNSUBACK
 }
 
