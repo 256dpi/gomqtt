@@ -54,19 +54,19 @@ func NewPublishMessage() *PublishMessage {
 }
 
 // Type return the messages message type.
-func (this PublishMessage) Type() MessageType {
+func (pm PublishMessage) Type() MessageType {
 	return PUBLISH
 }
 
 // String returns a string representation of the message.
-func (this PublishMessage) String() string {
+func (pm PublishMessage) String() string {
 	return fmt.Sprintf("PUBLISH: Topic=%q PacketId=%d QoS=%d Retained=%t Dup=%t Payload=%v",
-		this.Topic, this.PacketId, this.QoS, this.Retain, this.Dup, this.Payload)
+		pm.Topic, pm.PacketId, pm.QoS, pm.Retain, pm.Dup, pm.Payload)
 }
 
 // Len returns the byte length of the message.
-func (this *PublishMessage) Len() int {
-	ml := this.len()
+func (pm *PublishMessage) Len() int {
+	ml := pm.len()
 	return headerLen(ml) + ml
 }
 
@@ -74,7 +74,7 @@ func (this *PublishMessage) Len() int {
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
-func (this *PublishMessage) Decode(src []byte) (int, error) {
+func (pm *PublishMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -85,13 +85,13 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	}
 
 	// read flags
-	this.Dup = ((flags >> 3) & 0x1) == 1
-	this.Retain = (flags & 0x1) == 1
-	this.QoS = (flags >> 1) & 0x3
+	pm.Dup = ((flags >> 3) & 0x1) == 1
+	pm.Retain = (flags & 0x1) == 1
+	pm.QoS = (flags >> 1) & 0x3
 
 	// check qos
-	if !validQoS(this.QoS) {
-		return total, fmt.Errorf("PUBLISH/Decode: Invalid QoS (%d)", this.QoS)
+	if !validQoS(pm.QoS) {
+		return total, fmt.Errorf("PUBLISH/Decode: Invalid QoS (%d)", pm.QoS)
 	}
 
 	// check buffer length
@@ -102,20 +102,20 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 	n := 0
 
 	// read topic
-	this.Topic, n, err = readLPBytes(src[total:])
+	pm.Topic, n, err = readLPBytes(src[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	if this.QoS != 0 {
+	if pm.QoS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
 			return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 		}
 
 		// read packet id
-		this.PacketId = binary.BigEndian.Uint16(src[total:])
+		pm.PacketId = binary.BigEndian.Uint16(src[total:])
 		total += 2
 	}
 
@@ -124,8 +124,8 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 
 	// read payload
 	if l > 0 {
-		this.Payload = src[total : total+l]
-		total += len(this.Payload)
+		pm.Payload = src[total : total+l]
+		total += len(pm.Payload)
 	}
 
 	return total, nil
@@ -134,69 +134,69 @@ func (this *PublishMessage) Decode(src []byte) (int, error) {
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (this *PublishMessage) Encode(dst []byte) (int, error) {
+func (pm *PublishMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check topic length
-	if len(this.Topic) == 0 {
+	if len(pm.Topic) == 0 {
 		return total, fmt.Errorf("PUBLISH/Encode: Topic name is empty")
 	}
 
 	flags := byte(0)
 
 	// set dup flag
-	if this.Dup {
+	if pm.Dup {
 		flags |= 0x8 // 00001000
 	} else {
 		flags &= 247 // 11110111
 	}
 
 	// set retain flag
-	if this.Retain {
+	if pm.Retain {
 		flags |= 0x1 // 00000001
 	} else {
 		flags &= 254 // 11111110
 	}
 
 	// check qos
-	if !validQoS(this.QoS) {
-		return 0, fmt.Errorf("PUBLISH/Encode: Invalid QoS %d", this.QoS)
+	if !validQoS(pm.QoS) {
+		return 0, fmt.Errorf("PUBLISH/Encode: Invalid QoS %d", pm.QoS)
 	}
 
 	// set qos
-	flags = (flags & 249) | (this.QoS << 1) // 249 = 11111001
+	flags = (flags & 249) | (pm.QoS << 1) // 249 = 11111001
 
 	// encode header
-	n, err := headerEncode(dst[total:], flags, this.len(), this.Len(), PUBLISH)
+	n, err := headerEncode(dst[total:], flags, pm.len(), pm.Len(), PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write topic
-	n, err = writeLPBytes(dst[total:], this.Topic)
+	n, err = writeLPBytes(dst[total:], pm.Topic)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write packet id
-	if this.QoS != 0 {
-		binary.BigEndian.PutUint16(dst[total:], this.PacketId)
+	if pm.QoS != 0 {
+		binary.BigEndian.PutUint16(dst[total:], pm.PacketId)
 		total += 2
 	}
 
 	// write payload
-	copy(dst[total:], this.Payload)
-	total += len(this.Payload)
+	copy(dst[total:], pm.Payload)
+	total += len(pm.Payload)
 
 	return total, nil
 }
 
 // Returns the payload length.
-func (this *PublishMessage) len() int {
-	total := 2 + len(this.Topic) + len(this.Payload)
-	if this.QoS != 0 {
+func (pm *PublishMessage) len() int {
+	total := 2 + len(pm.Topic) + len(pm.Payload)
+	if pm.QoS != 0 {
 		total += 2
 	}
 

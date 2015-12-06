@@ -40,13 +40,13 @@ const (
 )
 
 // Valid checks if the ConnackCode is valid.
-func (this ConnackCode) Valid() bool {
-	return this <= 5
+func (cc ConnackCode) Valid() bool {
+	return cc <= 5
 }
 
 // Error returns the corresponding error string for the ConnackCode.
-func (this ConnackCode) Error() string {
-	switch this {
+func (cc ConnackCode) Error() string {
+	switch cc {
 	case ConnectionAccepted:
 		return "Connection accepted"
 	case ErrInvalidProtocolVersion:
@@ -85,17 +85,17 @@ func NewConnackMessage() *ConnackMessage {
 }
 
 // Type return the messages message type.
-func (this ConnackMessage) Type() MessageType {
+func (cm ConnackMessage) Type() MessageType {
 	return CONNACK
 }
 
 // String returns a string representation of the message.
-func (this ConnackMessage) String() string {
-	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q", this.SessionPresent, this.ReturnCode)
+func (cm ConnackMessage) String() string {
+	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q", cm.SessionPresent, cm.ReturnCode)
 }
 
 // Len returns the byte length of the message.
-func (this *ConnackMessage) Len() int {
+func (cm *ConnackMessage) Len() int {
 	return headerLen(2) + 2
 }
 
@@ -103,7 +103,7 @@ func (this *ConnackMessage) Len() int {
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
-func (this *ConnackMessage) Decode(src []byte) (int, error) {
+func (cm *ConnackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -120,7 +120,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// read connack flags
 	connackFlags := src[total]
-	this.SessionPresent = connackFlags&0x1 == 1
+	cm.SessionPresent = connackFlags&0x1 == 1
 	total++
 
 	// check flags
@@ -129,12 +129,12 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 	}
 
 	// read return code
-	this.ReturnCode = ConnackCode(src[total])
+	cm.ReturnCode = ConnackCode(src[total])
 	total++
 
 	// check return code
-	if !this.ReturnCode.Valid() {
-		return 0, fmt.Errorf("CONNACK/Decode: Invalid return code (%d)", this.ReturnCode)
+	if !cm.ReturnCode.Valid() {
+		return 0, fmt.Errorf("CONNACK/Decode: Invalid return code (%d)", cm.ReturnCode)
 	}
 
 	return total, nil
@@ -143,18 +143,18 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (this *ConnackMessage) Encode(dst []byte) (int, error) {
+func (cm *ConnackMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, 2, this.Len(), CONNACK)
+	n, err := headerEncode(dst[total:], 0, 2, cm.Len(), CONNACK)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// set session present flag
-	if this.SessionPresent {
+	if cm.SessionPresent {
 		dst[total] = 1 // 00000001
 	} else {
 		dst[total] = 0 // 00000000
@@ -162,12 +162,12 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 	total++
 
 	// check return code
-	if !this.ReturnCode.Valid() {
-		return total, fmt.Errorf("CONNACK/Encode: Invalid return code (%d)", this.ReturnCode)
+	if !cm.ReturnCode.Valid() {
+		return total, fmt.Errorf("CONNACK/Encode: Invalid return code (%d)", cm.ReturnCode)
 	}
 
 	// set return code
-	dst[total] = byte(this.ReturnCode)
+	dst[total] = byte(cm.ReturnCode)
 	total++
 
 	return total, nil

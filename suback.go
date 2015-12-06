@@ -38,18 +38,18 @@ func NewSubackMessage() *SubackMessage {
 }
 
 // Type return the messages message type.
-func (this SubackMessage) Type() MessageType {
+func (sm SubackMessage) Type() MessageType {
 	return SUBACK
 }
 
 // String returns a string representation of the message.
-func (this SubackMessage) String() string {
-	return fmt.Sprintf("SUBACK: PacketId=%d ReturnCodes=%v", this.PacketId, this.ReturnCodes)
+func (sm SubackMessage) String() string {
+	return fmt.Sprintf("SUBACK: PacketId=%d ReturnCodes=%v", sm.PacketId, sm.ReturnCodes)
 }
 
 // Len returns the byte length of the message.
-func (this *SubackMessage) Len() int {
-	ml := this.len()
+func (sm *SubackMessage) Len() int {
+	ml := sm.len()
 	return headerLen(ml) + ml
 }
 
@@ -57,7 +57,7 @@ func (this *SubackMessage) Len() int {
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
-func (this *SubackMessage) Decode(src []byte) (int, error) {
+func (sm *SubackMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -78,18 +78,18 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	this.PacketId = binary.BigEndian.Uint16(src[total:])
+	sm.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
 	// calculate number of return codes
 	rcl := int(rl) - 2
 
 	// read return codes
-	this.ReturnCodes = src[total : total+rcl]
-	total += len(this.ReturnCodes)
+	sm.ReturnCodes = src[total : total+rcl]
+	total += len(sm.ReturnCodes)
 
 	// validate return codes
-	for i, code := range this.ReturnCodes {
+	for i, code := range sm.ReturnCodes {
 		if !validQoS(code) && code != QosFailure {
 			return total, fmt.Errorf("SUBACK/Decode: Invalid return code %d for topic %d", code, i)
 		}
@@ -101,35 +101,35 @@ func (this *SubackMessage) Decode(src []byte) (int, error) {
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (this *SubackMessage) Encode(dst []byte) (int, error) {
+func (sm *SubackMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check return codes
-	for i, code := range this.ReturnCodes {
+	for i, code := range sm.ReturnCodes {
 		if !validQoS(code) && code != QosFailure {
 			return total, fmt.Errorf("SUBACK/Encode: Invalid return code %d for topic %d", code, i)
 		}
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.len(), this.Len(), SUBACK)
+	n, err := headerEncode(dst[total:], 0, sm.len(), sm.Len(), SUBACK)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
+	binary.BigEndian.PutUint16(dst[total:], sm.PacketId)
 	total += 2
 
 	// write return codes
-	copy(dst[total:], this.ReturnCodes)
-	total += len(this.ReturnCodes)
+	copy(dst[total:], sm.ReturnCodes)
+	total += len(sm.ReturnCodes)
 
 	return total, nil
 }
 
 // Returns the payload length.
-func (this *SubackMessage) len() int {
-	return 2 + len(this.ReturnCodes)
+func (sm *SubackMessage) len() int {
+	return 2 + len(sm.ReturnCodes)
 }

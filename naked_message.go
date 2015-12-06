@@ -52,12 +52,12 @@ func NewDisconnectMessage() *DisconnectMessage {
 }
 
 // Type return the messages message type.
-func (this DisconnectMessage) Type() MessageType {
+func (dm DisconnectMessage) Type() MessageType {
 	return DISCONNECT
 }
 
 // Len returns the byte length of the message.
-func (this *DisconnectMessage) Len() int {
+func (dm *DisconnectMessage) Len() int {
 	return nakedMessageLen()
 }
 
@@ -65,19 +65,19 @@ func (this *DisconnectMessage) Len() int {
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
-func (this *DisconnectMessage) Decode(src []byte) (int, error) {
+func (dm *DisconnectMessage) Decode(src []byte) (int, error) {
 	return nakedMessageDecode(src, DISCONNECT)
 }
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (this *DisconnectMessage) Encode(dst []byte) (int, error) {
+func (dm *DisconnectMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, DISCONNECT)
 }
 
 // String returns a string representation of the message.
-func (this DisconnectMessage) String() string {
+func (dm DisconnectMessage) String() string {
 	return DISCONNECT.String()
 }
 
@@ -92,12 +92,12 @@ func NewPingreqMessage() *PingreqMessage {
 }
 
 // Type return the messages message type.
-func (this PingreqMessage) Type() MessageType {
+func (pm PingreqMessage) Type() MessageType {
 	return PINGREQ
 }
 
 // Len returns the byte length of the message.
-func (this *PingreqMessage) Len() int {
+func (pm *PingreqMessage) Len() int {
 	return nakedMessageLen()
 }
 
@@ -105,19 +105,19 @@ func (this *PingreqMessage) Len() int {
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
-func (this *PingreqMessage) Decode(src []byte) (int, error) {
+func (pm *PingreqMessage) Decode(src []byte) (int, error) {
 	return nakedMessageDecode(src, PINGREQ)
 }
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (this *PingreqMessage) Encode(dst []byte) (int, error) {
+func (pm *PingreqMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, PINGREQ)
 }
 
 // String returns a string representation of the message.
-func (this PingreqMessage) String() string {
+func (pm PingreqMessage) String() string {
 	return PINGREQ.String()
 }
 
@@ -133,12 +133,12 @@ func NewPingrespMessage() *PingrespMessage {
 }
 
 // Type return the messages message type.
-func (this PingrespMessage) Type() MessageType {
+func (pm PingrespMessage) Type() MessageType {
 	return PINGRESP
 }
 
 // Len returns the byte length of the message.
-func (this *PingrespMessage) Len() int {
+func (pm *PingrespMessage) Len() int {
 	return nakedMessageLen()
 }
 
@@ -146,18 +146,18 @@ func (this *PingrespMessage) Len() int {
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
-func (this *PingrespMessage) Decode(src []byte) (int, error) {
+func (pm *PingrespMessage) Decode(src []byte) (int, error) {
 	return nakedMessageDecode(src, PINGRESP)
 }
 
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (this *PingrespMessage) Encode(dst []byte) (int, error) {
+func (pm *PingrespMessage) Encode(dst []byte) (int, error) {
 	return nakedMessageEncode(dst, PINGRESP)
 }
 
 // String returns a string representation of the message.
-func (this PingrespMessage) String() string {
+func (pm PingrespMessage) String() string {
 	return PINGRESP.String()
 }

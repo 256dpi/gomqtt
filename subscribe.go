@@ -50,15 +50,15 @@ func NewSubscribeMessage() *SubscribeMessage {
 }
 
 // Type return the messages message type.
-func (this SubscribeMessage) Type() MessageType {
+func (sm SubscribeMessage) Type() MessageType {
 	return SUBSCRIBE
 }
 
 // String returns a string representation of the message.
-func (this SubscribeMessage) String() string {
-	s := fmt.Sprintf("SUBSCRIBE: PacketId=%d", this.PacketId)
+func (sm SubscribeMessage) String() string {
+	s := fmt.Sprintf("SUBSCRIBE: PacketId=%d", sm.PacketId)
 
-	for i, t := range this.Subscriptions {
+	for i, t := range sm.Subscriptions {
 		s = fmt.Sprintf("%s Topic[%d]=%q/%d", s, i, string(t.Topic), t.QoS)
 	}
 
@@ -66,8 +66,8 @@ func (this SubscribeMessage) String() string {
 }
 
 // Len returns the byte length of the message.
-func (this *SubscribeMessage) Len() int {
-	ml := this.len()
+func (sm *SubscribeMessage) Len() int {
+	ml := sm.len()
 	return headerLen(ml) + ml
 }
 
@@ -75,7 +75,7 @@ func (this *SubscribeMessage) Len() int {
 // decoded, and whether there have been any errors during the process.
 // The byte slice MUST NOT be modified during the duration of this
 // message being available since the byte slice never gets copied.
-func (this *SubscribeMessage) Decode(src []byte) (int, error) {
+func (sm *SubscribeMessage) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -91,11 +91,11 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	this.PacketId = binary.BigEndian.Uint16(src[total:])
+	sm.PacketId = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
 	// reset subscriptions
-	this.Subscriptions = this.Subscriptions[:0]
+	sm.Subscriptions = sm.Subscriptions[:0]
 
 	// calculate number of subscriptions
 	sl := int(rl) - 2
@@ -114,7 +114,7 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 		}
 
 		// read qos and add subscription
-		this.Subscriptions = append(this.Subscriptions, Subscription{t, src[total]})
+		sm.Subscriptions = append(sm.Subscriptions, Subscription{t, src[total]})
 		total++
 
 		// decrement counter
@@ -122,7 +122,7 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 	}
 
 	// check for empty subscription list
-	if len(this.Subscriptions) == 0 {
+	if len(sm.Subscriptions) == 0 {
 		return total, fmt.Errorf("SUBSCRIBE/Decode: Empty subscription list")
 	}
 
@@ -132,21 +132,21 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 // Encode writes the message bytes into the byte array from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
+func (sm *SubscribeMessage) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, this.len(), this.Len(), SUBSCRIBE)
+	n, err := headerEncode(dst[total:], 0, sm.len(), sm.Len(), SUBSCRIBE)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write packet it
-	binary.BigEndian.PutUint16(dst[total:], this.PacketId)
+	binary.BigEndian.PutUint16(dst[total:], sm.PacketId)
 	total += 2
 
-	for _, t := range this.Subscriptions {
+	for _, t := range sm.Subscriptions {
 		// write topic
 		n, err := writeLPBytes(dst[total:], t.Topic)
 		total += n
@@ -164,11 +164,11 @@ func (this *SubscribeMessage) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (this *SubscribeMessage) len() int {
+func (sm *SubscribeMessage) len() int {
 	// packet ID
 	total := 2
 
-	for _, t := range this.Subscriptions {
+	for _, t := range sm.Subscriptions {
 		total += 2 + len(t.Topic) + 1
 	}
 

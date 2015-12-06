@@ -41,8 +41,8 @@ const (
 // Name returns the name of the message type. It should correspond to one of the
 // constant values defined for MessageType. It is statically defined and cannot
 // be changed.
-func (this MessageType) String() string {
-	switch this {
+func (mt MessageType) String() string {
+	switch mt {
 	case RESERVED:
 		return "RESERVED"
 	case CONNECT:
@@ -82,8 +82,8 @@ func (this MessageType) String() string {
 
 // DefaultFlags returns the default flag values for the message type, as defined by
 // the MQTT spec, except for PUBLISH.
-func (this MessageType) defaultFlags() byte {
-	switch this {
+func (mt MessageType) defaultFlags() byte {
+	switch mt {
 	case RESERVED:
 		return 0
 	case CONNECT:
@@ -122,8 +122,8 @@ func (this MessageType) defaultFlags() byte {
 // New creates a new message based on the message type. It is a shortcut to call
 // one of the New*Message functions. If an error is returned then the message type
 // is invalid.
-func (this MessageType) New() (Message, error) {
-	switch this {
+func (mt MessageType) New() (Message, error) {
+	switch mt {
 	case CONNECT:
 		return NewConnectMessage(), nil
 	case CONNACK:
@@ -154,10 +154,10 @@ func (this MessageType) New() (Message, error) {
 		return NewDisconnectMessage(), nil
 	}
 
-	return nil, fmt.Errorf("MessageType/NewMessage: Invalid message type %d", this)
+	return nil, fmt.Errorf("MessageType/NewMessage: Invalid message type %d", mt)
 }
 
 // Valid returns a boolean indicating whether the message type is valid or not.
-func (this MessageType) Valid() bool {
-	return this > RESERVED && this < RESERVED2
+func (mt MessageType) Valid() bool {
+	return mt > RESERVED && mt < RESERVED2
 }
