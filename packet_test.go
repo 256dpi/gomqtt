@@ -61,62 +61,6 @@ func TestFixedHeaderFlags(t *testing.T) {
 	}
 }
 
-func ExampleReadme() {
-	// Create new packet.
-	pkt1 := NewConnectPacket()
-	pkt1.Username = []byte("gomqtt")
-	pkt1.Password = []byte("amazing!")
-
-	// Allocate buffer.
-	buf := make([]byte, pkt1.Len())
-
-	// Encode the packet.
-	if _, err := pkt1.Encode(buf); err != nil {
-		// there was an error while encoding
-		panic(err)
-	}
-
-	// Send buffer off the wire.
-
-	// ---
-
-	// Get buffer from the wire.
-
-	// Detect packet.
-	l, t := DetectPacket(buf)
-
-	// Check length
-	if l == 0 {
-		// buffer not complete yet
-		return
-	}
-
-	// Create packet.
-	pkt2, err := t.New()
-	if err != nil {
-		// packet type is invalid
-		panic(err)
-	}
-
-	// Decode packet.
-	_, err = pkt2.Decode(buf)
-	if err != nil {
-		// there was an error while decoding
-		panic(err)
-	}
-
-	switch pkt2.Type() {
-	case CONNECT:
-		c := pkt2.(*ConnectPacket)
-		fmt.Println(string(c.Username))
-		fmt.Println(string(c.Password))
-	}
-
-	// Output:
-	// gomqtt
-	// amazing!
-}
-
 func TestDetect1(t *testing.T) {
 	buf := []byte{0x10, 0x0}
 

@@ -12,51 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*
-Package packet implements functionality for encoding and decoding MQTT 3.1.1
-(http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.
-
-Create a new packet and encode it:
-
-	// Create new packet.
-	pkt1 := NewConnectPacket()
-	pkt1.Username = []byte("gomqtt")
-	pkt1.Password = []byte("amazing!")
-
-	// Allocate buffer.
-	buf := make([]byte, pkt1.Len())
-
-	// Encode the packet.
-	if _, err := pkt1.Encode(buf); err != nil {
-		// there was an error while encoding
-		panic(err)
-	}
-
-Decode bytes to a packet:
-
-	// Detect packet.
-	l, mt := DetectPacket(buf)
-
-	// Check length
-	if l == 0 {
-		// buffer not complete yet
-		return
-	}
-
-	// Create packet.
-	pkt2, err := mt.New();
-	if err != nil {
-		// packet type is invalid
-		panic(err)
-	}
-
-	// Decode packet.
-	_, err = pkt2.Decode(buf)
-	if err != nil {
-		// there was an error while decoding
-		panic(err)
-	}
-*/
+// Package packet implements functionality for encoding and decoding MQTT 3.1.1
+// (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.
 package packet
 
 import "encoding/binary"
