@@ -19,7 +19,7 @@ import (
 	"fmt"
 )
 
-// A single subscription in a SubscribePacket.
+// Subscription is a single subscription in a SubscribePacket.
 type Subscription struct {
 	// The topic to subscribe to.
 	Topic []byte

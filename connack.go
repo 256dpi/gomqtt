@@ -19,7 +19,7 @@ import "fmt"
 // The ConnackCode represents the return code in the CONNACK packet.
 type ConnackCode byte
 
-// All existing ConnackCodes.
+// All ConnackCodes.
 const (
 	ConnectionAccepted ConnackCode = iota
 	ErrInvalidProtocolVersion

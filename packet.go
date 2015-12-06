@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /*
-This go package implements functionality for encoding and decoding MQTT 3.1.1
+Package packet implements functionality for encoding and decoding MQTT 3.1.1
 (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.
 
 Create a new packet and encode it:
@@ -62,16 +62,15 @@ package packet
 import "encoding/binary"
 
 const (
-	// The message is delivered according to the capabilities of the underlying network.
-	// No response is sent by the receiver and no retry is performed by the sender. The
-	// message arrives at the receiver either once or not at all.
+	// QOSAtMostOnce defines that the packet is delivery exactly once and the packet
+	// arrives at the receiver either once or not at all.
 	QOSAtMostOnce byte = iota
 
-	// This quality of service ensures that the message arrives at the receiver at least once.
+	// QOSAtLeastOnce ensures that the message arrives at the receiver at least once.
 	QOSAtLeastOnce
 
-	// This is the highest quality of service, for use when neither loss nor duplication of
-	// messages are acceptable.
+	// QOSExactlyOnce is the highest quality of service, for use when neither loss nor
+	// duplication of messages are acceptable.
 	QOSExactlyOnce
 
 	// QOSFailure is a return value for a subscription if there's a problem while subscribing
@@ -126,7 +125,7 @@ func DetectPacket(src []byte) (int, Type) {
 }
 
 /*
-A basic fuzzing test that works with https://github.com/dvyukov/go-fuzz:
+Fuzz is a basic fuzzing test that works with https://github.com/dvyukov/go-fuzz:
 
 	$ go-fuzz-build github.com/gomqtt/packet
 	$ go-fuzz -bin=./packet-fuzz.zip -workdir=./fuzz

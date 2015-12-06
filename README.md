@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/release/gomqtt/packet.svg)](https://github.com/gomqtt/packet/releases)
 [![Go Report Card](http://goreportcard.com/badge/gomqtt/packet)](http://goreportcard.com/report/gomqtt/packet)
 
-**This go package implements functionality for encoding and decoding [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.**
+**Package packet implements functionality for encoding and decoding [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.**
 
 ## Features
 

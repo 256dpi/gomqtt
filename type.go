@@ -19,6 +19,7 @@ import "fmt"
 // Type represents the MQTT packet types.
 type Type byte
 
+// All packet types.
 const (
 	_ Type = iota
 	CONNECT
