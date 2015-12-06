@@ -62,18 +62,17 @@ package packet
 import "encoding/binary"
 
 const (
-	// QOSAtMostOnce defines that the packet is delivery exactly once and the packet
-	// arrives at the receiver either once or not at all.
+	// QOSAtMostOnce defines that the message is delivered at most once, or it
+	//may not be delivered at all.
 	QOSAtMostOnce byte = iota
 
-	// QOSAtLeastOnce ensures that the message arrives at the receiver at least once.
+	// QOSAtLeastOnce defines that the message is always delivered at least once.
 	QOSAtLeastOnce
 
-	// QOSExactlyOnce is the highest quality of service, for use when neither loss nor
-	// duplication of messages are acceptable.
+	// QOSExactlyOnce defines that the message is always delivered exactly once.
 	QOSExactlyOnce
 
-	// QOSFailure is a return value for a subscription if there's a problem while subscribing
+	// QOSFailure indicates that there has been an error while subscribing
 	// to a specific topic.
 	QOSFailure = 0x80
 )
