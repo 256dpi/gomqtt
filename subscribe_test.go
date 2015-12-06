@@ -21,17 +21,17 @@ import (
 )
 
 func TestSubscribeInterface(t *testing.T) {
-	msg := NewSubscribePacket()
-	msg.Subscriptions = []Subscription{
+	pkt := NewSubscribePacket()
+	pkt.Subscriptions = []Subscription{
 		{Topic: []byte("hello"), QOS: QOSAtMostOnce},
 	}
 
-	require.Equal(t, msg.Type(), SUBSCRIBE)
-	require.NotNil(t, msg.String())
+	require.Equal(t, pkt.Type(), SUBSCRIBE)
+	require.NotNil(t, pkt.String())
 }
 
 func TestSubscribePacketDecode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		36,
 		0, // packet ID MSB
@@ -50,47 +50,47 @@ func TestSubscribePacketDecode(t *testing.T) {
 		2, // QOS
 	}
 
-	msg := NewSubscribePacket()
-	n, err := msg.Decode(msgBytes)
+	pkt := NewSubscribePacket()
+	n, err := pkt.Decode(pktBytes)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n)
-	require.Equal(t, 3, len(msg.Subscriptions))
-	require.Equal(t, []byte("surgemq"), msg.Subscriptions[0].Topic)
-	require.Equal(t, 0, int(msg.Subscriptions[0].QOS))
-	require.Equal(t, []byte("/a/b/#/c"), msg.Subscriptions[1].Topic)
-	require.Equal(t, 1, int(msg.Subscriptions[1].QOS))
-	require.Equal(t, []byte("/a/b/#/cdd"), msg.Subscriptions[2].Topic)
-	require.Equal(t, 2, int(msg.Subscriptions[2].QOS))
+	require.Equal(t, len(pktBytes), n)
+	require.Equal(t, 3, len(pkt.Subscriptions))
+	require.Equal(t, []byte("surgemq"), pkt.Subscriptions[0].Topic)
+	require.Equal(t, 0, int(pkt.Subscriptions[0].QOS))
+	require.Equal(t, []byte("/a/b/#/c"), pkt.Subscriptions[1].Topic)
+	require.Equal(t, 1, int(pkt.Subscriptions[1].QOS))
+	require.Equal(t, []byte("/a/b/#/cdd"), pkt.Subscriptions[2].Topic)
+	require.Equal(t, 2, int(pkt.Subscriptions[2].QOS))
 }
 
 func TestSubscribePacketDecodeError1(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		9, // <- too much
 	}
 
-	msg := NewSubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewSubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestSubscribePacketDecodeError2(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		0,
 		// <- missing packet id
 	}
 
-	msg := NewSubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewSubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestSubscribePacketDecodeError3(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		2,
 		0, // packet ID MSB
@@ -98,14 +98,14 @@ func TestSubscribePacketDecodeError3(t *testing.T) {
 		// <- missing subscription
 	}
 
-	msg := NewSubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewSubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestSubscribePacketDecodeError4(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		5,
 		0, // packet ID MSB
@@ -115,14 +115,14 @@ func TestSubscribePacketDecodeError4(t *testing.T) {
 		's',
 	}
 
-	msg := NewSubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewSubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestSubscribePacketDecodeError5(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		5,
 		0, // packet ID MSB
@@ -133,14 +133,14 @@ func TestSubscribePacketDecodeError5(t *testing.T) {
 		// <- missing qos
 	}
 
-	msg := NewSubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewSubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestSubscribePacketEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		36,
 		0, // packet ID MSB
@@ -159,45 +159,45 @@ func TestSubscribePacketEncode(t *testing.T) {
 		2, // QOS
 	}
 
-	msg := NewSubscribePacket()
-	msg.PacketID = 7
-	msg.Subscriptions = []Subscription{
+	pkt := NewSubscribePacket()
+	pkt.PacketID = 7
+	pkt.Subscriptions = []Subscription{
 		{[]byte("surgemq"), 0},
 		{[]byte("/a/b/#/c"), 1},
 		{[]byte("/a/b/#/cdd"), 2},
 	}
 
-	dst := make([]byte, msg.Len())
-	n, err := msg.Encode(dst)
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n)
-	require.Equal(t, msgBytes, dst)
+	require.Equal(t, len(pktBytes), n)
+	require.Equal(t, pktBytes, dst)
 }
 
 func TestSubscribePacketEncodeError1(t *testing.T) {
-	msg := NewSubscribePacket()
+	pkt := NewSubscribePacket()
 
 	dst := make([]byte, 1) // <- too small
-	_, err := msg.Encode(dst)
+	_, err := pkt.Encode(dst)
 
 	require.Error(t, err)
 }
 
 func TestSubscribePacketEncodeError2(t *testing.T) {
-	msg := NewSubscribePacket()
-	msg.Subscriptions = []Subscription{
+	pkt := NewSubscribePacket()
+	pkt.Subscriptions = []Subscription{
 		{make([]byte, 65536), 0}, // too big
 	}
 
-	dst := make([]byte, msg.Len())
-	_, err := msg.Encode(dst)
+	dst := make([]byte, pkt.Len())
+	_, err := pkt.Encode(dst)
 
 	require.Error(t, err)
 }
 
 func TestSubscribeEqualDecodeEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		36,
 		0, // packet ID MSB
@@ -216,36 +216,36 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 		2, // QOS
 	}
 
-	msg := NewSubscribePacket()
-	n, err := msg.Decode(msgBytes)
+	pkt := NewSubscribePacket()
+	n, err := pkt.Decode(pktBytes)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, len(pktBytes), n)
 
-	dst := make([]byte, msg.Len())
-	n2, err := msg.Encode(dst)
-
-	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n2)
-	require.Equal(t, msgBytes, dst[:n2])
-
-	n3, err := msg.Decode(dst)
+	dst := make([]byte, pkt.Len())
+	n2, err := pkt.Encode(dst)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n3)
+	require.Equal(t, len(pktBytes), n2)
+	require.Equal(t, pktBytes, dst[:n2])
+
+	n3, err := pkt.Decode(dst)
+
+	require.NoError(t, err)
+	require.Equal(t, len(pktBytes), n3)
 }
 
 func BenchmarkSubscribeEncode(b *testing.B) {
-	msg := NewSubscribePacket()
-	msg.PacketID = 7
-	msg.Subscriptions = []Subscription{
+	pkt := NewSubscribePacket()
+	pkt.PacketID = 7
+	pkt.Subscriptions = []Subscription{
 		{[]byte("t"), 0},
 	}
 
-	buf := make([]byte, msg.Len())
+	buf := make([]byte, pkt.Len())
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Encode(buf)
+		_, err := pkt.Encode(buf)
 		if err != nil {
 			panic(err)
 		}
@@ -253,7 +253,7 @@ func BenchmarkSubscribeEncode(b *testing.B) {
 }
 
 func BenchmarkSubscribeDecode(b *testing.B) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		6,
 		0, // packet ID MSB
@@ -264,10 +264,10 @@ func BenchmarkSubscribeDecode(b *testing.B) {
 		0, // QOS
 	}
 
-	msg := NewSubscribePacket()
+	pkt := NewSubscribePacket()
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Decode(msgBytes)
+		_, err := pkt.Decode(pktBytes)
 		if err != nil {
 			panic(err)
 		}

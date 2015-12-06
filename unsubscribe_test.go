@@ -21,15 +21,15 @@ import (
 )
 
 func TestUnsubscribeInterface(t *testing.T) {
-	msg := NewUnsubscribePacket()
-	msg.Topics = [][]byte{[]byte("hello")}
+	pkt := NewUnsubscribePacket()
+	pkt.Topics = [][]byte{[]byte("hello")}
 
-	require.Equal(t, msg.Type(), UNSUBSCRIBE)
-	require.NotNil(t, msg.String())
+	require.Equal(t, pkt.Type(), UNSUBSCRIBE)
+	require.NotNil(t, pkt.String())
 }
 
 func TestUnsubscribePacketDecode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
 		0, // packet ID MSB
@@ -45,19 +45,19 @@ func TestUnsubscribePacketDecode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	msg := NewUnsubscribePacket()
-	n, err := msg.Decode(msgBytes)
+	pkt := NewUnsubscribePacket()
+	n, err := pkt.Decode(pktBytes)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n)
-	require.Equal(t, 3, len(msg.Topics))
-	require.Equal(t, []byte("surgemq"), msg.Topics[0])
-	require.Equal(t, []byte("/a/b/#/c"), msg.Topics[1])
-	require.Equal(t, []byte("/a/b/#/cdd"), msg.Topics[2])
+	require.Equal(t, len(pktBytes), n)
+	require.Equal(t, 3, len(pkt.Topics))
+	require.Equal(t, []byte("surgemq"), pkt.Topics[0])
+	require.Equal(t, []byte("/a/b/#/c"), pkt.Topics[1])
+	require.Equal(t, []byte("/a/b/#/cdd"), pkt.Topics[2])
 }
 
 func TestUnsubscribePacketDecodeError1(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		2,
 		0, // packet ID MSB
@@ -65,41 +65,41 @@ func TestUnsubscribePacketDecodeError1(t *testing.T) {
 		// empty topic list
 	}
 
-	msg := NewUnsubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewUnsubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestUnsubscribePacketDecodeError2(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		6, // <- wrong remaining length
 		0, // packet ID MSB
 		7, // packet ID LSB
 	}
 
-	msg := NewUnsubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewUnsubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestUnsubscribePacketDecodeError3(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		0,
 		// missing packet id
 	}
 
-	msg := NewUnsubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewUnsubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestUnsubscribePacketDecodeError4(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		11,
 		0, // packet ID MSB
@@ -109,14 +109,14 @@ func TestUnsubscribePacketDecodeError4(t *testing.T) {
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
 	}
 
-	msg := NewUnsubscribePacket()
-	_, err := msg.Decode(msgBytes)
+	pkt := NewUnsubscribePacket()
+	_, err := pkt.Decode(pktBytes)
 
 	require.Error(t, err)
 }
 
 func TestUnsubscribePacketEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
 		0, // packet ID MSB
@@ -132,45 +132,45 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	msg := NewUnsubscribePacket()
-	msg.PacketID = 7
-	msg.Topics = [][]byte{
+	pkt := NewUnsubscribePacket()
+	pkt.PacketID = 7
+	pkt.Topics = [][]byte{
 		[]byte("surgemq"),
 		[]byte("/a/b/#/c"),
 		[]byte("/a/b/#/cdd"),
 	}
 
 	dst := make([]byte, 100)
-	n, err := msg.Encode(dst)
+	n, err := pkt.Encode(dst)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n)
-	require.Equal(t, msgBytes, dst[:n])
+	require.Equal(t, len(pktBytes), n)
+	require.Equal(t, pktBytes, dst[:n])
 }
 
 func TestUnsubscribePacketEncodeError1(t *testing.T) {
-	msg := NewUnsubscribePacket()
-	msg.PacketID = 7
-	msg.Topics = [][]byte{
+	pkt := NewUnsubscribePacket()
+	pkt.PacketID = 7
+	pkt.Topics = [][]byte{
 		[]byte("surgemq"),
 	}
 
 	dst := make([]byte, 1) // <- too small
-	n, err := msg.Encode(dst)
+	n, err := pkt.Encode(dst)
 
 	require.Error(t, err)
 	require.Equal(t, 0, n)
 }
 
 func TestUnsubscribePacketEncodeError2(t *testing.T) {
-	msg := NewUnsubscribePacket()
-	msg.PacketID = 7
-	msg.Topics = [][]byte{
+	pkt := NewUnsubscribePacket()
+	pkt.PacketID = 7
+	pkt.Topics = [][]byte{
 		make([]byte, 65536),
 	}
 
-	dst := make([]byte, msg.Len())
-	n, err := msg.Encode(dst)
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
 
 	require.Error(t, err)
 	require.Equal(t, 6, n)
@@ -179,7 +179,7 @@ func TestUnsubscribePacketEncodeError2(t *testing.T) {
 // test to ensure encoding and decoding are the same
 // decode, encode, and decode again
 func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		33,
 		0, // packet ID MSB
@@ -195,36 +195,36 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	msg := NewUnsubscribePacket()
-	n, err := msg.Decode(msgBytes)
+	pkt := NewUnsubscribePacket()
+	n, err := pkt.Decode(pktBytes)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n)
+	require.Equal(t, len(pktBytes), n)
 
 	dst := make([]byte, 100)
-	n2, err := msg.Encode(dst)
+	n2, err := pkt.Encode(dst)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n2)
-	require.Equal(t, msgBytes, dst[:n2])
+	require.Equal(t, len(pktBytes), n2)
+	require.Equal(t, pktBytes, dst[:n2])
 
-	n3, err := msg.Decode(dst)
+	n3, err := pkt.Decode(dst)
 
 	require.NoError(t, err)
-	require.Equal(t, len(msgBytes), n3)
+	require.Equal(t, len(pktBytes), n3)
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
-	msg := NewUnsubscribePacket()
-	msg.PacketID = 1
-	msg.Topics = [][]byte{
+	pkt := NewUnsubscribePacket()
+	pkt.PacketID = 1
+	pkt.Topics = [][]byte{
 		[]byte("t"),
 	}
 
-	buf := make([]byte, msg.Len())
+	buf := make([]byte, pkt.Len())
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Encode(buf)
+		_, err := pkt.Encode(buf)
 		if err != nil {
 			panic(err)
 		}
@@ -232,7 +232,7 @@ func BenchmarkUnsubscribeEncode(b *testing.B) {
 }
 
 func BenchmarkUnsubscribeDecode(b *testing.B) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		5,
 		0, // packet ID MSB
@@ -242,10 +242,10 @@ func BenchmarkUnsubscribeDecode(b *testing.B) {
 		't',
 	}
 
-	msg := NewUnsubscribePacket()
+	pkt := NewUnsubscribePacket()
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Decode(msgBytes)
+		_, err := pkt.Decode(pktBytes)
 		if err != nil {
 			panic(err)
 		}

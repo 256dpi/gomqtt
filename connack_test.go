@@ -30,177 +30,177 @@ func TestConnackReturnCodes(t *testing.T) {
 }
 
 func TestConnackInterface(t *testing.T) {
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
-	require.Equal(t, msg.Type(), CONNACK)
-	require.NotNil(t, msg.String())
+	require.Equal(t, pkt.Type(), CONNACK)
+	require.NotNil(t, pkt.String())
 }
 
 func TestConnackPacketDecode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
 		0, // connection accepted
 	}
 
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
-	n, err := msg.Decode(msgBytes)
+	n, err := pkt.Decode(pktBytes)
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
-	require.False(t, msg.SessionPresent)
-	require.Equal(t, ConnectionAccepted, msg.ReturnCode)
+	require.False(t, pkt.SessionPresent)
+	require.Equal(t, ConnectionAccepted, pkt.ReturnCode)
 }
 
 func TestConnackPacketDecodeError1(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		3, // <- wrong size
 		0, // session not present
 		0, // connection accepted
 	}
 
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
-	_, err := msg.Decode(msgBytes)
+	_, err := pkt.Decode(pktBytes)
 	require.Error(t, err)
 }
 
 func TestConnackPacketDecodeError2(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
 		// <- wrong packet size
 	}
 
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
-	_, err := msg.Decode(msgBytes)
+	_, err := pkt.Decode(pktBytes)
 	require.Error(t, err)
 }
 
 func TestConnackPacketDecodeError3(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		64, // <- wrong value
 		0,  // connection accepted
 	}
 
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
-	_, err := msg.Decode(msgBytes)
+	_, err := pkt.Decode(pktBytes)
 	require.Error(t, err)
 }
 
 func TestConnackPacketDecodeError4(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		0,
 		6, // <- wrong code
 	}
 
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
-	_, err := msg.Decode(msgBytes)
+	_, err := pkt.Decode(pktBytes)
 	require.Error(t, err)
 }
 
 func TestConnackPacketDecodeError5(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		1, // <- wrong remaining length
 		0,
 		6,
 	}
 
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
-	_, err := msg.Decode(msgBytes)
+	_, err := pkt.Decode(pktBytes)
 	require.Error(t, err)
 }
 
 func TestConnackPacketEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		1, // session present
 		0, // connection accepted
 	}
 
-	msg := NewConnackPacket()
-	msg.ReturnCode = ConnectionAccepted
-	msg.SessionPresent = true
+	pkt := NewConnackPacket()
+	pkt.ReturnCode = ConnectionAccepted
+	pkt.SessionPresent = true
 
-	dst := make([]byte, msg.Len())
-	n, err := msg.Encode(dst)
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
-	require.Equal(t, msgBytes, dst[:n])
+	require.Equal(t, pktBytes, dst[:n])
 }
 
 func TestConnackPacketEncodeError1(t *testing.T) {
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
 	dst := make([]byte, 3) // <- wrong buffer size
-	n, err := msg.Encode(dst)
+	n, err := pkt.Encode(dst)
 
 	require.Error(t, err)
 	require.Equal(t, 0, n)
 }
 
 func TestConnackPacketEncodeError2(t *testing.T) {
-	msg := NewConnackPacket()
-	msg.ReturnCode = 11 // <- wrong return code
+	pkt := NewConnackPacket()
+	pkt.ReturnCode = 11 // <- wrong return code
 
-	dst := make([]byte, msg.Len())
-	n, err := msg.Encode(dst)
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
 
 	require.Error(t, err)
 	require.Equal(t, 3, n)
 }
 
 func TestConnackEqualDecodeEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
 		0, // connection accepted
 	}
 
-	msg := NewConnackPacket()
-	n, err := msg.Decode(msgBytes)
+	pkt := NewConnackPacket()
+	n, err := pkt.Decode(pktBytes)
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
 
-	dst := make([]byte, msg.Len())
-	n2, err := msg.Encode(dst)
+	dst := make([]byte, pkt.Len())
+	n2, err := pkt.Encode(dst)
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n2)
-	require.Equal(t, msgBytes, dst[:n2])
+	require.Equal(t, pktBytes, dst[:n2])
 
-	n3, err := msg.Decode(dst)
+	n3, err := pkt.Decode(dst)
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n3)
 }
 
 func BenchmarkConnackEncode(b *testing.B) {
-	msg := NewConnackPacket()
-	msg.ReturnCode = ConnectionAccepted
-	msg.SessionPresent = true
+	pkt := NewConnackPacket()
+	pkt.ReturnCode = ConnectionAccepted
+	pkt.SessionPresent = true
 
-	buf := make([]byte, msg.Len())
+	buf := make([]byte, pkt.Len())
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Encode(buf)
+		_, err := pkt.Encode(buf)
 		if err != nil {
 			panic(err)
 		}
@@ -208,17 +208,17 @@ func BenchmarkConnackEncode(b *testing.B) {
 }
 
 func BenchmarkConnackDecode(b *testing.B) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
 		0, // connection accepted
 	}
 
-	msg := NewConnackPacket()
+	pkt := NewConnackPacket()
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Decode(msgBytes)
+		_, err := pkt.Decode(pktBytes)
 		if err != nil {
 			panic(err)
 		}

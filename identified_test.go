@@ -21,14 +21,14 @@ import (
 )
 
 func TestIdentifiedPacketDecode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
 		0, // packet ID MSB
 		7, // packet ID LSB
 	}
 
-	n, pid, err := identifiedPacketDecode(msgBytes, PUBACK)
+	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
@@ -36,14 +36,14 @@ func TestIdentifiedPacketDecode(t *testing.T) {
 }
 
 func TestIdentifiedPacketDecodeError1(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(PUBACK << 4),
 		1, // <- wrong remaining length
 		0, // packet ID MSB
 		7, // packet ID LSB
 	}
 
-	n, pid, err := identifiedPacketDecode(msgBytes, PUBACK)
+	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
 
 	require.Error(t, err)
 	require.Equal(t, 2, n)
@@ -51,14 +51,14 @@ func TestIdentifiedPacketDecodeError1(t *testing.T) {
 }
 
 func TestIdentifiedPacketDecodeError2(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
 		7, // packet ID LSB
 		// <- insufficient bytes
 	}
 
-	n, pid, err := identifiedPacketDecode(msgBytes, PUBACK)
+	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
 
 	require.Error(t, err)
 	require.Equal(t, 2, n)
@@ -66,7 +66,7 @@ func TestIdentifiedPacketDecodeError2(t *testing.T) {
 }
 
 func TestIdentifiedPacketEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
 		0, // packet ID MSB
@@ -78,7 +78,7 @@ func TestIdentifiedPacketEncode(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
-	require.Equal(t, msgBytes, dst[:n])
+	require.Equal(t, pktBytes, dst[:n])
 }
 
 func TestIdentifiedPacketEncodeError1(t *testing.T) {
@@ -90,15 +90,15 @@ func TestIdentifiedPacketEncodeError1(t *testing.T) {
 }
 
 func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
 		0, // packet ID MSB
 		7, // packet ID LSB
 	}
 
-	msg := &PubackPacket{}
-	n, err := msg.Decode(msgBytes)
+	pkt := &PubackPacket{}
+	n, err := pkt.Decode(pktBytes)
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
@@ -108,9 +108,9 @@ func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n2)
-	require.Equal(t, msgBytes, dst[:n2])
+	require.Equal(t, pktBytes, dst[:n2])
 
-	n3, pid, err := identifiedPacketDecode(msgBytes, PUBACK)
+	n3, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
 
 	require.NoError(t, err)
 	require.Equal(t, 4, n3)
@@ -118,13 +118,13 @@ func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkIdentifiedPacketEncode(b *testing.B) {
-	msg := &PubackPacket{}
-	msg.PacketID = 1
+	pkt := &PubackPacket{}
+	pkt.PacketID = 1
 
-	buf := make([]byte, msg.Len())
+	buf := make([]byte, pkt.Len())
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Encode(buf)
+		_, err := pkt.Encode(buf)
 		if err != nil {
 			panic(err)
 		}
@@ -132,17 +132,17 @@ func BenchmarkIdentifiedPacketEncode(b *testing.B) {
 }
 
 func BenchmarkIdentifiedPacketDecode(b *testing.B) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
 		0, // packet ID MSB
 		1, // packet ID LSB
 	}
 
-	msg := &PubackPacket{}
+	pkt := &PubackPacket{}
 
 	for i := 0; i < b.N; i++ {
-		_, err := msg.Decode(msgBytes)
+		_, err := pkt.Decode(pktBytes)
 		if err != nil {
 			panic(err)
 		}
@@ -150,17 +150,17 @@ func BenchmarkIdentifiedPacketDecode(b *testing.B) {
 }
 
 func testIdentifiedPacketImplementation(t *testing.T, _t Type) {
-	msg, err := _t.New()
+	pkt, err := _t.New()
 	require.NoError(t, err)
-	require.Equal(t, _t, msg.Type())
-	require.NotEmpty(t, msg.String())
+	require.Equal(t, _t, pkt.Type())
+	require.NotEmpty(t, pkt.String())
 
-	buf := make([]byte, msg.Len())
-	n, err := msg.Encode(buf)
+	buf := make([]byte, pkt.Len())
+	n, err := pkt.Encode(buf)
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
 
-	n, err = msg.Decode(buf)
+	n, err = pkt.Decode(buf)
 	require.NoError(t, err)
 	require.Equal(t, 4, n)
 }

@@ -19,15 +19,15 @@ Package packet implements functionality for encoding and decoding MQTT 3.1.1
 Create a new packet and encode it:
 
 	// Create new packet.
-	msg1 := NewConnectPacket()
-	msg1.Username = []byte("gomqtt")
-	msg1.Password = []byte("amazing!")
+	pkt1 := NewConnectPacket()
+	pkt1.Username = []byte("gomqtt")
+	pkt1.Password = []byte("amazing!")
 
 	// Allocate buffer.
-	buf := make([]byte, msg1.Len())
+	buf := make([]byte, pkt1.Len())
 
 	// Encode the packet.
-	if _, err := msg1.Encode(buf); err != nil {
+	if _, err := pkt1.Encode(buf); err != nil {
 		// there was an error while encoding
 		panic(err)
 	}
@@ -44,14 +44,14 @@ Decode bytes to a packet:
 	}
 
 	// Create packet.
-	msg2, err := mt.New();
+	pkt2, err := mt.New();
 	if err != nil {
 		// packet type is invalid
 		panic(err)
 	}
 
 	// Decode packet.
-	_, err = msg2.Decode(buf)
+	_, err = pkt2.Decode(buf)
 	if err != nil {
 		// there was an error while decoding
 		panic(err)
@@ -143,13 +143,13 @@ func Fuzz(data []byte) int {
 	// on incomplete buffers
 
 	// Create a new packet
-	msg, err := mt.New()
+	pkt, err := mt.New()
 	if err != nil {
 		return 0
 	}
 
 	// Decode it from the buffer.
-	_, err = msg.Decode(data)
+	_, err = pkt.Decode(data)
 	if err != nil {
 		return 0
 	}

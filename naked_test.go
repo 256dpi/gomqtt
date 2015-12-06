@@ -21,32 +21,32 @@ import (
 )
 
 func TestNakedPacketDecode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
-	n, err := nakedPacketDecode(msgBytes, DISCONNECT)
+	n, err := nakedPacketDecode(pktBytes, DISCONNECT)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n)
 }
 
 func TestNakedPacketDecodeError1(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		1, // <- wrong remaining length
 		0,
 	}
 
-	n, err := nakedPacketDecode(msgBytes, DISCONNECT)
+	n, err := nakedPacketDecode(pktBytes, DISCONNECT)
 
 	require.Error(t, err)
 	require.Equal(t, 2, n)
 }
 
 func TestNakedPacketEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
@@ -56,16 +56,16 @@ func TestNakedPacketEncode(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n)
-	require.Equal(t, msgBytes, dst[:n])
+	require.Equal(t, pktBytes, dst[:n])
 }
 
 func TestNakedPacketEqualDecodeEncode(t *testing.T) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
-	n, err := nakedPacketDecode(msgBytes, DISCONNECT)
+	n, err := nakedPacketDecode(pktBytes, DISCONNECT)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n)
@@ -75,7 +75,7 @@ func TestNakedPacketEqualDecodeEncode(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 2, n2)
-	require.Equal(t, msgBytes, dst[:n2])
+	require.Equal(t, pktBytes, dst[:n2])
 
 	n3, err := nakedPacketDecode(dst, DISCONNECT)
 
@@ -95,13 +95,13 @@ func BenchmarkNakedPacketEncode(b *testing.B) {
 }
 
 func BenchmarkNakedPacketDecode(b *testing.B) {
-	msgBytes := []byte{
+	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err := nakedPacketDecode(msgBytes, DISCONNECT)
+		_, err := nakedPacketDecode(pktBytes, DISCONNECT)
 		if err != nil {
 			panic(err)
 		}
@@ -109,17 +109,17 @@ func BenchmarkNakedPacketDecode(b *testing.B) {
 }
 
 func testNakedPacketImplementation(t *testing.T, _t Type) {
-	msg, err := _t.New()
+	pkt, err := _t.New()
 	require.NoError(t, err)
-	require.Equal(t, _t, msg.Type())
-	require.NotEmpty(t, msg.String())
+	require.Equal(t, _t, pkt.Type())
+	require.NotEmpty(t, pkt.String())
 
-	buf := make([]byte, msg.Len())
-	n, err := msg.Encode(buf)
+	buf := make([]byte, pkt.Len())
+	n, err := pkt.Encode(buf)
 	require.NoError(t, err)
 	require.Equal(t, 2, n)
 
-	n, err = msg.Decode(buf)
+	n, err = pkt.Decode(buf)
 	require.NoError(t, err)
 	require.Equal(t, 2, n)
 }
