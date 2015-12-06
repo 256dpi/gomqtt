@@ -19,7 +19,7 @@ import (
 	"fmt"
 )
 
-// A PUBLISH Control Packet is sent from a Client to a Server or from Server to a Client
+// A PublishPacket is sent from a Client to a Server or from Server to a Client
 // to transport an Application Message.
 type PublishPacket struct {
 	// The Topic of the message.

@@ -40,7 +40,7 @@ func nakedPacketEncode(dst []byte, t Type) (int, error) {
 	return headerEncode(dst, 0, 0, nakedPacketLen(), t)
 }
 
-// The DISCONNECT Packet is the final Control Packet sent from the Client to the Server.
+// The DisconnectPacket is sent from the Client to the Server.
 // It indicates that the Client is disconnecting cleanly.
 type DisconnectPacket struct{}
 
@@ -81,7 +81,7 @@ func (dm DisconnectPacket) String() string {
 	return DISCONNECT.String()
 }
 
-// The PINGREQ Packet is sent from a Client to the Server.
+// The PingreqPacket is sent from a Client to the Server.
 type PingreqPacket struct{}
 
 var _ Packet = (*PingreqPacket)(nil)
@@ -121,8 +121,8 @@ func (pm PingreqPacket) String() string {
 	return PINGREQ.String()
 }
 
-// A PINGRESP Packet is sent by the Server to the Client in response to a PINGREQ
-// Packet. It indicates that the Server is alive.
+// A PingrespPacket is sent by the Server to the Client in response to a
+// PingreqPacket. It indicates that the Server is alive.
 type PingrespPacket struct{}
 
 var _ Packet = (*PingrespPacket)(nil)

@@ -65,7 +65,7 @@ func identifiedPacketEncode(dst []byte, packetID uint16, mt Type) (int, error) {
 	return total, nil
 }
 
-// A PUBACK Packet is the response to a PUBLISH Packet with QOS level 1.
+// A PubackPacket is the response to a PublishPacket with QOS level 1.
 type PubackPacket struct {
 	// Shared packet identifier.
 	PacketID uint16
@@ -110,7 +110,7 @@ func (pm PubackPacket) String() string {
 	return fmt.Sprintf("PUBACK: PacketID=%d", pm.PacketID)
 }
 
-// The PUBCOMP Packet is the response to a PUBREL Packet. It is the fourth and
+// The PubcompPacket is the response to a PubrelPacket. It is the fourth and
 // final packet of the QOS 2 protocol exchange.
 type PubcompPacket struct {
 	// Shared packet identifier.
@@ -156,7 +156,7 @@ func (pm PubcompPacket) String() string {
 	return fmt.Sprintf("PUBCOMP: PacketID=%d", pm.PacketID)
 }
 
-// A PUBREC Packet is the response to a PUBLISH Packet with QOS 2. It is the second
+// A PubrecPacket is the response to a PublishPacket with QOS 2. It is the second
 // packet of the QOS 2 protocol exchange.
 type PubrecPacket struct {
 	// Shared packet identifier.
@@ -202,7 +202,7 @@ func (pm PubrecPacket) String() string {
 	return fmt.Sprintf("PUBREC: PacketID=%d", pm.PacketID)
 }
 
-// A PUBREL Packet is the response to a PUBREC Packet. It is the third packet of the
+// A PubrelPacket is the response to a PubrecPacket. It is the third packet of the
 // QOS 2 protocol exchange.
 type PubrelPacket struct {
 	// Shared packet identifier.
@@ -248,8 +248,8 @@ func (pm PubrelPacket) String() string {
 	return fmt.Sprintf("PUBREL: PacketID=%d", pm.PacketID)
 }
 
-// The UNSUBACK Packet is sent by the Server to the Client to confirm receipt of an
-// UNSUBSCRIBE Packet.
+// The UnsubackPacket is sent by the Server to the Client to confirm receipt of an
+// UnsubscribePacket.
 type UnsubackPacket struct {
 	// Shared packet identifier.
 	PacketID uint16

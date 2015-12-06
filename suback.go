@@ -19,8 +19,8 @@ import (
 	"fmt"
 )
 
-// A SUBACK Packet is sent by the Server to the Client to confirm receipt and processing
-// of a SUBSCRIBE Packet. The SUBACK Packet contains a list of return codes, that specify
+// A SubackPacket is sent by the Server to the Client to confirm receipt and processing
+// of a SubscribePacket. The SubackPacket contains a list of return codes, that specify
 // the maximum QOS level that have been granted.
 type SubackPacket struct {
 	// The granted QOS levels for the requested subscriptions.

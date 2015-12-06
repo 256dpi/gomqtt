@@ -16,7 +16,7 @@ package packet
 
 import "fmt"
 
-// ConnackCode is the type representing the return code in the CONNACK packet.
+// The ConnackCode represents the return code in the CONNACK packet.
 type ConnackCode byte
 
 // All existing ConnackCodes.
@@ -54,14 +54,13 @@ func (cc ConnackCode) Error() string {
 	return "Unknown error"
 }
 
-// The CONNACK Packet is the packet sent by the Server in response to a CONNECT Packet
-// received from a Client.
+// The ConnackPacket is sent by the Server in response to a ConnectPacket received from a Client.
 type ConnackPacket struct {
 	// The Session Present flag enables a Client to establish whether the Client and
 	// Server have a consistent view about whether there is already stored Session state.
 	SessionPresent bool
 
-	// If a well formed CONNECT Packet is received by the Server, but the Server is unable
+	// If a well formed ConnectPacket is received by the Server, but the Server is unable
 	// to process it for some reason, then the Server SHOULD attempt to send a CONNACK packet
 	// containing the appropriate non-zero Connect return code.
 	ReturnCode ConnackCode

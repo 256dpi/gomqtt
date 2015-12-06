@@ -19,7 +19,7 @@ import (
 	"fmt"
 )
 
-// An UNSUBSCRIBE Packet is sent by the Client to the Server, to unsubscribe from topics.
+// An UnsubscribePacket is sent by the Client to the Server, to unsubscribe from topics.
 type UnsubscribePacket struct {
 	// The topics to unsubscribe from.
 	Topics [][]byte

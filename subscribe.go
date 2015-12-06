@@ -28,11 +28,11 @@ type Subscription struct {
 	QOS byte
 }
 
-// The SUBSCRIBE Packet is sent from the Client to the Server to create one or more
+// The SubscribePacket is sent from the Client to the Server to create one or more
 // Subscriptions. Each Subscription registers a Client’s interest in one or more
-// Topics. The Server sends PUBLISH Packets to the Client in order to forward
+// Topics. The Server sends PublishPackets to the Client in order to forward
 // Application Messages that were published to Topics that match these Subscriptions.
-// The SUBSCRIBE Packet also specifies (for each Subscription) the maximum QOS with
+// The SubscribePacket also specifies (for each Subscription) the maximum QOS with
 // which the Server can send Application Messages to the Client.
 type SubscribePacket struct {
 	// The subscriptions.
