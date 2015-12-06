@@ -73,7 +73,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
+		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 	}
 
 	// read packet id
@@ -103,7 +103,7 @@ func (this *UnsubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check for empty list
 	if len(this.Topics) == 0 {
-		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Empty topic list.")
+		return total, fmt.Errorf("UNSUBSCRIBE/Decode: Empty topic list")
 	}
 
 	return total, nil

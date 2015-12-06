@@ -154,7 +154,7 @@ func (this MessageType) New() (Message, error) {
 		return NewDisconnectMessage(), nil
 	}
 
-	return nil, fmt.Errorf("MessageType/NewMessage: Invalid message type %d.", this)
+	return nil, fmt.Errorf("MessageType/NewMessage: Invalid message type %d", this)
 }
 
 // Valid returns a boolean indicating whether the message type is valid or not.

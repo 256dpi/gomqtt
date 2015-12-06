@@ -87,7 +87,7 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("SUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
+		return total, fmt.Errorf("SUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 	}
 
 	// read packet id
@@ -110,7 +110,7 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 
 		// check buffer length
 		if len(src) < total+1 {
-			return total, fmt.Errorf("SUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d.", total+1, len(src))
+			return total, fmt.Errorf("SUBSCRIBE/Decode: Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
 		}
 
 		// read qos and add subscription
@@ -123,7 +123,7 @@ func (this *SubscribeMessage) Decode(src []byte) (int, error) {
 
 	// check for empty subscription list
 	if len(this.Subscriptions) == 0 {
-		return total, fmt.Errorf("SUBSCRIBE/Decode: Empty subscription list.")
+		return total, fmt.Errorf("SUBSCRIBE/Decode: Empty subscription list")
 	}
 
 	return total, nil

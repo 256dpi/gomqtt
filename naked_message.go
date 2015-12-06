@@ -28,7 +28,7 @@ func nakedMessageDecode(src []byte, mt MessageType) (int, error) {
 
 	// check remaining length
 	if rl != 0 {
-		return hl, fmt.Errorf("%s/nakedMessageDecode: Expected zero remaining length.", mt)
+		return hl, fmt.Errorf("%s/nakedMessageDecode: Expected zero remaining length", mt)
 	}
 
 	return hl, err

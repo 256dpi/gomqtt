@@ -115,7 +115,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, fmt.Errorf("CONNACK/Decode: Expected remaining length to be 2.")
+		return total, fmt.Errorf("CONNACK/Decode: Expected remaining length to be 2")
 	}
 
 	// read connack flags
@@ -125,7 +125,7 @@ func (this *ConnackMessage) Decode(src []byte) (int, error) {
 
 	// check flags
 	if connackFlags&254 != 0 {
-		return 0, fmt.Errorf("CONNACK/Decode: Bits 7-1 in acknowledge flags byte (1) are not 0.")
+		return 0, fmt.Errorf("CONNACK/Decode: Bits 7-1 in acknowledge flags byte (1) are not 0")
 	}
 
 	// read return code
@@ -163,7 +163,7 @@ func (this *ConnackMessage) Encode(dst []byte) (int, error) {
 
 	// check return code
 	if !this.ReturnCode.Valid() {
-		return total, fmt.Errorf("CONNACK/Encode: Invalid return code (%d).", this.ReturnCode)
+		return total, fmt.Errorf("CONNACK/Encode: Invalid return code (%d)", this.ReturnCode)
 	}
 
 	// set return code

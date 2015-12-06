@@ -109,7 +109,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d.", total+1, len(src))
+		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
 	}
 
 	// read version
@@ -118,17 +118,17 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// check protocol string and version
 	if versionByte != version311Byte {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version (%d).", version311Byte)
+		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version (%d)", version311Byte)
 	}
 
 	// check protocol version string
 	if !bytes.Equal(protoName, version311Name) {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version description (%s).", protoName)
+		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Invalid protocol version description (%s)", protoName)
 	}
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d.", total+1, len(src))
+		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
 	}
 
 	// read connect flags
@@ -147,27 +147,27 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
-		return total, fmt.Errorf("CONNECT/Decode: Reserved bit 0 is not 0.")
+		return total, fmt.Errorf("CONNECT/Decode: Reserved bit 0 is not 0")
 	}
 
 	// check will qos
 	if !validQoS(this.WillQoS) {
-		return total, fmt.Errorf("CONNECT/Decode: Invalid QoS level (%d) for will message.", this.WillQoS)
+		return total, fmt.Errorf("CONNECT/Decode: Invalid QoS level (%d) for will message", this.WillQoS)
 	}
 
 	// check will flags
 	if !willFlag && (this.WillRetain || this.WillQoS != 0) {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero.", willFlag, this.WillQoS, this.WillRetain)
+		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, this.WillQoS, this.WillRetain)
 	}
 
 	// check auth flags
 	if !usernameFlag && passwordFlag {
-		return total, fmt.Errorf("CONNECT/Decode: Password flag is set but Username flag is not set.")
+		return total, fmt.Errorf("CONNECT/Decode: Password flag is set but Username flag is not set")
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d.", total+2, len(src))
+		return total, fmt.Errorf("CONNECT/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 	}
 
 	// read keep alive
@@ -183,7 +183,7 @@ func (this *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// if the client supplies a zero-byte ClientId, the Client MUST also set CleanSession to 1
 	if len(this.ClientId) == 0 && !this.CleanSession {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Clean session must be 1 if client id is zero length.")
+		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Clean session must be 1 if client id is zero length")
 	}
 
 	// read will topic and payload
@@ -264,7 +264,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 		connectFlags |= 0x4 // 00000100
 
 		if !validQoS(this.WillQoS) {
-			return total, fmt.Errorf("CONNECT/Encode: Invalid Will QoS level %d.", this.WillQoS)
+			return total, fmt.Errorf("CONNECT/Encode: Invalid Will QoS level %d", this.WillQoS)
 		}
 
 		// set will qos flag
@@ -319,7 +319,7 @@ func (this *ConnectMessage) Encode(dst []byte) (int, error) {
 	}
 
 	if len(this.Username) == 0 && len(this.Password) > 0 {
-		return total, fmt.Errorf("CONNECT/Encode: Protocol violation: Password set without username.")
+		return total, fmt.Errorf("CONNECT/Encode: Protocol violation: Password set without username")
 	}
 
 	// write username

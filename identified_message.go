@@ -37,7 +37,7 @@ func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Expected remaining length to be 2.", mt)
+		return total, 0, fmt.Errorf("%s/identifiedMessageDecode: Expected remaining length to be 2", mt)
 	}
 
 	// read packet id
