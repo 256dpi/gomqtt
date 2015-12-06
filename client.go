@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gomqtt/message"
+	"github.com/gomqtt/packet"
 	"github.com/gomqtt/stream"
 )
 
@@ -101,9 +101,9 @@ func (this *Client) Connect(opts *Options) error {
 	go this.keepAlive()
 	go this.watch()
 
-	// prepare connect message
-	m := message.NewConnectMessage()
-	m.ClientId = []byte(opts.ClientID)
+	// prepare connect packet
+	m := packet.NewConnectPacket()
+	m.ClientID = []byte(opts.ClientID)
 	m.KeepAlive = uint16(opts.KeepAlive.Seconds())
 	m.CleanSession = opts.CleanSession
 
@@ -117,10 +117,10 @@ func (this *Client) Connect(opts *Options) error {
 	// set will
 	m.WillTopic = []byte(opts.WillTopic)
 	m.WillPayload = opts.WillPayload
-	m.WillQoS = opts.WillQos
+	m.WillQOS = opts.WillQos
 	m.WillRetain = opts.WillRetained
 
-	// send connect message
+	// send connect packet
 	this.send(m)
 
 	this.start.Wait()
@@ -128,13 +128,13 @@ func (this *Client) Connect(opts *Options) error {
 }
 
 func (this *Client) Publish(topic string, payload []byte, qos byte, retain bool) {
-	m := message.NewPublishMessage()
+	m := packet.NewPublishPacket()
 	m.Topic = []byte(topic)
 	m.Payload = payload
-	m.QoS = qos
+	m.QOS = qos
 	m.Retain = retain
 	m.Dup = false
-	m.PacketId = 1
+	m.PacketID = 1
 
 	this.send(m)
 }
@@ -146,14 +146,14 @@ func (this *Client) Subscribe(topic string, qos byte) {
 }
 
 func (this *Client) SubscribeMultiple(filters map[string]byte) {
-	m := message.NewSubscribeMessage()
-	m.Subscriptions = make([]message.Subscription, 0, len(filters))
-	m.PacketId = 1
+	m := packet.NewSubscribePacket()
+	m.Subscriptions = make([]packet.Subscription, 0, len(filters))
+	m.PacketID = 1
 
 	for topic, qos := range filters {
-		m.Subscriptions = append(m.Subscriptions, message.Subscription{
+		m.Subscriptions = append(m.Subscriptions, packet.Subscription{
 			Topic: []byte(topic),
-			QoS:   qos,
+			QOS:   qos,
 		})
 	}
 
@@ -165,9 +165,9 @@ func (this *Client) Unsubscribe(topic string) {
 }
 
 func (this *Client) UnsubscribeMultiple(topics []string) {
-	m := message.NewUnsubscribeMessage()
+	m := packet.NewUnsubscribePacket()
 	m.Topics = make([][]byte, 0, len(topics))
-	m.PacketId = 1
+	m.PacketID = 1
 
 	for _, t := range topics {
 		m.Topics = append(m.Topics, []byte(t))
@@ -177,14 +177,14 @@ func (this *Client) UnsubscribeMultiple(topics []string) {
 }
 
 func (this *Client) Disconnect() {
-	m := message.NewDisconnectMessage()
+	m := packet.NewDisconnectPacket()
 
 	this.send(m)
 
 	close(this.quit)
 }
 
-// process incoming messages
+// process incoming packets
 func (this *Client) process() {
 	this.start.Done()
 
@@ -200,11 +200,11 @@ func (this *Client) process() {
 			this.lastContact = time.Now()
 
 			switch msg.Type() {
-			case message.CONNACK:
-				m, ok := msg.(*message.ConnackMessage)
+			case packet.CONNACK:
+				m, ok := msg.(*packet.ConnackPacket)
 
 				if ok {
-					if m.ReturnCode == message.ConnectionAccepted {
+					if m.ReturnCode == packet.ConnectionAccepted {
 						if this.connectCallback != nil {
 							this.connectCallback(m.SessionPresent)
 						}
@@ -212,30 +212,30 @@ func (this *Client) process() {
 						this.error(errors.New(m.ReturnCode.Error()))
 					}
 				} else {
-					this.error(errors.New("failed to convert CONNACK message"))
+					this.error(errors.New("failed to convert CONNACK packet"))
 				}
-			case message.PINGRESP:
-				_, ok := msg.(*message.PingrespMessage)
+			case packet.PINGRESP:
+				_, ok := msg.(*packet.PingrespPacket)
 
 				if ok {
 					this.pingrespPending = false
 				} else {
-					this.error(errors.New("failed to convert PINGRESP message"))
+					this.error(errors.New("failed to convert PINGRESP packet"))
 				}
-			case message.PUBLISH:
-				m, ok := msg.(*message.PublishMessage)
+			case packet.PUBLISH:
+				m, ok := msg.(*packet.PublishPacket)
 
 				if ok {
 					this.messageCallback(string(m.Topic), m.Payload)
 				} else {
-					this.error(errors.New("failed to convert PUBLISH message"))
+					this.error(errors.New("failed to convert PUBLISH packet"))
 				}
 			}
 		}
 	}
 }
 
-func (this *Client) send(msg message.Message) {
+func (this *Client) send(msg packet.Packet) {
 	this.lastContact = time.Now()
 	this.stream.Send(msg)
 }
@@ -261,7 +261,7 @@ func (this *Client) keepAlive() {
 				if !this.pingrespPending {
 					this.pingrespPending = true
 
-					m := message.NewPingrespMessage()
+					m := packet.NewPingreqPacket()
 					this.send(m)
 				} else {
 					// TODO: close connection?
