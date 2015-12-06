@@ -28,11 +28,11 @@ type PublishMessage struct {
 	// The Payload of the message.
 	Payload []byte
 
-	// The QoS indicates the level of assurance for delivery of a message.
-	QoS byte
+	// The QOS indicates the level of assurance for delivery of a message.
+	QOS byte
 
 	// If the RETAIN flag is set to true, in a PUBLISH Packet sent by a Client to a
-	// Server, the Server MUST store the Application Message and its QoS, so that it can be
+	// Server, the Server MUST store the Application Message and its QOS, so that it can be
 	// delivered to future subscribers whose subscriptions match its topic name.
 	Retain bool
 
@@ -43,7 +43,7 @@ type PublishMessage struct {
 	Dup bool
 
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*PublishMessage)(nil)
@@ -60,8 +60,8 @@ func (pm PublishMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (pm PublishMessage) String() string {
-	return fmt.Sprintf("PUBLISH: Topic=%q PacketId=%d QoS=%d Retained=%t Dup=%t Payload=%v",
-		pm.Topic, pm.PacketId, pm.QoS, pm.Retain, pm.Dup, pm.Payload)
+	return fmt.Sprintf("PUBLISH: Topic=%q PacketID=%d QOS=%d Retained=%t Dup=%t Payload=%v",
+		pm.Topic, pm.PacketID, pm.QOS, pm.Retain, pm.Dup, pm.Payload)
 }
 
 // Len returns the byte length of the message.
@@ -87,11 +87,11 @@ func (pm *PublishMessage) Decode(src []byte) (int, error) {
 	// read flags
 	pm.Dup = ((flags >> 3) & 0x1) == 1
 	pm.Retain = (flags & 0x1) == 1
-	pm.QoS = (flags >> 1) & 0x3
+	pm.QOS = (flags >> 1) & 0x3
 
 	// check qos
-	if !validQoS(pm.QoS) {
-		return total, fmt.Errorf("PUBLISH/Decode: Invalid QoS (%d)", pm.QoS)
+	if !validQOS(pm.QOS) {
+		return total, fmt.Errorf("PUBLISH/Decode: Invalid QOS (%d)", pm.QOS)
 	}
 
 	// check buffer length
@@ -108,14 +108,14 @@ func (pm *PublishMessage) Decode(src []byte) (int, error) {
 		return total, err
 	}
 
-	if pm.QoS != 0 {
+	if pm.QOS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
 			return total, fmt.Errorf("PUBLISH/Decode: Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
 		}
 
 		// read packet id
-		pm.PacketId = binary.BigEndian.Uint16(src[total:])
+		pm.PacketID = binary.BigEndian.Uint16(src[total:])
 		total += 2
 	}
 
@@ -159,12 +159,12 @@ func (pm *PublishMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// check qos
-	if !validQoS(pm.QoS) {
-		return 0, fmt.Errorf("PUBLISH/Encode: Invalid QoS %d", pm.QoS)
+	if !validQOS(pm.QOS) {
+		return 0, fmt.Errorf("PUBLISH/Encode: Invalid QOS %d", pm.QOS)
 	}
 
 	// set qos
-	flags = (flags & 249) | (pm.QoS << 1) // 249 = 11111001
+	flags = (flags & 249) | (pm.QOS << 1) // 249 = 11111001
 
 	// encode header
 	n, err := headerEncode(dst[total:], flags, pm.len(), pm.Len(), PUBLISH)
@@ -181,8 +181,8 @@ func (pm *PublishMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	if pm.QoS != 0 {
-		binary.BigEndian.PutUint16(dst[total:], pm.PacketId)
+	if pm.QOS != 0 {
+		binary.BigEndian.PutUint16(dst[total:], pm.PacketID)
 		total += 2
 	}
 
@@ -196,7 +196,7 @@ func (pm *PublishMessage) Encode(dst []byte) (int, error) {
 // Returns the payload length.
 func (pm *PublishMessage) len() int {
 	total := 2 + len(pm.Topic) + len(pm.Payload)
-	if pm.QoS != 0 {
+	if pm.QOS != 0 {
 		total += 2
 	}
 

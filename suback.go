@@ -21,13 +21,13 @@ import (
 
 // A SUBACK Packet is sent by the Server to the Client to confirm receipt and processing
 // of a SUBSCRIBE Packet. The SUBACK Packet contains a list of return codes, that specify
-// the maximum QoS level that have been granted.
+// the maximum QOS level that have been granted.
 type SubackMessage struct {
-	// The granted QoS levels for the requested subscriptions.
+	// The granted QOS levels for the requested subscriptions.
 	ReturnCodes []byte
 
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*SubackMessage)(nil)
@@ -44,7 +44,7 @@ func (sm SubackMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (sm SubackMessage) String() string {
-	return fmt.Sprintf("SUBACK: PacketId=%d ReturnCodes=%v", sm.PacketId, sm.ReturnCodes)
+	return fmt.Sprintf("SUBACK: PacketID=%d ReturnCodes=%v", sm.PacketID, sm.ReturnCodes)
 }
 
 // Len returns the byte length of the message.
@@ -78,7 +78,7 @@ func (sm *SubackMessage) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	sm.PacketId = binary.BigEndian.Uint16(src[total:])
+	sm.PacketID = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
 	// calculate number of return codes
@@ -90,7 +90,7 @@ func (sm *SubackMessage) Decode(src []byte) (int, error) {
 
 	// validate return codes
 	for i, code := range sm.ReturnCodes {
-		if !validQoS(code) && code != QosFailure {
+		if !validQOS(code) && code != QOSFailure {
 			return total, fmt.Errorf("SUBACK/Decode: Invalid return code %d for topic %d", code, i)
 		}
 	}
@@ -106,7 +106,7 @@ func (sm *SubackMessage) Encode(dst []byte) (int, error) {
 
 	// check return codes
 	for i, code := range sm.ReturnCodes {
-		if !validQoS(code) && code != QosFailure {
+		if !validQOS(code) && code != QOSFailure {
 			return total, fmt.Errorf("SUBACK/Encode: Invalid return code %d for topic %d", code, i)
 		}
 	}
@@ -119,7 +119,7 @@ func (sm *SubackMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], sm.PacketId)
+	binary.BigEndian.PutUint16(dst[total:], sm.PacketID)
 	total += 2
 
 	// write return codes

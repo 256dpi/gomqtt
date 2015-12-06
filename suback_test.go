@@ -121,7 +121,7 @@ func TestSubackMessageEncode(t *testing.T) {
 	}
 
 	msg := NewSubackMessage()
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.ReturnCodes = []byte{0, 1, 2, 0x80}
 
 	dst := make([]byte, 10)
@@ -134,7 +134,7 @@ func TestSubackMessageEncode(t *testing.T) {
 
 func TestSubackMessageEncodeError1(t *testing.T) {
 	msg := NewSubackMessage()
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.ReturnCodes = []byte{0x81}
 
 	dst := make([]byte, msg.Len())
@@ -146,7 +146,7 @@ func TestSubackMessageEncodeError1(t *testing.T) {
 
 func TestSubackMessageEncodeError2(t *testing.T) {
 	msg := NewSubackMessage()
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.ReturnCodes = []byte{0x80}
 
 	dst := make([]byte, msg.Len()-1)
@@ -189,7 +189,7 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkSubackEncode(b *testing.B) {
 	msg := NewSubackMessage()
-	msg.PacketId = 1
+	msg.PacketID = 1
 	msg.ReturnCodes = []byte{0}
 
 	buf := make([]byte, msg.Len())

@@ -133,7 +133,7 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 	}
 
 	msg := NewUnsubscribeMessage()
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.Topics = [][]byte{
 		[]byte("surgemq"),
 		[]byte("/a/b/#/c"),
@@ -150,7 +150,7 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 
 func TestUnsubscribeMessageEncodeError1(t *testing.T) {
 	msg := NewUnsubscribeMessage()
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.Topics = [][]byte{
 		[]byte("surgemq"),
 	}
@@ -164,7 +164,7 @@ func TestUnsubscribeMessageEncodeError1(t *testing.T) {
 
 func TestUnsubscribeMessageEncodeError2(t *testing.T) {
 	msg := NewUnsubscribeMessage()
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.Topics = [][]byte{
 		make([]byte, 65536),
 	}
@@ -216,7 +216,7 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
 	msg := NewUnsubscribeMessage()
-	msg.PacketId = 1
+	msg.PacketID = 1
 	msg.Topics = [][]byte{
 		[]byte("t"),
 	}

@@ -41,14 +41,14 @@ func identifiedMessageDecode(src []byte, mt MessageType) (int, uint16, error) {
 	}
 
 	// read packet id
-	packetId := binary.BigEndian.Uint16(src[total:])
+	packetID := binary.BigEndian.Uint16(src[total:])
 	total += 2
 
-	return total, packetId, nil
+	return total, packetID, nil
 }
 
 // Encodes a identified message.
-func identifiedMessageEncode(dst []byte, packetId uint16, mt MessageType) (int, error) {
+func identifiedMessageEncode(dst []byte, packetID uint16, mt MessageType) (int, error) {
 	total := 0
 
 	// encode header
@@ -59,16 +59,16 @@ func identifiedMessageEncode(dst []byte, packetId uint16, mt MessageType) (int, 
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], packetId)
+	binary.BigEndian.PutUint16(dst[total:], packetID)
 	total += 2
 
 	return total, nil
 }
 
-// A PUBACK Packet is the response to a PUBLISH Packet with QoS level 1.
+// A PUBACK Packet is the response to a PUBLISH Packet with QOS level 1.
 type PubackMessage struct {
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*PubackMessage)(nil)
@@ -94,7 +94,7 @@ func (pm *PubackMessage) Len() int {
 // message being available since the byte slice never gets copied.
 func (pm *PubackMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBACK)
-	pm.PacketId = pid
+	pm.PacketID = pid
 	return n, err
 }
 
@@ -102,19 +102,19 @@ func (pm *PubackMessage) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (pm *PubackMessage) Encode(dst []byte) (int, error) {
-	return identifiedMessageEncode(dst, pm.PacketId, PUBACK)
+	return identifiedMessageEncode(dst, pm.PacketID, PUBACK)
 }
 
 // String returns a string representation of the message.
 func (pm PubackMessage) String() string {
-	return fmt.Sprintf("PUBACK: PacketId=%d", pm.PacketId)
+	return fmt.Sprintf("PUBACK: PacketID=%d", pm.PacketID)
 }
 
 // The PUBCOMP Packet is the response to a PUBREL Packet. It is the fourth and
-// final packet of the QoS 2 protocol exchange.
+// final packet of the QOS 2 protocol exchange.
 type PubcompMessage struct {
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*PubcompMessage)(nil)
@@ -140,7 +140,7 @@ func (pm *PubcompMessage) Len() int {
 // message being available since the byte slice never gets copied.
 func (pm *PubcompMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBCOMP)
-	pm.PacketId = pid
+	pm.PacketID = pid
 	return n, err
 }
 
@@ -148,19 +148,19 @@ func (pm *PubcompMessage) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (pm *PubcompMessage) Encode(dst []byte) (int, error) {
-	return identifiedMessageEncode(dst, pm.PacketId, PUBCOMP)
+	return identifiedMessageEncode(dst, pm.PacketID, PUBCOMP)
 }
 
 // String returns a string representation of the message.
 func (pm PubcompMessage) String() string {
-	return fmt.Sprintf("PUBCOMP: PacketId=%d", pm.PacketId)
+	return fmt.Sprintf("PUBCOMP: PacketID=%d", pm.PacketID)
 }
 
-// A PUBREC Packet is the response to a PUBLISH Packet with QoS 2. It is the second
-// packet of the QoS 2 protocol exchange.
+// A PUBREC Packet is the response to a PUBLISH Packet with QOS 2. It is the second
+// packet of the QOS 2 protocol exchange.
 type PubrecMessage struct {
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*PubrecMessage)(nil)
@@ -186,7 +186,7 @@ func (pm *PubrecMessage) Len() int {
 // message being available since the byte slice never gets copied.
 func (pm *PubrecMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBREC)
-	pm.PacketId = pid
+	pm.PacketID = pid
 	return n, err
 }
 
@@ -194,19 +194,19 @@ func (pm *PubrecMessage) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (pm *PubrecMessage) Encode(dst []byte) (int, error) {
-	return identifiedMessageEncode(dst, pm.PacketId, PUBREC)
+	return identifiedMessageEncode(dst, pm.PacketID, PUBREC)
 }
 
 // String returns a string representation of the message.
 func (pm PubrecMessage) String() string {
-	return fmt.Sprintf("PUBREC: PacketId=%d", pm.PacketId)
+	return fmt.Sprintf("PUBREC: PacketID=%d", pm.PacketID)
 }
 
 // A PUBREL Packet is the response to a PUBREC Packet. It is the third packet of the
-// QoS 2 protocol exchange.
+// QOS 2 protocol exchange.
 type PubrelMessage struct {
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*PubrelMessage)(nil)
@@ -232,7 +232,7 @@ func (pm *PubrelMessage) Len() int {
 // message being available since the byte slice never gets copied.
 func (pm *PubrelMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, PUBREL)
-	pm.PacketId = pid
+	pm.PacketID = pid
 	return n, err
 }
 
@@ -240,19 +240,19 @@ func (pm *PubrelMessage) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (pm *PubrelMessage) Encode(dst []byte) (int, error) {
-	return identifiedMessageEncode(dst, pm.PacketId, PUBREL)
+	return identifiedMessageEncode(dst, pm.PacketID, PUBREL)
 }
 
 // String returns a string representation of the message.
 func (pm PubrelMessage) String() string {
-	return fmt.Sprintf("PUBREL: PacketId=%d", pm.PacketId)
+	return fmt.Sprintf("PUBREL: PacketID=%d", pm.PacketID)
 }
 
 // The UNSUBACK Packet is sent by the Server to the Client to confirm receipt of an
 // UNSUBSCRIBE Packet.
 type UnsubackMessage struct {
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*UnsubackMessage)(nil)
@@ -278,7 +278,7 @@ func (um *UnsubackMessage) Len() int {
 // message being available since the byte slice never gets copied.
 func (um *UnsubackMessage) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedMessageDecode(src, UNSUBACK)
-	um.PacketId = pid
+	um.PacketID = pid
 	return n, err
 }
 
@@ -286,10 +286,10 @@ func (um *UnsubackMessage) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (um *UnsubackMessage) Encode(dst []byte) (int, error) {
-	return identifiedMessageEncode(dst, um.PacketId, UNSUBACK)
+	return identifiedMessageEncode(dst, um.PacketID, UNSUBACK)
 }
 
 // String returns a string representation of the message.
 func (um UnsubackMessage) String() string {
-	return fmt.Sprintf("UNSUBACK: PacketId=%d", um.PacketId)
+	return fmt.Sprintf("UNSUBACK: PacketID=%d", um.PacketID)
 }

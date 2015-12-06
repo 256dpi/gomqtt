@@ -119,7 +119,7 @@ func TestIdentifiedMessageEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkIdentifiedMessageEncode(b *testing.B) {
 	msg := &PubackMessage{}
-	msg.PacketId = 1
+	msg.PacketID = 1
 
 	buf := make([]byte, msg.Len())
 

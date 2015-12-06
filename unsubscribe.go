@@ -25,7 +25,7 @@ type UnsubscribeMessage struct {
 	Topics [][]byte
 
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*UnsubscribeMessage)(nil)
@@ -77,7 +77,7 @@ func (um *UnsubscribeMessage) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	um.PacketId = binary.BigEndian.Uint16(src[total:])
+	um.PacketID = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
 	// prepare counter
@@ -123,7 +123,7 @@ func (um *UnsubscribeMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], um.PacketId)
+	binary.BigEndian.PutUint16(dst[total:], um.PacketID)
 	total += 2
 
 	for _, t := range um.Topics {

@@ -29,7 +29,7 @@ var (
 // sent from the Client to the Server MUST be a CONNECT Packet.
 type ConnectMessage struct {
 	// The clients client id.
-	ClientId []byte
+	ClientID []byte
 
 	// The keep alive value.
 	KeepAlive uint16
@@ -49,8 +49,8 @@ type ConnectMessage struct {
 	// The payload of the will message.
 	WillPayload []byte
 
-	// The qos of the will message.
-	WillQoS byte
+	// The QOS of the will message.
+	WillQOS byte
 
 	// The retain setting of the will message.
 	WillRetain bool
@@ -70,9 +70,9 @@ func (cm ConnectMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (cm ConnectMessage) String() string {
-	return fmt.Sprintf("CONNECT: KeepAlive=%d ClientId=%q WillTopic=%q WillPayload=%q Username=%q Password=%q",
+	return fmt.Sprintf("CONNECT: KeepAlive=%d ClientID=%q WillTopic=%q WillPayload=%q Username=%q Password=%q",
 		cm.KeepAlive,
-		cm.ClientId,
+		cm.ClientID,
 		cm.WillTopic,
 		cm.WillPayload,
 		cm.Username,
@@ -142,7 +142,7 @@ func (cm *ConnectMessage) Decode(src []byte) (int, error) {
 
 	// read other flags
 	cm.WillRetain = ((connectFlags >> 5) & 0x1) == 1
-	cm.WillQoS = (connectFlags >> 3) & 0x3
+	cm.WillQOS = (connectFlags >> 3) & 0x3
 	cm.CleanSession = ((connectFlags >> 1) & 0x1) == 1
 
 	// check reserved bit
@@ -151,13 +151,13 @@ func (cm *ConnectMessage) Decode(src []byte) (int, error) {
 	}
 
 	// check will qos
-	if !validQoS(cm.WillQoS) {
-		return total, fmt.Errorf("CONNECT/Decode: Invalid QoS level (%d) for will message", cm.WillQoS)
+	if !validQOS(cm.WillQOS) {
+		return total, fmt.Errorf("CONNECT/Decode: Invalid QOS level (%d) for will message", cm.WillQOS)
 	}
 
 	// check will flags
-	if !willFlag && (cm.WillRetain || cm.WillQoS != 0) {
-		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cm.WillQoS, cm.WillRetain)
+	if !willFlag && (cm.WillRetain || cm.WillQOS != 0) {
+		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cm.WillQOS, cm.WillRetain)
 	}
 
 	// check auth flags
@@ -175,14 +175,14 @@ func (cm *ConnectMessage) Decode(src []byte) (int, error) {
 	total += 2
 
 	// read client id
-	cm.ClientId, n, err = readLPBytes(src[total:])
+	cm.ClientID, n, err = readLPBytes(src[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	// if the client supplies a zero-byte ClientId, the Client MUST also set CleanSession to 1
-	if len(cm.ClientId) == 0 && !cm.CleanSession {
+	// if the client supplies a zero-byte ClientID, the Client MUST also set CleanSession to 1
+	if len(cm.ClientID) == 0 && !cm.CleanSession {
 		return total, fmt.Errorf("CONNECT/Decode: Protocol violation: Clean session must be 1 if client id is zero length")
 	}
 
@@ -263,12 +263,12 @@ func (cm *ConnectMessage) Encode(dst []byte) (int, error) {
 	if len(cm.WillTopic) > 0 {
 		connectFlags |= 0x4 // 00000100
 
-		if !validQoS(cm.WillQoS) {
-			return total, fmt.Errorf("CONNECT/Encode: Invalid Will QoS level %d", cm.WillQoS)
+		if !validQOS(cm.WillQOS) {
+			return total, fmt.Errorf("CONNECT/Encode: Invalid Will QOS level %d", cm.WillQOS)
 		}
 
 		// set will qos flag
-		connectFlags = (connectFlags & 231) | (cm.WillQoS << 3) // 231 = 11100111
+		connectFlags = (connectFlags & 231) | (cm.WillQOS << 3) // 231 = 11100111
 
 		// set will retain flag
 		if cm.WillRetain {
@@ -297,7 +297,7 @@ func (cm *ConnectMessage) Encode(dst []byte) (int, error) {
 	total += 2
 
 	// write client id
-	n, err = writeLPBytes(dst[total:], cm.ClientId)
+	n, err = writeLPBytes(dst[total:], cm.ClientID)
 	total += n
 	if err != nil {
 		return total, err
@@ -355,7 +355,7 @@ func (cm *ConnectMessage) len() int {
 	total += 2 + 4 + 1 + 1 + 2
 
 	// add the clientID length
-	total += 2 + len(cm.ClientId)
+	total += 2 + len(cm.ClientID)
 
 	// add the will topic and will message length
 	if len(cm.WillTopic) > 0 {

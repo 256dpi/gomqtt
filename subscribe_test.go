@@ -23,7 +23,7 @@ import (
 func TestSubscribeInterface(t *testing.T) {
 	msg := NewSubscribeMessage()
 	msg.Subscriptions = []Subscription{
-		{Topic: []byte("hello"), QoS: QosAtMostOnce},
+		{Topic: []byte("hello"), QOS: QOSAtMostOnce},
 	}
 
 	require.Equal(t, msg.Type(), SUBSCRIBE)
@@ -39,15 +39,15 @@ func TestSubscribeMessageDecode(t *testing.T) {
 		0, // topic name MSB
 		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // QoS
+		0, // QOS
 		0, // topic name MSB
 		8, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		1,  // QoS
+		1,  // QOS
 		0,  // topic name MSB
 		10, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-		2, // QoS
+		2, // QOS
 	}
 
 	msg := NewSubscribeMessage()
@@ -57,11 +57,11 @@ func TestSubscribeMessageDecode(t *testing.T) {
 	require.Equal(t, len(msgBytes), n)
 	require.Equal(t, 3, len(msg.Subscriptions))
 	require.Equal(t, []byte("surgemq"), msg.Subscriptions[0].Topic)
-	require.Equal(t, 0, int(msg.Subscriptions[0].QoS))
+	require.Equal(t, 0, int(msg.Subscriptions[0].QOS))
 	require.Equal(t, []byte("/a/b/#/c"), msg.Subscriptions[1].Topic)
-	require.Equal(t, 1, int(msg.Subscriptions[1].QoS))
+	require.Equal(t, 1, int(msg.Subscriptions[1].QOS))
 	require.Equal(t, []byte("/a/b/#/cdd"), msg.Subscriptions[2].Topic)
-	require.Equal(t, 2, int(msg.Subscriptions[2].QoS))
+	require.Equal(t, 2, int(msg.Subscriptions[2].QOS))
 }
 
 func TestSubscribeMessageDecodeError1(t *testing.T) {
@@ -148,19 +148,19 @@ func TestSubscribeMessageEncode(t *testing.T) {
 		0, // topic name MSB
 		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // QoS
+		0, // QOS
 		0, // topic name MSB
 		8, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		1,  // QoS
+		1,  // QOS
 		0,  // topic name MSB
 		10, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-		2, // QoS
+		2, // QOS
 	}
 
 	msg := NewSubscribeMessage()
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.Subscriptions = []Subscription{
 		{[]byte("surgemq"), 0},
 		{[]byte("/a/b/#/c"), 1},
@@ -205,15 +205,15 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 		0, // topic name MSB
 		7, // topic name LSB
 		's', 'u', 'r', 'g', 'e', 'm', 'q',
-		0, // QoS
+		0, // QOS
 		0, // topic name MSB
 		8, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		1,  // QoS
+		1,  // QOS
 		0,  // topic name MSB
 		10, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-		2, // QoS
+		2, // QOS
 	}
 
 	msg := NewSubscribeMessage()
@@ -237,7 +237,7 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkSubscribeEncode(b *testing.B) {
 	msg := NewSubscribeMessage()
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.Subscriptions = []Subscription{
 		{[]byte("t"), 0},
 	}
@@ -261,7 +261,7 @@ func BenchmarkSubscribeDecode(b *testing.B) {
 		0, // topic name MSB
 		1, // topic name LSB
 		't',
-		0, // QoS
+		0, // QOS
 	}
 
 	msg := NewSubscribeMessage()

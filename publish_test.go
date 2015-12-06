@@ -44,10 +44,10 @@ func TestPublishMessageDecode1(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, len(msgBytes), n)
-	require.Equal(t, 7, int(msg.PacketId))
+	require.Equal(t, 7, int(msg.PacketID))
 	require.Equal(t, []byte("surgemq"), msg.Topic)
 	require.Equal(t, []byte("send me home"), msg.Payload)
-	require.Equal(t, 1, int(msg.QoS))
+	require.Equal(t, 1, int(msg.QOS))
 	require.Equal(t, true, msg.Retain)
 	require.Equal(t, true, msg.Dup)
 }
@@ -67,10 +67,10 @@ func TestPublishMessageDecode2(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, len(msgBytes), n)
-	require.Equal(t, 0, int(msg.PacketId))
+	require.Equal(t, 0, int(msg.PacketID))
 	require.Equal(t, []byte("surgemq"), msg.Topic)
 	require.Equal(t, []byte("send me home"), msg.Payload)
-	require.Equal(t, 0, int(msg.QoS))
+	require.Equal(t, 0, int(msg.QOS))
 	require.Equal(t, false, msg.Retain)
 	require.Equal(t, false, msg.Dup)
 }
@@ -157,10 +157,10 @@ func TestPublishMessageEncode1(t *testing.T) {
 
 	msg := NewPublishMessage()
 	msg.Topic = []byte("surgemq")
-	msg.QoS = QosAtLeastOnce
+	msg.QOS = QOSAtLeastOnce
 	msg.Retain = true
 	msg.Dup = true
-	msg.PacketId = 7
+	msg.PacketID = 7
 	msg.Payload = []byte("send me home")
 
 	dst := make([]byte, msg.Len())
@@ -206,7 +206,7 @@ func TestPublishMessageEncodeError1(t *testing.T) {
 func TestPublishMessageEncodeError2(t *testing.T) {
 	msg := NewPublishMessage()
 	msg.Topic = []byte("t")
-	msg.QoS = 3 // <- wrong qos
+	msg.QOS = 3 // <- wrong qos
 
 	dst := make([]byte, msg.Len())
 	_, err := msg.Encode(dst)
@@ -268,8 +268,8 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 func BenchmarkPublishEncode(b *testing.B) {
 	msg := NewPublishMessage()
 	msg.Topic = []byte("t")
-	msg.QoS = QosAtLeastOnce
-	msg.PacketId = 1
+	msg.QOS = QOSAtLeastOnce
+	msg.PacketID = 1
 	msg.Payload = []byte("p")
 
 	buf := make([]byte, msg.Len())

@@ -61,7 +61,7 @@ func TestConnectMessageDecode(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, len(msgBytes), n)
 	require.Equal(t, 10, int(msg.KeepAlive))
-	require.Equal(t, "surgemq", string(msg.ClientId))
+	require.Equal(t, "surgemq", string(msg.ClientID))
 	require.Equal(t, "will", string(msg.WillTopic))
 	require.Equal(t, "send me home", string(msg.WillPayload))
 	require.Equal(t, "surgemq", string(msg.Username))
@@ -418,9 +418,9 @@ func TestConnectMessageEncode1(t *testing.T) {
 	}
 
 	msg := NewConnectMessage()
-	msg.WillQoS = QosAtLeastOnce
+	msg.WillQOS = QOSAtLeastOnce
 	msg.CleanSession = false
-	msg.ClientId = []byte("surgemq")
+	msg.ClientID = []byte("surgemq")
 	msg.KeepAlive = 10
 	msg.WillTopic = []byte("will")
 	msg.WillPayload = []byte("send me home")
@@ -475,7 +475,7 @@ func TestConnectMessageEncodeError1(t *testing.T) {
 func TestConnectMessageEncodeError2(t *testing.T) {
 	msg := NewConnectMessage()
 	msg.WillTopic = []byte("t")
-	msg.WillQoS = 3 // <- wrong qos
+	msg.WillQOS = 3 // <- wrong qos
 
 	dst := make([]byte, msg.Len())
 	n, err := msg.Encode(dst)
@@ -486,7 +486,7 @@ func TestConnectMessageEncodeError2(t *testing.T) {
 
 func TestConnectMessageEncodeError3(t *testing.T) {
 	msg := NewConnectMessage()
-	msg.ClientId = make([]byte, 65536) // <- too big
+	msg.ClientID = make([]byte, 65536) // <- too big
 
 	dst := make([]byte, msg.Len())
 	n, err := msg.Encode(dst)
@@ -601,9 +601,9 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkConnectEncode(b *testing.B) {
 	msg := NewConnectMessage()
-	msg.WillQoS = QosAtLeastOnce
+	msg.WillQOS = QOSAtLeastOnce
 	msg.CleanSession = true
-	msg.ClientId = []byte("i")
+	msg.ClientID = []byte("i")
 	msg.KeepAlive = 10
 	msg.WillTopic = []byte("w")
 	msg.WillPayload = []byte("m")

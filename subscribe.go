@@ -24,22 +24,22 @@ type Subscription struct {
 	// The topic to subscribe to.
 	Topic []byte
 
-	// The qos level for receiving the messages.
-	QoS byte
+	// The QOS level for receiving the messages.
+	QOS byte
 }
 
 // The SUBSCRIBE Packet is sent from the Client to the Server to create one or more
 // Subscriptions. Each Subscription registers a Client’s interest in one or more
 // Topics. The Server sends PUBLISH Packets to the Client in order to forward
 // Application Messages that were published to Topics that match these Subscriptions.
-// The SUBSCRIBE Packet also specifies (for each Subscription) the maximum QoS with
+// The SUBSCRIBE Packet also specifies (for each Subscription) the maximum QOS with
 // which the Server can send Application Messages to the Client.
 type SubscribeMessage struct {
 	// The subscriptions.
 	Subscriptions []Subscription
 
 	// Shared message identifier.
-	PacketId uint16
+	PacketID uint16
 }
 
 var _ Message = (*SubscribeMessage)(nil)
@@ -56,10 +56,10 @@ func (sm SubscribeMessage) Type() MessageType {
 
 // String returns a string representation of the message.
 func (sm SubscribeMessage) String() string {
-	s := fmt.Sprintf("SUBSCRIBE: PacketId=%d", sm.PacketId)
+	s := fmt.Sprintf("SUBSCRIBE: PacketID=%d", sm.PacketID)
 
 	for i, t := range sm.Subscriptions {
-		s = fmt.Sprintf("%s Topic[%d]=%q/%d", s, i, string(t.Topic), t.QoS)
+		s = fmt.Sprintf("%s Topic[%d]=%q/%d", s, i, string(t.Topic), t.QOS)
 	}
 
 	return s
@@ -91,7 +91,7 @@ func (sm *SubscribeMessage) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	sm.PacketId = binary.BigEndian.Uint16(src[total:])
+	sm.PacketID = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
 	// reset subscriptions
@@ -143,7 +143,7 @@ func (sm *SubscribeMessage) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet it
-	binary.BigEndian.PutUint16(dst[total:], sm.PacketId)
+	binary.BigEndian.PutUint16(dst[total:], sm.PacketID)
 	total += 2
 
 	for _, t := range sm.Subscriptions {
@@ -155,7 +155,7 @@ func (sm *SubscribeMessage) Encode(dst []byte) (int, error) {
 		}
 
 		// write qos
-		dst[total] = t.QoS
+		dst[total] = t.QOS
 
 		total++
 	}

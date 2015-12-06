@@ -62,27 +62,27 @@ package message
 import "encoding/binary"
 
 const (
-	// QoS 0: At most once delivery
+	// QOS 0: At most once delivery
 	// The message is delivered according to the capabilities of the underlying network.
 	// No response is sent by the receiver and no retry is performed by the sender. The
 	// message arrives at the receiver either once or not at all.
-	QosAtMostOnce byte = iota
+	QOSAtMostOnce byte = iota
 
-	// QoS 1: At least once delivery
+	// QOS 1: At least once delivery
 	// This quality of service ensures that the message arrives at the receiver at least once.
-	// A QoS 1 PUBLISH Packet has a Packet Identifier in its variable header and is acknowledged
+	// A QOS 1 PUBLISH Packet has a Packet Identifier in its variable header and is acknowledged
 	// by a PUBACK Packet.
-	QosAtLeastOnce
+	QOSAtLeastOnce
 
-	// QoS 2: Exactly once delivery
+	// QOS 2: Exactly once delivery
 	// This is the highest quality of service, for use when neither loss nor duplication of
 	// messages are acceptable. There is an increased overhead associated with this quality of
 	// service.
-	QosExactlyOnce
+	QOSExactlyOnce
 
-	// QosFailure is a return value for a subscription if there's a problem while subscribing
+	// QOSFailure is a return value for a subscription if there's a problem while subscribing
 	// to a specific topic.
-	QosFailure = 0x80
+	QOSFailure = 0x80
 )
 
 // Message is an interface defined for all MQTT message types.

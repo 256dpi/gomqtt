@@ -21,8 +21,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestQosCodes(t *testing.T) {
-	if QosAtMostOnce != 0 || QosAtLeastOnce != 1 || QosExactlyOnce != 2 {
+func TestQOSCodes(t *testing.T) {
+	if QOSAtMostOnce != 0 || QOSAtLeastOnce != 1 || QOSExactlyOnce != 2 {
 		t.Errorf("QOS codes invalid")
 	}
 }
