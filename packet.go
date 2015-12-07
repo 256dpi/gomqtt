@@ -20,7 +20,7 @@ import "encoding/binary"
 
 const (
 	// QOSAtMostOnce defines that the message is delivered at most once, or it
-	//may not be delivered at all.
+	// may not be delivered at all.
 	QOSAtMostOnce byte = iota
 
 	// QOSAtLeastOnce defines that the message is always delivered at least once.
@@ -79,12 +79,10 @@ func DetectPacket(src []byte) (int, Type) {
 	return 1 + n + rl, t
 }
 
-/*
-Fuzz is a basic fuzzing test that works with https://github.com/dvyukov/go-fuzz:
-
-	$ go-fuzz-build github.com/gomqtt/packet
-	$ go-fuzz -bin=./packet-fuzz.zip -workdir=./fuzz
-*/
+// Fuzz is a basic fuzzing test that works with https://github.com/dvyukov/go-fuzz:
+//
+//		$ go-fuzz-build github.com/gomqtt/packet
+//		$ go-fuzz -bin=./packet-fuzz.zip -workdir=./fuzz
 func Fuzz(data []byte) int {
 	// check for zero length data
 	if len(data) == 0 {
