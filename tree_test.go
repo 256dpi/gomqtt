@@ -108,6 +108,14 @@ func TestTreeMatchWildcard3(t *testing.T) {
 	require.Equal(t, 1, tree.Match("foo/bar/baz")[0])
 }
 
+func TestTreeMatchWildcard4(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar/#", 1)
+
+	require.Equal(t, 1, tree.Match("foo/bar")[0])
+}
+
 func TestTreeMatchMultiple(t *testing.T) {
 	tree := NewTree()
 

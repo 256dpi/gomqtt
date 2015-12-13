@@ -211,14 +211,14 @@ func (t *Tree) Match(topic string) []interface{} {
 }
 
 func (t *Tree) match(result []interface{}, i int, segments []string, tree *node) []interface{} {
-	// when finished add all values to the result set
-	if i == len(segments) {
-		return append(result, tree.values...)
-	}
-
 	// add all values to the result set that match multiple levels
 	if subtree, ok := tree.children[t.WildcardSome]; ok {
 		result = append(result, subtree.values...)
+	}
+
+	// when finished add all values to the result set
+	if i == len(segments) {
+		return append(result, tree.values...)
 	}
 
 	// advance children that match a single level
