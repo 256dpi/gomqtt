@@ -15,6 +15,7 @@
 package topic
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -144,7 +145,7 @@ func TestTreeString(t *testing.T) {
 	require.Equal(t, "topic.Tree:\n| 'foo' => 0\n|   'bar' => 1", tree.String())
 }
 
-func BenchmarkTreeAdd(b *testing.B) {
+func BenchmarkTreeAddSame(b *testing.B) {
 	tree := NewTree()
 
 	for i := 0; i < b.N; i++ {
@@ -152,11 +153,37 @@ func BenchmarkTreeAdd(b *testing.B) {
 	}
 }
 
-func BenchmarkTreeMatch(b *testing.B) {
+func BenchmarkTreeAdd2Unique(b *testing.B) {
+	tree := NewTree()
+
+	for i := 0; i < b.N; i++ {
+		tree.Add(fmt.Sprintf("foo/bar/%d", i), 1)
+	}
+}
+
+func BenchmarkTreeMatchExact(b *testing.B) {
+	tree := NewTree()
+	tree.Add("foo/bar", 1)
+
+	for i := 0; i < b.N; i++ {
+		tree.Match("foo/bar")
+	}
+}
+
+func BenchmarkTreeMatchWildcardOne(b *testing.B) {
 	tree := NewTree()
 	tree.Add("foo/bar", 1)
 
 	for i := 0; i < b.N; i++ {
 		tree.Match("foo/+")
+	}
+}
+
+func BenchmarkTreeMatchWildcardSome(b *testing.B) {
+	tree := NewTree()
+	tree.Add("foo/bar", 1)
+
+	for i := 0; i < b.N; i++ {
+		tree.Match("#")
 	}
 }

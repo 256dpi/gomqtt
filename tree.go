@@ -28,7 +28,7 @@ type node struct {
 func newNode() *node {
 	return &node{
 		children: make(map[string]*node),
-		values:   make([]interface{}, 0, 1),
+		values:   make([]interface{}, 0),
 	}
 }
 
@@ -44,7 +44,7 @@ func (n *node) removeValue(value interface{}) {
 }
 
 func (n *node) clearValues() {
-	n.values = make([]interface{}, 0, 1)
+	n.values = make([]interface{}, 0)
 }
 
 func (n *node) string(i int) string {
