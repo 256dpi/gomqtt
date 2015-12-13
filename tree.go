@@ -89,6 +89,7 @@ func NewTree() *Tree {
 
 // Add registers the value for the supplied filter. This function will
 // automatically grow the tree and is thread-safe.
+// If value already exists for the given filter it will not be added again.
 func (t *Tree) Add(filter string, value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
