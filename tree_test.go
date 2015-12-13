@@ -98,11 +98,21 @@ func TestTreeMatchWildcard3(t *testing.T) {
 	require.Equal(t, 1, tree.Match("foo/bar/baz")[0])
 }
 
+func TestTreeMatchMultiple(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+	tree.Add("foo/+", 2)
+	tree.Add("foo/#", 3)
+
+	require.Equal(t, 3, len(tree.Match("foo/bar")))
+}
+
 func TestTreeMatchNoDuplicates(t *testing.T) {
 	tree := NewTree()
 
 	tree.Add("foo/bar", 1)
-	tree.Add("foo/*", 1)
+	tree.Add("foo/+", 1)
 	tree.Add("foo/#", 1)
 
 	require.Equal(t, 1, len(tree.Match("foo/bar")))
@@ -122,7 +132,7 @@ func TestTreeString(t *testing.T) {
 
 	tree.Add("foo/bar", 1)
 
-	require.Equal(t, "topic.Tree:\n| 'foo' => 0\n|   'bar' => 1\n", tree.String())
+	require.Equal(t, "topic.Tree:\n| 'foo' => 0\n|   'bar' => 1", tree.String())
 }
 
 func BenchmarkTreeAdd(b *testing.B) {
@@ -138,6 +148,6 @@ func BenchmarkTreeMatch(b *testing.B) {
 	tree.Add("foo/bar", 1)
 
 	for i := 0; i < b.N; i++ {
-		tree.Match("foo/*")
+		tree.Match("foo/+")
 	}
 }

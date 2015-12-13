@@ -199,19 +199,19 @@ func (t *Tree) Match(topic string) ([]interface{}) {
 }
 
 func (t *Tree) match(result []interface{}, i int, segments []string, tree *node) []interface{} {
-	// add all values for the some wildcard to the result set
+	// when finished add all values to the result set
+	if i == len(segments) {
+		return append(result, tree.values...)
+	}
+
+	// add all values to the result set that match multiple levels
 	if subtree, ok := tree.children[t.WildcardSome]; ok {
 		result = append(result, subtree.values...)
 	}
 
-	// advance children of the one wildcard
+	// advance children that match a single level
 	if subtree, ok := tree.children[t.WildcardOne]; ok {
 		result = t.match(result, i + 1, segments, subtree)
-	}
-
-	// when finished add all values to the result set
-	if i == len(segments) {
-		return append(result, tree.values...)
 	}
 
 	segment := segments[i]
