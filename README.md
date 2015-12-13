@@ -16,3 +16,28 @@ Get it using go's standard toolset:
 ```bash
 $ go get github.com/gomqtt/topic
 ```
+
+## Usage
+
+```go
+tree := NewTree()
+
+tree.Add("foo/bar", 1)
+tree.Add("foo/bar/baz", 2)
+tree.Add("foo/+", 3)
+tree.Add("foo/#", 4)
+
+fmt.Println(tree)
+fmt.Println(tree.Match("foo/bar"))
+fmt.Println(tree.Match("foo/bar/baz"))
+
+// Output:
+// topic.Tree:
+// | 'foo' => 0
+// |   'bar' => 1
+// |     'baz' => 1
+// |   '+' => 1
+// |   '#' => 1
+// [4 3 1]
+// [4 2]
+```
