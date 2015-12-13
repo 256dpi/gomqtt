@@ -15,20 +15,20 @@
 package topic
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 	"sync"
 )
 
 type node struct {
 	children map[string]*node
-	values []interface{}
+	values   []interface{}
 }
 
 func newNode() *node {
 	return &node{
 		children: make(map[string]*node),
-		values: make([]interface{}, 0, 1),
+		values:   make([]interface{}, 0, 1),
 	}
 }
 
@@ -63,19 +63,19 @@ func (n *node) string(i int) string {
 
 // Tree implements a thread-safe tree for adding, removing and matching topics.
 type Tree struct {
-	Separator string
-	WildcardOne string
+	Separator    string
+	WildcardOne  string
 	WildcardSome string
 
-	root *node
+	root  *node
 	mutex sync.RWMutex
 }
 
 // NewTree returns a new Tree.
 func NewTree() *Tree {
 	return &Tree{
-		Separator: "/",
-		WildcardOne: "+",
+		Separator:    "/",
+		WildcardOne:  "+",
 		WildcardSome: "#",
 
 		root: newNode(),
@@ -107,7 +107,7 @@ func (t *Tree) add(value interface{}, i int, segments []string, tree *node) {
 		tree.children[segment] = subtree
 	}
 
-	t.add(value, i + 1, segments, subtree)
+	t.add(value, i+1, segments, subtree)
 }
 
 // Remove unregisters the value for the supplied filter. This function will
@@ -148,7 +148,7 @@ func (t *Tree) remove(value interface{}, i int, segments []string, tree *node) b
 		return false
 	}
 
-	if t.remove(value, i + 1, segments, subtree) {
+	if t.remove(value, i+1, segments, subtree) {
 		delete(tree.children, segment)
 	}
 
@@ -180,7 +180,7 @@ func (t *Tree) clear(value interface{}, tree *node) bool {
 // Match will return a set of values that have filters that match the supplied
 // topic. The result set will be cleared from duplicate values. The function is
 // thread-safe.
-func (t *Tree) Match(topic string) ([]interface{}) {
+func (t *Tree) Match(topic string) []interface{} {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
@@ -211,7 +211,7 @@ func (t *Tree) match(result []interface{}, i int, segments []string, tree *node)
 
 	// advance children that match a single level
 	if subtree, ok := tree.children[t.WildcardOne]; ok {
-		result = t.match(result, i + 1, segments, subtree)
+		result = t.match(result, i+1, segments, subtree)
 	}
 
 	segment := segments[i]
@@ -219,7 +219,7 @@ func (t *Tree) match(result []interface{}, i int, segments []string, tree *node)
 	// match segments and get children
 	if segment != t.WildcardOne && segment != t.WildcardSome {
 		if subtree, ok := tree.children[segment]; ok {
-			result = t.match(result, i + 1, segments, subtree)
+			result = t.match(result, i+1, segments, subtree)
 		}
 	}
 
@@ -227,7 +227,7 @@ func (t *Tree) match(result []interface{}, i int, segments []string, tree *node)
 }
 
 // Reset will completely clear the tree. The function is thread-safe.
-func (t* Tree) Reset() {
+func (t *Tree) Reset() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
@@ -236,7 +236,7 @@ func (t* Tree) Reset() {
 
 // String will return a string representation of the tree. The function is
 // thread-safe.
-func (t* Tree) String() string {
+func (t *Tree) String() string {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
