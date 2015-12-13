@@ -201,5 +201,5 @@ func (t* Tree) Reset() {
 }
 
 func (t* Tree) String() string {
-	return fmt.Sprintf("%s\n", t.root.string(0))
+	return fmt.Sprintf("topic.Tree:%s\n", t.root.string(0))
 }

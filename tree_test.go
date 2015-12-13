@@ -37,6 +37,15 @@ func TestTreeRemove(t *testing.T) {
 	require.Equal(t, 0, len(tree.root.children))
 }
 
+func TestTreeRemoveMissing(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+	tree.Remove("bar/baz", 1)
+
+	require.Equal(t, 1, len(tree.root.children))
+}
+
 func TestTreeEmpty(t *testing.T) {
 	tree := NewTree()
 
@@ -97,4 +106,21 @@ func TestTreeMatchNoDuplicates(t *testing.T) {
 	tree.Add("foo/#", 1)
 
 	require.Equal(t, 1, len(tree.Match("foo/bar")))
+}
+
+func TestTreeReset(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+	tree.Reset()
+
+	require.Equal(t, 0, len(tree.root.children))
+}
+
+func TestTreeString(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+
+	require.Equal(t, "topic.Tree:\n| 'foo' => 0\n|   'bar' => 1\n", tree.String())
 }
