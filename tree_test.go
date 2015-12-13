@@ -28,6 +28,15 @@ func TestTreeAdd(t *testing.T) {
 	require.Equal(t, 1, tree.root.children["foo"].children["bar"].values[0])
 }
 
+func TestTreeAddDuplicate(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+	tree.Add("foo/bar", 1)
+
+	require.Equal(t, 1, len(tree.root.children["foo"].children["bar"].values))
+}
+
 func TestTreeRemove(t *testing.T) {
 	tree := NewTree()
 

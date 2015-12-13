@@ -99,6 +99,12 @@ func (t *Tree) Add(filter string, value interface{}) {
 func (t *Tree) add(value interface{}, i int, segments []string, tree *node) {
 	// add value to leaf
 	if i == len(segments) {
+		for _, v := range tree.values {
+			if v == value {
+				return
+			}
+		}
+
 		tree.values = append(tree.values, value)
 		return
 	}
