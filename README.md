@@ -7,8 +7,6 @@
 
 **Package topic provides functionality to work with [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) topics.**
 
-_The package is currently WIP and will be available soon!_
-
 ## Installation
 
 Get it using go's standard toolset:
