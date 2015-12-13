@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package topic provides functionality to work with MQTT 3.1.1
+// Package topic implements functionality for working with MQTT 3.1.1
 // (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) topics.
 package topic
