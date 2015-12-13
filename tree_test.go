@@ -124,3 +124,20 @@ func TestTreeString(t *testing.T) {
 
 	require.Equal(t, "topic.Tree:\n| 'foo' => 0\n|   'bar' => 1\n", tree.String())
 }
+
+func BenchmarkTreeAdd(b *testing.B) {
+	tree := NewTree()
+
+	for i := 0; i < b.N; i++ {
+		tree.Add("foo/bar", 1)
+	}
+}
+
+func BenchmarkTreeMatch(b *testing.B) {
+	tree := NewTree()
+	tree.Add("foo/bar", 1)
+
+	for i := 0; i < b.N; i++ {
+		tree.Match("foo/*")
+	}
+}
