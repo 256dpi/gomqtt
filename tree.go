@@ -17,6 +17,7 @@ package topic
 import (
 	"strings"
 	"fmt"
+	"sync"
 )
 
 type node struct {
@@ -60,14 +61,17 @@ func (n *node) string(i int) string {
 	return str
 }
 
+// Tree implements a thread-safe tree for adding, removing and matching topics.
 type Tree struct {
 	Separator string
 	WildcardOne string
 	WildcardSome string
 
 	root *node
+	mutex sync.RWMutex
 }
 
+// NewTree returns a new Tree.
 func NewTree() *Tree {
 	return &Tree{
 		Separator: "/",
@@ -78,7 +82,12 @@ func NewTree() *Tree {
 	}
 }
 
+// Add registers the value for the supplied filter. This function will
+// automatically grow the tree and is thread-safe.
 func (t *Tree) Add(filter string, value interface{}) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
 	t.add(value, 0, strings.Split(filter, t.Separator), t.root)
 }
 
@@ -101,11 +110,21 @@ func (t *Tree) add(value interface{}, i int, segments []string, tree *node) {
 	t.add(value, i + 1, segments, subtree)
 }
 
+// Remove unregisters the value for the supplied filter. This function will
+// automatically shrink the tree and is thread-safe.
 func (t *Tree) Remove(filter string, value interface{}) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
 	t.remove(value, 0, strings.Split(filter, t.Separator), t.root)
 }
 
+// Empty will unregister all values for the supplied filter. This function will
+// automatically shrink the tree and is thread-safe.
 func (t *Tree) Empty(filter string) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
 	t.remove(nil, 0, strings.Split(filter, t.Separator), t.root)
 }
 
@@ -136,7 +155,12 @@ func (t *Tree) remove(value interface{}, i int, segments []string, tree *node) b
 	return len(tree.values) == 0 && len(tree.children) == 0
 }
 
+// Clear will unregister the supplied value from all filters. This function will
+// automatically shrink the tree and is thread-safe.
 func (t *Tree) Clear(value interface{}) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
 	t.clear(value, t.root)
 }
 
@@ -153,8 +177,14 @@ func (t *Tree) clear(value interface{}, tree *node) bool {
 	return len(tree.values) == 0 && len(tree.children) == 0
 }
 
-func (t *Tree) Match(filter string) ([]interface{}) {
-	values := t.match(make([]interface{}, 0), 0, strings.Split(filter, t.Separator), t.root)
+// Match will return a set of values that have filters that match the supplied
+// topic. The result set will be cleared from duplicate values. The function is
+// thread-safe.
+func (t *Tree) Match(topic string) ([]interface{}) {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
+	values := t.match(make([]interface{}, 0), 0, strings.Split(topic, t.Separator), t.root)
 
 	// remove duplicates
 	result := make([]interface{}, 0, len(values))
@@ -196,10 +226,19 @@ func (t *Tree) match(result []interface{}, i int, segments []string, tree *node)
 	return result
 }
 
+// Reset will completely clear the tree. The function is thread-safe.
 func (t* Tree) Reset() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
 	t.root = newNode()
 }
 
+// String will return a string representation of the tree. The function is
+// thread-safe.
 func (t* Tree) String() string {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
 	return fmt.Sprintf("topic.Tree:%s\n", t.root.string(0))
 }
