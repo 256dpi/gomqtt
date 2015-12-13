@@ -29,7 +29,7 @@ func ExamplePacket() {
 	}
 
 	// Create packet.
-	pkt2, err := mt.New();
+	pkt2, err := mt.New()
 	if err != nil {
 		panic(err) // packet type is invalid
 	}

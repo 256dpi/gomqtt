@@ -70,8 +70,8 @@ func (cp ConnectPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (cp ConnectPacket) String() string {
-	return fmt.Sprintf("CONNECT: ClientID=%q KeepAlive=%d Username=%q " +
-		"Password=%q CleanSession=%t WillTopic=%q WillPayload=%q WillQOS=%d " +
+	return fmt.Sprintf("CONNECT: ClientID=%q KeepAlive=%d Username=%q "+
+		"Password=%q CleanSession=%t WillTopic=%q WillPayload=%q WillQOS=%d "+
 		"WillRetain=%t",
 		cp.ClientID,
 		cp.KeepAlive,
