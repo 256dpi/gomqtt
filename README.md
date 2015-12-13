@@ -5,7 +5,7 @@
 [![GoDoc](https://godoc.org/github.com/gomqtt/topic?status.svg)](http://godoc.org/github.com/gomqtt/topic)
 [![Release](https://img.shields.io/github/release/gomqtt/topic.svg)](https://github.com/gomqtt/topic/releases)
 
-**This go package provides functionality to work with [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) topics.**
+**Package topic provides functionality to work with [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) topics.**
 
 _The package is currently WIP and will be available soon!_
 
