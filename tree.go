@@ -240,5 +240,5 @@ func (t* Tree) String() string {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	return fmt.Sprintf("topic.Tree:%s\n", t.root.string(0))
+	return fmt.Sprintf("topic.Tree:%s", t.root.string(0))
 }
