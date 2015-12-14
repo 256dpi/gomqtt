@@ -89,7 +89,7 @@ func TestClientConnectError(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestClientErrorAuthentication(t *testing.T) {
+func TestClientAuthenticationError(t *testing.T) {
 	c := NewClient()
 
 	done := make(chan bool)

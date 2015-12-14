@@ -42,6 +42,7 @@ type Client struct {
 	lastContact     time.Time
 	pingrespPending bool
 	start           sync.WaitGroup
+	finish			sync.WaitGroup
 }
 
 // NewClient returns a new client.
@@ -95,8 +96,9 @@ func (this *Client) Connect(opts *Options) error {
 	// save opts
 	this.opts = opts
 
-	// start watcher and processor
+	// start subroutines
 	this.start.Add(3)
+	this.finish.Add(3)
 	go this.process()
 	go this.keepAlive()
 	go this.watch()
@@ -182,11 +184,14 @@ func (this *Client) Disconnect() {
 	this.send(m)
 
 	close(this.quit)
+
+	this.finish.Wait()
 }
 
 // process incoming packets
 func (this *Client) process() {
 	this.start.Done()
+	defer this.finish.Done()
 
 	for {
 		select {
@@ -249,6 +254,7 @@ func (this *Client) error(err error) {
 // manages the sending of ping packets to keep the connection alive
 func (this *Client) keepAlive() {
 	this.start.Done()
+	defer this.finish.Done()
 
 	for {
 		select {
@@ -277,6 +283,7 @@ func (this *Client) keepAlive() {
 // watch for EOFs and errors on the stream
 func (this *Client) watch() {
 	this.start.Done()
+	defer this.finish.Done()
 
 	for {
 		select {
