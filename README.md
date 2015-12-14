@@ -5,7 +5,7 @@
 [![GoDoc](https://godoc.org/github.com/gomqtt/broker?status.svg)](http://godoc.org/github.com/gomqtt/broker)
 [![Release](https://img.shields.io/github/release/gomqtt/broker.svg)](https://github.com/gomqtt/broker/releases)
 
-**This go package provides a basic extensible [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker.**
+**Package broker provides a extensible [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker implementation.**
 
 _The package is currently WIP and will be available soon!_
 
