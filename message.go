@@ -14,18 +14,9 @@
 
 package broker
 
-import "github.com/gomqtt/stream"
-
-type Broker struct {
-	QueueBackend QueueBackend
-	RetainedBackend RetainedBackend
-	WillBackend WillBackend
-}
-
-func NewBroker() *Broker {
-	return &Broker{}
-}
-
-func (b *Broker) Handle(stream stream.Stream) {
-	NewConnection(b, stream)
+type Message struct {
+	Topic string
+	Payload []byte
+	QOS byte
+	Retain bool
 }
