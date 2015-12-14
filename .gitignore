@@ -2,3 +2,5 @@
 *.prof
 *.test
 *.out
+.vagrant/
+profile/
