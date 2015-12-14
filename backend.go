@@ -22,17 +22,17 @@ import (
 type QueueBackend interface {
 	Subscribe(*Connection, string)
 	Unsubscribe(*Connection, string)
-	Publish(*Message)
+	Publish(*packet.PublishPacket)
 }
 
 type RetainedBackend interface {
-	StoreRetained(*Connection, *Message)
-	RetrieveRetained(*Connection, string) []*Message
+	StoreRetained(*Connection, *packet.PublishPacket)
+	RetrieveRetained(*Connection, string) []*packet.PublishPacket
 }
 
 type WillBackend interface {
-	StoreWill(*Connection, *Message)
-	RetrieveWill(*Connection) *Message
+	StoreWill(*Connection, *packet.PublishPacket)
+	RetrieveWill(*Connection) *packet.PublishPacket
 	ClearWill(*Connection)
 }
 
@@ -56,17 +56,12 @@ func (m *MemoryBackend) Unsubscribe(conn *Connection, filter string) {
 	m.tree.Remove(filter, conn)
 }
 
-func (m *MemoryBackend) Publish(message *Message) {
-	for _, v := range m.tree.Match(message.Topic) {
+func (m *MemoryBackend) Publish(message *packet.PublishPacket) {
+	for _, v := range m.tree.Match(string(message.Topic)) {
 		conn, ok := v.(*Connection)
 
 		if ok {
-			m := packet.NewPublishPacket()
-			m.Topic = []byte(message.Topic)
-			m.Payload = message.Payload
-			m.QOS = message.QOS
-			m.Retain = message.Retain
-			conn.stream.Send(m)
+			conn.stream.Send(message)
 		}
 	}
 }

@@ -14,7 +14,7 @@ func main() {
 //	b.RetainedBackend = m
 
 	s := server.NewServer(b.Handle)
-	s.LaunchTCPConfiguration("localhost:1337")
+	s.LaunchTCPConfiguration("localhost:1885")
 
 	select{}
 }

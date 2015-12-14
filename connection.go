@@ -32,6 +32,8 @@ type Connection struct {
 }
 
 func NewConnection(broker *Broker, stream stream.Stream) *Connection {
+	fmt.Println("new connection")
+
 	c := &Connection{
 		broker: broker,
 		stream: stream,
@@ -70,6 +72,7 @@ func (c *Connection) process() {
 
 			switch msg.Type() {
 			case packet.CONNECT:
+				fmt.Println("received connect")
 				_, ok := msg.(*packet.ConnectPacket)
 
 				if ok {
@@ -92,13 +95,7 @@ func (c *Connection) process() {
 				pp, ok := msg.(*packet.PublishPacket)
 
 				if ok {
-					m := &Message{
-						Topic: string(pp.Topic),
-						Payload: pp.Payload,
-						QOS: pp.QOS,
-						Retain: pp.Retain,
-					}
-					c.broker.QueueBackend.Publish(m)
+					c.broker.QueueBackend.Publish(pp)
 				} else {
 					//TODO: do something
 				}
