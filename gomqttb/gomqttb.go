@@ -14,6 +14,7 @@ import (
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var memprofile = flag.String("memprofile", "", "write memory profile to this file")
 
 func main() {
 	fmt.Println("starting...")
@@ -21,6 +22,7 @@ func main() {
 	flag.Parse()
 
 	if *cpuprofile != "" {
+		fmt.Println("start cpuprofile!")
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
 			log.Fatal(err)
@@ -47,5 +49,17 @@ func main() {
 	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
 
 	<-finish
+
+	if *memprofile != "" {
+		fmt.Println("write memprofile!")
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.WriteHeapProfile(f)
+		f.Close()
+		return
+	}
+
 	fmt.Println("exiting...")
 }
