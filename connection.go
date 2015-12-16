@@ -40,10 +40,9 @@ func NewConnection(broker *Broker, stream stream.Stream) *Connection {
 		quit: make(chan struct{}),
 	}
 
-	c.start.Add(2)
-	c.finish.Add(2)
+	c.start.Add(1)
+	c.finish.Add(1)
 	go c.process()
-	go c.watch()
 
 	return c
 }
@@ -64,7 +63,13 @@ func (c *Connection) process() {
 			return
 		case msg, ok := <-c.stream.Incoming():
 			if !ok {
-				fmt.Println("incomming channel closed")
+				fmt.Println("connection closed")
+
+				err := c.stream.Error()
+				if err != nil {
+					fmt.Println(err)
+				}
+
 				return
 			}
 
@@ -116,26 +121,6 @@ func (c *Connection) process() {
 				} else {
 					//TODO: do something
 				}
-			}
-		}
-	}
-}
-
-func (c *Connection) watch() {
-	c.start.Done()
-	defer c.finish.Done()
-
-	for {
-		select {
-		case <-c.quit:
-			return
-		case err, ok := <-c.stream.Error():
-			if err != nil {
-				//TODO: do something
-			}
-
-			if !ok {
-				return
 			}
 		}
 	}

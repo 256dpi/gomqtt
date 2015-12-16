@@ -54,8 +54,6 @@ func main() {
 
 	b := broker.NewBroker()
 	b.QueueBackend = m
-//	b.WillBackend = m
-//	b.RetainedBackend = m
 
 	s := server.NewServer(b.Handle)
 	s.LaunchTCPConfiguration(net.JoinHostPort(*host, *port))
