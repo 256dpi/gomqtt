@@ -22,6 +22,7 @@ import (
 type QueueBackend interface {
 	Subscribe(*Connection, string)
 	Unsubscribe(*Connection, string)
+	Remove(conn *Connection)
 	Publish(*packet.PublishPacket)
 }
 
@@ -54,6 +55,10 @@ func (m *MemoryBackend) Subscribe(conn *Connection, filter string) {
 
 func (m *MemoryBackend) Unsubscribe(conn *Connection, filter string) {
 	m.tree.Remove(filter, conn)
+}
+
+func (m *MemoryBackend) Remove(conn *Connection) {
+	m.tree.Clear(conn)
 }
 
 func (m *MemoryBackend) Publish(message *packet.PublishPacket) {

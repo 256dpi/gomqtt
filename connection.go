@@ -20,23 +20,24 @@ import (
 
 	"github.com/gomqtt/stream"
 	"github.com/gomqtt/packet"
+	"github.com/satori/go.uuid"
 )
 
 type Connection struct {
 	broker *Broker
 	stream stream.Stream
 
+	uuid string
 	quit chan struct{}
 	start sync.WaitGroup
 	finish sync.WaitGroup
 }
 
 func NewConnection(broker *Broker, stream stream.Stream) *Connection {
-	fmt.Println("new connection")
-
 	c := &Connection{
 		broker: broker,
 		stream: stream,
+		uuid: uuid.NewV1().String(),
 		quit: make(chan struct{}),
 	}
 
@@ -57,23 +58,25 @@ func (c *Connection) process() {
 	c.start.Done()
 	defer c.finish.Done()
 
+	fmt.Println("new connection: " + c.uuid)
+
 	for {
 		select {
 		case <-c.quit:
 			return
 		case msg, ok := <-c.stream.Incoming():
 			if !ok {
-				fmt.Println("connection closed")
+				fmt.Println("lost connection: " + c.uuid)
 
 				err := c.stream.Error()
 				if err != nil {
 					fmt.Println(err)
 				}
 
+				c.broker.QueueBackend.Remove(c)
+
 				return
 			}
-
-			//fmt.Println(msg)
 
 			switch msg.Type() {
 			case packet.CONNECT:
@@ -85,24 +88,18 @@ func (c *Connection) process() {
 					ca.ReturnCode = packet.ConnectionAccepted
 					ca.SessionPresent = false
 					c.stream.Send(ca)
-				} else {
-					//TODO: do something
 				}
 			case packet.PINGREQ:
 				_, ok := msg.(*packet.PingrespPacket)
 
 				if ok {
 					c.stream.Send(packet.NewPingrespPacket())
-				} else {
-					//TODO: do something
 				}
 			case packet.PUBLISH:
 				pp, ok := msg.(*packet.PublishPacket)
 
 				if ok {
 					c.broker.QueueBackend.Publish(pp)
-				} else {
-					//TODO: do something
 				}
 			case packet.SUBSCRIBE:
 				sp, ok := msg.(*packet.SubscribePacket)
@@ -118,8 +115,6 @@ func (c *Connection) process() {
 					}
 
 					c.stream.Send(m)
-				} else {
-					//TODO: do something
 				}
 			}
 		}
