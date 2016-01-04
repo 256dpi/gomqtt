@@ -97,11 +97,10 @@ func (this *Client) Connect(opts *Options) error {
 	this.opts = opts
 
 	// start subroutines
-	this.start.Add(3)
-	this.finish.Add(3)
+	this.start.Add(2)
+	this.finish.Add(2)
 	go this.process()
 	go this.keepAlive()
-	go this.watch()
 
 	// prepare connect packet
 	m := packet.NewConnectPacket()
@@ -276,25 +275,6 @@ func (this *Client) keepAlive() {
 			}
 
 			time.Sleep(1 * time.Second)
-		}
-	}
-}
-
-// watch for EOFs and errors on the stream
-func (this *Client) watch() {
-	this.start.Done()
-	defer this.finish.Done()
-
-	for {
-		select {
-		case <-this.quit:
-			return
-		case err, ok := <-this.stream.Error():
-			if !ok {
-				return
-			}
-
-			this.error(err)
 		}
 	}
 }
