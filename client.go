@@ -39,16 +39,18 @@ type Client struct {
 	messageCallback MessageCallback
 	errorCallback   ErrorCallback
 
-	lastContact     time.Time
-	pingrespPending bool
-	start           sync.WaitGroup
-	finish			sync.WaitGroup
+	lastContact      time.Time
+	lastContactMutex sync.Mutex
+	pingrespPending  bool
+	start            sync.WaitGroup
+	finish			 sync.WaitGroup
 }
 
 // NewClient returns a new client.
 func NewClient() *Client {
 	return &Client{
 		quit: make(chan bool),
+		lastContact: time.Now(),
 	}
 }
 
@@ -201,7 +203,7 @@ func (this *Client) process() {
 				return
 			}
 
-			this.lastContact = time.Now()
+			//this.lastContact = time.Now()
 
 			switch msg.Type() {
 			case packet.CONNACK:
@@ -240,7 +242,10 @@ func (this *Client) process() {
 }
 
 func (this *Client) send(msg packet.Packet) {
+	this.lastContactMutex.Lock()
 	this.lastContact = time.Now()
+	this.lastContactMutex.Unlock()
+
 	this.stream.Send(msg)
 }
 
@@ -260,7 +265,9 @@ func (this *Client) keepAlive() {
 		case <-this.quit:
 			return
 		default:
+			this.lastContactMutex.Lock()
 			last := uint(time.Since(this.lastContact).Seconds())
+			this.lastContactMutex.Unlock()
 
 			if last > uint(this.opts.KeepAlive.Seconds()) {
 				if !this.pingrespPending {
