@@ -269,7 +269,7 @@ func (this *Client) keepAlive() {
 			last := uint(time.Since(this.lastContact).Seconds())
 			this.lastContactMutex.Unlock()
 
-			if last > uint(this.opts.KeepAlive.Seconds()) {
+			if this.opts.KeepAlive.Seconds() > 0 && last > uint(this.opts.KeepAlive.Seconds()) {
 				if !this.pingrespPending {
 					this.pingrespPending = true
 
