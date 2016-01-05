@@ -3,6 +3,10 @@ dependencies:
     - sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa -y
     - sudo apt-get update -y
     - sudo apt-get install mosquitto -y
+    - sudo echo "listener 1883" >> /etc/mosquitto/mosquitto.conf
+    - sudo echo "listener 1884" >> /etc/mosquitto/mosquitto.conf
+    - sudo echo "protocol websockets" >> /etc/mosquitto/mosquitto.conf
+    - sudo service mosquitto restart
 test:
   pre:
     - go get github.com/axw/gocov/gocov
