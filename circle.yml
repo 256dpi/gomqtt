@@ -1,11 +1,28 @@
 dependencies:
   pre:
-    - sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa -y
-    - sudo apt-get update -y
-    - sudo apt-get install mosquitto -y
-    - sudo sh -c 'echo "listener 1883" >> /etc/mosquitto/mosquitto.conf'
+    - sudo apt-get update
+    - sudo apt-get install build-essential python quilt devscripts python-setuptools python3 libssl-dev cmake libc-ares-dev uuid-dev daemon
+
+    - wget http://git.libwebsockets.org/cgi-bin/cgit/libwebsockets/snapshot/libwebsockets-1.4-chrome43-firefox-36.tar.gz
+    - tar zxvf libwebsockets-1.4-chrome43-firefox-36.tar.gz
+    - cd libwebsockets-1.4-chrome43-firefox-36
+    - mkdir build && cd build
+    - cmake .. && sudo make install && sudo ldconfig
+    - cd ../..
+
+    - wget http://mosquitto.org/files/source/mosquitto-1.4.2.tar.gz
+    - tar zxvf mosquitto-1.4.2.tar.gz
+    - cd mosquitto-1.4.2
+    - sed -i -e 's/WITH_WEBSOCKETS:=no/WITH_WEBSOCKETS:=yes/g' ./config.mk
+    - make && sudo make install
+
+    - sudo cp mosquitto.conf /etc/mosquitto
+    - sudo sh -c 'echo "port 1883" >> /etc/mosquitto/mosquitto.conf'
     - sudo sh -c 'echo "listener 1884" >> /etc/mosquitto/mosquitto.conf'
     - sudo sh -c 'echo "protocol websockets" >> /etc/mosquitto/mosquitto.conf'
+
+    - sudo cp service/upstart/mosquitto.conf /etc/init/
+    - sudo initctl reload-configuration
     - sudo service mosquitto restart
 test:
   pre:
