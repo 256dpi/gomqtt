@@ -30,17 +30,18 @@ import (
 
 var host = flag.String("host", "0.0.0.0", "broker host")
 var port = flag.String("port", "1884", "broker port")
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-var memprofile = flag.String("memprofile", "", "write memory profile to this file")
+
+var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
+var memProfile = flag.String("memprofile", "", "write memory profile to this file")
 
 func main() {
 	fmt.Println("starting...")
 
 	flag.Parse()
 
-	if *cpuprofile != "" {
+	if *cpuProfile != "" {
 		fmt.Println("start cpuprofile!")
-		f, err := os.Create(*cpuprofile)
+		f, err := os.Create(*cpuProfile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -50,24 +51,24 @@ func main() {
 
 	// start
 
+	s := server.New()
+	s.LaunchTCP(net.JoinHostPort(*host, *port))
+	fmt.Println("launched server")
+
 	m := broker.NewMemoryBackend()
+	broker.New(s.Accept(), m, nil, nil)
+	fmt.Println("started broker")
 
-	b := broker.NewBroker()
-	b.QueueBackend = m
-
-	s := server.NewServer(b.Handle)
-	s.LaunchTCPConfiguration(net.JoinHostPort(*host, *port))
-
-	fmt.Println("started!")
+	// finish
 
 	finish := make(chan os.Signal, 1)
 	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
 
 	<-finish
 
-	if *memprofile != "" {
+	if *memProfile != "" {
 		fmt.Println("write memprofile!")
-		f, err := os.Create(*memprofile)
+		f, err := os.Create(*memProfile)
 		if err != nil {
 			log.Fatal(err)
 		}

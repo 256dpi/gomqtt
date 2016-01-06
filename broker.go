@@ -17,15 +17,35 @@ package broker
 import "github.com/gomqtt/stream"
 
 type Broker struct {
-	QueueBackend QueueBackend
-	RetainedBackend RetainedBackend
-	WillBackend WillBackend
+	streams <-chan stream.Stream
+	queueBackend QueueBackend
+	retainedBackend RetainedBackend
+	willBackend WillBackend
 }
 
-func NewBroker() *Broker {
-	return &Broker{}
+// New returns a new Broker.
+func New(streams <-chan stream.Stream, qb QueueBackend, rb RetainedBackend, wb WillBackend) *Broker {
+	return &Broker{
+		streams: streams,
+		queueBackend: qb,
+		retainedBackend: rb,
+		willBackend: wb,
+	}
 }
 
-func (b *Broker) Handle(stream stream.Stream) {
-	NewConnection(b, stream)
+// Run starts a goroutine that accepts streams.
+func (b *Broker) Run() {
+	go func(){
+		for {
+			stream, ok := <- b.streams
+
+			if stream != nil {
+				NewConnection(b, stream)
+			}
+
+			if !ok {
+				return
+			}
+		}
+	}()
 }

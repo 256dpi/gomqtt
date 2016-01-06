@@ -73,7 +73,7 @@ func (c *Connection) process() {
 					fmt.Println(err)
 				}
 
-				c.broker.QueueBackend.Remove(c)
+				c.broker.queueBackend.Remove(c)
 
 				return
 			}
@@ -99,7 +99,7 @@ func (c *Connection) process() {
 				pp, ok := msg.(*packet.PublishPacket)
 
 				if ok {
-					c.broker.QueueBackend.Publish(pp)
+					c.broker.queueBackend.Publish(pp)
 				}
 			case packet.SUBSCRIBE:
 				sp, ok := msg.(*packet.SubscribePacket)
@@ -110,7 +110,7 @@ func (c *Connection) process() {
 					m.PacketID = sp.PacketID
 
 					for _, s := range sp.Subscriptions {
-						c.broker.QueueBackend.Subscribe(c, string(s.Topic))
+						c.broker.queueBackend.Subscribe(c, string(s.Topic))
 						m.ReturnCodes = append(m.ReturnCodes, s.QOS)
 					}
 
