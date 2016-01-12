@@ -23,10 +23,8 @@ func tcpPreparer(handler Handler) (Conn, chan struct{}) {
 	tp := newTestPort()
 
 	server := NewServer(func(conn Conn){
-		go func(){
-			handler(conn)
-			close(done)
-		}()
+		handler(conn)
+		close(done)
 	})
 
 	go func(){

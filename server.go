@@ -131,7 +131,7 @@ func (s *Server) AcceptConnections(listener net.Listener) {
 				}
 			}
 
-			s.handler(NewNetConn(conn))
+			go s.handler(NewNetConn(conn))
 		}
 	})
 }
@@ -215,7 +215,7 @@ func (s *Server) RequestHandler() func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		s.handler(NewWebSocketConn(conn))
+		go s.handler(NewWebSocketConn(conn))
 	}
 }
 
