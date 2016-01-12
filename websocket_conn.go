@@ -32,7 +32,7 @@ type WebSocketConn struct {
 	readCounter int64
 }
 
-// NewWebSocketConn returns a new WebSocketStream.
+// NewWebSocketConn returns a new WebSocketConn.
 func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 	return &WebSocketConn{
 		conn: conn,

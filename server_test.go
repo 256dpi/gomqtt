@@ -122,14 +122,14 @@ func TestTCPServerStop(t *testing.T) {
 	server := NewServer(make(chan Conn))
 	server.LaunchTCP(tp.address())
 
-	stream, err := testDialer.Dial(tp.url("tcp"))
+	conn, err := testDialer.Dial(tp.url("tcp"))
 	require.NoError(t, err)
 
 	server.Stop()
 	require.NoError(t, server.Error())
 	require.True(t, server.Stopped())
 
-	_, err = stream.Receive()
+	_, err = conn.Receive()
 	require.Error(t, err)
 }
 
@@ -139,14 +139,14 @@ func TestWSServerStop(t *testing.T) {
 	server := NewServer(make(chan Conn))
 	server.LaunchWS(tp.address())
 
-	stream, err := testDialer.Dial(tp.url("ws"))
+	conn, err := testDialer.Dial(tp.url("ws"))
 	require.NoError(t, err)
 
 	server.Stop()
 	require.NoError(t, server.Error())
 	require.True(t, server.Stopped())
 
-	_, err = stream.Receive()
+	_, err = conn.Receive()
 	require.Error(t, err)
 }
 

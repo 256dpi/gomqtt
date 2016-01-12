@@ -27,10 +27,10 @@ import (
 
 var ErrStopped = errors.New("server: already stopped")
 
-// The Server manages multiple listeners and sends new streams to the registered
-// channel. The serve requires an already created channel to be supplied, as in
-// most cases that channel would never close so that the backend can restart
-// independently from the broker logic.
+// The Server manages multiple listeners and sends new connections to the
+// registered channel. The serve requires an already created channel to be
+// supplied, as in most cases that channel would never close so that the backend
+// can restart independently from the broker logic.
 type Server struct {
 	in        chan<- Conn
 	listeners []net.Listener
@@ -112,8 +112,7 @@ func (s *Server) LaunchTLS(address string, config *tls.Config) error {
 	return nil
 }
 
-// AcceptConnections accepts and sends new connections as streams to the
-// Accept channel.
+// AcceptConnections accepts and sends new connections to the Accept channel.
 //
 // Note: If the server has been stopped due to Stop() or an error the
 // internally started goroutine will return.
@@ -130,12 +129,12 @@ func (s *Server) AcceptConnections(listener net.Listener) {
 				}
 			}
 
-			stream := NewNetConn(conn)
+			netConn := NewNetConn(conn)
 
 			select {
-			case s.in <- stream:
+			case s.in <- netConn:
 			case <-s.tomb.Dying():
-				stream.Close()
+				netConn.Close()
 
 				return tomb.ErrDying
 			}
@@ -222,12 +221,12 @@ func (s *Server) RequestHandler() func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		stream := NewWebSocketConn(conn)
+		webSocketConn := NewWebSocketConn(conn)
 
 		select {
-		case s.in <- stream:
+		case s.in <- webSocketConn:
 		case <-s.tomb.Dying():
-			stream.Close()
+			webSocketConn.Close()
 		}
 	}
 }
