@@ -25,6 +25,7 @@ import (
 )
 
 var ErrDetectionOverflow = errors.New("detection length overflow (>5)")
+var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
 // The NetConn wraps a TCP based connection.
 type NetConn struct {
@@ -33,6 +34,7 @@ type NetConn struct {
 
 	writeCounter int64
 	readCounter int64
+	readLimit int64
 }
 
 // NewNetConn returns a new NetConn.
@@ -98,6 +100,12 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 			continue
 		}
 
+		// check read limit
+		if c.readLimit > 0 && int64(packetLength) > c.readLimit {
+			c.conn.Close()
+			return nil, newTransportError(ReadLimitExceeded, ErrReadLimitExceeded)
+		}
+
 		// create packet
 		pkt, err := packetType.New()
 		if err != nil {
@@ -147,4 +155,8 @@ func (c *NetConn) BytesWritten() int64 {
 
 func (c *NetConn) BytesRead() int64 {
 	return c.readCounter
+}
+
+func (c *NetConn) SetReadLimit(limit int64) {
+	c.readLimit = limit
 }

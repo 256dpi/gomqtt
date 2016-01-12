@@ -184,3 +184,22 @@ func abstractConnCountersTest(t *testing.T, preparer abstractTestPreparer) {
 	conn2.Close()
 	<-done
 }
+
+func abstractConnReadLimitTest(t *testing.T, preparer abstractTestPreparer) {
+	conn2, done := preparer(func(conn1 Conn){
+		conn1.SetReadLimit(1)
+
+		pkt, err := conn1.Receive()
+		require.Nil(t, pkt)
+		require.Equal(t, ReadLimitExceeded, toError(err).Code())
+	})
+
+	err := conn2.Send(packet.NewConnectPacket())
+	require.NoError(t, err)
+
+	pkt, err := conn2.Receive()
+	require.Nil(t, pkt)
+	require.Equal(t, ExpectedClose, toError(err).Code())
+
+	<-done
+}

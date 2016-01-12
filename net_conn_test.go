@@ -70,3 +70,7 @@ func TestNetConnSendAfterClose(t *testing.T) {
 func TestNetConnCounters(t *testing.T) {
 	abstractConnCountersTest(t, tcpPreparer)
 }
+
+func TestNetConnReadLimit(t *testing.T) {
+	abstractConnReadLimitTest(t, tcpPreparer)
+}

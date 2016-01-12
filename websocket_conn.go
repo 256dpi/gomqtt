@@ -72,7 +72,16 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 		if closeErr.Code == websocket.CloseNormalClosure {
 			c.conn.Close()
 			return nil, newTransportError(ExpectedClose, err)
+		} else if closeErr.Code == websocket.CloseMessageTooBig {
+			// TODO: shouldn't be an expected close
+			return nil, newTransportError(ExpectedClose, err)
 		}
+	}
+
+	// return read limit error instead
+	if err == websocket.ErrReadLimit {
+		c.conn.Close()
+		return nil, newTransportError(ReadLimitExceeded, err)
 	}
 
 	// return on any other errors
@@ -134,4 +143,8 @@ func (c *WebSocketConn) BytesWritten() int64 {
 
 func (c *WebSocketConn) BytesRead() int64 {
 	return c.readCounter
+}
+
+func (c *WebSocketConn) SetReadLimit(limit int64) {
+	c.conn.SetReadLimit(limit)
 }

@@ -73,6 +73,10 @@ func TestWebSocketConnCounters(t *testing.T) {
 	abstractConnCountersTest(t, wsPreparer)
 }
 
+func TestWebSocketConnReadLimit(t *testing.T) {
+	abstractConnReadLimitTest(t, wsPreparer)
+}
+
 func TestWebSocketBadFrameError(t *testing.T) {
 	conn2, done := wsPreparer(func(conn1 Conn){
 		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // <- bad frame
