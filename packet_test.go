@@ -69,8 +69,8 @@ func TestDetect1(t *testing.T) {
 	require.Equal(t, 1, int(_t))
 }
 
-// not enough bytes
 func TestDetect2(t *testing.T) {
+	// not enough bytes
 	buf := []byte{0x10, 0xff}
 
 	l, _t := DetectPacket(buf)
@@ -88,8 +88,8 @@ func TestDetect3(t *testing.T) {
 	require.Equal(t, 1, int(_t))
 }
 
-// not enough bytes
 func TestDetect4(t *testing.T) {
+	// not enough bytes
 	buf := []byte{0x10, 0xff, 0xff}
 
 	l, _t := DetectPacket(buf)
@@ -99,16 +99,25 @@ func TestDetect4(t *testing.T) {
 }
 
 func TestDetect5(t *testing.T) {
-	buf := []byte{0x10, 0xff, 0xff, 0xff, 0x1}
+	buf := []byte{0x10, 0xff, 0xff, 0xff, 0x7f}
 
 	l, _t := DetectPacket(buf)
 
-	require.Equal(t, 4194308, l)
+	require.Equal(t, 268435460, l)
 	require.Equal(t, 1, int(_t))
 }
 
 func TestDetect6(t *testing.T) {
 	buf := []byte{0x10}
+
+	l, _t := DetectPacket(buf)
+
+	require.Equal(t, 0, l)
+	require.Equal(t, 0, int(_t))
+}
+
+func TestDetect7(t *testing.T) {
+	buf := []byte{0x10, 0xff, 0xff, 0xff, 0x80}
 
 	l, _t := DetectPacket(buf)
 
