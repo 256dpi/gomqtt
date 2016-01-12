@@ -73,3 +73,5 @@ func toError(err error) Error {
 
 	return nil
 }
+
+func noopHandler(conn Conn) {}

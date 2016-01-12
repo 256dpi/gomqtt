@@ -18,25 +18,30 @@ import (
 	"testing"
 )
 
-func tcpPreparer(handler func(Conn)) (Conn, chan Conn) {
-	channel := make(chan Conn)
+func tcpPreparer(handler Handler) (Conn, chan struct{}) {
+	done := make(chan struct{})
 	tp := newTestPort()
 
-	server := NewServer(channel)
-	server.LaunchTCP(tp.address())
+	server := NewServer(func(conn Conn){
+		go func(){
+			handler(conn)
+			close(done)
+		}()
+	})
 
 	go func(){
-		handler(<-channel)
-		close(channel)
+		<-done
 		server.Stop()
 	}()
+
+	server.LaunchTCP(tp.address())
 
 	conn, err := testDialer.Dial(tp.url("tcp"))
 	if err != nil {
 		panic(err)
 	}
 
-	return conn, channel
+	return conn, done
 }
 
 func TestNetConnConnection(t *testing.T) {

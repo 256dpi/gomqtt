@@ -22,7 +22,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type abstractTestPreparer func (func(Conn)) (Conn, chan Conn)
+type abstractTestPreparer func (Handler) (Conn, chan struct{})
 
 func abstractConnConnectTest(t *testing.T, preparer abstractTestPreparer) {
 	conn2, done := preparer(func(conn1 Conn){

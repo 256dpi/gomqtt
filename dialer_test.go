@@ -66,7 +66,7 @@ func TestDialerWSSError(t *testing.T) {
 func TestTCPDefaultPort(t *testing.T) {
 	tp := newTestPort()
 
-	server := NewServer(make(chan Conn))
+	server := NewServer(noopHandler)
 	err := server.LaunchTCP(tp.address())
 	require.NoError(t, err)
 
@@ -80,11 +80,11 @@ func TestTCPDefaultPort(t *testing.T) {
 	server.Stop()
 }
 
-//TODO: something odd here...
+//TODO: fix
 //func TestTLSDefaultPort(t *testing.T) {
 //	tp := newTestPort()
 //
-//	server := NewServer(make(chan Conn))
+//	server := NewServer(noopHandler)
 //	err := server.LaunchTLS(tp.address(), serverTLSConfig)
 //	require.NoError(t, err)
 //
@@ -102,7 +102,7 @@ func TestTCPDefaultPort(t *testing.T) {
 func TestWSDefaultPort(t *testing.T) {
 	tp := newTestPort()
 
-	server := NewServer(make(chan Conn))
+	server := NewServer(noopHandler)
 	err := server.LaunchWS(tp.address())
 	require.NoError(t, err)
 
@@ -119,7 +119,7 @@ func TestWSDefaultPort(t *testing.T) {
 func TestWSSDefaultPort(t *testing.T) {
 	tp := newTestPort()
 
-	server := NewServer(make(chan Conn))
+	server := NewServer(noopHandler)
 	err := server.LaunchWSS(tp.address(), serverTLSConfig)
 	require.NoError(t, err)
 

@@ -25,14 +25,16 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-var ErrStopped = errors.New("server: already stopped")
+var ErrStopped = errors.New("server already stopped")
+
+type Handler func(Conn)
 
 // The Server manages multiple listeners and sends new connections to the
 // registered channel. The serve requires an already created channel to be
 // supplied, as in most cases that channel would never close so that the backend
 // can restart independently from the broker logic.
 type Server struct {
-	in        chan<- Conn
+	handler   Handler
 	listeners []net.Listener
 	upgrader  *websocket.Upgrader
 
@@ -40,9 +42,9 @@ type Server struct {
 }
 
 // NewServer returns a new Server.
-func NewServer(channel chan<- Conn) *Server {
+func NewServer(handler Handler) *Server {
 	s := &Server{
-		in: channel,
+		handler: handler,
 		listeners: make([]net.Listener, 0),
 		upgrader: &websocket.Upgrader{
 			HandshakeTimeout: 60 * time.Second,
@@ -123,21 +125,13 @@ func (s *Server) AcceptConnections(listener net.Listener) {
 			if err != nil {
 				select {
 				case <-s.tomb.Dying():
-					return nil
+					return tomb.ErrDying
 				default:
 					return err
 				}
 			}
 
-			netConn := NewNetConn(conn)
-
-			select {
-			case s.in <- netConn:
-			case <-s.tomb.Dying():
-				netConn.Close()
-
-				return tomb.ErrDying
-			}
+			s.handler(NewNetConn(conn))
 		}
 	})
 }
@@ -221,13 +215,7 @@ func (s *Server) RequestHandler() func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		webSocketConn := NewWebSocketConn(conn)
-
-		select {
-		case s.in <- webSocketConn:
-		case <-s.tomb.Dying():
-			webSocketConn.Close()
-		}
+		s.handler(NewWebSocketConn(conn))
 	}
 }
 

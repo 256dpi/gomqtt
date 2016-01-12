@@ -20,25 +20,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func wsPreparer(handler func(Conn)) (Conn, chan Conn) {
-	channel := make(chan Conn)
+func wsPreparer(handler Handler) (Conn, chan struct{}) {
+	done := make(chan struct{})
 	tp := newTestPort()
 
-	server := NewServer(channel)
-	server.LaunchWS(tp.address())
+	server := NewServer(func(conn Conn){
+		go func(){
+			handler(conn)
+			close(done)
+		}()
+	})
 
 	go func(){
-		handler(<-channel)
-		close(channel)
+		<-done
 		server.Stop()
 	}()
+
+	server.LaunchWS(tp.address())
 
 	conn, err := testDialer.Dial(tp.url("ws"))
 	if err != nil {
 		panic(err)
 	}
 
-	return conn, channel
+	return conn, done
 }
 
 func TestWebSocketConnConnection(t *testing.T) {
