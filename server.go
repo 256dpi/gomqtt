@@ -53,14 +53,16 @@ func NewServer(handler Handler) *Server {
 	}
 
 	// start cleanup function
-	go func(){
+	s.tomb.Go(func()(error){
 		select {
 		case <-s.tomb.Dying():
 			for _, l := range s.listeners {
 				l.Close()
 			}
+
+			return tomb.ErrDying
 		}
-	}()
+	})
 
 	return s
 }

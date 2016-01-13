@@ -24,15 +24,13 @@ func wsPreparer(handler Handler) (Conn, chan struct{}) {
 	done := make(chan struct{})
 	tp := newTestPort()
 
-	server := NewServer(func(conn Conn){
+	var server *Server
+
+	server = NewServer(func(conn Conn){
 		handler(conn)
+		server.Stop()
 		close(done)
 	})
-
-	go func(){
-		<-done
-		server.Stop()
-	}()
 
 	server.LaunchWS(tp.address())
 

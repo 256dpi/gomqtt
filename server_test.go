@@ -27,17 +27,19 @@ import (
 func TestServerNoError(t *testing.T) {
 	server := NewServer(noopHandler)
 	require.NoError(t, server.Error())
+	server.Stop()
 }
 
 func TestTCPServerError1(t *testing.T) {
 	server := NewServer(noopHandler)
 	err := server.LaunchTCP("localhost:1") // <- no permissions
 	require.Error(t, err)
+	server.Stop()
 }
 
 func TestTCPServerError2(t *testing.T) {
 	server := NewServer(noopHandler)
-	server.tomb.Kill(nil) // <- fake stopped server
+	server.Stop()
 	require.Error(t, server.LaunchTCP("localhost:1"))
 }
 
@@ -45,11 +47,12 @@ func TestTLSServerError1(t *testing.T) {
 	server := NewServer(noopHandler)
 	err := server.LaunchTLS("localhost:1", serverTLSConfig) // <- no permissions
 	require.Error(t, err)
+	server.Stop()
 }
 
 func TestTLSServerError2(t *testing.T) {
 	server := NewServer(noopHandler)
-	server.tomb.Kill(nil) // <- fake stopped server
+	server.Stop()
 	require.Error(t, server.LaunchTLS("localhost:1", serverTLSConfig))
 }
 
@@ -57,11 +60,12 @@ func TestWSServerError1(t *testing.T) {
 	server := NewServer(noopHandler)
 	err := server.LaunchWS("localhost:1") // <- no permissions
 	require.Error(t, err)
+	server.Stop()
 }
 
 func TestWSServerError2(t *testing.T) {
 	server := NewServer(noopHandler)
-	server.tomb.Kill(nil) // <- fake stopped server
+	server.Stop()
 	require.Error(t, server.LaunchWS("localhost:1"))
 }
 
@@ -69,11 +73,12 @@ func TestWSSServerError1(t *testing.T) {
 	server := NewServer(noopHandler)
 	err := server.LaunchWSS("localhost:1", serverTLSConfig) // <- no permissions
 	require.Error(t, err)
+	server.Stop()
 }
 
 func TestWSSServerError2(t *testing.T) {
 	server := NewServer(noopHandler)
-	server.tomb.Kill(nil) // <- fake stopped server
+	server.Stop()
 	require.Error(t, server.LaunchWSS("localhost:1", serverTLSConfig))
 }
 
@@ -84,7 +89,7 @@ func TestInactiveRequestHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	server := NewServer(noopHandler)
-	server.tomb.Kill(nil) // <- fake stopped server
+	server.Stop()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.RequestHandler())
