@@ -34,6 +34,8 @@ type Handler func(Conn)
 // supplied, as in most cases that channel would never close so that the backend
 // can restart independently from the broker logic.
 type Server struct {
+	TLSConfig *tls.Config
+
 	handler   Handler
 	listeners []net.Listener
 	upgrader  *websocket.Upgrader
@@ -78,8 +80,23 @@ func (s *Server) Error() error {
 	return err
 }
 
+func (s *Server) Launch(protocol, address string) error {
+	switch protocol {
+	case "mqtt", "tcp":
+		return s.launchTCP(address)
+	case "mqtts", "tcps", "ssl", "tls":
+		return s.launchTLS(address, s.TLSConfig)
+	case "ws":
+		return s.launchWS(address)
+	case "wss":
+		return s.launchWSS(address, s.TLSConfig)
+	}
+
+	return ErrUnsupportedProtocol
+}
+
 // LaunchTCP will launch a TCP server.
-func (s *Server) LaunchTCP(address string) error {
+func (s *Server) launchTCP(address string) error {
 	select {
 	case <- s.tomb.Dying():
 		return ErrStopped
@@ -98,7 +115,7 @@ func (s *Server) LaunchTCP(address string) error {
 }
 
 // LaunchTLS will launch a TLS server.
-func (s *Server) LaunchTLS(address string, config *tls.Config) error {
+func (s *Server) launchTLS(address string, config *tls.Config) error {
 	select {
 	case <- s.tomb.Dying():
 		return ErrStopped
@@ -139,7 +156,7 @@ func (s *Server) AcceptConnections(listener net.Listener) {
 }
 
 // LaunchWS will launch a WS server.
-func (s *Server) LaunchWS(address string) error {
+func (s *Server) launchWS(address string) error {
 	select {
 	case <- s.tomb.Dying():
 		return ErrStopped
@@ -158,7 +175,7 @@ func (s *Server) LaunchWS(address string) error {
 }
 
 // LaunchWSS will launch a WSS server.
-func (s *Server) LaunchWSS(address string, config *tls.Config) error {
+func (s *Server) launchWSS(address string, config *tls.Config) error {
 	select {
 	case <- s.tomb.Dying():
 		return ErrStopped

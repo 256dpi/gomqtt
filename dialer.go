@@ -28,7 +28,7 @@ import (
 var ErrUnsupportedProtocol = errors.New("dialer: unsupported protocol")
 
 type Dialer struct {
-	TLSClientConfig *tls.Config
+	TLSConfig *tls.Config
 	RequestHeader http.Header
 
 	DefaultTCPPort string
@@ -91,7 +91,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 			port = d.DefaultTLSPort
 		}
 
-		conn, err := tls.Dial("tcp", net.JoinHostPort(host, port), d.TLSClientConfig)
+		conn, err := tls.Dial("tcp", net.JoinHostPort(host, port), d.TLSConfig)
 		if err != nil {
 			return nil, newTransportError(DialError, err)
 		}
@@ -117,7 +117,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 
 		url := fmt.Sprintf("wss://%s:%s%s", host, port, urlParts.Path)
 
-		d.webSocketDialer.TLSClientConfig = d.TLSClientConfig
+		d.webSocketDialer.TLSClientConfig = d.TLSConfig
 		conn, _, err := d.webSocketDialer.Dial(url, d.RequestHeader)
 		if err != nil {
 			return nil, newTransportError(DialError, err)

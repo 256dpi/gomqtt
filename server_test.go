@@ -22,7 +22,60 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/gomqtt/packet"
 )
+
+func abstractServerTest(t *testing.T, protocol string) {
+	tp := newTestPort()
+
+	server := NewServer(func(conn1 Conn){
+		pkt, err := conn1.Receive()
+		require.Equal(t, pkt.Type(), packet.CONNECT)
+		require.NoError(t, err)
+
+		err = conn1.Send(packet.NewConnackPacket())
+		require.NoError(t, err)
+
+		pkt, err = conn1.Receive()
+		require.Nil(t, pkt)
+		require.Equal(t, ExpectedClose, toError(err).Code())
+	})
+
+	server.TLSConfig = serverTLSConfig
+	server.Launch(protocol, tp.address())
+
+	conn2, err := testDialer.Dial(tp.url(protocol))
+	require.NoError(t, err)
+
+	err = conn2.Send(packet.NewConnectPacket())
+	require.NoError(t, err)
+
+	pkt, err := conn2.Receive()
+	require.Equal(t, pkt.Type(), packet.CONNACK)
+	require.NoError(t, err)
+
+	err = conn2.Close()
+	require.NoError(t, err)
+
+	server.Stop()
+	require.NoError(t, server.Error())
+}
+
+func TestTCPServer(t *testing.T) {
+	abstractServerTest(t, "tcp")
+}
+
+func TestTLSServer(t *testing.T) {
+	abstractServerTest(t, "tls")
+}
+
+func TestWSServer(t *testing.T) {
+	abstractServerTest(t, "ws")
+}
+
+func TestWSSServer(t *testing.T) {
+	abstractServerTest(t, "wss")
+}
 
 func TestServerNoError(t *testing.T) {
 	server := NewServer(noopHandler)
@@ -32,7 +85,7 @@ func TestServerNoError(t *testing.T) {
 
 func TestTCPServerError1(t *testing.T) {
 	server := NewServer(noopHandler)
-	err := server.LaunchTCP("localhost:1") // <- no permissions
+	err := server.Launch("tcp", "localhost:1") // <- no permissions
 	require.Error(t, err)
 	server.Stop()
 }
@@ -40,25 +93,27 @@ func TestTCPServerError1(t *testing.T) {
 func TestTCPServerError2(t *testing.T) {
 	server := NewServer(noopHandler)
 	server.Stop()
-	require.Error(t, server.LaunchTCP("localhost:1"))
+	require.Error(t, server.Launch("tcp", "localhost:1"))
 }
 
 func TestTLSServerError1(t *testing.T) {
 	server := NewServer(noopHandler)
-	err := server.LaunchTLS("localhost:1", serverTLSConfig) // <- no permissions
+	server.TLSConfig = serverTLSConfig
+	err := server.Launch("tls", "localhost:1") // <- no permissions
 	require.Error(t, err)
 	server.Stop()
 }
 
 func TestTLSServerError2(t *testing.T) {
 	server := NewServer(noopHandler)
+	server.TLSConfig = serverTLSConfig
 	server.Stop()
-	require.Error(t, server.LaunchTLS("localhost:1", serverTLSConfig))
+	require.Error(t, server.Launch("tls", "localhost:1"))
 }
 
 func TestWSServerError1(t *testing.T) {
 	server := NewServer(noopHandler)
-	err := server.LaunchWS("localhost:1") // <- no permissions
+	err := server.Launch("ws", "localhost:1") // <- no permissions
 	require.Error(t, err)
 	server.Stop()
 }
@@ -66,20 +121,22 @@ func TestWSServerError1(t *testing.T) {
 func TestWSServerError2(t *testing.T) {
 	server := NewServer(noopHandler)
 	server.Stop()
-	require.Error(t, server.LaunchWS("localhost:1"))
+	require.Error(t, server.Launch("ws", "localhost:1"))
 }
 
 func TestWSSServerError1(t *testing.T) {
 	server := NewServer(noopHandler)
-	err := server.LaunchWSS("localhost:1", serverTLSConfig) // <- no permissions
+	server.TLSConfig = serverTLSConfig
+	err := server.Launch("wss", "localhost:1") // <- no permissions
 	require.Error(t, err)
 	server.Stop()
 }
 
 func TestWSSServerError2(t *testing.T) {
 	server := NewServer(noopHandler)
+	server.TLSConfig = serverTLSConfig
 	server.Stop()
-	require.Error(t, server.LaunchWSS("localhost:1", serverTLSConfig))
+	require.Error(t, server.Launch("wss", "localhost:1"))
 }
 
 func TestInactiveRequestHandler(t *testing.T) {
@@ -111,7 +168,7 @@ func TestInvalidWebSocketUpgrade(t *testing.T) {
 	tp := newTestPort()
 
 	server := NewServer(noopHandler)
-	server.LaunchWS(tp.address())
+	server.Launch("ws", tp.address())
 
 	resp, err := http.PostForm(tp.url("http"), url.Values{"foo": {"bar"}})
 	require.Equal(t, "405 Method Not Allowed", resp.Status)
@@ -125,7 +182,7 @@ func TestTCPAcceptError(t *testing.T) {
 	tp := newTestPort()
 
 	server := NewServer(noopHandler)
-	server.LaunchTCP(tp.address())
+	server.Launch("tcp", tp.address())
 
 	server.listeners[0].Close()
 	time.Sleep(1 * time.Second)
@@ -138,7 +195,7 @@ func TestHTTPAcceptError(t *testing.T) {
 	tp := newTestPort()
 
 	server := NewServer(noopHandler)
-	server.LaunchWS(tp.address())
+	server.Launch("ws", tp.address())
 
 	server.listeners[0].Close()
 	time.Sleep(1 * time.Second)

@@ -30,7 +30,7 @@ func tcpPreparer(handler Handler) (Conn, chan struct{}) {
 		close(done)
 	})
 
-	server.LaunchTCP(tp.address())
+	server.Launch("tcp", tp.address())
 
 	conn, err := testDialer.Dial(tp.url("tcp"))
 	if err != nil {

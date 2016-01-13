@@ -32,7 +32,7 @@ func wsPreparer(handler Handler) (Conn, chan struct{}) {
 		close(done)
 	})
 
-	server.LaunchWS(tp.address())
+	server.Launch("ws", tp.address())
 
 	conn, err := testDialer.Dial(tp.url("ws"))
 	if err != nil {

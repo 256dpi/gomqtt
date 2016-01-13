@@ -35,7 +35,7 @@ func init() {
 	clientTLSConfig = &tls.Config{InsecureSkipVerify: true}
 
 	testDialer = NewDialer()
-	testDialer.TLSClientConfig = clientTLSConfig
+	testDialer.TLSConfig = clientTLSConfig
 }
 
 // the testPort
