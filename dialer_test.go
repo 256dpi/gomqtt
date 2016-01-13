@@ -23,43 +23,51 @@ import (
 func TestGlobalDial(t *testing.T) {
 	conn, err := Dial("mqtt://localhost:1883")
 	require.NoError(t, err)
-	conn.Close()
+	err = conn.Close()
+	require.NoError(t, err)
 }
 
 func TestDialerURLWithoutPort(t *testing.T) {
 	conn, err := Dial("mqtt://localhost")
 	require.NoError(t, err)
-	conn.Close()
+	err = conn.Close()
+	require.NoError(t, err)
 }
 
 func TestDialerBadURL(t *testing.T) {
-	_, err := Dial("foo")
+	conn, err := Dial("foo")
+	require.Nil(t, conn)
 	require.Equal(t, DialError, toError(err).Code())
 }
 
 func TestDialerUnsupportedProtocol(t *testing.T) {
-	_, err := Dial("foo://localhost")
+	conn, err := Dial("foo://localhost")
+	require.Nil(t, conn)
 	require.Equal(t, DialError, toError(err).Code())
 	require.Equal(t, ErrUnsupportedProtocol, toError(err).Err())
 }
 
 func TestDialerTCPError(t *testing.T) {
-	_, err := Dial("tcp://localhost:1234567")
+	conn, err := Dial("tcp://localhost:1234567")
+	require.Nil(t, conn)
 	require.Equal(t, DialError, toError(err).Code())
 }
 
 func TestDialerTLSError(t *testing.T) {
-	_, err := Dial("tls://localhost:1234567")
+	conn, err := Dial("tls://localhost:1234567")
+	require.Nil(t, conn)
 	require.Equal(t, DialError, toError(err).Code())
 }
 
 func TestDialerWSError(t *testing.T) {
-	_, err := Dial("ws://localhost:1234567")
+	conn, err := Dial("ws://localhost:1234567")
+	require.Nil(t, conn)
 	require.Equal(t, DialError, toError(err).Code())
 }
 
 func TestDialerWSSError(t *testing.T) {
-	_, err := Dial("wss://localhost:1234567")
+	conn, err := Dial("wss://localhost:1234567")
+	require.Nil(t, conn)
 	require.Equal(t, DialError, toError(err).Code())
 }
 
