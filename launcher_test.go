@@ -29,3 +29,16 @@ func TestGlobalLaunch(t *testing.T) {
 	err = server.Close()
 	require.NoError(t, err)
 }
+
+func TestLauncherBadURL(t *testing.T) {
+	conn, err := Launch("foo")
+	require.Nil(t, conn)
+	require.Equal(t, LaunchError, toError(err).Code())
+}
+
+func TestLauncherUnsupportedProtocol(t *testing.T) {
+	conn, err := Launch("foo://localhost")
+	require.Nil(t, conn)
+	require.Equal(t, LaunchError, toError(err).Code())
+	require.Equal(t, ErrUnsupportedProtocol, toError(err).Err())
+}
