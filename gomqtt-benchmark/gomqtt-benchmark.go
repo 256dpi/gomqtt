@@ -16,20 +16,18 @@ package main
 
 import (
 	"flag"
-	"net"
 	"time"
 	"fmt"
 	"sync/atomic"
 	"strconv"
 
-	"github.com/gomqtt/stream"
+	"github.com/gomqtt/transport"
 	"github.com/gomqtt/packet"
 )
 
 const interval = 100
 
-var host = flag.String("host", "0.0.0.0", "broker host")
-var port = flag.String("port", "1884", "broker port")
+var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")
 
 var sent = make(chan int)
@@ -38,49 +36,47 @@ var received = make(chan int)
 func main() {
 	flag.Parse()
 
+	fmt.Println("start benchmark of '" + *url +"' with " + strconv.Itoa(*workers) + " workers")
+
 	for i := 0; i < *workers; i++ {
 		id := "id-" + strconv.Itoa(i)
 		go counter(id)
 		go bomber(id)
 	}
 
-	go reporter()
-
-	select{}
+	reporter()
 }
 
-func connection(name string) stream.Stream {
-	conn, err := net.Dial("tcp", net.JoinHostPort(*host, *port))
+func connection(name string) transport.Conn {
+	conn, err := transport.Dial(*url)
 	if err != nil {
 		panic(err)
 	}
 
-	s := stream.NewNetStream(conn)
-
 	cp := packet.NewConnectPacket()
 	cp.ClientID = []byte("gomqtt-benchmark/" + name)
-	s.Send(cp)
 
-	ap := <-s.Incoming()
-	if ap == nil {
-		return nil
-	} else {
-		if _ap, ok := ap.(*packet.ConnackPacket); ok {
-			if _ap.ReturnCode != packet.ConnectionAccepted {
-				fmt.Println(name + ": connection denied")
-				return nil
-			}
+	err = conn.Send(cp)
+	if err != nil {
+		panic(err)
+	}
+
+	pkt, err := conn.Receive()
+	if err != nil {
+		panic(err)
+	}
+
+	if ap, ok := pkt.(*packet.ConnackPacket); ok {
+		if ap.ReturnCode == packet.ConnectionAccepted {
+			return conn
 		}
 	}
 
-	return s
+	panic(name + ": connection failed")
 }
 
 func counter(id string) {
 	s := connection("counter/" + id)
-	if s == nil {
-		return
-	}
 
 	sp := packet.NewSubscribePacket()
 	sp.PacketID = 1
@@ -90,29 +86,31 @@ func counter(id string) {
 			QOS: 0,
 		},
 	}
-	s.Send(sp)
+
+	err := s.Send(sp)
+	if err != nil {
+		panic(err)
+	}
 
 	i := 0
 
 	for {
-		_, ok := <- s.Incoming()
+		_, err := s.Receive()
+		if err != nil {
+			panic(err)
+		}
 
-		if ok {
-			i++
+		i++
 
-			if i >= interval {
-				received <- i
-				i = 0
-			}
+		if i >= interval {
+			received <- i
+			i = 0
 		}
 	}
 }
 
 func bomber(id string) {
 	s := connection("bomber/" + id)
-	if s == nil {
-		return
-	}
 
 	pp := packet.NewPublishPacket()
 	pp.Topic = []byte(id)
@@ -121,7 +119,11 @@ func bomber(id string) {
 	i := 0
 
 	for {
-		s.Send(pp)
+		err := s.Send(pp)
+		if err != nil {
+			panic(err)
+		}
+
 		i++
 
 		if i >= interval {
@@ -149,7 +151,11 @@ func reporter() {
 
 	for {
 		<-time.After(5 * time.Second)
-		fmt.Printf("sent: %d msg/s, received: %d msg/s\n", atomic.LoadInt32(&s) / 5, atomic.LoadInt32(&r) / 5)
+
+		fmt.Printf("sent: %d msg/s, ", atomic.LoadInt32(&s) / 5)
+		fmt.Printf("received: %d msg/s, ", atomic.LoadInt32(&r) / 5)
+		fmt.Printf("diff: %d\n", (atomic.LoadInt32(&s) / 5) - (atomic.LoadInt32(&r) / 5))
+
 		atomic.StoreInt32(&s, 0)
 		atomic.StoreInt32(&r, 0)
 	}
