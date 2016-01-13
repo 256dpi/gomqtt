@@ -84,7 +84,7 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 		require.NoError(t, err)
 
 		_, err = conn.Receive()
-		require.Error(t, err)
+		require.Equal(t, NetworkError, toError(err).Code())
 	}()
 
 	dialer := NewDialer()

@@ -68,7 +68,7 @@ func abstractServerLaunchErrorTest(t *testing.T, protocol string) {
 	tp := testPort(1) // <- no permissions
 
 	server, err := testLauncher.Launch(tp.url(protocol))
-	require.Error(t, err)
+	require.Equal(t, NetworkError, toError(err).Code())
 	require.Nil(t, server)
 }
 
@@ -83,5 +83,5 @@ func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
 
 	conn, err := server.Accept()
 	require.Nil(t, conn)
-	require.Error(t, err)
+	require.Equal(t, NetworkError, toError(err).Code())
 }
