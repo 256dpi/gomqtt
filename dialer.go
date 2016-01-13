@@ -25,7 +25,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var ErrUnsupportedProtocol = errors.New("dialer: unsupported protocol")
+var ErrUnsupportedProtocol = errors.New("unsupported protocol")
 
 type Dialer struct {
 	TLSConfig     *tls.Config
