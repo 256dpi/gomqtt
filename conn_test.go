@@ -22,19 +22,26 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func abstractConnTestPreparer(protocol string, handler Handler) (Conn, chan struct{}) {
+func abstractConnTestPreparer(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 	done := make(chan struct{})
 	tp := newTestPort()
 
-	var server *Server
+	server, err := testLauncher.Launch(tp.url(protocol))
+	if err != nil {
+		panic(err)
+	}
 
-	server = NewServer(func(conn Conn){
+	go func(){
+		conn, err := server.Accept()
+		if err != nil {
+			panic(err)
+		}
+
 		handler(conn)
-		server.Stop()
-		close(done)
-	})
 
-	server.Launch(protocol, tp.address())
+		server.Close()
+		close(done)
+	}()
 
 	conn, err := testDialer.Dial(tp.url(protocol))
 	if err != nil {
@@ -177,7 +184,7 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 	require.Equal(t, ExpectedClose, toError(err).Code())
 
 	err = conn2.Send(packet.NewConnectPacket())
-	require.Equal(t, ConnectionError, toError(err).Code())
+	require.Equal(t, NetworkError, toError(err).Code())
 
 	<-done
 }

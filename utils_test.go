@@ -23,7 +23,9 @@ import (
 
 var serverTLSConfig *tls.Config
 var clientTLSConfig *tls.Config
+
 var testDialer *Dialer
+var testLauncher *Launcher
 
 func init() {
 	cer, err := tls.LoadX509KeyPair("test/server.pem", "test/server.key")
@@ -36,6 +38,9 @@ func init() {
 
 	testDialer = NewDialer()
 	testDialer.TLSConfig = clientTLSConfig
+
+	testLauncher = NewLauncher()
+	testLauncher.TLSConfig = serverTLSConfig
 }
 
 // the testPort
@@ -60,11 +65,6 @@ func newTestPort() *testPort {
 	return &p
 }
 
-// generates the listen address for that testPort
-func (p *testPort) address() string {
-	return fmt.Sprintf("localhost:%d", int(*p))
-}
-
 // generates the url for that testPort
 func (p *testPort) url(protocol string) string {
 	return fmt.Sprintf("%s://localhost:%d/", protocol, int(*p))
@@ -83,5 +83,3 @@ func toError(err error) Error {
 
 	return nil
 }
-
-func noopHandler(conn Conn) {}

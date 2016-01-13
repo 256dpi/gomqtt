@@ -54,7 +54,7 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	err = c.conn.WriteMessage(websocket.BinaryMessage, buf)
 	if err != nil {
 		c.conn.Close()
-		return newTransportError(ConnectionError, err)
+		return newTransportError(NetworkError, err)
 	}
 
 	// increment write counter
@@ -87,7 +87,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 	// return on any other errors
 	if err != nil {
 		c.conn.Close()
-		return nil, newTransportError(ConnectionError, err)
+		return nil, newTransportError(NetworkError, err)
 	}
 
 	// detect packet
@@ -122,12 +122,12 @@ func (c *WebSocketConn) end() error {
 
 	err := c.conn.WriteMessage(websocket.CloseMessage, msg)
 	if err != nil {
-		return newTransportError(ConnectionError, err)
+		return newTransportError(NetworkError, err)
 	}
 
 	err = c.conn.Close()
 	if err != nil {
-		return newTransportError(ConnectionError, err)
+		return newTransportError(NetworkError, err)
 	}
 
 	return nil

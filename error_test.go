@@ -22,27 +22,30 @@ import (
 )
 
 func TestErrorStrings(t *testing.T) {
-	err1 := newTransportError(ExpectedClose, fmt.Errorf("foo"))
-	require.Equal(t, "expected close: foo", err1.Error())
+	err := newTransportError(ExpectedClose, fmt.Errorf("foo"))
+	require.Equal(t, "expected close: foo", err.Error())
 
-	err2 := newTransportError(DialError, fmt.Errorf("foo"))
-	require.Equal(t, "dial error: foo", err2.Error())
+	err = newTransportError(DialError, fmt.Errorf("foo"))
+	require.Equal(t, "dial error: foo", err.Error())
 
-	err3 := newTransportError(EncodeError, fmt.Errorf("foo"))
-	require.Equal(t, "encode error: foo", err3.Error())
+	err = newTransportError(LaunchError, fmt.Errorf("foo"))
+	require.Equal(t, "launch error: foo", err.Error())
 
-	err4 := newTransportError(DecodeError, fmt.Errorf("foo"))
-	require.Equal(t, "decode error: foo", err4.Error())
+	err = newTransportError(EncodeError, fmt.Errorf("foo"))
+	require.Equal(t, "encode error: foo", err.Error())
 
-	err5 := newTransportError(DetectionError, fmt.Errorf("foo"))
-	require.Equal(t, "detection error: foo", err5.Error())
+	err = newTransportError(DecodeError, fmt.Errorf("foo"))
+	require.Equal(t, "decode error: foo", err.Error())
 
-	err6 := newTransportError(ConnectionError, fmt.Errorf("foo"))
-	require.Equal(t, "connection error: foo", err6.Error())
+	err = newTransportError(DetectionError, fmt.Errorf("foo"))
+	require.Equal(t, "detection error: foo", err.Error())
 
-	err7 := newTransportError(ReadLimitExceeded, fmt.Errorf("foo"))
-	require.Equal(t, "read limit exceeded: foo", err7.Error())
+	err = newTransportError(NetworkError, fmt.Errorf("foo"))
+	require.Equal(t, "network error: foo", err.Error())
 
-	err8 := newTransportError(0, fmt.Errorf("foo"))
-	require.Equal(t, "unknown error: foo", err8.Error())
+	err = newTransportError(ReadLimitExceeded, fmt.Errorf("foo"))
+	require.Equal(t, "read limit exceeded: foo", err.Error())
+
+	err = newTransportError(0, fmt.Errorf("foo"))
+	require.Equal(t, "unknown error: foo", err.Error())
 }

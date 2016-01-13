@@ -22,10 +22,11 @@ const(
 	_ ErrorCode = iota
 	ExpectedClose
 	DialError
+	LaunchError
 	EncodeError
 	DecodeError
 	DetectionError
-	ConnectionError
+	NetworkError
 	ReadLimitExceeded
 )
 
@@ -57,14 +58,16 @@ func (err *transportError) Error() string {
 		return fmt.Sprintf("expected close: %s", err.err.Error())
 	case DialError:
 		return fmt.Sprintf("dial error: %s", err.err.Error())
+	case LaunchError:
+		return fmt.Sprintf("launch error: %s", err.err.Error())
 	case EncodeError:
 		return fmt.Sprintf("encode error: %s", err.err.Error())
 	case DecodeError:
 		return fmt.Sprintf("decode error: %s", err.err.Error())
 	case DetectionError:
 		return fmt.Sprintf("detection error: %s", err.err.Error())
-	case ConnectionError:
-		return fmt.Sprintf("connection error: %s", err.err.Error())
+	case NetworkError:
+		return fmt.Sprintf("network error: %s", err.err.Error())
 	case ReadLimitExceeded:
 		return fmt.Sprintf("read limit exceeded: %s", err.err.Error())
 	}

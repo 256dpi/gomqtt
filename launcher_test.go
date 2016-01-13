@@ -14,12 +14,18 @@
 
 package transport
 
-// Server defines the interface for all launched servers.
-type Server interface {
-	// Accept will return the next available connection or block until a
-	// connection becomes available, otherwise returns an error.
-	Accept() (Conn, error)
+import (
+	"testing"
 
-	// Close will close the underlying listener and cleanup resources.
-	Close() error
+	"github.com/stretchr/testify/require"
+)
+
+func TestGlobalLaunch(t *testing.T) {
+	tp := newTestPort()
+
+	server, err := Launch(tp.url("tcp"))
+	require.NoError(t, err)
+
+	err = server.Close()
+	require.NoError(t, err)
 }

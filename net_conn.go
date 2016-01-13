@@ -60,7 +60,7 @@ func (c *NetConn) Send(pkt packet.Packet) error {
 	bytesWritten, err := c.conn.Write(buf)
 	if err != nil {
 		c.conn.Close()
-		return newTransportError(ConnectionError, err)
+		return newTransportError(NetworkError, err)
 	}
 
 	// increment write counter
@@ -87,7 +87,7 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 			return nil, newTransportError(ExpectedClose, err)
 		} else if err != nil {
 			c.conn.Close()
-			return nil, newTransportError(ConnectionError, err)
+			return nil, newTransportError(NetworkError, err)
 		}
 
 		// detect packet
@@ -123,7 +123,7 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 			return nil, newTransportError(ExpectedClose, err)
 		} else if err != nil {
 			c.conn.Close()
-			return nil, newTransportError(ConnectionError, err)
+			return nil, newTransportError(NetworkError, err)
 		}
 
 		// decode buffer
@@ -143,7 +143,7 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 func (c *NetConn) Close() error {
 	err := c.conn.Close()
 	if err != nil {
-		return newTransportError(ConnectionError, err)
+		return newTransportError(NetworkError, err)
 	}
 
 	return nil

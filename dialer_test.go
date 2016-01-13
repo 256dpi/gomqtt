@@ -23,6 +23,7 @@ import (
 func TestGlobalDial(t *testing.T) {
 	conn, err := Dial("mqtt://localhost:1883")
 	require.NoError(t, err)
+
 	err = conn.Close()
 	require.NoError(t, err)
 }
@@ -30,6 +31,7 @@ func TestGlobalDial(t *testing.T) {
 func TestDialerURLWithoutPort(t *testing.T) {
 	conn, err := Dial("mqtt://localhost")
 	require.NoError(t, err)
+
 	err = conn.Close()
 	require.NoError(t, err)
 }
@@ -74,8 +76,7 @@ func TestDialerWSSError(t *testing.T) {
 func TestTCPDefaultPort(t *testing.T) {
 	tp := newTestPort()
 
-	server := NewServer(noopHandler)
-	err := server.Launch("tcp", tp.address())
+	server, err := testLauncher.Launch(tp.url("tcp"))
 	require.NoError(t, err)
 
 	dialer := NewDialer()
@@ -85,33 +86,31 @@ func TestTCPDefaultPort(t *testing.T) {
 	require.NoError(t, err)
 
 	conn.Close()
-	server.Stop()
+	server.Close()
 }
 
 //TODO: fix
 //func TestTLSDefaultPort(t *testing.T) {
 //	tp := newTestPort()
 //
-//	server := NewServer(noopHandler)
-//	err := server.LaunchTLS(tp.address(), serverTLSConfig)
+//	server, err := testLauncher.Launch(tp.url("tls"))
 //	require.NoError(t, err)
 //
 //	dialer := NewDialer()
-//	dialer.TLSClientConfig = clientTLSConfig
+//	dialer.TLSConfig = clientTLSConfig
 //	dialer.DefaultTLSPort = tp.port()
 //
 //	conn, err := dialer.Dial("tls://localhost")
 //	require.NoError(t, err)
 //
 //	conn.Close()
-//	server.Stop()
+//	server.Close()
 //}
 
 func TestWSDefaultPort(t *testing.T) {
 	tp := newTestPort()
 
-	server := NewServer(noopHandler)
-	err := server.Launch("ws", tp.address())
+	server, err := testLauncher.Launch(tp.url("ws"))
 	require.NoError(t, err)
 
 	dialer := NewDialer()
@@ -121,15 +120,13 @@ func TestWSDefaultPort(t *testing.T) {
 	require.NoError(t, err)
 
 	conn.Close()
-	server.Stop()
+	server.Close()
 }
 
 func TestWSSDefaultPort(t *testing.T) {
 	tp := newTestPort()
 
-	server := NewServer(noopHandler)
-	server.TLSConfig = serverTLSConfig
-	err := server.Launch("wss", tp.address())
+	server, err := testLauncher.Launch(tp.url("wss"))
 	require.NoError(t, err)
 
 	dialer := NewDialer()
@@ -140,5 +137,5 @@ func TestWSSDefaultPort(t *testing.T) {
 	require.NoError(t, err)
 
 	conn.Close()
-	server.Stop()
+	server.Close()
 }
