@@ -45,6 +45,9 @@ func NewNetConn(conn net.Conn) *NetConn {
 	}
 }
 
+// Send will write the packet to the underlying connection. It will return
+// an Error if there was an error while encoding or writing to the
+// underlying connection.
 func (c *NetConn) Send(pkt packet.Packet) error {
 	// allocate buffer
 	buf := make([]byte, pkt.Len())
@@ -69,6 +72,9 @@ func (c *NetConn) Send(pkt packet.Packet) error {
 	return nil
 }
 
+// Receive will read from the underlying connection and return a fully read
+// packet. It will return an Error if there was an error while decoding or
+// reading from the underlying connection.
 func (c *NetConn) Receive() (packet.Packet, error) {
 	// initial detection length
 	detectionLength := 2
@@ -140,6 +146,9 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 	}
 }
 
+// Close will close the underlying connection and cleanup resources. It will
+// return an Error if there was an error while closing the underlying
+// connection.
 func (c *NetConn) Close() error {
 	err := c.conn.Close()
 	if err != nil {
@@ -149,14 +158,21 @@ func (c *NetConn) Close() error {
 	return nil
 }
 
+// BytesWritten will return the number of bytes successfully written to
+// the underlying connection.
 func (c *NetConn) BytesWritten() int64 {
 	return c.writeCounter
 }
 
+// BytesRead will return the number of bytes successfully read from the
+// underlying connection.
 func (c *NetConn) BytesRead() int64 {
 	return c.readCounter
 }
 
+// SetReadLimit sets the maximum size of a packet that can be received.
+// If the limit is greater than zero, Receive will close the connection and
+// return an Error if receiving the next packet will exceed the limit.
 func (c *NetConn) SetReadLimit(limit int64) {
 	c.readLimit = limit
 }

@@ -23,16 +23,18 @@ import (
 // Conn defines the interface for all transport connections.
 type Conn interface {
 	// Send will write the packet to the underlying connection. It will return
-	// an error if there was an error while encoding or writing to the
+	// an Error if there was an error while encoding or writing to the
 	// underlying connection.
 	Send(packet.Packet) error
 
 	// Receive will read from the underlying connection and return a fully read
-	// packet. It will return an error if there was an error while decoding or
+	// packet. It will return an Error if there was an error while decoding or
 	// reading from the underlying connection.
 	Receive() (packet.Packet, error)
 
-	// Close will close the underlying connection and cleanup resources.
+	// Close will close the underlying connection and cleanup resources. It will
+	// return an Error if there was an error while closing the underlying
+	// connection.
 	Close() error
 
 	// BytesWritten will return the number of bytes successfully written to
@@ -43,7 +45,8 @@ type Conn interface {
 	// underlying connection.
 	BytesRead() int64
 
-	// SetReadLimit sets the maximum size for a packet read. If a packet exceeds
-	// the limit, the connection gets closed and returns an error.
+	// SetReadLimit sets the maximum size of a packet that can be received.
+	// If the limit is greater than zero, Receive will close the connection and
+	// return an Error if receiving the next packet will exceed the limit.
 	SetReadLimit(limit int64)
 }

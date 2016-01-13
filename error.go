@@ -30,6 +30,7 @@ const (
 	ReadLimitExceeded
 )
 
+// Error wraps standard errors and provides additional context information.
 type Error interface {
 	error
 
