@@ -89,23 +89,24 @@ func TestTCPDefaultPort(t *testing.T) {
 	server.Close()
 }
 
-//TODO: fix
-//func TestTLSDefaultPort(t *testing.T) {
-//	tp := newTestPort()
-//
-//	server, err := testLauncher.Launch(tp.url("tls"))
-//	require.NoError(t, err)
-//
-//	dialer := NewDialer()
-//	dialer.TLSConfig = clientTLSConfig
-//	dialer.DefaultTLSPort = tp.port()
-//
-//	conn, err := dialer.Dial("tls://localhost")
-//	require.NoError(t, err)
-//
-//	conn.Close()
-//	server.Close()
-//}
+func TestTLSDefaultPort(t *testing.T) {
+	t.SkipNow()
+	
+	tp := newTestPort()
+
+	server, err := testLauncher.Launch(tp.url("tls"))
+	require.NoError(t, err)
+
+	dialer := NewDialer()
+	dialer.TLSConfig = clientTLSConfig
+	dialer.DefaultTLSPort = tp.port()
+
+	conn, err := dialer.Dial("tls://localhost")
+	require.NoError(t, err)
+
+	conn.Close()
+	server.Close()
+}
 
 func TestWSDefaultPort(t *testing.T) {
 	tp := newTestPort()
