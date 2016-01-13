@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strconv"
 	"crypto/tls"
+	"net"
 )
 
 var serverTLSConfig *tls.Config
@@ -40,13 +41,22 @@ func init() {
 // the testPort
 type testPort int
 
-// the startPort that gets incremented
-var startPort = 55555
-
 // returns a new testPort
 func newTestPort() *testPort {
-	startPort++
-	p := testPort(startPort)
+	// taken from: https://github.com/phayes/freeport/blob/master/freeport.go
+
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
+	defer l.Close()
+
+	p := testPort(l.Addr().(*net.TCPAddr).Port)
 	return &p
 }
 
