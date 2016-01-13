@@ -121,42 +121,6 @@ func TestInvalidWebSocketUpgrade(t *testing.T) {
 	require.NoError(t, server.Error())
 }
 
-//TODO: fix
-//func TestTCPServerStop(t *testing.T) {
-//	tp := newTestPort()
-//
-//	server := NewServer(noopHandler)
-//	server.LaunchTCP(tp.address())
-//
-//	conn, err := testDialer.Dial(tp.url("tcp"))
-//	require.NoError(t, err)
-//
-//	server.Stop()
-//	require.NoError(t, server.Error())
-//	require.True(t, server.Stopped())
-//
-//	_, err = conn.Receive()
-//	require.Error(t, err)
-//}
-
-//TODO: fix
-//func TestWSServerStop(t *testing.T) {
-//	tp := newTestPort()
-//
-//	server := NewServer(noopHandler)
-//	server.LaunchWS(tp.address())
-//
-//	conn, err := testDialer.Dial(tp.url("ws"))
-//	require.NoError(t, err)
-//
-//	server.Stop()
-//	require.NoError(t, server.Error())
-//	require.True(t, server.Stopped())
-//
-//	_, err = conn.Receive()
-//	require.Error(t, err)
-//}
-
 func TestTCPAcceptError(t *testing.T) {
 	tp := newTestPort()
 
