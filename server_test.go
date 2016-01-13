@@ -72,71 +72,16 @@ func abstractServerLaunchErrorTest(t *testing.T, protocol string) {
 	require.Nil(t, server)
 }
 
-//TODO: migrate
-//func TestInactiveRequestHandler(t *testing.T) {
-//	tp := newTestPort()
-//
-//	listener, err := net.Listen("tcp", tp.address())
-//	require.NoError(t, err)
-//
-//	server := NewServer(noopHandler)
-//	server.Stop()
-//
-//	mux := http.NewServeMux()
-//	mux.HandleFunc("/", server.RequestHandler())
-//
-//	serv := &http.Server{
-//		Handler: mux,
-//	}
-//	go func(){
-//		err = serv.Serve(listener)
-//		require.NoError(t, err)
-//	}()
-//	_, err = testDialer.Dial(tp.url("ws"))
-//	require.Error(t, err)
-//
-//	listener.Close()
-//}
+func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
+	tp := newTestPort()
 
-//TODO: migrate
-//func TestInvalidWebSocketUpgrade(t *testing.T) {
-//	tp := newTestPort()
-//
-//	server := NewServer(noopHandler)
-//	server.Launch("ws", tp.address())
-//
-//	resp, err := http.PostForm(tp.url("http"), url.Values{"foo": {"bar"}})
-//	require.Equal(t, "405 Method Not Allowed", resp.Status)
-//	require.NoError(t, err)
-//
-//	server.Stop()
-//	require.NoError(t, server.Error())
-//}
+	server, err := testLauncher.Launch(tp.url(protocol))
+	require.NoError(t, err)
 
-//TODO: migrate
-//func TestTCPAcceptError(t *testing.T) {
-//	tp := newTestPort()
-//
-//	server := NewServer(noopHandler)
-//	server.Launch("tcp", tp.address())
-//
-//	server.listeners[0].Close()
-//	time.Sleep(1 * time.Second)
-//
-//	require.Error(t, server.Error())
-//	require.True(t, server.Stopped())
-//}
+	err = server.Close()
+	require.NoError(t, err)
 
-//TODO: migrate
-//func TestHTTPAcceptError(t *testing.T) {
-//	tp := newTestPort()
-//
-//	server := NewServer(noopHandler)
-//	server.Launch("ws", tp.address())
-//
-//	server.listeners[0].Close()
-//	time.Sleep(1 * time.Second)
-//
-//	require.Error(t, server.Error())
-//	require.True(t, server.Stopped())
-//}
+	conn, err := server.Accept()
+	require.Nil(t, conn)
+	require.Error(t, err)
+}

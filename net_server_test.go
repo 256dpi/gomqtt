@@ -1,6 +1,8 @@
 package transport
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestTCPServer(t *testing.T) {
 	abstractServerTest(t, "tcp")
@@ -16,4 +18,8 @@ func TestTCPServerLaunchError(t *testing.T) {
 
 func TestTLSServerLaunchError(t *testing.T) {
 	abstractServerLaunchErrorTest(t, "tls")
+}
+
+func TestNetServerAcceptAfterClose(t *testing.T) {
+	abstractServerAcceptAfterCloseTest(t, "tcp")
 }

@@ -22,7 +22,12 @@ import (
 
 	"github.com/gorilla/websocket"
 	"gopkg.in/tomb.v2"
+	"errors"
 )
+
+var ErrAcceptAfterClose = errors.New("accept after close")
+
+var errManualClose = errors.New("manual close")
 
 type WebSocketServer struct {
 	listener net.Listener
@@ -104,15 +109,20 @@ func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request)
 func (s *WebSocketServer) Accept() (Conn, error) {
 	select {
 	case <-s.tomb.Dying():
-		// return the previously caught error
-		return nil, s.tomb.Err()
+		if s.tomb.Err() == errManualClose {
+			// server has been closed manually
+			return nil, newTransportError(NetworkError, ErrAcceptAfterClose)
+		} else {
+			// return the previously caught error
+			return nil, s.tomb.Err()
+		}
 	case conn := <-s.incoming:
 		return conn, nil
 	}
 }
 
 func (s *WebSocketServer) Close() error {
-	s.tomb.Kill(nil)
+	s.tomb.Kill(errManualClose)
 
 	err := s.listener.Close()
 	s.tomb.Wait()
