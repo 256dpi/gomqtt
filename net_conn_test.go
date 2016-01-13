@@ -18,60 +18,38 @@ import (
 	"testing"
 )
 
-func tcpPreparer(handler Handler) (Conn, chan struct{}) {
-	done := make(chan struct{})
-	tp := newTestPort()
-
-	var server *Server
-
-	server = NewServer(func(conn Conn){
-		handler(conn)
-		server.Stop()
-		close(done)
-	})
-
-	server.Launch("tcp", tp.address())
-
-	conn, err := testDialer.Dial(tp.url("tcp"))
-	if err != nil {
-		panic(err)
-	}
-
-	return conn, done
-}
-
 func TestNetConnConnection(t *testing.T) {
-	abstractConnConnectTest(t, tcpPreparer)
+	abstractConnConnectTest(t, "tcp")
 }
 
 func TestNetConnClose(t *testing.T) {
-	abstractConnCloseTest(t, tcpPreparer)
+	abstractConnCloseTest(t, "tcp")
 }
 
 func TestNetConnEncodeError(t *testing.T) {
-	abstractConnEncodeErrorTest(t, tcpPreparer)
+	abstractConnEncodeErrorTest(t, "tcp")
 }
 
 func TestNetConnDecode1Error(t *testing.T) {
-	abstractConnDecodeError1Test(t, tcpPreparer)
+	abstractConnDecodeError1Test(t, "tcp")
 }
 
 func TestNetConnDecode2Error(t *testing.T) {
-	abstractConnDecodeError2Test(t, tcpPreparer)
+	abstractConnDecodeError2Test(t, "tcp")
 }
 
 func TestNetConnDecode3Error(t *testing.T) {
-	abstractConnDecodeError3Test(t, tcpPreparer)
+	abstractConnDecodeError3Test(t, "tcp")
 }
 
 func TestNetConnSendAfterClose(t *testing.T) {
-	abstractConnSendAfterCloseTest(t, tcpPreparer)
+	abstractConnSendAfterCloseTest(t, "tcp")
 }
 
 func TestNetConnCounters(t *testing.T) {
-	abstractConnCountersTest(t, tcpPreparer)
+	abstractConnCountersTest(t, "tcp")
 }
 
 func TestNetConnReadLimit(t *testing.T) {
-	abstractConnReadLimitTest(t, tcpPreparer)
+	abstractConnReadLimitTest(t, "tcp")
 }

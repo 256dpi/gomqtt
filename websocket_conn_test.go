@@ -20,66 +20,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func wsPreparer(handler Handler) (Conn, chan struct{}) {
-	done := make(chan struct{})
-	tp := newTestPort()
-
-	var server *Server
-
-	server = NewServer(func(conn Conn){
-		handler(conn)
-		server.Stop()
-		close(done)
-	})
-
-	server.Launch("ws", tp.address())
-
-	conn, err := testDialer.Dial(tp.url("ws"))
-	if err != nil {
-		panic(err)
-	}
-
-	return conn, done
-}
-
 func TestWebSocketConnConnection(t *testing.T) {
-	abstractConnConnectTest(t, wsPreparer)
+	abstractConnConnectTest(t, "ws")
 }
 
 func TestWebSocketConnClose(t *testing.T) {
-	abstractConnCloseTest(t, wsPreparer)
+	abstractConnCloseTest(t, "ws")
 }
 
 func TestWebSocketConnEncodeError(t *testing.T) {
-	abstractConnEncodeErrorTest(t, wsPreparer)
+	abstractConnEncodeErrorTest(t, "ws")
 }
 
 func TestWebSocketConnDecode1Error(t *testing.T) {
-	abstractConnDecodeError1Test(t, wsPreparer)
+	abstractConnDecodeError1Test(t, "ws")
 }
 
 func TestWebSocketConnDecode2Error(t *testing.T) {
-	abstractConnDecodeError2Test(t, wsPreparer)
+	abstractConnDecodeError2Test(t, "ws")
 }
 
 func TestWebSocketConnDecode3Error(t *testing.T) {
-	abstractConnDecodeError3Test(t, wsPreparer)
+	abstractConnDecodeError3Test(t, "ws")
 }
 
 func TestWebSocketConnSendAfterClose(t *testing.T) {
-	abstractConnSendAfterCloseTest(t, wsPreparer)
+	abstractConnSendAfterCloseTest(t, "ws")
 }
 
 func TestWebSocketConnCounters(t *testing.T) {
-	abstractConnCountersTest(t, wsPreparer)
+	abstractConnCountersTest(t, "ws")
 }
 
 func TestWebSocketConnReadLimit(t *testing.T) {
-	abstractConnReadLimitTest(t, wsPreparer)
+	abstractConnReadLimitTest(t, "ws")
 }
 
 func TestWebSocketBadFrameError(t *testing.T) {
-	conn2, done := wsPreparer(func(conn1 Conn){
+	conn2, done := abstractConnTestPreparer("ws", func(conn1 Conn){
 		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // <- bad frame
 
 		if webSocketConn, ok := conn1.(*WebSocketConn); ok {

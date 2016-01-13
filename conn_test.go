@@ -22,10 +22,30 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type abstractTestPreparer func (Handler) (Conn, chan struct{})
+func abstractConnTestPreparer(protocol string, handler Handler) (Conn, chan struct{}) {
+	done := make(chan struct{})
+	tp := newTestPort()
 
-func abstractConnConnectTest(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+	var server *Server
+
+	server = NewServer(func(conn Conn){
+		handler(conn)
+		server.Stop()
+		close(done)
+	})
+
+	server.Launch(protocol, tp.address())
+
+	conn, err := testDialer.Dial(tp.url(protocol))
+	if err != nil {
+		panic(err)
+	}
+
+	return conn, done
+}
+
+func abstractConnConnectTest(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		pkt, err := conn1.Receive()
 		require.Equal(t, pkt.Type(), packet.CONNECT)
 		require.NoError(t, err)
@@ -51,8 +71,8 @@ func abstractConnConnectTest(t *testing.T, preparer abstractTestPreparer) {
 	<-done
 }
 
-func abstractConnCloseTest(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+func abstractConnCloseTest(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		err := conn1.Close()
 		require.NoError(t, err)
 	})
@@ -64,8 +84,8 @@ func abstractConnCloseTest(t *testing.T, preparer abstractTestPreparer) {
 	<-done
 }
 
-func abstractConnEncodeErrorTest(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		pkt := packet.NewConnackPacket()
 		pkt.ReturnCode = 11 // <- invalid return code
 
@@ -80,8 +100,8 @@ func abstractConnEncodeErrorTest(t *testing.T, preparer abstractTestPreparer) {
 	<-done
 }
 
-func abstractConnDecodeError1Test(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+func abstractConnDecodeError1Test(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		buf := []byte{0x00, 0x00} // <- too small
 
 		if netConn, ok := conn1.(*NetConn); ok {
@@ -102,8 +122,8 @@ func abstractConnDecodeError1Test(t *testing.T, preparer abstractTestPreparer) {
 	<-done
 }
 
-func abstractConnDecodeError2Test(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+func abstractConnDecodeError2Test(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		buf := []byte{0x10, 0xff, 0xff, 0xff, 0x80} // <- too long
 
 		if netConn, ok := conn1.(*NetConn); ok {
@@ -124,8 +144,8 @@ func abstractConnDecodeError2Test(t *testing.T, preparer abstractTestPreparer) {
 	<-done
 }
 
-func abstractConnDecodeError3Test(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+func abstractConnDecodeError3Test(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		buf := []byte{0x20, 0x02, 0x00, 0x06} // <- invalid packet
 
 		if netConn, ok := conn1.(*NetConn); ok {
@@ -146,8 +166,8 @@ func abstractConnDecodeError3Test(t *testing.T, preparer abstractTestPreparer) {
 	<-done
 }
 
-func abstractConnSendAfterCloseTest(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		err := conn1.Close()
 		require.NoError(t, err)
 	})
@@ -162,8 +182,8 @@ func abstractConnSendAfterCloseTest(t *testing.T, preparer abstractTestPreparer)
 	<-done
 }
 
-func abstractConnCountersTest(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+func abstractConnCountersTest(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		pkt, _ := conn1.Receive()
 		require.Equal(t, int64(pkt.Len()), conn1.BytesRead())
 
@@ -185,8 +205,8 @@ func abstractConnCountersTest(t *testing.T, preparer abstractTestPreparer) {
 	<-done
 }
 
-func abstractConnReadLimitTest(t *testing.T, preparer abstractTestPreparer) {
-	conn2, done := preparer(func(conn1 Conn){
+func abstractConnReadLimitTest(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn){
 		conn1.SetReadLimit(1)
 
 		pkt, err := conn1.Receive()
