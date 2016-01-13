@@ -20,21 +20,21 @@ import (
 )
 
 type QueueBackend interface {
-	Subscribe(*Connection, string)
-	Unsubscribe(*Connection, string)
-	Remove(conn *Connection)
+	Subscribe(*Client, string)
+	Unsubscribe(*Client, string)
+	Remove(*Client)
 	Publish(*packet.PublishPacket)
 }
 
 type RetainedBackend interface {
-	StoreRetained(*Connection, *packet.PublishPacket)
-	RetrieveRetained(*Connection, string) []*packet.PublishPacket
+	StoreRetained(*Client, *packet.PublishPacket)
+	RetrieveRetained(*Client, string) []*packet.PublishPacket
 }
 
 type WillBackend interface {
-	StoreWill(*Connection, *packet.PublishPacket)
-	RetrieveWill(*Connection) *packet.PublishPacket
-	ClearWill(*Connection)
+	StoreWill(*Client, *packet.PublishPacket)
+	RetrieveWill(*Client) *packet.PublishPacket
+	ClearWill(*Client)
 }
 
 // TODO: missing offline subscriptions
@@ -49,25 +49,21 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-func (m *MemoryBackend) Subscribe(conn *Connection, filter string) {
+func (m *MemoryBackend) Subscribe(conn *Client, filter string) {
 	m.tree.Add(filter, conn)
 }
 
-func (m *MemoryBackend) Unsubscribe(conn *Connection, filter string) {
+func (m *MemoryBackend) Unsubscribe(conn *Client, filter string) {
 	m.tree.Remove(filter, conn)
 }
 
-func (m *MemoryBackend) Remove(conn *Connection) {
+func (m *MemoryBackend) Remove(conn *Client) {
 	m.tree.Clear(conn)
 }
 
-func (m *MemoryBackend) Publish(message *packet.PublishPacket) {
-	for _, v := range m.tree.Match(string(message.Topic)) {
-		conn, ok := v.(*Connection)
-
-		if ok {
-			conn.stream.Send(message)
-		}
+func (m *MemoryBackend) Publish(pkt *packet.PublishPacket) {
+	for _, v := range m.tree.Match(string(pkt.Topic)) {
+		v.(*Client).publish(pkt)
 	}
 }
 

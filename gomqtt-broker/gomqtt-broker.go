@@ -23,13 +23,11 @@ import (
 	"syscall"
 	"fmt"
 
-	"github.com/gomqtt/server"
+	"github.com/gomqtt/transport"
 	"github.com/gomqtt/broker"
-	"net"
 )
 
-var host = flag.String("host", "0.0.0.0", "broker host")
-var port = flag.String("port", "1884", "broker port")
+var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memProfile = flag.String("memprofile", "", "write memory profile to this file")
@@ -51,13 +49,30 @@ func main() {
 
 	// start
 
-	s := server.New()
-	s.LaunchTCP(net.JoinHostPort(*host, *port))
-	fmt.Println("launched server")
+	fmt.Println("starting broker on url '" + *url + "' ...")
 
-	m := broker.NewMemoryBackend()
-	broker.New(s.Accept(), m, nil, nil)
-	fmt.Println("started broker")
+	server, err := transport.Launch(*url)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("launched server!")
+
+	memoryBackend := broker.NewMemoryBackend()
+	broker := broker.New(memoryBackend, nil, nil)
+
+	go func(){
+		for {
+			conn, err := server.Accept()
+			if err != nil {
+				panic(err)
+			}
+
+			broker.Handle(conn)
+		}
+	}()
+
+	fmt.Println("started broker!")
 
 	// finish
 

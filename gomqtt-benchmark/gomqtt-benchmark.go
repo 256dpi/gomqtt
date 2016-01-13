@@ -26,6 +26,7 @@ import (
 )
 
 const interval = 100
+const update = 5
 
 var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")
@@ -40,6 +41,7 @@ func main() {
 
 	for i := 0; i < *workers; i++ {
 		id := "id-" + strconv.Itoa(i)
+
 		go counter(id)
 		go bomber(id)
 	}
@@ -47,16 +49,16 @@ func main() {
 	reporter()
 }
 
-func connection(name string) transport.Conn {
+func connection(id string) transport.Conn {
 	conn, err := transport.Dial(*url)
 	if err != nil {
 		panic(err)
 	}
 
-	cp := packet.NewConnectPacket()
-	cp.ClientID = []byte("gomqtt-benchmark/" + name)
+	connect := packet.NewConnectPacket()
+	connect.ClientID = []byte("gomqtt-benchmark/" + id)
 
-	err = conn.Send(cp)
+	err = conn.Send(connect)
 	if err != nil {
 		panic(err)
 	}
@@ -66,97 +68,104 @@ func connection(name string) transport.Conn {
 		panic(err)
 	}
 
-	if ap, ok := pkt.(*packet.ConnackPacket); ok {
-		if ap.ReturnCode == packet.ConnectionAccepted {
+	if connack, ok := pkt.(*packet.ConnackPacket); ok {
+		if connack.ReturnCode == packet.ConnectionAccepted {
+			fmt.Println(id + ": connected")
+
 			return conn
 		}
 	}
 
-	panic(name + ": connection failed")
+	panic(id + ": connection failed")
 }
 
 func counter(id string) {
-	s := connection("counter/" + id)
+	conn := connection("counter/" + id)
 
-	sp := packet.NewSubscribePacket()
-	sp.PacketID = 1
-	sp.Subscriptions = []packet.Subscription{
+	subscribe := packet.NewSubscribePacket()
+	subscribe.PacketID = 1
+	subscribe.Subscriptions = []packet.Subscription{
 		packet.Subscription{
 			Topic: []byte(id),
 			QOS: 0,
 		},
 	}
 
-	err := s.Send(sp)
+	err := conn.Send(subscribe)
 	if err != nil {
 		panic(err)
 	}
 
-	i := 0
+	fmt.Println(id + ": subscribed to '" + id + "'")
+
+	counter:= 0
 
 	for {
-		_, err := s.Receive()
+		_, err := conn.Receive()
 		if err != nil {
 			panic(err)
 		}
 
-		i++
+		counter++
 
-		if i >= interval {
-			received <- i
-			i = 0
+		if counter >= interval {
+			received <- counter
+			counter = 0
 		}
 	}
 }
 
 func bomber(id string) {
-	s := connection("bomber/" + id)
+	conn := connection("bomber/" + id)
 
-	pp := packet.NewPublishPacket()
-	pp.Topic = []byte(id)
-	pp.Payload = []byte("foo")
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte(id)
+	publish.Payload = []byte("foo")
 
-	i := 0
+	counter := 0
 
 	for {
-		err := s.Send(pp)
+		err := conn.Send(publish)
 		if err != nil {
 			panic(err)
 		}
 
-		i++
+		counter++
 
-		if i >= interval {
-			sent <- i
-			i = 0
+		if counter >= interval {
+			sent <- counter
+			counter = 0
 		}
 	}
 }
 
 func reporter() {
-	var s int32 = 0
-	var r int32 = 0
+	var sentCounter int32 = 0
+	var receivedCounter int32 = 0
 
 	go func(){
 		for {
-			atomic.AddInt32(&s, int32(<-sent))
+			atomic.AddInt32(&sentCounter, int32(<-sent))
 		}
 	}()
 
 	go func(){
 		for {
-			atomic.AddInt32(&r, int32(<-received))
+			atomic.AddInt32(&receivedCounter, int32(<-received))
 		}
 	}()
 
 	for {
-		<-time.After(5 * time.Second)
+		<-time.After(update * time.Second)
 
-		fmt.Printf("sent: %d msg/s, ", atomic.LoadInt32(&s) / 5)
-		fmt.Printf("received: %d msg/s, ", atomic.LoadInt32(&r) / 5)
-		fmt.Printf("diff: %d\n", (atomic.LoadInt32(&s) / 5) - (atomic.LoadInt32(&r) / 5))
+		sentPerSecond := atomic.LoadInt32(&sentCounter) / update
+		receivedPerSecond := atomic.LoadInt32(&receivedCounter) / update
 
-		atomic.StoreInt32(&s, 0)
-		atomic.StoreInt32(&r, 0)
+		fmt.Printf("sent: %d msg/s, ", sentPerSecond)
+		fmt.Printf("received: %d msg/s, ", receivedPerSecond)
+		fmt.Printf("diff: %d\n", sentPerSecond - receivedPerSecond)
+
+		atomic.StoreInt32(&sentCounter, 0)
+		atomic.StoreInt32(&receivedCounter, 0)
 	}
 }
