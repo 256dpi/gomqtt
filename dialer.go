@@ -16,11 +16,11 @@ package transport
 
 import (
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
-	"errors"
-	"fmt"
 
 	"github.com/gorilla/websocket"
 )
@@ -28,7 +28,7 @@ import (
 var ErrUnsupportedProtocol = errors.New("dialer: unsupported protocol")
 
 type Dialer struct {
-	TLSConfig *tls.Config
+	TLSConfig     *tls.Config
 	RequestHeader http.Header
 
 	DefaultTCPPort string
@@ -46,8 +46,8 @@ func NewDialer() *Dialer {
 		DefaultWSPort:  "80",
 		DefaultWSSPort: "443",
 		webSocketDialer: &websocket.Dialer{
-			Proxy: http.ProxyFromEnvironment,
-			Subprotocols: []string{ "mqtt" },
+			Proxy:        http.ProxyFromEnvironment,
+			Subprotocols: []string{"mqtt"},
 		},
 	}
 }

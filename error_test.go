@@ -15,8 +15,8 @@
 package transport
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 )

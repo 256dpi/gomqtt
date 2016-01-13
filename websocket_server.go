@@ -15,8 +15,8 @@
 package transport
 
 import (
-	"net"
 	"crypto/tls"
+	"net"
 	"net/http"
 	"time"
 
@@ -37,7 +37,7 @@ func newWebSocketServer(listener net.Listener) *WebSocketServer {
 		listener: listener,
 		upgrader: &websocket.Upgrader{
 			HandshakeTimeout: 60 * time.Second,
-			Subprotocols: []string{ "mqtt" },
+			Subprotocols:     []string{"mqtt"},
 		},
 		incoming: make(chan *WebSocketConn),
 	}
@@ -75,7 +75,7 @@ func (s *WebSocketServer) serveHTTP() {
 		Handler: mux,
 	}
 
-	s.tomb.Go(func()(error){
+	s.tomb.Go(func() error {
 		err := h.Serve(s.listener)
 		if err != nil {
 			newTransportError(NetworkError, err)
@@ -106,7 +106,7 @@ func (s *WebSocketServer) Accept() (Conn, error) {
 	case <-s.tomb.Dying():
 		// return the previously caught error
 		return nil, s.tomb.Err()
-	case conn := <- s.incoming:
+	case conn := <-s.incoming:
 		return conn, nil
 	}
 }

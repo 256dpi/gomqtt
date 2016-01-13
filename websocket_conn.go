@@ -15,8 +15,8 @@
 package transport
 
 import (
-	"sync/atomic"
 	"errors"
+	"sync/atomic"
 
 	"github.com/gomqtt/packet"
 	"github.com/gorilla/websocket"
@@ -29,7 +29,7 @@ type WebSocketConn struct {
 	conn *websocket.Conn
 
 	writeCounter int64
-	readCounter int64
+	readCounter  int64
 }
 
 // NewWebSocketConn returns a new WebSocketConn.

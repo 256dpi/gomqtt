@@ -15,10 +15,10 @@
 package transport
 
 import (
-	"fmt"
-	"strconv"
 	"crypto/tls"
+	"fmt"
 	"net"
+	"strconv"
 )
 
 var serverTLSConfig *tls.Config

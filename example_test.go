@@ -27,7 +27,7 @@ func ExampleTransport() {
 		panic(err)
 	}
 
-	go func(){
+	go func() {
 		// accept next incoming connection
 		conn, err := server.Accept()
 		if err != nil {

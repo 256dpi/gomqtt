@@ -18,7 +18,7 @@ import "fmt"
 
 type ErrorCode int
 
-const(
+const (
 	_ ErrorCode = iota
 	ExpectedClose
 	DialError
@@ -42,13 +42,13 @@ type Error interface {
 
 type transportError struct {
 	code ErrorCode
-	err error
+	err  error
 }
 
 func newTransportError(code ErrorCode, err error) *transportError {
 	return &transportError{
 		code: code,
-		err: err,
+		err:  err,
 	}
 }
 

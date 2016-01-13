@@ -21,8 +21,8 @@ import (
 	//"net/url"
 	//"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/gomqtt/packet"
+	"github.com/stretchr/testify/require"
 )
 
 func abstractServerTest(t *testing.T, protocol string) {
@@ -31,7 +31,7 @@ func abstractServerTest(t *testing.T, protocol string) {
 	server, err := testLauncher.Launch(tp.url(protocol))
 	require.NoError(t, err)
 
-	go func(){
+	go func() {
 		conn1, err := server.Accept()
 		require.NoError(t, err)
 

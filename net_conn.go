@@ -16,10 +16,10 @@ package transport
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"net"
 	"sync/atomic"
-	"errors"
 
 	"github.com/gomqtt/packet"
 )
@@ -29,18 +29,18 @@ var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
 // The NetConn wraps a TCP based connection.
 type NetConn struct {
-	conn net.Conn
+	conn   net.Conn
 	reader *bufio.Reader
 
 	writeCounter int64
-	readCounter int64
-	readLimit int64
+	readCounter  int64
+	readLimit    int64
 }
 
 // NewNetConn returns a new NetConn.
 func NewNetConn(conn net.Conn) *NetConn {
 	return &NetConn{
-		conn: conn,
+		conn:   conn,
 		reader: bufio.NewReader(conn),
 	}
 }

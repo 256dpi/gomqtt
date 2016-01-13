@@ -17,4 +17,3 @@ func TestWSServerLaunchError(t *testing.T) {
 func TestWSSServerLaunchError(t *testing.T) {
 	abstractServerLaunchErrorTest(t, "wss")
 }
-

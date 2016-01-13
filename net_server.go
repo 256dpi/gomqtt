@@ -15,8 +15,8 @@
 package transport
 
 import (
-	"net"
 	"crypto/tls"
+	"net"
 )
 
 type NetServer struct {
