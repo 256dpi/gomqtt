@@ -75,7 +75,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 	}
 
 	switch urlParts.Scheme {
-	case "mqtt", "tcp":
+	case "tcp", "mqtt":
 		if port == "" {
 			port = d.DefaultTCPPort
 		}
@@ -86,7 +86,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 		}
 
 		return NewNetConn(conn), nil
-	case "mqtts", "tcps", "ssl", "tls":
+	case "tls", "mqtts":
 		if port == "" {
 			port = d.DefaultTLSPort
 		}

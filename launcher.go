@@ -44,9 +44,9 @@ func (l *Launcher) Launch(urlString string) (Server, error) {
 	}
 
 	switch urlParts.Scheme {
-	case "mqtt", "tcp":
+	case "tcp", "mqtt":
 		return NewNetServer(urlParts.Host)
-	case "mqtts", "tcps", "ssl", "tls":
+	case "tls", "mqtts":
 		return NewSecureNetServer(urlParts.Host, l.TLSConfig)
 	case "ws":
 		return NewWebSocketServer(urlParts.Host)
