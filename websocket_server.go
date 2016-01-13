@@ -29,6 +29,7 @@ var ErrAcceptAfterClose = errors.New("accept after close")
 
 var errManualClose = errors.New("manual close")
 
+// WebSocketServer accepts websocket.Conn based connections.
 type WebSocketServer struct {
 	listener net.Listener
 	upgrader *websocket.Upgrader
@@ -48,6 +49,7 @@ func newWebSocketServer(listener net.Listener) *WebSocketServer {
 	}
 }
 
+// NewWebSocketServer creates a new WS server that listens on the provided address.
 func NewWebSocketServer(address string) (*WebSocketServer, error) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
@@ -60,6 +62,8 @@ func NewWebSocketServer(address string) (*WebSocketServer, error) {
 	return s, nil
 }
 
+// NewSecureWebSocketServer creates a new WSS server that listens on the
+// provided address.
 func NewSecureWebSocketServer(address string, config *tls.Config) (*WebSocketServer, error) {
 	listener, err := tls.Listen("tcp", address, config)
 	if err != nil {
@@ -106,21 +110,25 @@ func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+// Accept will return the next available connection or block until a
+// connection becomes available, otherwise returns an Error.
 func (s *WebSocketServer) Accept() (Conn, error) {
 	select {
 	case <-s.tomb.Dying():
 		if s.tomb.Err() == errManualClose {
 			// server has been closed manually
 			return nil, newTransportError(NetworkError, ErrAcceptAfterClose)
-		} else {
-			// return the previously caught error
-			return nil, s.tomb.Err()
 		}
+
+		// return the previously caught error
+		return nil, s.tomb.Err()
 	case conn := <-s.incoming:
 		return conn, nil
 	}
 }
 
+// Close will close the underlying listener and cleanup resources. It will
+// return an Error if the underlying listener didn't close cleanly.
 func (s *WebSocketServer) Close() error {
 	s.tomb.Kill(errManualClose)
 

@@ -17,9 +17,10 @@ package transport
 // Server defines the interface for all launched servers.
 type Server interface {
 	// Accept will return the next available connection or block until a
-	// connection becomes available, otherwise returns an error.
+	// connection becomes available, otherwise returns an Error.
 	Accept() (Conn, error)
 
-	// Close will close the underlying listener and cleanup resources.
+	// Close will close the underlying listener and cleanup resources. It will
+	// return an Error if the underlying listener didn't close cleanly.
 	Close() error
 }
