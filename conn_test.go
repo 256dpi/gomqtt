@@ -19,7 +19,7 @@ import (
 
 	"github.com/gomqtt/packet"
 	"github.com/gorilla/websocket"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func abstractConnTestPreparer(protocol string, handler func(Conn)) (Conn, chan struct{}) {
@@ -54,26 +54,26 @@ func abstractConnTestPreparer(protocol string, handler func(Conn)) (Conn, chan s
 func abstractConnConnectTest(t *testing.T, protocol string) {
 	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
-		require.Equal(t, pkt.Type(), packet.CONNECT)
-		require.NoError(t, err)
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
+		assert.NoError(t, err)
 
 		err = conn1.Send(packet.NewConnackPacket())
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, ExpectedClose, toError(err).Code())
 	})
 
 	err := conn2.Send(packet.NewConnectPacket())
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
-	require.Equal(t, pkt.Type(), packet.CONNACK)
-	require.NoError(t, err)
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
+	assert.NoError(t, err)
 
 	err = conn2.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	<-done
 }
@@ -81,12 +81,12 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 func abstractConnCloseTest(t *testing.T, protocol string) {
 	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
 		err := conn1.Close()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	})
 
 	pkt, err := conn2.Receive()
-	require.Nil(t, pkt)
-	require.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Nil(t, pkt)
+	assert.Equal(t, ExpectedClose, toError(err).Code())
 
 	<-done
 }
@@ -97,12 +97,12 @@ func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
 		pkt.ReturnCode = 11 // <- invalid return code
 
 		err := conn1.Send(pkt)
-		require.Equal(t, EncodeError, toError(err).Code())
+		assert.Equal(t, EncodeError, toError(err).Code())
 	})
 
 	pkt, err := conn2.Receive()
-	require.Nil(t, pkt)
-	require.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Nil(t, pkt)
+	assert.Equal(t, ExpectedClose, toError(err).Code())
 
 	<-done
 }
@@ -118,13 +118,13 @@ func abstractConnDecodeError1Test(t *testing.T, protocol string) {
 		}
 
 		pkt, err := conn1.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, ExpectedClose, toError(err).Code())
 	})
 
 	pkt, err := conn2.Receive()
-	require.Nil(t, pkt)
-	require.Equal(t, DetectionError, toError(err).Code())
+	assert.Nil(t, pkt)
+	assert.Equal(t, DetectionError, toError(err).Code())
 
 	<-done
 }
@@ -140,13 +140,13 @@ func abstractConnDecodeError2Test(t *testing.T, protocol string) {
 		}
 
 		pkt, err := conn1.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, ExpectedClose, toError(err).Code())
 	})
 
 	pkt, err := conn2.Receive()
-	require.Nil(t, pkt)
-	require.Equal(t, DetectionError, toError(err).Code())
+	assert.Nil(t, pkt)
+	assert.Equal(t, DetectionError, toError(err).Code())
 
 	<-done
 }
@@ -162,13 +162,13 @@ func abstractConnDecodeError3Test(t *testing.T, protocol string) {
 		}
 
 		pkt, err := conn1.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, ExpectedClose, toError(err).Code())
 	})
 
 	pkt, err := conn2.Receive()
-	require.Nil(t, pkt)
-	require.Equal(t, DecodeError, toError(err).Code())
+	assert.Nil(t, pkt)
+	assert.Equal(t, DecodeError, toError(err).Code())
 
 	<-done
 }
@@ -176,15 +176,15 @@ func abstractConnDecodeError3Test(t *testing.T, protocol string) {
 func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
 		err := conn1.Close()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	})
 
 	pkt, err := conn2.Receive()
-	require.Nil(t, pkt)
-	require.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Nil(t, pkt)
+	assert.Equal(t, ExpectedClose, toError(err).Code())
 
 	err = conn2.Send(packet.NewConnectPacket())
-	require.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code())
 
 	<-done
 }
@@ -192,27 +192,27 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 func abstractConnCountersTest(t *testing.T, protocol string) {
 	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
-		require.NoError(t, err)
-		require.Equal(t, int64(pkt.Len()), conn1.BytesRead())
+		assert.NoError(t, err)
+		assert.Equal(t, int64(pkt.Len()), conn1.BytesRead())
 
 		pkt2 := packet.NewConnackPacket()
 		conn1.Send(pkt2)
-		require.Equal(t, int64(pkt2.Len()), conn1.BytesWritten())
+		assert.Equal(t, int64(pkt2.Len()), conn1.BytesWritten())
 
 		err = conn1.Close()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	})
 
 	pkt := packet.NewConnectPacket()
 	conn2.Send(pkt)
-	require.Equal(t, int64(pkt.Len()), conn2.BytesWritten())
+	assert.Equal(t, int64(pkt.Len()), conn2.BytesWritten())
 
 	pkt2, err := conn2.Receive()
-	require.NoError(t, err)
-	require.Equal(t, int64(pkt2.Len()), conn2.BytesRead())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(pkt2.Len()), conn2.BytesRead())
 
 	err = conn2.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	<-done
 }
@@ -222,16 +222,16 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 		conn1.SetReadLimit(1)
 
 		pkt, err := conn1.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, NetworkError, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, NetworkError, toError(err).Code())
 	})
 
 	err := conn2.Send(packet.NewConnectPacket())
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
-	require.Nil(t, pkt)
-	require.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Nil(t, pkt)
+	assert.Equal(t, ExpectedClose, toError(err).Code())
 
 	<-done
 }

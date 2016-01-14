@@ -17,7 +17,7 @@ package transport
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWebSocketConnConnection(t *testing.T) {
@@ -67,13 +67,13 @@ func TestWebSocketBadFrameError(t *testing.T) {
 		}
 
 		pkt, err := conn1.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, NetworkError, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, NetworkError, toError(err).Code())
 	})
 
 	pkt, err := conn2.Receive()
-	require.Nil(t, pkt)
-	require.Equal(t, NetworkError, toError(err).Code())
+	assert.Nil(t, pkt)
+	assert.Equal(t, NetworkError, toError(err).Code())
 
 	<-done
 }

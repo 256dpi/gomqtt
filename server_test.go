@@ -22,66 +22,66 @@ import (
 	//"time"
 
 	"github.com/gomqtt/packet"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func abstractServerTest(t *testing.T, protocol string) {
 	tp := newTestPort()
 
 	server, err := testLauncher.Launch(tp.url(protocol))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	go func() {
 		conn1, err := server.Accept()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		pkt, err := conn1.Receive()
-		require.Equal(t, pkt.Type(), packet.CONNECT)
-		require.NoError(t, err)
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
+		assert.NoError(t, err)
 
 		err = conn1.Send(packet.NewConnackPacket())
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, ExpectedClose, toError(err).Code())
 	}()
 
 	conn2, err := testDialer.Dial(tp.url(protocol))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	err = conn2.Send(packet.NewConnectPacket())
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
-	require.Equal(t, pkt.Type(), packet.CONNACK)
-	require.NoError(t, err)
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
+	assert.NoError(t, err)
 
 	err = conn2.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	err = server.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 }
 
 func abstractServerLaunchErrorTest(t *testing.T, protocol string) {
 	tp := testPort(1) // <- no permissions
 
 	server, err := testLauncher.Launch(tp.url(protocol))
-	require.Equal(t, NetworkError, toError(err).Code())
-	require.Nil(t, server)
+	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Nil(t, server)
 }
 
 func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
 	tp := newTestPort()
 
 	server, err := testLauncher.Launch(tp.url(protocol))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	err = server.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	conn, err := server.Accept()
-	require.Nil(t, conn)
-	require.Equal(t, NetworkError, toError(err).Code())
+	assert.Nil(t, conn)
+	assert.Equal(t, NetworkError, toError(err).Code())
 }

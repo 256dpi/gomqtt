@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWSServer(t *testing.T) {
@@ -46,12 +46,12 @@ func TestInvalidWebSocketUpgrade(t *testing.T) {
 	tp := newTestPort()
 
 	server, err := testLauncher.Launch(tp.url("ws"))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	resp, err := http.PostForm(tp.url("http"), url.Values{"foo": {"bar"}})
-	require.Equal(t, "405 Method Not Allowed", resp.Status)
-	require.NoError(t, err)
+	assert.Equal(t, "405 Method Not Allowed", resp.Status)
+	assert.NoError(t, err)
 
 	err = server.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 }

@@ -17,28 +17,28 @@ package transport
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGlobalLaunch(t *testing.T) {
 	tp := newTestPort()
 
 	server, err := Launch(tp.url("tcp"))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	err = server.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestLauncherBadURL(t *testing.T) {
 	conn, err := Launch("foo")
-	require.Nil(t, conn)
-	require.Equal(t, LaunchError, toError(err).Code())
+	assert.Nil(t, conn)
+	assert.Equal(t, LaunchError, toError(err).Code())
 }
 
 func TestLauncherUnsupportedProtocol(t *testing.T) {
 	conn, err := Launch("foo://localhost")
-	require.Nil(t, conn)
-	require.Equal(t, LaunchError, toError(err).Code())
-	require.Equal(t, ErrUnsupportedProtocol, toError(err).Err())
+	assert.Nil(t, conn)
+	assert.Equal(t, LaunchError, toError(err).Code())
+	assert.Equal(t, ErrUnsupportedProtocol, toError(err).Err())
 }

@@ -17,84 +17,84 @@ package transport
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGlobalDial(t *testing.T) {
 	tp := newTestPort()
 
 	server, err := testLauncher.Launch(tp.url("tcp"))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	go func(){
 		conn, err := server.Accept()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		pkt, err := conn.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, NetworkError, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, NetworkError, toError(err).Code())
 	}()
 
 	conn, err := Dial(tp.url("tcp"))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	err = conn.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	err = server.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestDialerBadURL(t *testing.T) {
 	conn, err := Dial("foo")
-	require.Nil(t, conn)
-	require.Equal(t, DialError, toError(err).Code())
+	assert.Nil(t, conn)
+	assert.Equal(t, DialError, toError(err).Code())
 }
 
 func TestDialerUnsupportedProtocol(t *testing.T) {
 	conn, err := Dial("foo://localhost")
-	require.Nil(t, conn)
-	require.Equal(t, DialError, toError(err).Code())
-	require.Equal(t, ErrUnsupportedProtocol, toError(err).Err())
+	assert.Nil(t, conn)
+	assert.Equal(t, DialError, toError(err).Code())
+	assert.Equal(t, ErrUnsupportedProtocol, toError(err).Err())
 }
 
 func TestDialerTCPError(t *testing.T) {
 	conn, err := Dial("tcp://localhost:1234567")
-	require.Nil(t, conn)
-	require.Equal(t, DialError, toError(err).Code())
+	assert.Nil(t, conn)
+	assert.Equal(t, DialError, toError(err).Code())
 }
 
 func TestDialerTLSError(t *testing.T) {
 	conn, err := Dial("tls://localhost:1234567")
-	require.Nil(t, conn)
-	require.Equal(t, DialError, toError(err).Code())
+	assert.Nil(t, conn)
+	assert.Equal(t, DialError, toError(err).Code())
 }
 
 func TestDialerWSError(t *testing.T) {
 	conn, err := Dial("ws://localhost:1234567")
-	require.Nil(t, conn)
-	require.Equal(t, DialError, toError(err).Code())
+	assert.Nil(t, conn)
+	assert.Equal(t, DialError, toError(err).Code())
 }
 
 func TestDialerWSSError(t *testing.T) {
 	conn, err := Dial("wss://localhost:1234567")
-	require.Nil(t, conn)
-	require.Equal(t, DialError, toError(err).Code())
+	assert.Nil(t, conn)
+	assert.Equal(t, DialError, toError(err).Code())
 }
 
 func abstractDefaultPortTest(t *testing.T, protocol string) {
 	tp := newTestPort()
 
 	server, err := testLauncher.Launch(tp.url(protocol))
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	go func(){
 		conn, err := server.Accept()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		pkt, err := conn.Receive()
-		require.Nil(t, pkt)
-		require.Equal(t, NetworkError, toError(err).Code())
+		assert.Nil(t, pkt)
+		assert.Equal(t, NetworkError, toError(err).Code())
 	}()
 
 	dialer := NewDialer()
@@ -105,13 +105,13 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 	dialer.DefaultWSSPort = tp.port()
 
 	conn, err := dialer.Dial(protocol + "://localhost")
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	err = conn.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	err = server.Close()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestTCPDefaultPort(t *testing.T) {
