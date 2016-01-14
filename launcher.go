@@ -19,10 +19,12 @@ import (
 	"net/url"
 )
 
+// Launcher is a small interface for launching servers.
 type Launcher struct {
 	TLSConfig *tls.Config
 }
 
+// NewLauncher returns a new Launcher.
 func NewLauncher() *Launcher {
 	return &Launcher{}
 }
@@ -33,10 +35,12 @@ func init() {
 	sharedLauncher = NewLauncher()
 }
 
+// Launch is a shorthand function.
 func Launch(urlString string) (Server, error) {
 	return sharedLauncher.Launch(urlString)
 }
 
+// Launch will launch a server based on information extracted from an URL.
 func (l *Launcher) Launch(urlString string) (Server, error) {
 	urlParts, err := url.ParseRequestURI(urlString)
 	if err != nil {

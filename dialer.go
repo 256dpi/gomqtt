@@ -27,6 +27,7 @@ import (
 
 var ErrUnsupportedProtocol = errors.New("unsupported protocol")
 
+// Dialer is a small interface to initiate connections.
 type Dialer struct {
 	TLSConfig     *tls.Config
 	RequestHeader http.Header
@@ -39,6 +40,7 @@ type Dialer struct {
 	webSocketDialer *websocket.Dialer
 }
 
+// NewDialer returns a new Dialer.
 func NewDialer() *Dialer {
 	return &Dialer{
 		DefaultTCPPort: "1883",
@@ -58,10 +60,12 @@ func init() {
 	sharedDialer = NewDialer()
 }
 
+// Dial is a shorthand function.
 func Dial(urlString string) (Conn, error) {
 	return sharedDialer.Dial(urlString)
 }
 
+// Dial initiates a connection based in information extracted from an URL.
 func (d *Dialer) Dial(urlString string) (Conn, error) {
 	urlParts, err := url.ParseRequestURI(urlString)
 	if err != nil {
