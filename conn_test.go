@@ -191,24 +191,29 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 
 func abstractConnCountersTest(t *testing.T, protocol string) {
 	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
-		pkt, _ := conn1.Receive()
+		pkt, err := conn1.Receive()
+		require.NoError(t, err)
 		require.Equal(t, int64(pkt.Len()), conn1.BytesRead())
 
 		pkt2 := packet.NewConnackPacket()
 		conn1.Send(pkt2)
 		require.Equal(t, int64(pkt2.Len()), conn1.BytesWritten())
 
-		conn1.Close()
+		err = conn1.Close()
+		require.NoError(t, err)
 	})
 
 	pkt := packet.NewConnectPacket()
 	conn2.Send(pkt)
 	require.Equal(t, int64(pkt.Len()), conn2.BytesWritten())
 
-	pkt2, _ := conn2.Receive()
+	pkt2, err := conn2.Receive()
+	require.NoError(t, err)
 	require.Equal(t, int64(pkt2.Len()), conn2.BytesRead())
 
-	conn2.Close()
+	err = conn2.Close()
+	require.NoError(t, err)
+
 	<-done
 }
 

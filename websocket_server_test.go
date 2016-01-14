@@ -16,9 +16,10 @@ package transport
 
 import (
 	"testing"
-	"github.com/stretchr/testify/require"
 	"net/http"
-"net/url"
+	"net/url"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestWSServer(t *testing.T) {

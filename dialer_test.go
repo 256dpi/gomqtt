@@ -30,15 +30,19 @@ func TestGlobalDial(t *testing.T) {
 		conn, err := server.Accept()
 		require.NoError(t, err)
 
-		_, err = conn.Receive()
+		pkt, err := conn.Receive()
+		require.Nil(t, pkt)
 		require.Equal(t, NetworkError, toError(err).Code())
 	}()
 
 	conn, err := Dial(tp.url("tcp"))
 	require.NoError(t, err)
 
-	conn.Close()
-	server.Close()
+	err = conn.Close()
+	require.NoError(t, err)
+
+	err = server.Close()
+	require.NoError(t, err)
 }
 
 func TestDialerBadURL(t *testing.T) {
@@ -88,7 +92,8 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 		conn, err := server.Accept()
 		require.NoError(t, err)
 
-		_, err = conn.Receive()
+		pkt, err := conn.Receive()
+		require.Nil(t, pkt)
 		require.Equal(t, NetworkError, toError(err).Code())
 	}()
 
