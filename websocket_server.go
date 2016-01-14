@@ -19,13 +19,11 @@ import (
 	"net"
 	"net/http"
 	"time"
+	"errors"
 
 	"github.com/gorilla/websocket"
 	"gopkg.in/tomb.v2"
-	"errors"
 )
-
-var ErrAcceptAfterClose = errors.New("accept after close")
 
 var errManualClose = errors.New("manual close")
 

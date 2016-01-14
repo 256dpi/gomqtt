@@ -43,9 +43,6 @@ func TestErrorStrings(t *testing.T) {
 	err = newTransportError(NetworkError, fmt.Errorf("foo"))
 	require.Equal(t, "network error: foo", err.Error())
 
-	err = newTransportError(ReadLimitExceeded, fmt.Errorf("foo"))
-	require.Equal(t, "read limit exceeded: foo", err.Error())
-
 	err = newTransportError(0, fmt.Errorf("foo"))
 	require.Equal(t, "unknown error: foo", err.Error())
 }

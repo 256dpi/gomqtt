@@ -16,7 +16,6 @@ package transport
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -24,8 +23,6 @@ import (
 
 	"github.com/gorilla/websocket"
 )
-
-var ErrUnsupportedProtocol = errors.New("unsupported protocol")
 
 // Dialer is a small interface to initiate connections.
 type Dialer struct {

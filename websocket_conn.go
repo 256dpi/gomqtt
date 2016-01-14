@@ -15,14 +15,11 @@
 package transport
 
 import (
-	"errors"
 	"sync/atomic"
 
 	"github.com/gomqtt/packet"
 	"github.com/gorilla/websocket"
 )
-
-var ErrZeroSize = errors.New("detected zero sized packet")
 
 // The WebSocketConn wraps a gorilla WebSocket.Conn.
 type WebSocketConn struct {
@@ -87,7 +84,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 	// return read limit error instead
 	if err == websocket.ErrReadLimit {
 		c.conn.Close()
-		return nil, newTransportError(ReadLimitExceeded, err)
+		return nil, newTransportError(NetworkError, err)
 	}
 
 	// return on any other errors
@@ -100,7 +97,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 	packetLength, t := packet.DetectPacket(buf)
 	if packetLength == 0 {
 		c.end()
-		return nil, newTransportError(DetectionError, ErrZeroSize)
+		return nil, newTransportError(DetectionError, ErrDetectionOverflow)
 	}
 
 	// allocate packet

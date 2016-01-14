@@ -218,7 +218,7 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		require.Nil(t, pkt)
-		require.Equal(t, ReadLimitExceeded, toError(err).Code())
+		require.Equal(t, NetworkError, toError(err).Code())
 	})
 
 	err := conn2.Send(packet.NewConnectPacket())

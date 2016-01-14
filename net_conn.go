@@ -16,16 +16,12 @@ package transport
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"net"
 	"sync/atomic"
 
 	"github.com/gomqtt/packet"
 )
-
-var ErrDetectionOverflow = errors.New("detection length overflow (>5)")
-var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
 // The NetConn wraps a TCP based connection.
 type NetConn struct {
@@ -109,7 +105,7 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 		// check read limit
 		if c.readLimit > 0 && int64(packetLength) > c.readLimit {
 			c.conn.Close()
-			return nil, newTransportError(ReadLimitExceeded, ErrReadLimitExceeded)
+			return nil, newTransportError(NetworkError, ErrReadLimitExceeded)
 		}
 
 		// create packet
