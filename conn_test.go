@@ -16,24 +16,11 @@ package transport
 
 import (
 	"testing"
-	"time"
-	"os"
 
 	"github.com/gomqtt/packet"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
 )
-
-func TestMain(m *testing.M) {
-	retCode := m.Run()
-
-	println(retCode)
-
-	time.Sleep(5 * time.Second)
-
-	// call with result of m.Run()
-	os.Exit(retCode)
-}
 
 func abstractConnTestPreparer(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 	done := make(chan struct{})
