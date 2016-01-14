@@ -25,7 +25,7 @@ $ go get github.com/gomqtt/transport
 
 ```go
 // launch server
-server, err := Launch("tcp://localhost:1337")
+server, err := Launch("tcp://localhost:1883")
 if err != nil {
     panic(err)
 }
@@ -56,7 +56,7 @@ go func(){
 }()
 
 // dial to server
-conn, err := Dial("tcp://localhost:1337")
+conn, err := Dial("tcp://localhost:1883")
 if err != nil {
     panic(err)
 }
