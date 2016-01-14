@@ -2,7 +2,7 @@ package packet
 
 import "fmt"
 
-func ExamplePacket() {
+func Example() {
 	/* Packet Encoding */
 
 	// Create new packet.
