@@ -15,12 +15,10 @@
 package client
 
 import (
-	"net/url"
 	"time"
 )
 
 type Options struct {
-	URL          *url.URL
 	ClientID     string
 	CleanSession bool
 

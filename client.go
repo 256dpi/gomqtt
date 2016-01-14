@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/gomqtt/packet"
-	"github.com/gomqtt/stream"
+	"github.com/gomqtt/transport"
 )
 
 type (
@@ -31,9 +31,9 @@ type (
 )
 
 type Client struct {
-	opts   *Options
-	stream stream.Stream
-	quit   chan bool
+	opts *Options
+	conn transport.Conn
+	quit chan bool
 
 	connectCallback ConnectCallback
 	messageCallback MessageCallback
@@ -69,34 +69,31 @@ func (this *Client) OnError(callback ErrorCallback) {
 	this.errorCallback = callback
 }
 
-// QuickConnect opens a connection to the broker specified by an URL.
-func (this *Client) QuickConnect(urlString string, clientID string) error {
-	url, err := url.Parse(urlString)
+// Connect opens the connection to the broker.
+func (this *Client) Connect(urlString string, opts *Options) error {
+	var err error
+
+	// parse url
+	urlParts, err := url.Parse(urlString)
 	if err != nil {
 		return err
 	}
 
-	opts := &Options{
-		URL:          url,
-		ClientID:     clientID,
-		CleanSession: true,
-	}
-
-	return this.Connect(opts)
-}
-
-// Connect opens the connection to the broker.
-func (this *Client) Connect(opts *Options) error {
-	var err error
-
 	// dial broker
-	this.stream, err = dial(opts)
+	this.conn, err = transport.Dial(urlString)
 	if err != nil {
 		return err
 	}
 
 	// save opts
-	this.opts = opts
+	if opts != nil {
+		this.opts = opts
+	} else {
+		this.opts = &Options{
+			ClientID:     "gomqtt/client",
+			CleanSession: true,
+		}
+	}
 
 	// start subroutines
 	this.start.Add(2)
@@ -111,9 +108,9 @@ func (this *Client) Connect(opts *Options) error {
 	m.CleanSession = opts.CleanSession
 
 	// check for credentials
-	if opts.URL.User != nil {
-		m.Username = []byte(opts.URL.User.Username())
-		p, _ := opts.URL.User.Password()
+	if urlParts.User != nil {
+		m.Username = []byte(urlParts.User.Username())
+		p, _ := urlParts.User.Password()
 		m.Password = []byte(p)
 	}
 
@@ -198,16 +195,18 @@ func (this *Client) process() {
 		select {
 		case <-this.quit:
 			return
-		case msg, ok := <-this.stream.Incoming():
-			if !ok {
+		default:
+			pkt, err := this.conn.Receive()
+			if err != nil {
+				//TODO: handle error
 				return
 			}
 
 			//this.lastContact = time.Now()
 
-			switch msg.Type() {
+			switch pkt.Type() {
 			case packet.CONNACK:
-				m, ok := msg.(*packet.ConnackPacket)
+				m, ok := pkt.(*packet.ConnackPacket)
 
 				if ok {
 					if m.ReturnCode == packet.ConnectionAccepted {
@@ -221,7 +220,7 @@ func (this *Client) process() {
 					this.error(errors.New("failed to convert CONNACK packet"))
 				}
 			case packet.PINGRESP:
-				_, ok := msg.(*packet.PingrespPacket)
+				_, ok := pkt.(*packet.PingrespPacket)
 
 				if ok {
 					this.pingrespPending = false
@@ -229,7 +228,7 @@ func (this *Client) process() {
 					this.error(errors.New("failed to convert PINGRESP packet"))
 				}
 			case packet.PUBLISH:
-				m, ok := msg.(*packet.PublishPacket)
+				m, ok := pkt.(*packet.PublishPacket)
 
 				if ok {
 					this.messageCallback(string(m.Topic), m.Payload)
@@ -246,7 +245,7 @@ func (this *Client) send(msg packet.Packet) {
 	this.lastContact = time.Now()
 	this.lastContactMutex.Unlock()
 
-	this.stream.Send(msg)
+	this.conn.Send(msg)
 }
 
 func (this *Client) error(err error) {

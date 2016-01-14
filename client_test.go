@@ -17,8 +17,7 @@ package client
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	"net/url"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClientConnect(t *testing.T) {
@@ -27,13 +26,16 @@ func TestClientConnect(t *testing.T) {
 	done := make(chan bool)
 
 	c.OnConnect(func(sessionPresent bool) {
-		require.False(t, sessionPresent)
+		assert.False(t, sessionPresent)
 
 		done <- true
 	})
 
-	err := c.QuickConnect("mqtt://localhost:1883", "test")
-	require.NoError(t, err)
+	err := c.Connect("mqtt://localhost:1883", &Options{
+		ClientID: "test",
+	})
+
+	assert.NoError(t, err)
 
 	<-done
 
@@ -46,13 +48,16 @@ func TestClientConnectWebSocket(t *testing.T) {
 	done := make(chan bool)
 
 	c.OnConnect(func(sessionPresent bool) {
-		require.False(t, sessionPresent)
+		assert.False(t, sessionPresent)
 
 		done <- true
 	})
 
-	err := c.QuickConnect("ws://localhost:1884", "test")
-	require.NoError(t, err)
+	err := c.Connect("ws://localhost:1884", &Options{
+		ClientID: "test",
+	})
+
+	assert.NoError(t, err)
 
 	<-done
 
@@ -65,14 +70,17 @@ func TestClientPublishSubscribe(t *testing.T) {
 	done := make(chan bool)
 
 	c.OnMessage(func(topic string, payload []byte) {
-		require.Equal(t, "test", topic)
-		require.Equal(t, []byte("test"), payload)
+		assert.Equal(t, "test", topic)
+		assert.Equal(t, []byte("test"), payload)
 
 		done <- true
 	})
 
-	err := c.QuickConnect("mqtt://localhost:1883", "test")
-	require.NoError(t, err)
+	err := c.Connect("mqtt://localhost:1883", &Options{
+		ClientID: "test",
+	})
+
+	assert.NoError(t, err)
 
 	c.Subscribe("test", 0)
 	c.Publish("test", []byte("test"), 0, false)
@@ -85,8 +93,12 @@ func TestClientPublishSubscribe(t *testing.T) {
 func TestClientConnectError(t *testing.T) {
 	c := NewClient()
 
-	err := c.QuickConnect("mqtt://localhost:1234", "test") // wrong port
-	require.Error(t, err)
+	// wrong port
+	err := c.Connect("mqtt://localhost:1234", &Options{
+		ClientID: "test",
+	})
+
+	assert.Error(t, err)
 }
 
 func TestClientAuthenticationError(t *testing.T) {
@@ -95,18 +107,15 @@ func TestClientAuthenticationError(t *testing.T) {
 	done := make(chan bool)
 
 	c.OnError(func(err error) {
-		require.Error(t, err)
+		assert.Error(t, err)
 
 		done <- true
 	})
 
-	err := c.Connect(&Options{
-		URL: &url.URL{
-			Scheme: "mqtt",
-			Host:   "localhost:1883",
-		}, // missing clientID
-	})
-	require.NoError(t, err)
+	// missing clientID
+	err := c.Connect("mqtt://localhost:1883", &Options{})
+
+	assert.NoError(t, err)
 
 	<-done
 }
