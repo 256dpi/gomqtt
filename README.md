@@ -12,6 +12,9 @@
 
 - Support for `net.Conn` based connections.
 - Support for `websocket.Conn` based connections through <https://github.com/gorilla/websocket>.
+- Shorthand `Dial` function for initiating connections.
+- Shorthand `Launch` function for launching servers.
+- Rich `Error` interface for enhanced error handling.
 
 ## Installation
 
