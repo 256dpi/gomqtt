@@ -1,6 +1,3 @@
-dependencies:
-  pre:
-    - wget -O - https://raw.githubusercontent.com/gomqtt/organisation/master/support/mosquitto.sh | sh
 test:
   pre:
     - go get github.com/axw/gocov/gocov

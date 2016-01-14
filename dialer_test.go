@@ -21,19 +21,24 @@ import (
 )
 
 func TestGlobalDial(t *testing.T) {
-	conn, err := Dial("mqtt://localhost:1883")
+	tp := newTestPort()
+
+	server, err := testLauncher.Launch(tp.url("tcp"))
 	require.NoError(t, err)
 
-	err = conn.Close()
-	require.NoError(t, err)
-}
+	go func(){
+		conn, err := server.Accept()
+		require.NoError(t, err)
 
-func TestDialerURLWithoutPort(t *testing.T) {
-	conn, err := Dial("mqtt://localhost")
+		_, err = conn.Receive()
+		require.Equal(t, NetworkError, toError(err).Code())
+	}()
+
+	conn, err := Dial(tp.url("tcp"))
 	require.NoError(t, err)
 
-	err = conn.Close()
-	require.NoError(t, err)
+	conn.Close()
+	server.Close()
 }
 
 func TestDialerBadURL(t *testing.T) {
@@ -97,8 +102,11 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 	conn, err := dialer.Dial(protocol + "://localhost")
 	require.NoError(t, err)
 
-	conn.Close()
-	server.Close()
+	err = conn.Close()
+	require.NoError(t, err)
+
+	err = server.Close()
+	require.NoError(t, err)
 }
 
 func TestTCPDefaultPort(t *testing.T) {
