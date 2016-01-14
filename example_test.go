@@ -20,7 +20,7 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-func ExampleTransport() {
+func Example() {
 	// launch server
 	server, err := Launch("tcp://localhost:1337")
 	if err != nil {
