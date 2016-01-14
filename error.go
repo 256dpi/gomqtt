@@ -43,16 +43,34 @@ var ErrReadLimitExceeded = errors.New("read limit exceeded")
 // Note: this error is wrapped in an Error with NetworkError code.
 var ErrAcceptAfterClose = errors.New("accept after close")
 
+// ErrorCode provides a context location for various errors.
 type ErrorCode int
 
 const (
 	_ ErrorCode = iota
+
+	// ExpectedClose marks errors that symbolizes the expected close of an
+	// connection.
 	ExpectedClose
+
+	// DialError marks errors that came up during a Dial call.
 	DialError
+
+	// LaunchError marks errors that came up during a Launch call.
 	LaunchError
+
+	// EncodeError marks errors that came up within Send and are returned by the
+	// packets Encode functions.
 	EncodeError
+
+	// DecodeError marks errors that came up within Receive and are returned by
+	// the packets Decode functions.
 	DecodeError
+
+	// DetectionError marks errors that cam up within Receive.
 	DetectionError
+
+	// NetworkError marks errors that are returned by the underlying connection.
 	NetworkError
 )
 
@@ -95,8 +113,6 @@ func (err *transportError) Error() string {
 		return fmt.Sprintf("detection error: %s", err.err.Error())
 	case NetworkError:
 		return fmt.Sprintf("network error: %s", err.err.Error())
-	case ReadLimitExceeded:
-		return fmt.Sprintf("read limit exceeded: %s", err.err.Error())
 	}
 
 	return fmt.Sprintf("unknown error: %s", err.err.Error())
