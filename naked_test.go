@@ -17,7 +17,7 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNakedPacketDecode(t *testing.T) {
@@ -28,8 +28,8 @@ func TestNakedPacketDecode(t *testing.T) {
 
 	n, err := nakedPacketDecode(pktBytes, DISCONNECT)
 
-	require.NoError(t, err)
-	require.Equal(t, 2, n)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
 }
 
 func TestNakedPacketDecodeError1(t *testing.T) {
@@ -41,8 +41,8 @@ func TestNakedPacketDecodeError1(t *testing.T) {
 
 	n, err := nakedPacketDecode(pktBytes, DISCONNECT)
 
-	require.Error(t, err)
-	require.Equal(t, 2, n)
+	assert.Error(t, err)
+	assert.Equal(t, 2, n)
 }
 
 func TestNakedPacketEncode(t *testing.T) {
@@ -54,9 +54,9 @@ func TestNakedPacketEncode(t *testing.T) {
 	dst := make([]byte, nakedPacketLen())
 	n, err := nakedPacketEncode(dst, DISCONNECT)
 
-	require.NoError(t, err)
-	require.Equal(t, 2, n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestNakedPacketEqualDecodeEncode(t *testing.T) {
@@ -67,20 +67,20 @@ func TestNakedPacketEqualDecodeEncode(t *testing.T) {
 
 	n, err := nakedPacketDecode(pktBytes, DISCONNECT)
 
-	require.NoError(t, err)
-	require.Equal(t, 2, n)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
 
 	dst := make([]byte, nakedPacketLen())
 	n2, err := nakedPacketEncode(dst, DISCONNECT)
 
-	require.NoError(t, err)
-	require.Equal(t, 2, n2)
-	require.Equal(t, pktBytes, dst[:n2])
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n2)
+	assert.Equal(t, pktBytes, dst[:n2])
 
 	n3, err := nakedPacketDecode(dst, DISCONNECT)
 
-	require.NoError(t, err)
-	require.Equal(t, 2, n3)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n3)
 }
 
 func BenchmarkNakedPacketEncode(b *testing.B) {
@@ -110,18 +110,18 @@ func BenchmarkNakedPacketDecode(b *testing.B) {
 
 func testNakedPacketImplementation(t *testing.T, _t Type) {
 	pkt, err := _t.New()
-	require.NoError(t, err)
-	require.Equal(t, _t, pkt.Type())
-	require.NotEmpty(t, pkt.String())
+	assert.NoError(t, err)
+	assert.Equal(t, _t, pkt.Type())
+	assert.NotEmpty(t, pkt.String())
 
 	buf := make([]byte, pkt.Len())
 	n, err := pkt.Encode(buf)
-	require.NoError(t, err)
-	require.Equal(t, 2, n)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
 
 	n, err = pkt.Decode(buf)
-	require.NoError(t, err)
-	require.Equal(t, 2, n)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
 }
 
 func TestDisconnectImplementation(t *testing.T) {

@@ -17,14 +17,14 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPublishInterface(t *testing.T) {
 	pkt := NewPublishPacket()
 
-	require.Equal(t, pkt.Type(), PUBLISH)
-	require.NotNil(t, pkt.String())
+	assert.Equal(t, pkt.Type(), PUBLISH)
+	assert.NotNil(t, pkt.String())
 }
 
 func TestPublishPacketDecode1(t *testing.T) {
@@ -42,14 +42,14 @@ func TestPublishPacketDecode1(t *testing.T) {
 	pkt := NewPublishPacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, 7, int(pkt.PacketID))
-	require.Equal(t, []byte("surgemq"), pkt.Topic)
-	require.Equal(t, []byte("send me home"), pkt.Payload)
-	require.Equal(t, 1, int(pkt.QOS))
-	require.Equal(t, true, pkt.Retain)
-	require.Equal(t, true, pkt.Dup)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, 7, int(pkt.PacketID))
+	assert.Equal(t, []byte("surgemq"), pkt.Topic)
+	assert.Equal(t, []byte("send me home"), pkt.Payload)
+	assert.Equal(t, 1, int(pkt.QOS))
+	assert.Equal(t, true, pkt.Retain)
+	assert.Equal(t, true, pkt.Dup)
 }
 
 func TestPublishPacketDecode2(t *testing.T) {
@@ -65,14 +65,14 @@ func TestPublishPacketDecode2(t *testing.T) {
 	pkt := NewPublishPacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, 0, int(pkt.PacketID))
-	require.Equal(t, []byte("surgemq"), pkt.Topic)
-	require.Equal(t, []byte("send me home"), pkt.Payload)
-	require.Equal(t, 0, int(pkt.QOS))
-	require.Equal(t, false, pkt.Retain)
-	require.Equal(t, false, pkt.Dup)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, 0, int(pkt.PacketID))
+	assert.Equal(t, []byte("surgemq"), pkt.Topic)
+	assert.Equal(t, []byte("send me home"), pkt.Payload)
+	assert.Equal(t, 0, int(pkt.QOS))
+	assert.Equal(t, false, pkt.Retain)
+	assert.Equal(t, false, pkt.Dup)
 }
 
 func TestPublishPacketDecodeError1(t *testing.T) {
@@ -84,7 +84,7 @@ func TestPublishPacketDecodeError1(t *testing.T) {
 	pkt := NewPublishPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishPacketDecodeError2(t *testing.T) {
@@ -96,7 +96,7 @@ func TestPublishPacketDecodeError2(t *testing.T) {
 	pkt := NewPublishPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishPacketDecodeError3(t *testing.T) {
@@ -109,7 +109,7 @@ func TestPublishPacketDecodeError3(t *testing.T) {
 	pkt := NewPublishPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishPacketDecodeError4(t *testing.T) {
@@ -124,7 +124,7 @@ func TestPublishPacketDecodeError4(t *testing.T) {
 	pkt := NewPublishPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishPacketDecodeError5(t *testing.T) {
@@ -140,7 +140,7 @@ func TestPublishPacketDecodeError5(t *testing.T) {
 	pkt := NewPublishPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishPacketEncode1(t *testing.T) {
@@ -166,9 +166,9 @@ func TestPublishPacketEncode1(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestPublishPacketEncode2(t *testing.T) {
@@ -188,9 +188,9 @@ func TestPublishPacketEncode2(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestPublishPacketEncodeError1(t *testing.T) {
@@ -200,7 +200,7 @@ func TestPublishPacketEncodeError1(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishPacketEncodeError2(t *testing.T) {
@@ -211,7 +211,7 @@ func TestPublishPacketEncodeError2(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishPacketEncodeError3(t *testing.T) {
@@ -221,7 +221,7 @@ func TestPublishPacketEncodeError3(t *testing.T) {
 	dst := make([]byte, 1) // <- too small
 	_, err := pkt.Encode(dst)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishPacketEncodeError4(t *testing.T) {
@@ -231,7 +231,7 @@ func TestPublishPacketEncodeError4(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPublishEqualDecodeEncode(t *testing.T) {
@@ -249,20 +249,20 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 	pkt := NewPublishPacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
 
 	dst := make([]byte, pkt.Len())
 	n2, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n2)
-	require.Equal(t, pktBytes, dst[:n2])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n2)
+	assert.Equal(t, pktBytes, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n3)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n3)
 }
 
 func BenchmarkPublishEncode(b *testing.B) {

@@ -17,23 +17,23 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConnackReturnCodes(t *testing.T) {
-	require.Equal(t, ErrInvalidProtocolVersion.Error(), ConnackCode(1).Error())
-	require.Equal(t, ErrIdentifierRejected.Error(), ConnackCode(2).Error())
-	require.Equal(t, ErrServerUnavailable.Error(), ConnackCode(3).Error())
-	require.Equal(t, ErrBadUsernameOrPassword.Error(), ConnackCode(4).Error())
-	require.Equal(t, ErrNotAuthorized.Error(), ConnackCode(5).Error())
-	require.Equal(t, "Unknown error", ConnackCode(6).Error())
+	assert.Equal(t, ErrInvalidProtocolVersion.Error(), ConnackCode(1).Error())
+	assert.Equal(t, ErrIdentifierRejected.Error(), ConnackCode(2).Error())
+	assert.Equal(t, ErrServerUnavailable.Error(), ConnackCode(3).Error())
+	assert.Equal(t, ErrBadUsernameOrPassword.Error(), ConnackCode(4).Error())
+	assert.Equal(t, ErrNotAuthorized.Error(), ConnackCode(5).Error())
+	assert.Equal(t, "Unknown error", ConnackCode(6).Error())
 }
 
 func TestConnackInterface(t *testing.T) {
 	pkt := NewConnackPacket()
 
-	require.Equal(t, pkt.Type(), CONNACK)
-	require.NotNil(t, pkt.String())
+	assert.Equal(t, pkt.Type(), CONNACK)
+	assert.NotNil(t, pkt.String())
 }
 
 func TestConnackPacketDecode(t *testing.T) {
@@ -48,10 +48,10 @@ func TestConnackPacketDecode(t *testing.T) {
 
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n)
-	require.False(t, pkt.SessionPresent)
-	require.Equal(t, ConnectionAccepted, pkt.ReturnCode)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
+	assert.False(t, pkt.SessionPresent)
+	assert.Equal(t, ConnectionAccepted, pkt.ReturnCode)
 }
 
 func TestConnackPacketDecodeError1(t *testing.T) {
@@ -65,7 +65,7 @@ func TestConnackPacketDecodeError1(t *testing.T) {
 	pkt := NewConnackPacket()
 
 	_, err := pkt.Decode(pktBytes)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnackPacketDecodeError2(t *testing.T) {
@@ -79,7 +79,7 @@ func TestConnackPacketDecodeError2(t *testing.T) {
 	pkt := NewConnackPacket()
 
 	_, err := pkt.Decode(pktBytes)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnackPacketDecodeError3(t *testing.T) {
@@ -93,7 +93,7 @@ func TestConnackPacketDecodeError3(t *testing.T) {
 	pkt := NewConnackPacket()
 
 	_, err := pkt.Decode(pktBytes)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnackPacketDecodeError4(t *testing.T) {
@@ -107,7 +107,7 @@ func TestConnackPacketDecodeError4(t *testing.T) {
 	pkt := NewConnackPacket()
 
 	_, err := pkt.Decode(pktBytes)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnackPacketDecodeError5(t *testing.T) {
@@ -121,7 +121,7 @@ func TestConnackPacketDecodeError5(t *testing.T) {
 	pkt := NewConnackPacket()
 
 	_, err := pkt.Decode(pktBytes)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnackPacketEncode(t *testing.T) {
@@ -139,9 +139,9 @@ func TestConnackPacketEncode(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestConnackPacketEncodeError1(t *testing.T) {
@@ -150,8 +150,8 @@ func TestConnackPacketEncodeError1(t *testing.T) {
 	dst := make([]byte, 3) // <- wrong buffer size
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
 }
 
 func TestConnackPacketEncodeError2(t *testing.T) {
@@ -161,8 +161,8 @@ func TestConnackPacketEncodeError2(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 3, n)
+	assert.Error(t, err)
+	assert.Equal(t, 3, n)
 }
 
 func TestConnackEqualDecodeEncode(t *testing.T) {
@@ -176,20 +176,20 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 	pkt := NewConnackPacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
 
 	dst := make([]byte, pkt.Len())
 	n2, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n2)
-	require.Equal(t, pktBytes, dst[:n2])
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n2)
+	assert.Equal(t, pktBytes, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n3)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n3)
 }
 
 func BenchmarkConnackEncode(b *testing.B) {

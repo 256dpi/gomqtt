@@ -17,7 +17,7 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestQOSCodes(t *testing.T) {
@@ -65,8 +65,8 @@ func TestDetect1(t *testing.T) {
 
 	l, _t := DetectPacket(buf)
 
-	require.Equal(t, 2, l)
-	require.Equal(t, 1, int(_t))
+	assert.Equal(t, 2, l)
+	assert.Equal(t, 1, int(_t))
 }
 
 func TestDetect2(t *testing.T) {
@@ -75,8 +75,8 @@ func TestDetect2(t *testing.T) {
 
 	l, _t := DetectPacket(buf)
 
-	require.Equal(t, 0, l)
-	require.Equal(t, 0, int(_t))
+	assert.Equal(t, 0, l)
+	assert.Equal(t, 0, int(_t))
 }
 
 func TestDetect3(t *testing.T) {
@@ -84,8 +84,8 @@ func TestDetect3(t *testing.T) {
 
 	l, _t := DetectPacket(buf)
 
-	require.Equal(t, 130, l)
-	require.Equal(t, 1, int(_t))
+	assert.Equal(t, 130, l)
+	assert.Equal(t, 1, int(_t))
 }
 
 func TestDetect4(t *testing.T) {
@@ -94,8 +94,8 @@ func TestDetect4(t *testing.T) {
 
 	l, _t := DetectPacket(buf)
 
-	require.Equal(t, 0, l)
-	require.Equal(t, 0, int(_t))
+	assert.Equal(t, 0, l)
+	assert.Equal(t, 0, int(_t))
 }
 
 func TestDetect5(t *testing.T) {
@@ -103,8 +103,8 @@ func TestDetect5(t *testing.T) {
 
 	l, _t := DetectPacket(buf)
 
-	require.Equal(t, 268435460, l)
-	require.Equal(t, 1, int(_t))
+	assert.Equal(t, 268435460, l)
+	assert.Equal(t, 1, int(_t))
 }
 
 func TestDetect6(t *testing.T) {
@@ -112,8 +112,8 @@ func TestDetect6(t *testing.T) {
 
 	l, _t := DetectPacket(buf)
 
-	require.Equal(t, 0, l)
-	require.Equal(t, 0, int(_t))
+	assert.Equal(t, 0, l)
+	assert.Equal(t, 0, int(_t))
 }
 
 func TestDetect7(t *testing.T) {
@@ -121,23 +121,23 @@ func TestDetect7(t *testing.T) {
 
 	l, _t := DetectPacket(buf)
 
-	require.Equal(t, 0, l)
-	require.Equal(t, 0, int(_t))
+	assert.Equal(t, 0, l)
+	assert.Equal(t, 0, int(_t))
 }
 
 func TestFuzz(t *testing.T) {
 	// too small buffer
-	require.Equal(t, 1, Fuzz([]byte{}))
+	assert.Equal(t, 1, Fuzz([]byte{}))
 
 	// wrong packet type
 	b1 := []byte{0 << 4, 0x00}
-	require.Equal(t, 0, Fuzz(b1))
+	assert.Equal(t, 0, Fuzz(b1))
 
 	// wrong packet format
 	b2 := []byte{2 << 4, 0x02, 0x00, 0x06}
-	require.Equal(t, 0, Fuzz(b2))
+	assert.Equal(t, 0, Fuzz(b2))
 
 	// right packet format
 	b3 := []byte{2 << 4, 0x02, 0x00, 0x01}
-	require.Equal(t, 1, Fuzz(b3))
+	assert.Equal(t, 1, Fuzz(b3))
 }

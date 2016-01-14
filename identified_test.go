@@ -17,7 +17,7 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIdentifiedPacketDecode(t *testing.T) {
@@ -30,9 +30,9 @@ func TestIdentifiedPacketDecode(t *testing.T) {
 
 	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n)
-	require.Equal(t, 7, int(pid))
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
+	assert.Equal(t, 7, int(pid))
 }
 
 func TestIdentifiedPacketDecodeError1(t *testing.T) {
@@ -45,9 +45,9 @@ func TestIdentifiedPacketDecodeError1(t *testing.T) {
 
 	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
 
-	require.Error(t, err)
-	require.Equal(t, 2, n)
-	require.Equal(t, 0, int(pid))
+	assert.Error(t, err)
+	assert.Equal(t, 2, n)
+	assert.Equal(t, 0, int(pid))
 }
 
 func TestIdentifiedPacketDecodeError2(t *testing.T) {
@@ -60,9 +60,9 @@ func TestIdentifiedPacketDecodeError2(t *testing.T) {
 
 	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
 
-	require.Error(t, err)
-	require.Equal(t, 2, n)
-	require.Equal(t, 0, int(pid))
+	assert.Error(t, err)
+	assert.Equal(t, 2, n)
+	assert.Equal(t, 0, int(pid))
 }
 
 func TestIdentifiedPacketEncode(t *testing.T) {
@@ -76,17 +76,17 @@ func TestIdentifiedPacketEncode(t *testing.T) {
 	dst := make([]byte, identifiedPacketLen())
 	n, err := identifiedPacketEncode(dst, 7, PUBACK)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestIdentifiedPacketEncodeError1(t *testing.T) {
 	dst := make([]byte, 3) // <- insufficient buffer
 	n, err := identifiedPacketEncode(dst, 7, PUBACK)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
 }
 
 func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
@@ -100,21 +100,21 @@ func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
 	pkt := &PubackPacket{}
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
 
 	dst := make([]byte, 100)
 	n2, err := identifiedPacketEncode(dst, 7, PUBACK)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n2)
-	require.Equal(t, pktBytes, dst[:n2])
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n2)
+	assert.Equal(t, pktBytes, dst[:n2])
 
 	n3, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
 
-	require.NoError(t, err)
-	require.Equal(t, 4, n3)
-	require.Equal(t, 7, int(pid))
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n3)
+	assert.Equal(t, 7, int(pid))
 }
 
 func BenchmarkIdentifiedPacketEncode(b *testing.B) {
@@ -151,18 +151,18 @@ func BenchmarkIdentifiedPacketDecode(b *testing.B) {
 
 func testIdentifiedPacketImplementation(t *testing.T, _t Type) {
 	pkt, err := _t.New()
-	require.NoError(t, err)
-	require.Equal(t, _t, pkt.Type())
-	require.NotEmpty(t, pkt.String())
+	assert.NoError(t, err)
+	assert.Equal(t, _t, pkt.Type())
+	assert.NotEmpty(t, pkt.String())
 
 	buf := make([]byte, pkt.Len())
 	n, err := pkt.Encode(buf)
-	require.NoError(t, err)
-	require.Equal(t, 4, n)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
 
 	n, err = pkt.Decode(buf)
-	require.NoError(t, err)
-	require.Equal(t, 4, n)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
 }
 
 func TestPubackImplementation(t *testing.T) {

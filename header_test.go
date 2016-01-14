@@ -17,14 +17,14 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPacketHeaderDecodeError1(t *testing.T) {
 	buf := []byte{0x6f, 193, 2} // <- not enough bytes
 
 	_, _, _, err := headerDecode(buf, 0)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPacketHeaderDecodeError2(t *testing.T) {
@@ -32,14 +32,14 @@ func TestPacketHeaderDecodeError2(t *testing.T) {
 	buf := []byte{0x62}
 
 	_, _, _, err := headerDecode(buf, 0)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPacketHeaderDecodeError3(t *testing.T) {
 	buf := []byte{0x62, 0xff} // <- invalid packet type
 
 	_, _, _, err := headerDecode(buf, 0)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestPacketHeaderDecodeError4(t *testing.T) {
@@ -48,16 +48,16 @@ func TestPacketHeaderDecodeError4(t *testing.T) {
 
 	n, _, _, err := headerDecode(buf, 6)
 
-	require.Error(t, err)
-	require.Equal(t, 1, n)
+	assert.Error(t, err)
+	assert.Equal(t, 1, n)
 }
 
 func TestPacketHeaderDecodeError5(t *testing.T) {
 	buf := []byte{0x66, 0x00, 0x01} // <- wrong flags
 
 	n, _, _, err := headerDecode(buf, 6)
-	require.Error(t, err)
-	require.Equal(t, 1, n)
+	assert.Error(t, err)
+	assert.Equal(t, 1, n)
 }
 
 func TestPacketHeaderEncode1(t *testing.T) {
@@ -66,9 +66,9 @@ func TestPacketHeaderEncode1(t *testing.T) {
 	buf := make([]byte, 3)
 	n, err := headerEncode(buf, 0, 321, 3, PUBREL)
 
-	require.NoError(t, err)
-	require.Equal(t, 3, n)
-	require.Equal(t, headerBytes, buf)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, n)
+	assert.Equal(t, headerBytes, buf)
 }
 
 func TestPacketHeaderEncode2(t *testing.T) {
@@ -77,9 +77,9 @@ func TestPacketHeaderEncode2(t *testing.T) {
 	buf := make([]byte, 5)
 	n, err := headerEncode(buf, 0, maxRemainingLength, 5, PUBREL)
 
-	require.NoError(t, err)
-	require.Equal(t, 5, n)
-	require.Equal(t, headerBytes, buf)
+	assert.NoError(t, err)
+	assert.Equal(t, 5, n)
+	assert.Equal(t, headerBytes, buf)
 }
 
 func TestPacketHeaderEncodeError1(t *testing.T) {
@@ -88,9 +88,9 @@ func TestPacketHeaderEncodeError1(t *testing.T) {
 	buf := make([]byte, 1) // <- wrong buffer size
 	n, err := headerEncode(buf, 0, 0, 2, PUBREL)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
-	require.Equal(t, headerBytes, buf)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, headerBytes, buf)
 }
 
 func TestPacketHeaderEncodeError2(t *testing.T) {
@@ -100,9 +100,9 @@ func TestPacketHeaderEncodeError2(t *testing.T) {
 	// overload max remaining length
 	n, err := headerEncode(buf, 0, maxRemainingLength+1, 2, PUBREL)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
-	require.Equal(t, headerBytes, buf)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, headerBytes, buf)
 }
 
 func TestPacketHeaderEncodeError3(t *testing.T) {
@@ -112,7 +112,7 @@ func TestPacketHeaderEncodeError3(t *testing.T) {
 	// too small buffer
 	n, err := headerEncode(buf, 0, 2097151, 2, PUBREL)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
-	require.Equal(t, headerBytes, buf)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, headerBytes, buf)
 }

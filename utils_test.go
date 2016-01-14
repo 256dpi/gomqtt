@@ -15,7 +15,7 @@
 package packet
 
 import (
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -43,9 +43,9 @@ func TestReadLPBytes(t *testing.T) {
 	for _, str := range testStrings {
 		b, n, err := readLPBytes(testBytes[total:])
 
-		require.NoError(t, err)
-		require.Equal(t, str, string(b))
-		require.Equal(t, len(str)+2, n)
+		assert.NoError(t, err)
+		assert.Equal(t, str, string(b))
+		assert.Equal(t, len(str)+2, n)
 
 		total += n
 	}
@@ -53,10 +53,10 @@ func TestReadLPBytes(t *testing.T) {
 
 func TestReadLPBytesErrors(t *testing.T) {
 	_, _, err := readLPBytes([]byte{})
-	require.Error(t, err)
+	assert.Error(t, err)
 
 	_, _, err = readLPBytes([]byte{0xff, 0xff, 0xff, 0xff})
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestWriteLPBytes(t *testing.T) {
@@ -66,19 +66,19 @@ func TestWriteLPBytes(t *testing.T) {
 	for _, str := range testStrings {
 		n, err := writeLPBytes(buf[total:], []byte(str))
 
-		require.NoError(t, err)
-		require.Equal(t, 2+len(str), n)
+		assert.NoError(t, err)
+		assert.Equal(t, 2+len(str), n)
 
 		total += n
 	}
 
-	require.Equal(t, testBytes, buf[:total])
+	assert.Equal(t, testBytes, buf[:total])
 }
 
 func TestWriteLPBytesErrors(t *testing.T) {
 	_, err := writeLPBytes([]byte{}, make([]byte, 65536))
-	require.Error(t, err)
+	assert.Error(t, err)
 
 	_, err = writeLPBytes([]byte{}, make([]byte, 10))
-	require.Error(t, err)
+	assert.Error(t, err)
 }

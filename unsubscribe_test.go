@@ -17,15 +17,15 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUnsubscribeInterface(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	pkt.Topics = [][]byte{[]byte("hello")}
 
-	require.Equal(t, pkt.Type(), UNSUBSCRIBE)
-	require.NotNil(t, pkt.String())
+	assert.Equal(t, pkt.Type(), UNSUBSCRIBE)
+	assert.NotNil(t, pkt.String())
 }
 
 func TestUnsubscribePacketDecode(t *testing.T) {
@@ -48,12 +48,12 @@ func TestUnsubscribePacketDecode(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, 3, len(pkt.Topics))
-	require.Equal(t, []byte("surgemq"), pkt.Topics[0])
-	require.Equal(t, []byte("/a/b/#/c"), pkt.Topics[1])
-	require.Equal(t, []byte("/a/b/#/cdd"), pkt.Topics[2])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, 3, len(pkt.Topics))
+	assert.Equal(t, []byte("surgemq"), pkt.Topics[0])
+	assert.Equal(t, []byte("/a/b/#/c"), pkt.Topics[1])
+	assert.Equal(t, []byte("/a/b/#/cdd"), pkt.Topics[2])
 }
 
 func TestUnsubscribePacketDecodeError1(t *testing.T) {
@@ -68,7 +68,7 @@ func TestUnsubscribePacketDecodeError1(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestUnsubscribePacketDecodeError2(t *testing.T) {
@@ -82,7 +82,7 @@ func TestUnsubscribePacketDecodeError2(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestUnsubscribePacketDecodeError3(t *testing.T) {
@@ -95,7 +95,7 @@ func TestUnsubscribePacketDecodeError3(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestUnsubscribePacketDecodeError4(t *testing.T) {
@@ -112,7 +112,7 @@ func TestUnsubscribePacketDecodeError4(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestUnsubscribePacketEncode(t *testing.T) {
@@ -143,9 +143,9 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 	dst := make([]byte, 100)
 	n, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestUnsubscribePacketEncodeError1(t *testing.T) {
@@ -158,8 +158,8 @@ func TestUnsubscribePacketEncodeError1(t *testing.T) {
 	dst := make([]byte, 1) // <- too small
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
 }
 
 func TestUnsubscribePacketEncodeError2(t *testing.T) {
@@ -172,8 +172,8 @@ func TestUnsubscribePacketEncodeError2(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 6, n)
+	assert.Error(t, err)
+	assert.Equal(t, 6, n)
 }
 
 // test to ensure encoding and decoding are the same
@@ -198,20 +198,20 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
 
 	dst := make([]byte, 100)
 	n2, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n2)
-	require.Equal(t, pktBytes, dst[:n2])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n2)
+	assert.Equal(t, pktBytes, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n3)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n3)
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {

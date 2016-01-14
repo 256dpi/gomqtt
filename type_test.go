@@ -15,7 +15,7 @@
 package packet
 
 import (
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -40,11 +40,11 @@ func TestTypes(t *testing.T) {
 }
 
 func TestTypeString(t *testing.T) {
-	require.Equal(t, "UNKNOWN", Type(99).String())
+	assert.Equal(t, "UNKNOWN", Type(99).String())
 }
 
 func TestTypeValid(t *testing.T) {
-	require.True(t, CONNECT.Valid())
+	assert.True(t, CONNECT.Valid())
 }
 
 func TestTypeNew(t *testing.T) {
@@ -67,7 +67,7 @@ func TestTypeNew(t *testing.T) {
 
 	for _, _t := range list {
 		m, err := _t.New()
-		require.NotNil(t, m)
-		require.NoError(t, err)
+		assert.NotNil(t, m)
+		assert.NoError(t, err)
 	}
 }

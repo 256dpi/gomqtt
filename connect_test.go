@@ -17,14 +17,14 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConnectInterface(t *testing.T) {
 	pkt := NewConnectPacket()
 
-	require.Equal(t, pkt.Type(), CONNECT)
-	require.NotNil(t, pkt.String())
+	assert.Equal(t, pkt.Type(), CONNECT)
+	assert.NotNil(t, pkt.String())
 }
 
 func TestConnectPacketDecode(t *testing.T) {
@@ -58,14 +58,14 @@ func TestConnectPacketDecode(t *testing.T) {
 	pkt := NewConnectPacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, 10, int(pkt.KeepAlive))
-	require.Equal(t, "surgemq", string(pkt.ClientID))
-	require.Equal(t, "will", string(pkt.WillTopic))
-	require.Equal(t, "send me home", string(pkt.WillPayload))
-	require.Equal(t, "surgemq", string(pkt.Username))
-	require.Equal(t, "verysecret", string(pkt.Password))
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, 10, int(pkt.KeepAlive))
+	assert.Equal(t, "surgemq", string(pkt.ClientID))
+	assert.Equal(t, "will", string(pkt.WillTopic))
+	assert.Equal(t, "send me home", string(pkt.WillPayload))
+	assert.Equal(t, "surgemq", string(pkt.Username))
+	assert.Equal(t, "verysecret", string(pkt.Password))
 }
 
 func TestConnectPacketDecodeError1(t *testing.T) {
@@ -80,7 +80,7 @@ func TestConnectPacketDecodeError1(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError2(t *testing.T) {
@@ -95,7 +95,7 @@ func TestConnectPacketDecodeError2(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError3(t *testing.T) {
@@ -111,7 +111,7 @@ func TestConnectPacketDecodeError3(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError4(t *testing.T) {
@@ -127,7 +127,7 @@ func TestConnectPacketDecodeError4(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError5(t *testing.T) {
@@ -143,7 +143,7 @@ func TestConnectPacketDecodeError5(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError6(t *testing.T) {
@@ -160,7 +160,7 @@ func TestConnectPacketDecodeError6(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError7(t *testing.T) {
@@ -177,7 +177,7 @@ func TestConnectPacketDecodeError7(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError8(t *testing.T) {
@@ -194,7 +194,7 @@ func TestConnectPacketDecodeError8(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError9(t *testing.T) {
@@ -211,7 +211,7 @@ func TestConnectPacketDecodeError9(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError10(t *testing.T) {
@@ -228,7 +228,7 @@ func TestConnectPacketDecodeError10(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError11(t *testing.T) {
@@ -247,7 +247,7 @@ func TestConnectPacketDecodeError11(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError12(t *testing.T) {
@@ -269,7 +269,7 @@ func TestConnectPacketDecodeError12(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError13(t *testing.T) {
@@ -290,7 +290,7 @@ func TestConnectPacketDecodeError13(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError14(t *testing.T) {
@@ -313,7 +313,7 @@ func TestConnectPacketDecodeError14(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError15(t *testing.T) {
@@ -338,7 +338,7 @@ func TestConnectPacketDecodeError15(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError16(t *testing.T) {
@@ -361,7 +361,7 @@ func TestConnectPacketDecodeError16(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketDecodeError17(t *testing.T) {
@@ -386,7 +386,7 @@ func TestConnectPacketDecodeError17(t *testing.T) {
 	pkt := NewConnectPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestConnectPacketEncode1(t *testing.T) {
@@ -430,9 +430,9 @@ func TestConnectPacketEncode1(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestConnectPacketEncode2(t *testing.T) {
@@ -457,9 +457,9 @@ func TestConnectPacketEncode2(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestConnectPacketEncodeError1(t *testing.T) {
@@ -468,8 +468,8 @@ func TestConnectPacketEncodeError1(t *testing.T) {
 	dst := make([]byte, 4) // <- too small buffer
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
 }
 
 func TestConnectPacketEncodeError2(t *testing.T) {
@@ -480,8 +480,8 @@ func TestConnectPacketEncodeError2(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 9, n)
+	assert.Error(t, err)
+	assert.Equal(t, 9, n)
 }
 
 func TestConnectPacketEncodeError3(t *testing.T) {
@@ -491,8 +491,8 @@ func TestConnectPacketEncodeError3(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 14, n)
+	assert.Error(t, err)
+	assert.Equal(t, 14, n)
 }
 
 func TestConnectPacketEncodeError4(t *testing.T) {
@@ -502,8 +502,8 @@ func TestConnectPacketEncodeError4(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 16, n)
+	assert.Error(t, err)
+	assert.Equal(t, 16, n)
 }
 
 func TestConnectPacketEncodeError5(t *testing.T) {
@@ -514,8 +514,8 @@ func TestConnectPacketEncodeError5(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 19, n)
+	assert.Error(t, err)
+	assert.Equal(t, 19, n)
 }
 
 func TestConnectPacketEncodeError6(t *testing.T) {
@@ -525,8 +525,8 @@ func TestConnectPacketEncodeError6(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 16, n)
+	assert.Error(t, err)
+	assert.Equal(t, 16, n)
 }
 
 func TestConnectPacketEncodeError7(t *testing.T) {
@@ -536,8 +536,8 @@ func TestConnectPacketEncodeError7(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 14, n)
+	assert.Error(t, err)
+	assert.Equal(t, 14, n)
 }
 
 func TestConnectPacketEncodeError8(t *testing.T) {
@@ -548,8 +548,8 @@ func TestConnectPacketEncodeError8(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 19, n)
+	assert.Error(t, err)
+	assert.Equal(t, 19, n)
 }
 
 func TestConnectEqualDecodeEncode(t *testing.T) {
@@ -583,20 +583,20 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 	pkt := NewConnectPacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
 
 	dst := make([]byte, pkt.Len())
 	n2, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n2)
-	require.Equal(t, pktBytes, dst[:n2])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n2)
+	assert.Equal(t, pktBytes, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n3)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n3)
 }
 
 func BenchmarkConnectEncode(b *testing.B) {

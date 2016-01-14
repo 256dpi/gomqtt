@@ -17,14 +17,14 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSubackInterface(t *testing.T) {
 	pkt := NewSubackPacket()
 
-	require.Equal(t, pkt.Type(), SUBACK)
-	require.NotNil(t, pkt.String())
+	assert.Equal(t, pkt.Type(), SUBACK)
+	assert.NotNil(t, pkt.String())
 }
 
 func TestSubackPacketDecode(t *testing.T) {
@@ -42,9 +42,9 @@ func TestSubackPacketDecode(t *testing.T) {
 	pkt := NewSubackPacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, 4, len(pkt.ReturnCodes))
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, 4, len(pkt.ReturnCodes))
 }
 
 func TestSubackPacketDecodeError1(t *testing.T) {
@@ -59,7 +59,7 @@ func TestSubackPacketDecodeError1(t *testing.T) {
 	pkt := NewSubackPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubackPacketDecodeError2(t *testing.T) {
@@ -77,7 +77,7 @@ func TestSubackPacketDecodeError2(t *testing.T) {
 	pkt := NewSubackPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubackPacketDecodeError3(t *testing.T) {
@@ -90,7 +90,7 @@ func TestSubackPacketDecodeError3(t *testing.T) {
 	pkt := NewSubackPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubackPacketDecodeError4(t *testing.T) {
@@ -105,7 +105,7 @@ func TestSubackPacketDecodeError4(t *testing.T) {
 	pkt := NewSubackPacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubackPacketEncode(t *testing.T) {
@@ -127,9 +127,9 @@ func TestSubackPacketEncode(t *testing.T) {
 	dst := make([]byte, 10)
 	n, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, pktBytes, dst[:n])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, pktBytes, dst[:n])
 }
 
 func TestSubackPacketEncodeError1(t *testing.T) {
@@ -140,8 +140,8 @@ func TestSubackPacketEncodeError1(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
 }
 
 func TestSubackPacketEncodeError2(t *testing.T) {
@@ -152,8 +152,8 @@ func TestSubackPacketEncodeError2(t *testing.T) {
 	dst := make([]byte, pkt.Len()-1)
 	n, err := pkt.Encode(dst)
 
-	require.Error(t, err)
-	require.Equal(t, 0, n)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
 }
 
 func TestSubackEqualDecodeEncode(t *testing.T) {
@@ -171,20 +171,20 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 	pkt := NewSubackPacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
 
 	dst := make([]byte, 100)
 	n2, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n2)
-	require.Equal(t, pktBytes, dst[:n2])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n2)
+	assert.Equal(t, pktBytes, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n3)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n3)
 }
 
 func BenchmarkSubackEncode(b *testing.B) {

@@ -17,7 +17,7 @@ package packet
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSubscribeInterface(t *testing.T) {
@@ -26,8 +26,8 @@ func TestSubscribeInterface(t *testing.T) {
 		{Topic: []byte("hello"), QOS: QOSAtMostOnce},
 	}
 
-	require.Equal(t, pkt.Type(), SUBSCRIBE)
-	require.NotNil(t, pkt.String())
+	assert.Equal(t, pkt.Type(), SUBSCRIBE)
+	assert.NotNil(t, pkt.String())
 }
 
 func TestSubscribePacketDecode(t *testing.T) {
@@ -53,15 +53,15 @@ func TestSubscribePacketDecode(t *testing.T) {
 	pkt := NewSubscribePacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, 3, len(pkt.Subscriptions))
-	require.Equal(t, []byte("surgemq"), pkt.Subscriptions[0].Topic)
-	require.Equal(t, 0, int(pkt.Subscriptions[0].QOS))
-	require.Equal(t, []byte("/a/b/#/c"), pkt.Subscriptions[1].Topic)
-	require.Equal(t, 1, int(pkt.Subscriptions[1].QOS))
-	require.Equal(t, []byte("/a/b/#/cdd"), pkt.Subscriptions[2].Topic)
-	require.Equal(t, 2, int(pkt.Subscriptions[2].QOS))
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, 3, len(pkt.Subscriptions))
+	assert.Equal(t, []byte("surgemq"), pkt.Subscriptions[0].Topic)
+	assert.Equal(t, 0, int(pkt.Subscriptions[0].QOS))
+	assert.Equal(t, []byte("/a/b/#/c"), pkt.Subscriptions[1].Topic)
+	assert.Equal(t, 1, int(pkt.Subscriptions[1].QOS))
+	assert.Equal(t, []byte("/a/b/#/cdd"), pkt.Subscriptions[2].Topic)
+	assert.Equal(t, 2, int(pkt.Subscriptions[2].QOS))
 }
 
 func TestSubscribePacketDecodeError1(t *testing.T) {
@@ -73,7 +73,7 @@ func TestSubscribePacketDecodeError1(t *testing.T) {
 	pkt := NewSubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubscribePacketDecodeError2(t *testing.T) {
@@ -86,7 +86,7 @@ func TestSubscribePacketDecodeError2(t *testing.T) {
 	pkt := NewSubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubscribePacketDecodeError3(t *testing.T) {
@@ -101,7 +101,7 @@ func TestSubscribePacketDecodeError3(t *testing.T) {
 	pkt := NewSubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubscribePacketDecodeError4(t *testing.T) {
@@ -118,7 +118,7 @@ func TestSubscribePacketDecodeError4(t *testing.T) {
 	pkt := NewSubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubscribePacketDecodeError5(t *testing.T) {
@@ -136,7 +136,7 @@ func TestSubscribePacketDecodeError5(t *testing.T) {
 	pkt := NewSubscribePacket()
 	_, err := pkt.Decode(pktBytes)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubscribePacketEncode(t *testing.T) {
@@ -170,9 +170,9 @@ func TestSubscribePacketEncode(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
-	require.Equal(t, pktBytes, dst)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, pktBytes, dst)
 }
 
 func TestSubscribePacketEncodeError1(t *testing.T) {
@@ -181,7 +181,7 @@ func TestSubscribePacketEncodeError1(t *testing.T) {
 	dst := make([]byte, 1) // <- too small
 	_, err := pkt.Encode(dst)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubscribePacketEncodeError2(t *testing.T) {
@@ -193,7 +193,7 @@ func TestSubscribePacketEncodeError2(t *testing.T) {
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)
 
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSubscribeEqualDecodeEncode(t *testing.T) {
@@ -219,20 +219,20 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 	pkt := NewSubscribePacket()
 	n, err := pkt.Decode(pktBytes)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
 
 	dst := make([]byte, pkt.Len())
 	n2, err := pkt.Encode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n2)
-	require.Equal(t, pktBytes, dst[:n2])
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n2)
+	assert.Equal(t, pktBytes, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
-	require.NoError(t, err)
-	require.Equal(t, len(pktBytes), n3)
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n3)
 }
 
 func BenchmarkSubscribeEncode(b *testing.B) {
