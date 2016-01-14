@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTreeAdd(t *testing.T) {
@@ -26,7 +26,7 @@ func TestTreeAdd(t *testing.T) {
 
 	tree.Add("foo/bar", 1)
 
-	require.Equal(t, 1, tree.root.children["foo"].children["bar"].values[0])
+	assert.Equal(t, 1, tree.root.children["foo"].children["bar"].values[0])
 }
 
 func TestTreeAddDuplicate(t *testing.T) {
@@ -35,7 +35,7 @@ func TestTreeAddDuplicate(t *testing.T) {
 	tree.Add("foo/bar", 1)
 	tree.Add("foo/bar", 1)
 
-	require.Equal(t, 1, len(tree.root.children["foo"].children["bar"].values))
+	assert.Equal(t, 1, len(tree.root.children["foo"].children["bar"].values))
 }
 
 func TestTreeRemove(t *testing.T) {
@@ -44,7 +44,7 @@ func TestTreeRemove(t *testing.T) {
 	tree.Add("foo/bar", 1)
 	tree.Remove("foo/bar", 1)
 
-	require.Equal(t, 0, len(tree.root.children))
+	assert.Equal(t, 0, len(tree.root.children))
 }
 
 func TestTreeRemoveMissing(t *testing.T) {
@@ -53,7 +53,7 @@ func TestTreeRemoveMissing(t *testing.T) {
 	tree.Add("foo/bar", 1)
 	tree.Remove("bar/baz", 1)
 
-	require.Equal(t, 1, len(tree.root.children))
+	assert.Equal(t, 1, len(tree.root.children))
 }
 
 func TestTreeEmpty(t *testing.T) {
@@ -63,7 +63,7 @@ func TestTreeEmpty(t *testing.T) {
 	tree.Add("foo/bar", 2)
 	tree.Empty("foo/bar")
 
-	require.Equal(t, 0, len(tree.root.children))
+	assert.Equal(t, 0, len(tree.root.children))
 }
 
 func TestTreeClear(t *testing.T) {
@@ -73,7 +73,7 @@ func TestTreeClear(t *testing.T) {
 	tree.Add("foo/bar/baz", 1)
 	tree.Clear(1)
 
-	require.Equal(t, 0, len(tree.root.children))
+	assert.Equal(t, 0, len(tree.root.children))
 }
 
 func TestTreeMatchExact(t *testing.T) {
@@ -81,7 +81,7 @@ func TestTreeMatchExact(t *testing.T) {
 
 	tree.Add("foo/bar", 1)
 
-	require.Equal(t, 1, tree.Match("foo/bar")[0])
+	assert.Equal(t, 1, tree.Match("foo/bar")[0])
 }
 
 func TestTreeMatchWildcard1(t *testing.T) {
@@ -89,7 +89,7 @@ func TestTreeMatchWildcard1(t *testing.T) {
 
 	tree.Add("foo/+", 1)
 
-	require.Equal(t, 1, tree.Match("foo/bar")[0])
+	assert.Equal(t, 1, tree.Match("foo/bar")[0])
 }
 
 func TestTreeMatchWildcard2(t *testing.T) {
@@ -97,7 +97,7 @@ func TestTreeMatchWildcard2(t *testing.T) {
 
 	tree.Add("foo/#", 1)
 
-	require.Equal(t, 1, tree.Match("foo/bar")[0])
+	assert.Equal(t, 1, tree.Match("foo/bar")[0])
 }
 
 func TestTreeMatchWildcard3(t *testing.T) {
@@ -105,7 +105,7 @@ func TestTreeMatchWildcard3(t *testing.T) {
 
 	tree.Add("foo/#", 1)
 
-	require.Equal(t, 1, tree.Match("foo/bar/baz")[0])
+	assert.Equal(t, 1, tree.Match("foo/bar/baz")[0])
 }
 
 func TestTreeMatchWildcard4(t *testing.T) {
@@ -113,7 +113,7 @@ func TestTreeMatchWildcard4(t *testing.T) {
 
 	tree.Add("foo/bar/#", 1)
 
-	require.Equal(t, 1, tree.Match("foo/bar")[0])
+	assert.Equal(t, 1, tree.Match("foo/bar")[0])
 }
 
 func TestTreeMatchMultiple(t *testing.T) {
@@ -123,7 +123,7 @@ func TestTreeMatchMultiple(t *testing.T) {
 	tree.Add("foo/+", 2)
 	tree.Add("foo/#", 3)
 
-	require.Equal(t, 3, len(tree.Match("foo/bar")))
+	assert.Equal(t, 3, len(tree.Match("foo/bar")))
 }
 
 func TestTreeMatchNoDuplicates(t *testing.T) {
@@ -133,7 +133,7 @@ func TestTreeMatchNoDuplicates(t *testing.T) {
 	tree.Add("foo/+", 1)
 	tree.Add("foo/#", 1)
 
-	require.Equal(t, 1, len(tree.Match("foo/bar")))
+	assert.Equal(t, 1, len(tree.Match("foo/bar")))
 }
 
 func TestTreeReset(t *testing.T) {
@@ -142,7 +142,7 @@ func TestTreeReset(t *testing.T) {
 	tree.Add("foo/bar", 1)
 	tree.Reset()
 
-	require.Equal(t, 0, len(tree.root.children))
+	assert.Equal(t, 0, len(tree.root.children))
 }
 
 func TestTreeString(t *testing.T) {
@@ -150,7 +150,7 @@ func TestTreeString(t *testing.T) {
 
 	tree.Add("foo/bar", 1)
 
-	require.Equal(t, "topic.Tree:\n| 'foo' => 0\n|   'bar' => 1", tree.String())
+	assert.Equal(t, "topic.Tree:\n| 'foo' => 0\n|   'bar' => 1", tree.String())
 }
 
 func BenchmarkTreeAddSame(b *testing.B) {
