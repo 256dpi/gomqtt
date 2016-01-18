@@ -92,9 +92,13 @@ func (c *Client) Connect(urlString string, opts *Options) error {
 	// preset to avoid pingreq right after start
 	c.lastSend = time.Now()
 
-	// start subroutines
+	// start process routine
 	c.tomb.Go(c.process)
-	c.tomb.Go(c.keepAlive)
+
+	// start keep alive if greater than zero
+	if c.opts.KeepAlive > 0 {
+		c.tomb.Go(c.keepAlive)
+	}
 
 	// prepare connect packet
 	m := packet.NewConnectPacket()
@@ -244,26 +248,23 @@ func (c *Client) error(err error) {
 // manages the sending of ping packets to keep the connection alive
 func (c *Client) keepAlive() error {
 	for {
+		c.lastSendMutex.Lock()
+		timeElapsed := time.Since(c.lastSend)
+		c.lastSendMutex.Unlock()
+
+		timeToWait := c.opts.KeepAlive
+
+		if timeElapsed > c.opts.KeepAlive {
+			c.send(packet.NewPingreqPacket())
+		} else {
+			timeToWait = c.opts.KeepAlive - timeElapsed
+		}
+
 		select {
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
-		default:
-			c.lastSendMutex.Lock()
-			last := uint(time.Since(c.lastSend).Seconds())
-			c.lastSendMutex.Unlock()
-
-			if c.opts.KeepAlive.Seconds() > 0 && last > uint(c.opts.KeepAlive.Seconds()) {
-				if !c.pingrespPending {
-					c.pingrespPending = true
-
-					m := packet.NewPingreqPacket()
-					c.send(m)
-				} else {
-					return errors.New("didn't receive pingresp")
-				}
-			}
-
-			time.Sleep(1 * time.Second)
+		case <-time.After(timeToWait):
+			// continue
 		}
 	}
 }
