@@ -31,9 +31,7 @@ func TestClientConnect(t *testing.T) {
 		done <- true
 	})
 
-	err := c.Connect("mqtt://localhost:1883", &Options{
-		ClientID: "test",
-	})
+	err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
 
 	assert.NoError(t, err)
 
@@ -53,9 +51,7 @@ func TestClientConnectWebSocket(t *testing.T) {
 		done <- true
 	})
 
-	err := c.Connect("ws://localhost:1884", &Options{
-		ClientID: "test",
-	})
+	err := c.Connect("ws://localhost:1884", NewOptions("test"))
 
 	assert.NoError(t, err)
 
@@ -76,9 +72,7 @@ func TestClientPublishSubscribe(t *testing.T) {
 		done <- true
 	})
 
-	err := c.Connect("mqtt://localhost:1883", &Options{
-		ClientID: "test",
-	})
+	err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
 
 	assert.NoError(t, err)
 
@@ -94,9 +88,7 @@ func TestClientConnectError(t *testing.T) {
 	c := NewClient()
 
 	// wrong port
-	err := c.Connect("mqtt://localhost:1234", &Options{
-		ClientID: "test",
-	})
+	err := c.Connect("mqtt://localhost:1234", NewOptions("test"))
 
 	assert.Error(t, err)
 }

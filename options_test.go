@@ -15,26 +15,11 @@
 package client
 
 import (
-	"time"
+	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
-type Options struct {
-	ClientID     string
-	CleanSession bool
-
-	WillEnabled  bool
-	WillTopic    string
-	WillPayload  []byte
-	WillQos      byte
-	WillRetained bool
-
-	KeepAlive time.Duration
-}
-
-func NewOptions(clientID string) *Options {
-	return &Options{
-		ClientID: clientID,
-		CleanSession: true,
-		KeepAlive: 30,
-	}
+func TestOptions(t *testing.T) {
+	opts := NewOptions("foo")
+	assert.Equal(t, "foo", opts.ClientID)
 }
