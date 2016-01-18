@@ -33,8 +33,8 @@ type Options struct {
 
 func NewOptions(clientID string) *Options {
 	return &Options{
-		ClientID: clientID,
+		ClientID:     clientID,
 		CleanSession: true,
-		KeepAlive: 30,
+		KeepAlive:    30,
 	}
 }

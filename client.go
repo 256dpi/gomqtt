@@ -22,6 +22,7 @@ import (
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
+	"gopkg.in/tomb.v2"
 )
 
 type (
@@ -33,44 +34,40 @@ type (
 type Client struct {
 	opts *Options
 	conn transport.Conn
-	quit chan bool
 
 	connectCallback ConnectCallback
 	messageCallback MessageCallback
 	errorCallback   ErrorCallback
 
-	lastContact      time.Time
-	lastContactMutex sync.Mutex
-	pingrespPending  bool
-	start            sync.WaitGroup
-	finish			 sync.WaitGroup
+	lastSend        time.Time
+	lastSendMutex   sync.Mutex
+	pingrespPending bool
+
+	tomb tomb.Tomb
 }
 
 // NewClient returns a new client.
 func NewClient() *Client {
-	return &Client{
-		quit: make(chan bool),
-		lastContact: time.Now(),
-	}
+	return &Client{}
 }
 
 // OnConnect sets the callback for successful connections.
-func (this *Client) OnConnect(callback ConnectCallback) {
-	this.connectCallback = callback
+func (c *Client) OnConnect(callback ConnectCallback) {
+	c.connectCallback = callback
 }
 
 // OnMessage sets the callback for incoming messages.
-func (this *Client) OnMessage(callback MessageCallback) {
-	this.messageCallback = callback
+func (c *Client) OnMessage(callback MessageCallback) {
+	c.messageCallback = callback
 }
 
 // OnError sets the callback for failed connection attempts and parsing errors.
-func (this *Client) OnError(callback ErrorCallback) {
-	this.errorCallback = callback
+func (c *Client) OnError(callback ErrorCallback) {
+	c.errorCallback = callback
 }
 
 // Connect opens the connection to the broker.
-func (this *Client) Connect(urlString string, opts *Options) error {
+func (c *Client) Connect(urlString string, opts *Options) error {
 	var err error
 
 	// parse url
@@ -80,26 +77,24 @@ func (this *Client) Connect(urlString string, opts *Options) error {
 	}
 
 	// dial broker
-	this.conn, err = transport.Dial(urlString)
+	c.conn, err = transport.Dial(urlString)
 	if err != nil {
 		return err
 	}
 
 	// save opts
 	if opts != nil {
-		this.opts = opts
+		c.opts = opts
 	} else {
-		this.opts = &Options{
-			ClientID:     "gomqtt/client",
-			CleanSession: true,
-		}
+		c.opts = NewOptions("gomqtt/client")
 	}
 
+	// preset to avoid pingreq right after start
+	c.lastSend = time.Now()
+
 	// start subroutines
-	this.start.Add(2)
-	this.finish.Add(2)
-	go this.process()
-	go this.keepAlive()
+	c.tomb.Go(c.process)
+	c.tomb.Go(c.keepAlive)
 
 	// prepare connect packet
 	m := packet.NewConnectPacket()
@@ -121,13 +116,10 @@ func (this *Client) Connect(urlString string, opts *Options) error {
 	m.WillRetain = opts.WillRetained
 
 	// send connect packet
-	this.send(m)
-
-	this.start.Wait()
-	return nil
+	return c.send(m)
 }
 
-func (this *Client) Publish(topic string, payload []byte, qos byte, retain bool) {
+func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) error {
 	m := packet.NewPublishPacket()
 	m.Topic = []byte(topic)
 	m.Payload = payload
@@ -136,16 +128,16 @@ func (this *Client) Publish(topic string, payload []byte, qos byte, retain bool)
 	m.Dup = false
 	m.PacketID = 1
 
-	this.send(m)
+	return c.send(m)
 }
 
-func (this *Client) Subscribe(topic string, qos byte) {
-	this.SubscribeMultiple(map[string]byte{
+func (c *Client) Subscribe(topic string, qos byte) error {
+	return c.SubscribeMultiple(map[string]byte{
 		topic: qos,
 	})
 }
 
-func (this *Client) SubscribeMultiple(filters map[string]byte) {
+func (c *Client) SubscribeMultiple(filters map[string]byte) error {
 	m := packet.NewSubscribePacket()
 	m.Subscriptions = make([]packet.Subscription, 0, len(filters))
 	m.PacketID = 1
@@ -157,14 +149,14 @@ func (this *Client) SubscribeMultiple(filters map[string]byte) {
 		})
 	}
 
-	this.send(m)
+	return c.send(m)
 }
 
-func (this *Client) Unsubscribe(topic string) {
-	this.UnsubscribeMultiple([]string{topic})
+func (c *Client) Unsubscribe(topic string) error {
+	return c.UnsubscribeMultiple([]string{topic})
 }
 
-func (this *Client) UnsubscribeMultiple(topics []string) {
+func (c *Client) UnsubscribeMultiple(topics []string) error {
 	m := packet.NewUnsubscribePacket()
 	m.Topics = make([][]byte, 0, len(topics))
 	m.PacketID = 1
@@ -173,36 +165,31 @@ func (this *Client) UnsubscribeMultiple(topics []string) {
 		m.Topics = append(m.Topics, []byte(t))
 	}
 
-	this.send(m)
+	return c.send(m)
 }
 
-func (this *Client) Disconnect() {
+func (c *Client) Disconnect() error {
 	m := packet.NewDisconnectPacket()
 
-	this.send(m)
+	err := c.send(m)
+	if err != nil {
+		return err
+	}
 
-	close(this.quit)
-
-	this.finish.Wait()
+	return c.tomb.Wait()
 }
 
 // process incoming packets
-func (this *Client) process() {
-	this.start.Done()
-	defer this.finish.Done()
-
+func (c *Client) process() error {
 	for {
 		select {
-		case <-this.quit:
-			return
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
 		default:
-			pkt, err := this.conn.Receive()
+			pkt, err := c.conn.Receive()
 			if err != nil {
-				//TODO: handle error
-				return
+				return err
 			}
-
-			//this.lastContact = time.Now()
 
 			switch pkt.Type() {
 			case packet.CONNACK:
@@ -210,73 +197,69 @@ func (this *Client) process() {
 
 				if ok {
 					if m.ReturnCode == packet.ConnectionAccepted {
-						if this.connectCallback != nil {
-							this.connectCallback(m.SessionPresent)
+						if c.connectCallback != nil {
+							c.connectCallback(m.SessionPresent)
 						}
 					} else {
-						this.error(errors.New(m.ReturnCode.Error()))
+						c.error(errors.New(m.ReturnCode.Error()))
 					}
 				} else {
-					this.error(errors.New("failed to convert CONNACK packet"))
+					c.error(errors.New("failed to convert CONNACK packet"))
 				}
 			case packet.PINGRESP:
 				_, ok := pkt.(*packet.PingrespPacket)
 
 				if ok {
-					this.pingrespPending = false
+					c.pingrespPending = false
 				} else {
-					this.error(errors.New("failed to convert PINGRESP packet"))
+					c.error(errors.New("failed to convert PINGRESP packet"))
 				}
 			case packet.PUBLISH:
 				m, ok := pkt.(*packet.PublishPacket)
 
 				if ok {
-					this.messageCallback(string(m.Topic), m.Payload)
+					c.messageCallback(string(m.Topic), m.Payload)
 				} else {
-					this.error(errors.New("failed to convert PUBLISH packet"))
+					c.error(errors.New("failed to convert PUBLISH packet"))
 				}
 			}
 		}
 	}
 }
 
-func (this *Client) send(msg packet.Packet) {
-	this.lastContactMutex.Lock()
-	this.lastContact = time.Now()
-	this.lastContactMutex.Unlock()
+func (c *Client) send(msg packet.Packet) error {
+	c.lastSendMutex.Lock()
+	c.lastSend = time.Now()
+	c.lastSendMutex.Unlock()
 
-	this.conn.Send(msg)
+	return c.conn.Send(msg)
 }
 
-func (this *Client) error(err error) {
-	if this.errorCallback != nil {
-		this.errorCallback(err)
+func (c *Client) error(err error) {
+	if c.errorCallback != nil {
+		c.errorCallback(err)
 	}
 }
 
 // manages the sending of ping packets to keep the connection alive
-func (this *Client) keepAlive() {
-	this.start.Done()
-	defer this.finish.Done()
-
+func (c *Client) keepAlive() error {
 	for {
 		select {
-		case <-this.quit:
-			return
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
 		default:
-			this.lastContactMutex.Lock()
-			last := uint(time.Since(this.lastContact).Seconds())
-			this.lastContactMutex.Unlock()
+			c.lastSendMutex.Lock()
+			last := uint(time.Since(c.lastSend).Seconds())
+			c.lastSendMutex.Unlock()
 
-			if this.opts.KeepAlive.Seconds() > 0 && last > uint(this.opts.KeepAlive.Seconds()) {
-				if !this.pingrespPending {
-					this.pingrespPending = true
+			if c.opts.KeepAlive.Seconds() > 0 && last > uint(c.opts.KeepAlive.Seconds()) {
+				if !c.pingrespPending {
+					c.pingrespPending = true
 
 					m := packet.NewPingreqPacket()
-					this.send(m)
+					c.send(m)
 				} else {
-					// TODO: close connection?
-					// return
+					return errors.New("didn't receive pingresp")
 				}
 			}
 
