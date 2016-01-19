@@ -16,98 +16,105 @@ package client
 
 import (
 	"testing"
+	"strings"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"sync/atomic"
 )
 
 func TestClientConnect(t *testing.T) {
 	c := NewClient()
 
-	done := make(chan bool)
-
-	c.OnConnect(func(sessionPresent bool) {
-		assert.False(t, sessionPresent)
-
-		done <- true
-	})
-
-	err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
-
+	sess, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
 	assert.NoError(t, err)
+	assert.False(t, sess)
 
-	<-done
-
-	c.Disconnect()
+	err = c.Disconnect()
+	assert.NoError(t, err)
 }
 
 func TestClientConnectWebSocket(t *testing.T) {
 	c := NewClient()
 
-	done := make(chan bool)
-
-	c.OnConnect(func(sessionPresent bool) {
-		assert.False(t, sessionPresent)
-
-		done <- true
-	})
-
-	err := c.Connect("ws://localhost:1884", NewOptions("test"))
-
+	sess, err := c.Connect("ws://localhost:1884", NewOptions("test"))
 	assert.NoError(t, err)
+	assert.False(t, sess)
 
-	<-done
-
-	c.Disconnect()
+	err = c.Disconnect()
+	assert.NoError(t, err)
 }
 
 func TestClientPublishSubscribe(t *testing.T) {
 	c := NewClient()
-
-	done := make(chan bool)
+	done := make(chan struct{})
 
 	c.OnMessage(func(topic string, payload []byte) {
 		assert.Equal(t, "test", topic)
 		assert.Equal(t, []byte("test"), payload)
 
-		done <- true
+		close(done)
 	})
 
-	err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	sess, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	assert.NoError(t, err)
+	assert.False(t, sess)
 
+	err = c.Subscribe("test", 0)
 	assert.NoError(t, err)
 
-	c.Subscribe("test", 0)
-	c.Publish("test", []byte("test"), 0, false)
+	err = c.Publish("test", []byte("test"), 0, false)
+	assert.NoError(t, err)
 
 	<-done
-
-	c.Disconnect()
+	err = c.Disconnect()
+	assert.NoError(t, err)
 }
 
 func TestClientConnectError(t *testing.T) {
 	c := NewClient()
 
 	// wrong port
-	err := c.Connect("mqtt://localhost:1234", NewOptions("test"))
-
+	sess, err := c.Connect("mqtt://localhost:1234", NewOptions("test"))
 	assert.Error(t, err)
+	assert.False(t, sess)
 }
 
 func TestClientAuthenticationError(t *testing.T) {
 	c := NewClient()
 
-	done := make(chan bool)
+	// missing clientID
+	sess, err := c.Connect("mqtt://localhost:1883", &Options{})
+	assert.Error(t, err)
+	assert.False(t, sess)
+}
 
-	c.OnError(func(err error) {
-		assert.Error(t, err)
+func TestClientKeepAlive(t *testing.T) {
+	c := NewClient()
 
-		done <- true
+	var reqCounter int32 = 0
+	var respCounter int32 = 0
+
+	c.OnLog(func(message string){
+		if strings.Contains(message, "PingreqPacket") {
+			atomic.AddInt32(&reqCounter, 1)
+		} else if strings.Contains(message, "PingrespPacket") {
+			atomic.AddInt32(&respCounter, 1)
+		}
 	})
 
-	// missing clientID
-	err := c.Connect("mqtt://localhost:1883", &Options{})
+	opts := NewOptions("test")
+	opts.KeepAlive = "2s"
 
+	sess, err := c.Connect("mqtt://localhost:1883", opts)
+	assert.NoError(t, err)
+	assert.False(t, sess)
+
+	<-time.After(7 * time.Second)
+
+	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	assert.Equal(t, int32(3), atomic.LoadInt32(&reqCounter))
+	assert.Equal(t, int32(3), atomic.LoadInt32(&respCounter))
 }

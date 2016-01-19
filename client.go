@@ -15,10 +15,10 @@
 package client
 
 import (
-	"errors"
 	"net/url"
 	"sync"
 	"time"
+	"fmt"
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
@@ -26,34 +26,30 @@ import (
 )
 
 type (
-	ConnectCallback func(bool)
 	MessageCallback func(string, []byte)
 	ErrorCallback   func(error)
+	LogCallback     func(string)
 )
 
 type Client struct {
-	opts *Options
 	conn transport.Conn
 
-	connectCallback ConnectCallback
 	messageCallback MessageCallback
 	errorCallback   ErrorCallback
+	logCallback     LogCallback
 
+	keepAlive       time.Duration
 	lastSend        time.Time
 	lastSendMutex   sync.Mutex
 	pingrespPending bool
 
 	tomb tomb.Tomb
+	boot sync.WaitGroup
 }
 
 // NewClient returns a new client.
 func NewClient() *Client {
 	return &Client{}
-}
-
-// OnConnect sets the callback for successful connections.
-func (c *Client) OnConnect(callback ConnectCallback) {
-	c.connectCallback = callback
 }
 
 // OnMessage sets the callback for incoming messages.
@@ -66,44 +62,40 @@ func (c *Client) OnError(callback ErrorCallback) {
 	c.errorCallback = callback
 }
 
-// Connect opens the connection to the broker.
-func (c *Client) Connect(urlString string, opts *Options) error {
-	var err error
+// OnLog sets the callback for log messages.
+func (c* Client) OnLog(callback LogCallback) {
+	c.logCallback = callback
+}
 
+// Connect opens the connection to the broker and sends a ConnectPacket.
+func (c *Client) Connect(urlString string, opts *Options) (bool, error) {
 	// parse url
 	urlParts, err := url.Parse(urlString)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// dial broker
 	c.conn, err = transport.Dial(urlString)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// save opts
-	if opts != nil {
-		c.opts = opts
-	} else {
-		c.opts = NewOptions("gomqtt/client")
+	if opts == nil {
+		opts = NewOptions("gomqtt/client")
 	}
 
-	// preset to avoid pingreq right after start
-	c.lastSend = time.Now()
-
-	// start process routine
-	c.tomb.Go(c.process)
-
-	// start keep alive if greater than zero
-	if c.opts.KeepAlive > 0 {
-		c.tomb.Go(c.keepAlive)
+	// parse keep alive
+	c.keepAlive, err = time.ParseDuration(opts.KeepAlive)
+	if err != nil {
+		return false, err
 	}
 
 	// prepare connect packet
 	m := packet.NewConnectPacket()
 	m.ClientID = []byte(opts.ClientID)
-	m.KeepAlive = uint16(opts.KeepAlive.Seconds())
+	m.KeepAlive = uint16(c.keepAlive.Seconds())
 	m.CleanSession = opts.CleanSession
 
 	// check for credentials
@@ -120,9 +112,49 @@ func (c *Client) Connect(urlString string, opts *Options) error {
 	m.WillRetain = opts.WillRetained
 
 	// send connect packet
-	return c.send(m)
+	err = c.send(m)
+	if err != nil {
+		return false, err
+	}
+
+	// receive connack packet
+	pkt, err := c.conn.Receive()
+	if err != nil {
+		return false, err
+	}
+
+	// hold session present flag
+	var sessionPresent bool
+
+	// check packet type
+	switch pkt.Type() {
+	case packet.CONNACK:
+		connack := pkt.(*packet.ConnackPacket)
+
+		if connack.ReturnCode != packet.ConnectionAccepted {
+			return false, connack.ReturnCode
+		}
+
+		sessionPresent = connack.SessionPresent
+	}
+
+	// start process routine
+	c.boot.Add(1)
+	c.tomb.Go(c.process)
+
+	// start keep alive if greater than zero
+	if c.keepAlive > 0 {
+		c.boot.Add(1)
+		c.tomb.Go(c.ping)
+	}
+
+	// wait for all goroutines to start
+	c.boot.Wait()
+
+	return sessionPresent, nil
 }
 
+// Publish will send a PublishPacket containing the passed parameters.
 func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) error {
 	m := packet.NewPublishPacket()
 	m.Topic = []byte(topic)
@@ -135,12 +167,15 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) er
 	return c.send(m)
 }
 
+// Subscribe will send a SubscribePacket containing one topic to subscribe.
 func (c *Client) Subscribe(topic string, qos byte) error {
 	return c.SubscribeMultiple(map[string]byte{
 		topic: qos,
 	})
 }
 
+// SubscribeMultiple will send a SubscribePacket containing multiple topics to
+// subscribe.
 func (c *Client) SubscribeMultiple(filters map[string]byte) error {
 	m := packet.NewSubscribePacket()
 	m.Subscriptions = make([]packet.Subscription, 0, len(filters))
@@ -156,10 +191,13 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) error {
 	return c.send(m)
 }
 
+// Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
 func (c *Client) Unsubscribe(topic string) error {
 	return c.UnsubscribeMultiple([]string{topic})
 }
 
+// UnsubscribeMultiple will send a UnsubscribePacket containing multiple
+// topics to unsubscribe.
 func (c *Client) UnsubscribeMultiple(topics []string) error {
 	m := packet.NewUnsubscribePacket()
 	m.Topics = make([][]byte, 0, len(topics))
@@ -172,19 +210,28 @@ func (c *Client) UnsubscribeMultiple(topics []string) error {
 	return c.send(m)
 }
 
+// Disconnect will send a DisconnectPacket and close the connection.
 func (c *Client) Disconnect() error {
 	m := packet.NewDisconnectPacket()
 
 	err := c.send(m)
 	if err != nil {
-		return err
+		_err, ok := err.(transport.Error)
+
+		if ok && _err.Code() != transport.ExpectedClose {
+			return err
+		}
 	}
 
-	return c.tomb.Wait()
+	c.tomb.Wait()
+
+	return nil
 }
 
 // process incoming packets
 func (c *Client) process() error {
+	c.boot.Done()
+
 	for {
 		select {
 		case <-c.tomb.Dying():
@@ -196,41 +243,20 @@ func (c *Client) process() error {
 			}
 
 			switch pkt.Type() {
-			case packet.CONNACK:
-				m, ok := pkt.(*packet.ConnackPacket)
-
-				if ok {
-					if m.ReturnCode == packet.ConnectionAccepted {
-						if c.connectCallback != nil {
-							c.connectCallback(m.SessionPresent)
-						}
-					} else {
-						c.error(errors.New(m.ReturnCode.Error()))
-					}
-				} else {
-					c.error(errors.New("failed to convert CONNACK packet"))
-				}
 			case packet.PINGRESP:
-				_, ok := pkt.(*packet.PingrespPacket)
-
-				if ok {
-					c.pingrespPending = false
-				} else {
-					c.error(errors.New("failed to convert PINGRESP packet"))
-				}
+				c.pingrespPending = false
+				c.log("Received PingrespPacket")
 			case packet.PUBLISH:
-				m, ok := pkt.(*packet.PublishPacket)
-
-				if ok {
-					c.messageCallback(string(m.Topic), m.Payload)
-				} else {
-					c.error(errors.New("failed to convert PUBLISH packet"))
-				}
+				publish := pkt.(*packet.PublishPacket)
+				go c.messageCallback(string(publish.Topic), publish.Payload)
+			default:
+				c.log(fmt.Sprintf("Unhandled Packet: %s", pkt.Type().String()))
 			}
 		}
 	}
 }
 
+// sends message and updates lastSend
 func (c *Client) send(msg packet.Packet) error {
 	c.lastSendMutex.Lock()
 	c.lastSend = time.Now()
@@ -239,32 +265,49 @@ func (c *Client) send(msg packet.Packet) error {
 	return c.conn.Send(msg)
 }
 
+// calls the error callback
 func (c *Client) error(err error) {
 	if c.errorCallback != nil {
-		c.errorCallback(err)
+		go c.errorCallback(err)
+	}
+}
+
+// calls the log callback
+func (c *Client) log(message string) {
+	if c.logCallback != nil {
+		go c.logCallback(message)
 	}
 }
 
 // manages the sending of ping packets to keep the connection alive
-func (c *Client) keepAlive() error {
+func (c *Client) ping() error {
+	c.boot.Done()
+
 	for {
 		c.lastSendMutex.Lock()
 		timeElapsed := time.Since(c.lastSend)
 		c.lastSendMutex.Unlock()
 
-		timeToWait := c.opts.KeepAlive
+		timeToWait := c.keepAlive
 
-		if timeElapsed > c.opts.KeepAlive {
-			c.send(packet.NewPingreqPacket())
+		if timeElapsed > c.keepAlive {
+			err := c.send(packet.NewPingreqPacket())
+			if err != nil {
+				return err
+			}
+
+			c.log(fmt.Sprintf("Sent PingreqPacket"))
 		} else {
-			timeToWait = c.opts.KeepAlive - timeElapsed
+			timeToWait = c.keepAlive - timeElapsed
+
+			c.log(fmt.Sprintf("Delay KeepAlive by %s", timeToWait.String()))
 		}
 
 		select {
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
 		case <-time.After(timeToWait):
-			// continue
+			continue
 		}
 	}
 }

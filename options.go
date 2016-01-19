@@ -14,27 +14,22 @@
 
 package client
 
-import (
-	"time"
-)
-
 type Options struct {
 	ClientID     string
 	CleanSession bool
+	KeepAlive    string
 
 	WillEnabled  bool
 	WillTopic    string
 	WillPayload  []byte
 	WillQos      byte
 	WillRetained bool
-
-	KeepAlive time.Duration
 }
 
 func NewOptions(clientID string) *Options {
 	return &Options{
 		ClientID:     clientID,
 		CleanSession: true,
-		KeepAlive:    30 * time.Second,
+		KeepAlive:    "30s",
 	}
 }
