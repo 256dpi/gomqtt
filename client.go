@@ -248,7 +248,9 @@ func (c *Client) process() error {
 				c.log("Received PingrespPacket")
 			case packet.PUBLISH:
 				publish := pkt.(*packet.PublishPacket)
-				go c.messageCallback(string(publish.Topic), publish.Payload)
+				if c.messageCallback != nil {
+					go c.messageCallback(string(publish.Topic), publish.Payload)
+				}
 			default:
 				c.log(fmt.Sprintf("Unhandled Packet: %s", pkt.Type().String()))
 			}
