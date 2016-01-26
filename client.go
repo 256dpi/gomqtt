@@ -68,6 +68,7 @@ func (c* Client) OnLog(callback LogCallback) {
 }
 
 // Connect opens the connection to the broker and sends a ConnectPacket.
+// This function blocks until a ConnackPacket has been received.
 func (c *Client) Connect(urlString string, opts *Options) (bool, error) {
 	// parse url
 	urlParts, err := url.Parse(urlString)
