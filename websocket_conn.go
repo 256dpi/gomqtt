@@ -46,14 +46,14 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	// encode packet
 	n, err := pkt.Encode(buf)
 	if err != nil {
-		c.end()
+		c.end(websocket.CloseInternalServerErr)
 		return newTransportError(EncodeError, err)
 	}
 
 	// write packet to connection
 	err = c.conn.WriteMessage(websocket.BinaryMessage, buf)
 	if err != nil {
-		c.conn.Close()
+		c.end(websocket.CloseInternalServerErr)
 		return newTransportError(NetworkError, err)
 	}
 
@@ -71,46 +71,45 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 	_, buf, err := c.conn.ReadMessage()
 
 	// return ErrExpectedClose instead
-	if closeErr, ok := err.(*websocket.CloseError); ok {
-		if closeErr.Code == websocket.CloseNormalClosure {
-			c.conn.Close()
-			return nil, newTransportError(ExpectedClose, err)
-		} else if closeErr.Code == websocket.CloseMessageTooBig {
-			// TODO: shouldn't be an expected close
-			return nil, newTransportError(ExpectedClose, err)
-		}
+	if _, ok := err.(*websocket.CloseError); ok {
+		// ensure that the connection gets fully closed
+		c.conn.Close()
+
+		// the closing is always expected from the receiver side as it its
+		// transmitted cleanly
+		return nil, newTransportError(ExpectedClose, err)
 	}
 
 	// return read limit error instead
 	if err == websocket.ErrReadLimit {
-		c.conn.Close()
+		c.end(websocket.CloseMessageTooBig)
 		return nil, newTransportError(NetworkError, err)
 	}
 
 	// return on any other errors
 	if err != nil {
-		c.conn.Close()
+		c.end(websocket.CloseAbnormalClosure)
 		return nil, newTransportError(NetworkError, err)
 	}
 
 	// detect packet
 	packetLength, t := packet.DetectPacket(buf)
 	if packetLength == 0 {
-		c.end()
+		c.end(websocket.CloseInvalidFramePayloadData)
 		return nil, newTransportError(DetectionError, ErrDetectionOverflow)
 	}
 
 	// allocate packet
 	pkt, err := t.New()
 	if err != nil {
-		c.end()
+		c.end(websocket.CloseInvalidFramePayloadData)
 		return nil, newTransportError(DetectionError, err)
 	}
 
 	// decode packet
 	n, err := pkt.Decode(buf)
 	if err != nil {
-		c.end()
+		c.end(websocket.CloseInvalidFramePayloadData)
 		return nil, newTransportError(DecodeError, err)
 	}
 
@@ -120,18 +119,16 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 	return pkt, nil
 }
 
-func (c *WebSocketConn) end() error {
-	msg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
+func (c *WebSocketConn) end(closeCode int) error {
+	msg := websocket.FormatCloseMessage(closeCode, "")
 
 	err := c.conn.WriteMessage(websocket.CloseMessage, msg)
 	if err != nil {
 		return newTransportError(NetworkError, err)
 	}
 
-	err = c.conn.Close()
-	if err != nil {
-		return newTransportError(NetworkError, err)
-	}
+	// ignore error as it would be raised by WriteMessage anyway
+	c.conn.Close()
 
 	return nil
 }
@@ -140,7 +137,7 @@ func (c *WebSocketConn) end() error {
 // return an Error if there was an error while closing the underlying
 // connection.
 func (c *WebSocketConn) Close() error {
-	return c.end()
+	return c.end(websocket.CloseNormalClosure)
 }
 
 // BytesWritten will return the number of bytes successfully written to
