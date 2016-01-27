@@ -329,6 +329,14 @@ func (c *Client) process() error {
 				if c.messageCallback != nil {
 					go c.messageCallback(string(publish.Topic), publish.Payload)
 				}
+			case packet.PUBACK:
+				// TODO: Remove message from store and complete future
+			case packet.PUBREC:
+				// TODO: Send Pubrel
+			case packet.PUBREL:
+				// TODO: Send Pubcomp
+			case packet.PUBCOMP:
+				// TODO: Remove message from store and complete future.
 			default:
 				c.log(fmt.Sprintf("Unhandled Packet: %s", pkt.Type().String()))
 			}

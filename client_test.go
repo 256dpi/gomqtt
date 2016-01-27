@@ -203,19 +203,12 @@ func TestClientKeepAlive(t *testing.T) {
 // should stop ping timer if stream closes
 // should emit close after end called
 // should stop ping timer after end called
-// should connect to the broker
-// should send a default client id
-// should send be clean by default
-// should connect with the given client id
-// should connect with the client id and unclean state
 // should require a clientId with clean=false
-// should default to localhost
 // should emit connect
 // should provide connack packet with connect event
 // should mark the client as connected
 // should emit error
 // should have different client ids
-// should queue message until connected
 // should queue message until connected
 // should delay closing everything up until the queue is depleted
 // should delay ending up until all inflight messages are delivered
@@ -227,14 +220,11 @@ func TestClientKeepAlive(t *testing.T) {
 // should fire a callback (qos 0)
 // should fire a callback (qos 1)
 // should fire a callback (qos 2)
-// should support UTF-8 characters in topic
-// should support UTF-8 characters in payload
 // Publish 10 QoS 2 and receive them
 // should send an unsubscribe packet (offline)
 // should send an unsubscribe packet
 // should accept an array of unsubs
 // should fire a callback on unsuback
-// should unsubscribe from a chinese topic
 // should checkPing at keepalive interval
 // should set a ping timer
 // should not set a ping timer keepalive=0
@@ -276,39 +266,15 @@ func TestClientKeepAlive(t *testing.T) {
 // should return the original packet on del
 // should get a packet with the same messageId
 
-// -- client
-// should allow instantiation of MqttClient without the \'new\' operator
-// should increment the message id
-// should return 1 once the interal counter reached limit
-// should attempt to reconnect once server is down
-// should reconnect to multiple host-ports combination if servers is passed
-// should reconnect if a connack is not received in an interval
-// shoud not be cleared by the connack timer
-// shoud not keep requeueing the first message when offline
-
 // -- mqtt
-// should return an MqttClient when connect is called with mqtt:/ url
-// should return an MqttClient with username option set
-// should return an MqttClient with username and password options set
-// should return an MqttClient with the clientid option set
-// should return an MqttClient when connect is called with tcp:/ url
-// should return an MqttClient with correct host when called with a host and port
-// should return an MqttClient when connect is called with mqtts:/ url
-// should return an MqttClient when connect is called with ssl:/ url
-// should return an MqttClient when connect is called with ws:/ url
-// should return an MqttClient when connect is called with wss:/ url
 // should throw an error when it is called with cert and key set but no protocol specified
 // should throw an error when it is called with cert and key set and protocol other than allowed: mqtt,mqtts,ws,wss
 // should return a MqttClient with mqtts set when connect is called key and cert set and protocol mqtt
 // should return a MqttClient with mqtts set when connect is called key and cert set and protocol mqtts
 // should return a MqttClient with wss set when connect is called key and cert set and protocol ws
 // should return a MqttClient with wss set when connect is called key and cert set and protocol wss
-// should return an MqttClient
-// should return an MqttClient
 // should support passing the key and cert
-// should return an MqttClient
 // should support passing the key, cert and CA list
-// should return an MqttConnection
 // should fire callback on net connect
 // should bind stream close to connection
 // should bind stream error to conn
