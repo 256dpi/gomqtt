@@ -125,6 +125,35 @@ func TestDetect7(t *testing.T) {
 	assert.Equal(t, 0, int(_t))
 }
 
+func TestPacketID(t *testing.T) {
+	type detail struct {
+		packet Packet
+		ok     bool
+	}
+
+	details := map[Type]detail{
+		CONNECT:     {NewConnectPacket(), false},
+		CONNACK:     {NewConnackPacket(), false},
+		PUBLISH:     {NewPublishPacket(), true},
+		PUBACK:      {NewPubackPacket(), true},
+		PUBREC:      {NewPubrecPacket(), true},
+		PUBREL:      {NewPubrelPacket(), true},
+		PUBCOMP:     {NewPubcompPacket(), true},
+		SUBSCRIBE:   {NewSubscribePacket(), true},
+		SUBACK:      {NewSubackPacket(), true},
+		UNSUBSCRIBE: {NewUnsubscribePacket(), true},
+		UNSUBACK:    {NewUnsubackPacket(), true},
+		PINGREQ:     {NewPingreqPacket(), false},
+		PINGRESP:    {NewPingrespPacket(), false},
+		DISCONNECT:  {NewDisconnectPacket(), false},
+	}
+
+	for _, d := range details {
+		_, ok := PacketID(d.packet)
+		assert.Equal(t, d.ok, ok)
+	}
+}
+
 func TestFuzz(t *testing.T) {
 	// too small buffer
 	assert.Equal(t, 1, Fuzz([]byte{}))

@@ -79,6 +79,33 @@ func DetectPacket(src []byte) (int, Type) {
 	return 1 + n + rl, t
 }
 
+// PacketID checks the packets type and returns its PacketID and true, or if it
+// does not have a PacketID, zero and false.
+func PacketID(packet Packet) (uint16, bool) {
+	switch packet.Type() {
+	case PUBLISH:
+		return packet.(*PublishPacket).PacketID, true
+	case PUBACK:
+		return packet.(*PubackPacket).PacketID, true
+	case PUBREC:
+		return packet.(*PubrecPacket).PacketID, true
+	case PUBREL:
+		return packet.(*PubrelPacket).PacketID, true
+	case PUBCOMP:
+		return packet.(*PubcompPacket).PacketID, true
+	case SUBSCRIBE:
+		return packet.(*SubscribePacket).PacketID, true
+	case SUBACK:
+		return packet.(*SubackPacket).PacketID, true
+	case UNSUBSCRIBE:
+		return packet.(*UnsubscribePacket).PacketID, true
+	case UNSUBACK:
+		return packet.(*UnsubackPacket).PacketID, true
+	}
+
+	return 0, false
+}
+
 // Fuzz is a basic fuzzing test that works with https://github.com/dvyukov/go-fuzz:
 //
 //		$ go-fuzz-build github.com/gomqtt/packet
