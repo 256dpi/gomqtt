@@ -73,3 +73,7 @@ type ConnectFuture struct {
 	SessionPresent bool
 	ReturnCode     packet.ConnackCode
 }
+
+type PublishFuture struct {
+	abstractFuture
+}

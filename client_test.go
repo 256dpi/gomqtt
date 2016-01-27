@@ -82,17 +82,18 @@ func TestClientPublishSubscribe(t *testing.T) {
 		close(done)
 	})
 
-	future, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	connectFuture, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
-	assert.False(t, future.SessionPresent)
-	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
+	assert.NoError(t, connectFuture.Wait())
+	assert.False(t, connectFuture.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
 	err = c.Subscribe("test", 0)
 	assert.NoError(t, err)
 
-	err = c.Publish("test", []byte("test"), 0, false)
+	publishFuture, err := c.Publish("test", []byte("test"), 0, false)
 	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
 
 	<-done
 	err = c.Disconnect()

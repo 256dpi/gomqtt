@@ -156,7 +156,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 }
 
 // Publish will send a PublishPacket containing the passed parameters.
-func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) error {
+func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*PublishFuture, error) {
 	publish := packet.NewPublishPacket()
 	publish.Topic = []byte(topic)
 	publish.Payload = payload
@@ -165,7 +165,21 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) er
 	publish.Dup = false
 	publish.PacketID = 1
 
-	return c.send(publish)
+	err := c.send(publish)
+	if err != nil {
+		return nil, err
+	}
+
+	future := &PublishFuture{}
+	future.initialize()
+
+	if qos == packet.QOSAtMostOnce {
+		future.complete()
+	}
+
+	// TODO: handle qos1 and qos2
+
+	return future, nil
 }
 
 // Subscribe will send a SubscribePacket containing one topic to subscribe.
