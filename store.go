@@ -14,22 +14,26 @@
 
 package client
 
-import "time"
+import "github.com/gomqtt/packet"
 
-type Future interface {
-	// Timeout will set a timeout for the future.
-	Timeout(time.Duration) Future
+// A store is used to persists incoming and outgoing packets until they are
+// successfully acknowledged by the other side.
+type Store interface {
+	// Open will open the store.
+	Open() error
 
-	// Wait will wait until the future is completed. The return value may be false
-	// if the call times out.
-	Wait() bool
+	// Put will persist a packet to the store.
+	Put(*packet.Packet) error
 
-	// Wait will call the callback when the future is completed. The first argument
-	// may be false id the call times out.
-	Callback(func(bool))
+	// Dell will remove a packet from the store.
+	Del(*packet.Packet) error
 
-	Error() error
+	// All will return all packets currently in the store.
+	All() (error, []packet.Packet)
 
-	// Returns true if the future is already completed.
-	Complete() bool
+	// Close will close the store.
+	Close() error
+
+	// Reset will completely reset the store.
+	Reset() error
 }

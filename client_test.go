@@ -18,9 +18,9 @@ import (
 	"testing"
 	"strings"
 	"time"
+	"sync/atomic"
 
 	"github.com/stretchr/testify/assert"
-	"sync/atomic"
 )
 
 func TestClientConnect(t *testing.T) {
