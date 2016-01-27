@@ -4,6 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/gomqtt/topic/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/topic?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/topic?status.svg)](http://godoc.org/github.com/gomqtt/topic)
 [![Release](https://img.shields.io/github/release/gomqtt/topic.svg)](https://github.com/gomqtt/topic/releases)
+[![Go Report Card](http://goreportcard.com/badge/gomqtt/topic)](http://goreportcard.com/report/gomqtt/topic)
 
 **Package topic implements functionality for working with [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) topics.**
 
