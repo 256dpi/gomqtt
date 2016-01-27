@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,6 +31,7 @@ func TestClientConnect(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
@@ -46,6 +48,7 @@ func TestClientConnectWebSocket(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
@@ -58,6 +61,7 @@ func TestClientConnectAfterConnect(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	future, err = c.Connect("mqtt://localhost:1883", NewOptions("test"))
 	assert.Equal(t, ErrAlreadyConnecting, err)
@@ -82,6 +86,7 @@ func TestClientPublishSubscribe(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	err = c.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -137,6 +142,7 @@ func TestClientKeepAlive(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	<-time.After(7 * time.Second)
 
