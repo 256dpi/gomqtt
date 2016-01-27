@@ -15,8 +15,8 @@
 package transport
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 // ErrUnsupportedProtocol is returned if either the launcher or dialer

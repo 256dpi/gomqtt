@@ -26,7 +26,7 @@ func TestGlobalDial(t *testing.T) {
 	server, err := testLauncher.Launch(tp.url("tcp"))
 	assert.NoError(t, err)
 
-	go func(){
+	go func() {
 		conn, err := server.Accept()
 		assert.NoError(t, err)
 
@@ -88,7 +88,7 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 	server, err := testLauncher.Launch(tp.url(protocol))
 	assert.NoError(t, err)
 
-	go func(){
+	go func() {
 		conn, err := server.Accept()
 		assert.NoError(t, err)
 

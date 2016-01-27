@@ -16,10 +16,10 @@ package transport
 
 import (
 	"crypto/tls"
+	"errors"
 	"net"
 	"net/http"
 	"time"
-	"errors"
 
 	"github.com/gorilla/websocket"
 	"gopkg.in/tomb.v2"
