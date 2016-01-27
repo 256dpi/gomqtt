@@ -26,20 +26,42 @@ import (
 func TestClientConnect(t *testing.T) {
 	c := NewClient()
 
-	sess, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	future, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
 	assert.NoError(t, err)
-	assert.False(t, sess)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
 }
 
 func TestClientConnectWebSocket(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	c := NewClient()
 
-	sess, err := c.Connect("ws://localhost:1884", NewOptions("test"))
+	future, err := c.Connect("ws://localhost:1884", NewOptions("test"))
 	assert.NoError(t, err)
-	assert.False(t, sess)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+}
+
+func TestClientConnectAfterConnect(t *testing.T) {
+	c := NewClient()
+
+	future, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+
+	future, err = c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	assert.Equal(t, ErrAlreadyConnecting, err)
+	assert.Nil(t, future)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
@@ -56,9 +78,10 @@ func TestClientPublishSubscribe(t *testing.T) {
 		close(done)
 	})
 
-	sess, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	future, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
 	assert.NoError(t, err)
-	assert.False(t, sess)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
 
 	err = c.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -75,21 +98,25 @@ func TestClientConnectError(t *testing.T) {
 	c := NewClient()
 
 	// wrong port
-	sess, err := c.Connect("mqtt://localhost:1234", NewOptions("test"))
+	future, err := c.Connect("mqtt://localhost:1234", NewOptions("test"))
 	assert.Error(t, err)
-	assert.False(t, sess)
+	assert.Nil(t, future)
 }
 
 func TestClientAuthenticationError(t *testing.T) {
 	c := NewClient()
 
 	// missing clientID
-	sess, err := c.Connect("mqtt://localhost:1883", &Options{})
+	future, err := c.Connect("mqtt://localhost:1883", &Options{})
 	assert.Error(t, err)
-	assert.False(t, sess)
+	assert.Nil(t, future)
 }
 
 func TestClientKeepAlive(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	c := NewClient()
 
 	var reqCounter int32 = 0
@@ -106,9 +133,10 @@ func TestClientKeepAlive(t *testing.T) {
 	opts := NewOptions("test")
 	opts.KeepAlive = "2s"
 
-	sess, err := c.Connect("mqtt://localhost:1883", opts)
+	future, err := c.Connect("mqtt://localhost:1883", opts)
 	assert.NoError(t, err)
-	assert.False(t, sess)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
 
 	<-time.After(7 * time.Second)
 

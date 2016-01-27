@@ -14,22 +14,62 @@
 
 package client
 
-import "time"
+import (
+	"time"
+	"errors"
+
+	"github.com/gomqtt/packet"
+)
+
+var ErrTimeoutExceeded = errors.New("timeout exceeded")
 
 type Future interface {
-	// Timeout will set a timeout for the future.
-	Timeout(time.Duration) Future
+	// Wait will block until the future is completed. If a timeout is specified
+	// it might return a ErrTimeoutExceeded.
+	Wait(timeout ...time.Duration) error
 
-	// Wait will wait until the future is completed. The return value may be false
-	// if the call times out.
-	Wait() bool
+	// Completed returns true if the future is completed.
+	Completed() bool
+}
 
-	// Wait will call the callback when the future is completed. The first argument
-	// may be false id the call times out.
-	Callback(func(bool))
+type abstractFuture struct {
+	channel chan struct{}
+}
 
-	Error() error
+func (f *abstractFuture) initialize() {
+	f.channel = make(chan struct{})
+}
 
-	// Returns true if the future is already completed.
-	Complete() bool
+func (f *abstractFuture) Wait(timeout ...time.Duration) error {
+	if len(timeout) > 0 {
+		select {
+		case <-f.channel:
+			return nil
+		case <-time.After(timeout[0]):
+			return ErrTimeoutExceeded
+		}
+	}
+
+	<-f.channel
+	return nil
+}
+
+func (f *abstractFuture) complete() {
+	close(f.channel)
+}
+
+func (f *abstractFuture) Completed() bool {
+	select {
+	case <-f.channel:
+		return true
+	default:
+		return false
+	}
+}
+
+type ConnectFuture struct {
+	abstractFuture
+
+	SessionPresent bool
+	ReturnCode packet.ConnackCode
 }

@@ -19,11 +19,14 @@ import (
 	"sync"
 	"time"
 	"fmt"
+	"errors"
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 	"gopkg.in/tomb.v2"
 )
+
+var ErrAlreadyConnecting = errors.New("already connecting")
 
 type (
 	MessageCallback func(string, []byte)
@@ -42,6 +45,9 @@ type Client struct {
 	lastSend        time.Time
 	lastSendMutex   sync.Mutex
 	pingrespPending bool
+
+	connectFuture *ConnectFuture
+	connectMutex sync.Mutex
 
 	tomb tomb.Tomb
 	boot sync.WaitGroup
@@ -67,19 +73,30 @@ func (c* Client) OnLog(callback LogCallback) {
 	c.logCallback = callback
 }
 
-// Connect opens the connection to the broker and sends a ConnectPacket.
-// This function blocks until a ConnackPacket has been received.
-func (c *Client) Connect(urlString string, opts *Options) (bool, error) {
+// Connect opens the connection to the broker and sends a ConnectPacket. It will
+// return a ConnectFuture that gets completed once a ConnackPacket has been
+// received. If the ConnectPacket couldn't be transmitted it will return an error.
+// It will return ErrAlreadyConnecting if Connect has been called before.
+func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error) {
+	c.connectMutex.Lock()
+	defer c.connectMutex.Unlock()
+
+	// TODO: we might use another identifier for that?
+	// check for existing ConnectFuture
+	if c.connectFuture != nil {
+		return nil, ErrAlreadyConnecting
+	}
+
 	// parse url
 	urlParts, err := url.Parse(urlString)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	// dial broker
 	c.conn, err = transport.Dial(urlString)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	// save opts
@@ -90,54 +107,37 @@ func (c *Client) Connect(urlString string, opts *Options) (bool, error) {
 	// parse keep alive
 	c.keepAlive, err = time.ParseDuration(opts.KeepAlive)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	// prepare connect packet
-	m := packet.NewConnectPacket()
-	m.ClientID = []byte(opts.ClientID)
-	m.KeepAlive = uint16(c.keepAlive.Seconds())
-	m.CleanSession = opts.CleanSession
+	connect := packet.NewConnectPacket()
+	connect.ClientID = []byte(opts.ClientID)
+	connect.KeepAlive = uint16(c.keepAlive.Seconds())
+	connect.CleanSession = opts.CleanSession
 
 	// check for credentials
 	if urlParts.User != nil {
-		m.Username = []byte(urlParts.User.Username())
+		connect.Username = []byte(urlParts.User.Username())
 		p, _ := urlParts.User.Password()
-		m.Password = []byte(p)
+		connect.Password = []byte(p)
 	}
 
 	// set will
-	m.WillTopic = []byte(opts.WillTopic)
-	m.WillPayload = opts.WillPayload
-	m.WillQOS = opts.WillQos
-	m.WillRetain = opts.WillRetained
+	connect.WillTopic = []byte(opts.WillTopic)
+	connect.WillPayload = opts.WillPayload
+	connect.WillQOS = opts.WillQos
+	connect.WillRetain = opts.WillRetained
 
 	// send connect packet
-	err = c.send(m)
+	err = c.send(connect)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	// receive connack packet
-	pkt, err := c.conn.Receive()
-	if err != nil {
-		return false, err
-	}
-
-	// hold session present flag
-	var sessionPresent bool
-
-	// check packet type
-	switch pkt.Type() {
-	case packet.CONNACK:
-		connack := pkt.(*packet.ConnackPacket)
-
-		if connack.ReturnCode != packet.ConnectionAccepted {
-			return false, connack.ReturnCode
-		}
-
-		sessionPresent = connack.SessionPresent
-	}
+	// create new ConnackFuture
+	c.connectFuture = &ConnectFuture{}
+	c.connectFuture.initialize()
 
 	// start process routine
 	c.boot.Add(1)
@@ -152,20 +152,20 @@ func (c *Client) Connect(urlString string, opts *Options) (bool, error) {
 	// wait for all goroutines to start
 	c.boot.Wait()
 
-	return sessionPresent, nil
+	return c.connectFuture, nil
 }
 
 // Publish will send a PublishPacket containing the passed parameters.
 func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) error {
-	m := packet.NewPublishPacket()
-	m.Topic = []byte(topic)
-	m.Payload = payload
-	m.QOS = qos
-	m.Retain = retain
-	m.Dup = false
-	m.PacketID = 1
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte(topic)
+	publish.Payload = payload
+	publish.QOS = qos
+	publish.Retain = retain
+	publish.Dup = false
+	publish.PacketID = 1
 
-	return c.send(m)
+	return c.send(publish)
 }
 
 // Subscribe will send a SubscribePacket containing one topic to subscribe.
@@ -244,6 +244,11 @@ func (c *Client) process() error {
 			}
 
 			switch pkt.Type() {
+			case packet.CONNACK:
+				connack := pkt.(*packet.ConnackPacket)
+				c.connectFuture.SessionPresent = connack.SessionPresent
+				c.connectFuture.ReturnCode = connack.ReturnCode
+				c.connectFuture.complete()
 			case packet.PINGRESP:
 				c.pingrespPending = false
 				c.log("Received PingrespPacket")
