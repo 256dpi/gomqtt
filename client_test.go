@@ -88,10 +88,53 @@ func TestClientPublishSubscribe(t *testing.T) {
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
-	err = c.Subscribe("test", 0)
+	future, err := c.Subscribe("test", 0)
 	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
 
 	publishFuture, err := c.Publish("test", []byte("test"), 0, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-done
+	err = c.Disconnect()
+	assert.NoError(t, err)
+}
+
+func TestClientUnsubscribe(t *testing.T) {
+	c := NewClient()
+	done := make(chan struct{})
+
+	c.OnMessage(func(topic string, payload []byte) {
+		assert.Equal(t, "test", topic)
+		assert.Equal(t, []byte("test"), payload)
+
+		close(done)
+	})
+
+	connectFuture, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.False(t, connectFuture.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+
+	future1, err := c.Subscribe("foo", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, future1.Wait())
+
+	future2, err := c.Unsubscribe("foo")
+	assert.NoError(t, err)
+	assert.NoError(t, future2.Wait())
+
+	future1, err = c.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, future1.Wait())
+
+	publishFuture, err := c.Publish("foo", []byte("test"), 0, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	publishFuture, err = c.Publish("test", []byte("test"), 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 

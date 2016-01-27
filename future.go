@@ -77,3 +77,11 @@ type ConnectFuture struct {
 type PublishFuture struct {
 	abstractFuture
 }
+
+type SubscribeFuture struct {
+	abstractFuture
+}
+
+type UnsubscribeFuture struct {
+	abstractFuture
+}

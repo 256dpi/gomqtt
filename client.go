@@ -37,6 +37,9 @@ type (
 type Client struct {
 	conn transport.Conn
 
+	futureStore *futureStore
+	idGenerator *idGenerator
+
 	messageCallback MessageCallback
 	errorCallback   ErrorCallback
 	logCallback     LogCallback
@@ -55,7 +58,10 @@ type Client struct {
 
 // NewClient returns a new client.
 func NewClient() *Client {
-	return &Client{}
+	return &Client{
+		futureStore: newFutureStore(),
+		idGenerator: newIDGenerator(),
+	}
 }
 
 // OnMessage sets the callback for incoming messages.
@@ -163,16 +169,19 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	publish.QOS = qos
 	publish.Retain = retain
 	publish.Dup = false
-	publish.PacketID = 1
+	publish.PacketID = c.idGenerator.next()
 
+	// send packet
 	err := c.send(publish)
 	if err != nil {
 		return nil, err
 	}
 
+	// create future
 	future := &PublishFuture{}
 	future.initialize()
 
+	// instantly complete qos 0 future
 	if qos == packet.QOSAtMostOnce {
 		future.complete()
 	}
@@ -183,7 +192,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 }
 
 // Subscribe will send a SubscribePacket containing one topic to subscribe.
-func (c *Client) Subscribe(topic string, qos byte) error {
+func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
 	return c.SubscribeMultiple(map[string]byte{
 		topic: qos,
 	})
@@ -191,38 +200,66 @@ func (c *Client) Subscribe(topic string, qos byte) error {
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe.
-func (c *Client) SubscribeMultiple(filters map[string]byte) error {
-	m := packet.NewSubscribePacket()
-	m.Subscriptions = make([]packet.Subscription, 0, len(filters))
-	m.PacketID = 1
+func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, error) {
+	subscribe := packet.NewSubscribePacket()
+	subscribe.Subscriptions = make([]packet.Subscription, 0, len(filters))
+	subscribe.PacketID = c.idGenerator.next()
 
+	// append filters
 	for topic, qos := range filters {
-		m.Subscriptions = append(m.Subscriptions, packet.Subscription{
+		subscribe.Subscriptions = append(subscribe.Subscriptions, packet.Subscription{
 			Topic: []byte(topic),
 			QOS:   qos,
 		})
 	}
 
-	return c.send(m)
+	// send packet
+	err := c.send(subscribe)
+	if err != nil {
+		return nil, err
+	}
+
+	// create future
+	future := &SubscribeFuture{}
+	future.initialize()
+
+	// store future
+	c.futureStore.put(subscribe.PacketID, future)
+
+	return future, nil
 }
 
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
-func (c *Client) Unsubscribe(topic string) error {
+func (c *Client) Unsubscribe(topic string) (*UnsubscribeFuture, error) {
 	return c.UnsubscribeMultiple([]string{topic})
 }
 
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
 // topics to unsubscribe.
-func (c *Client) UnsubscribeMultiple(topics []string) error {
-	m := packet.NewUnsubscribePacket()
-	m.Topics = make([][]byte, 0, len(topics))
-	m.PacketID = 1
+func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error) {
+	unsubscribe := packet.NewUnsubscribePacket()
+	unsubscribe.Topics = make([][]byte, 0, len(topics))
+	unsubscribe.PacketID = c.idGenerator.next()
 
+	// append topics
 	for _, t := range topics {
-		m.Topics = append(m.Topics, []byte(t))
+		unsubscribe.Topics = append(unsubscribe.Topics, []byte(t))
 	}
 
-	return c.send(m)
+	// send packet
+	err := c.send(unsubscribe)
+	if err != nil {
+		return nil, err
+	}
+
+	// create future
+	future := &UnsubscribeFuture{}
+	future.initialize()
+
+	// store future
+	c.futureStore.put(unsubscribe.PacketID, future)
+
+	return future, nil
 }
 
 // Disconnect will send a DisconnectPacket and close the connection.
@@ -259,10 +296,31 @@ func (c *Client) process() error {
 
 			switch pkt.Type() {
 			case packet.CONNACK:
+				// TODO: return error if future is already completed?
 				connack := pkt.(*packet.ConnackPacket)
 				c.connectFuture.SessionPresent = connack.SessionPresent
 				c.connectFuture.ReturnCode = connack.ReturnCode
 				c.connectFuture.complete()
+			case packet.SUBACK:
+				suback := pkt.(*packet.SubackPacket)
+				future := c.futureStore.get(suback.PacketID)
+
+				if subscribeFuture, ok := future.(*SubscribeFuture); ok {
+					subscribeFuture.complete()
+					c.futureStore.del(suback.PacketID)
+				} else {
+					// TODO: what happens if there is no future?
+				}
+			case packet.UNSUBACK:
+				unsuback := pkt.(*packet.UnsubackPacket)
+				future := c.futureStore.get(unsuback.PacketID)
+
+				if subscribeFuture, ok := future.(*UnsubscribeFuture); ok {
+					subscribeFuture.complete()
+					c.futureStore.del(unsuback.PacketID)
+				} else {
+					// TODO: what happens if there is no future?
+				}
 			case packet.PINGRESP:
 				c.pingrespPending = false
 				c.log("Received PingrespPacket")
