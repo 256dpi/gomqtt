@@ -37,3 +37,7 @@ func TestTLSServerLaunchError(t *testing.T) {
 func TestNetServerAcceptAfterClose(t *testing.T) {
 	abstractServerAcceptAfterCloseTest(t, "tcp")
 }
+
+func TestNetServerCloseAfterClose(t *testing.T) {
+	abstractServerCloseAfterClose(t, "tcp")
+}

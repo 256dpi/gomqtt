@@ -85,3 +85,16 @@ func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
 	assert.Nil(t, conn)
 	assert.Equal(t, NetworkError, toError(err).Code())
 }
+
+func abstractServerCloseAfterClose(t *testing.T, protocol string) {
+	tp := newTestPort()
+
+	server, err := testLauncher.Launch(tp.url(protocol))
+	assert.NoError(t, err)
+
+	err = server.Close()
+	assert.NoError(t, err)
+
+	err = server.Close()
+	assert.Equal(t, NetworkError, toError(err).Code())
+}

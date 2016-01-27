@@ -42,6 +42,10 @@ func TestWebSocketServerAcceptAfterClose(t *testing.T) {
 	abstractServerAcceptAfterCloseTest(t, "ws")
 }
 
+func TestWebSocketServerCloseAfterClose(t *testing.T) {
+	abstractServerCloseAfterClose(t, "ws")
+}
+
 func TestInvalidWebSocketUpgrade(t *testing.T) {
 	tp := newTestPort()
 
