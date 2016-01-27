@@ -58,19 +58,7 @@ func TestNetConnReadLimit(t *testing.T) {
 }
 
 func TestNetConnCloseAfterClose(t *testing.T) {
-	conn2, done := abstractConnTestPreparer("tcp", func(conn1 Conn) {
-		err := conn1.Close()
-		assert.NoError(t, err)
-
-		err = conn1.Close()
-		assert.Equal(t, NetworkError, toError(err).Code())
-	})
-
-	pkt, err := conn2.Receive()
-	assert.Nil(t, pkt)
-	assert.Equal(t, ExpectedClose, toError(err).Code())
-
-	<-done
+	abstractConnCloseAfterCloseTest(t, "tcp")
 }
 
 func TestNetConnCloseWhileReadError(t *testing.T) {

@@ -235,3 +235,19 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 
 	<-done
 }
+
+func abstractConnCloseAfterCloseTest(t *testing.T, protocol string) {
+	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+		err := conn1.Close()
+		assert.NoError(t, err)
+
+		err = conn1.Close()
+		assert.Equal(t, NetworkError, toError(err).Code())
+	})
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, ExpectedClose, toError(err).Code())
+
+	<-done
+}
