@@ -64,10 +64,10 @@ func (n *node) string(i int) string {
 // Tree implements a thread-safe tree for adding, removing and matching topics.
 type Tree struct {
 	// The separator character. Default: "/"
-	Separator    string
+	Separator string
 
 	// The single level wildcard character. Default: "+"
-	WildcardOne  string
+	WildcardOne string
 
 	// The multi level wildcard character. Default "#"
 	WildcardSome string
