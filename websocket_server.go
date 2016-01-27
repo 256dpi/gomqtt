@@ -84,11 +84,9 @@ func (s *WebSocketServer) serveHTTP() {
 
 	s.tomb.Go(func() error {
 		err := h.Serve(s.listener)
-		if err != nil {
-			newTransportError(NetworkError, err)
-		}
 
-		return nil
+		// Server will always return an error
+		return newTransportError(NetworkError, err)
 	})
 }
 

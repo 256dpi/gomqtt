@@ -20,6 +20,7 @@ import (
 	"net/url"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWSServer(t *testing.T) {
@@ -46,7 +47,7 @@ func TestWebSocketServerCloseAfterClose(t *testing.T) {
 	abstractServerCloseAfterClose(t, "ws")
 }
 
-func TestInvalidWebSocketUpgrade(t *testing.T) {
+func TestWebSocketServerInvalidUpgrade(t *testing.T) {
 	tp := newTestPort()
 
 	server, err := testLauncher.Launch(tp.url("ws"))
@@ -58,4 +59,37 @@ func TestInvalidWebSocketUpgrade(t *testing.T) {
 
 	err = server.Close()
 	assert.NoError(t, err)
+}
+
+func TestWebSocketServerAcceptAfterError(t *testing.T) {
+	tp := newTestPort()
+
+	server, err := testLauncher.Launch(tp.url("ws"))
+	assert.NoError(t, err)
+
+	webSocketServer := server.(*WebSocketServer)
+
+	err = webSocketServer.listener.Close()
+	assert.NoError(t, err)
+
+	conn, err := server.Accept()
+	require.Nil(t, conn)
+	assert.Equal(t, NetworkError, toError(err).Code())
+}
+
+func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
+	tp := newTestPort()
+
+	server, err := testLauncher.Launch(tp.url("ws"))
+	assert.NoError(t, err)
+
+	conn2, err := testDialer.Dial(tp.url("ws"))
+	assert.NoError(t, err)
+
+	err = server.Close()
+	assert.NoError(t, err)
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, ExpectedClose, toError(err).Code())
 }
