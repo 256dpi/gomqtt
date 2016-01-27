@@ -296,53 +296,90 @@ func (c *Client) process() error {
 
 			switch pkt.Type() {
 			case packet.CONNACK:
-				// TODO: return error if future is already completed?
-				connack := pkt.(*packet.ConnackPacket)
-				c.connectFuture.SessionPresent = connack.SessionPresent
-				c.connectFuture.ReturnCode = connack.ReturnCode
-				c.connectFuture.complete()
+				c.handleConnack(pkt.(*packet.ConnackPacket))
 			case packet.SUBACK:
-				suback := pkt.(*packet.SubackPacket)
-				future := c.futureStore.get(suback.PacketID)
-
-				if subscribeFuture, ok := future.(*SubscribeFuture); ok {
-					subscribeFuture.complete()
-					c.futureStore.del(suback.PacketID)
-				}
+				c.handleSuback(pkt.(*packet.SubackPacket))
 			case packet.UNSUBACK:
-				unsuback := pkt.(*packet.UnsubackPacket)
-				future := c.futureStore.get(unsuback.PacketID)
-
-				if subscribeFuture, ok := future.(*UnsubscribeFuture); ok {
-					subscribeFuture.complete()
-					c.futureStore.del(unsuback.PacketID)
-				}
+				c.handleUnsuback(pkt.(*packet.UnsubackPacket))
 			case packet.PINGRESP:
-				c.pingrespPending = false
-				c.log("Received PingrespPacket")
+				c.handlePingresp()
 			case packet.PUBLISH:
-				publish := pkt.(*packet.PublishPacket)
-
-				if c.messageCallback != nil {
-					go c.messageCallback(string(publish.Topic), publish.Payload)
-				}
-			case packet.PUBACK, packet.PUBCOMP:
-				// Retrieve Future from store
-				// Remove Future from store
-				// Remove Packet from store
-				// Complete Future
+				c.handlePublish(pkt.(*packet.PublishPacket))
+			case packet.PUBACK:
+				c.handlePubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
+			case packet.PUBCOMP:
+				c.handlePubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
 			case packet.PUBREC:
-				// Send PubrelPacket
+				c.handlePubrec(pkt.(*packet.PubrecPacket).PacketID)
 			case packet.PUBREL:
-				// Check store for matching PublishPacket
-				// Call OnMessage callback
-				// Save PubrelPacket to Store (why not remove it?)
-				// Send Pubcomp packet
+				c.handlePubrel(pkt.(*packet.PubrelPacket).PacketID)
 			default:
 				c.log(fmt.Sprintf("Unhandled Packet: %s", pkt.Type().String()))
 			}
 		}
 	}
+}
+
+// handle the incoming ConnackPacket
+func (c *Client) handleConnack(connack *packet.ConnackPacket) {
+	// TODO: return error if future is already completed?
+	c.connectFuture.SessionPresent = connack.SessionPresent
+	c.connectFuture.ReturnCode = connack.ReturnCode
+	c.connectFuture.complete()
+}
+
+// handle an incoming SubackPacket
+func (c *Client) handleSuback(suback *packet.SubackPacket) {
+	future := c.futureStore.get(suback.PacketID)
+
+	if subscribeFuture, ok := future.(*SubscribeFuture); ok {
+		subscribeFuture.complete()
+		c.futureStore.del(suback.PacketID)
+	}
+}
+
+// handle an incoming UnsubackPacket
+func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) {
+	future := c.futureStore.get(unsuback.PacketID)
+
+	if subscribeFuture, ok := future.(*UnsubscribeFuture); ok {
+		subscribeFuture.complete()
+		c.futureStore.del(unsuback.PacketID)
+	}
+}
+
+// handle an incoming Pingresp
+func (c *Client) handlePingresp() {
+	c.pingrespPending = false
+	c.log("Received PingrespPacket")
+}
+
+// handle an incoming PublishPacket
+func (c *Client) handlePublish(publish *packet.PublishPacket) {
+	if c.messageCallback != nil {
+		go c.messageCallback(string(publish.Topic), publish.Payload)
+	}
+}
+
+// handle an incoming PubackPacket or PubcompPacket
+func (c *Client) handlePubackAndPubcomp(packetID uint16) {
+	// Retrieve Future from store
+	// Remove Future from store
+	// Remove Packet from store
+	// Complete Future
+}
+
+// handle an incoming PubrecPacket
+func (c *Client) handlePubrec(packetID uint16) {
+	// Send PubrelPacket
+}
+
+// handle an incoming PubrelPacket
+func (c *Client) handlePubrel(packetID uint16) {
+	// Check store for matching PublishPacket
+	// Call OnMessage callback
+	// Save PubrelPacket to Store (why not remove it?)
+	// Send Pubcomp packet
 }
 
 // sends message and updates lastSend
