@@ -15,11 +15,11 @@
 package client
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 	"sync"
 	"time"
-	"fmt"
-	"errors"
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
@@ -47,7 +47,7 @@ type Client struct {
 	pingrespPending bool
 
 	connectFuture *ConnectFuture
-	connectMutex sync.Mutex
+	connectMutex  sync.Mutex
 
 	tomb tomb.Tomb
 	boot sync.WaitGroup
@@ -69,7 +69,7 @@ func (c *Client) OnError(callback ErrorCallback) {
 }
 
 // OnLog sets the callback for log messages.
-func (c* Client) OnLog(callback LogCallback) {
+func (c *Client) OnLog(callback LogCallback) {
 	c.logCallback = callback
 }
 

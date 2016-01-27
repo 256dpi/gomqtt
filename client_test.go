@@ -15,10 +15,10 @@
 package client
 
 import (
-	"testing"
 	"strings"
-	"time"
 	"sync/atomic"
+	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -122,7 +122,7 @@ func TestClientKeepAlive(t *testing.T) {
 	var reqCounter int32 = 0
 	var respCounter int32 = 0
 
-	c.OnLog(func(message string){
+	c.OnLog(func(message string) {
 		if strings.Contains(message, "PingreqPacket") {
 			atomic.AddInt32(&reqCounter, 1)
 		} else if strings.Contains(message, "PingrespPacket") {

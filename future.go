@@ -15,8 +15,8 @@
 package client
 
 import (
-	"time"
 	"errors"
+	"time"
 
 	"github.com/gomqtt/packet"
 )
@@ -71,5 +71,5 @@ type ConnectFuture struct {
 	abstractFuture
 
 	SessionPresent bool
-	ReturnCode packet.ConnackCode
+	ReturnCode     packet.ConnackCode
 }

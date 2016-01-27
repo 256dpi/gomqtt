@@ -15,8 +15,8 @@
 package client
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 	"time"
 )
 
@@ -26,7 +26,7 @@ func TestAbstractFuture(t *testing.T) {
 	f := &abstractFuture{}
 	f.initialize()
 
-	go func(){
+	go func() {
 		assert.NoError(t, f.Wait())
 		close(done)
 	}()
@@ -44,8 +44,8 @@ func TestAbstractFutureTimeout(t *testing.T) {
 	f := &abstractFuture{}
 	f.initialize()
 
-	go func(){
-		assert.NoError(t, f.Wait(10 * time.Millisecond))
+	go func() {
+		assert.NoError(t, f.Wait(10*time.Millisecond))
 		assert.True(t, f.Completed())
 		close(done)
 	}()
@@ -63,8 +63,8 @@ func TestAbstractFutureTimeoutExceeded(t *testing.T) {
 	f := &abstractFuture{}
 	f.initialize()
 
-	go func(){
-		assert.Equal(t, ErrTimeoutExceeded, f.Wait(1 * time.Millisecond))
+	go func() {
+		assert.Equal(t, ErrTimeoutExceeded, f.Wait(1*time.Millisecond))
 		assert.False(t, f.Completed())
 		close(done)
 	}()
