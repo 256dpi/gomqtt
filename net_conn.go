@@ -84,7 +84,8 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 
 		// try read detection bytes
 		header, err := c.reader.Peek(detectionLength)
-		if err == io.EOF {
+		if err == io.EOF && len(header) == 0 {
+			// only if Peek returned no bytes the close is expected
 			c.conn.Close()
 			return nil, newTransportError(ExpectedClose, err)
 		} else if err != nil {
@@ -120,11 +121,10 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 
 		// read whole packet
 		bytesRead, err := io.ReadFull(c.reader, buf)
-		if err == io.EOF {
+		if err != nil {
 			c.conn.Close()
-			return nil, newTransportError(ExpectedClose, err)
-		} else if err != nil {
-			c.conn.Close()
+
+			// even if EOF is returned we consider it an network error
 			return nil, newTransportError(NetworkError, err)
 		}
 

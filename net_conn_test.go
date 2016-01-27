@@ -16,6 +16,9 @@ package transport
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/gomqtt/packet"
 )
 
 func TestNetConnConnection(t *testing.T) {
@@ -52,4 +55,64 @@ func TestNetConnCounters(t *testing.T) {
 
 func TestNetConnReadLimit(t *testing.T) {
 	abstractConnReadLimitTest(t, "tcp")
+}
+
+func TestNetConnCloseAfterClose(t *testing.T) {
+	conn2, done := abstractConnTestPreparer("tcp", func(conn1 Conn) {
+		err := conn1.Close()
+		assert.NoError(t, err)
+
+		err = conn1.Close()
+		assert.Equal(t, NetworkError, toError(err).Code())
+	})
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, ExpectedClose, toError(err).Code())
+
+	<-done
+}
+
+func TestNetConnCloseWhileReadError(t *testing.T) {
+	conn2, done := abstractConnTestPreparer("tcp", func(conn1 Conn) {
+		pkt := packet.NewPublishPacket()
+		pkt.Topic = []byte("foo/bar/baz")
+		buf := make([]byte, pkt.Len())
+		pkt.Encode(buf)
+
+		netConn := conn1.(*NetConn)
+		_, err := netConn.conn.Write(buf[0:7]) // <- incomplete packet
+		assert.NoError(t, err)
+
+		err = netConn.conn.Close()
+		assert.NoError(t, err)
+	})
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}
+
+func TestNetConnCloseWhileDetectError(t *testing.T) {
+	conn2, done := abstractConnTestPreparer("tcp", func(conn1 Conn) {
+		pkt := packet.NewPublishPacket()
+		pkt.Topic = []byte("foo/bar/baz")
+		buf := make([]byte, pkt.Len())
+		pkt.Encode(buf)
+
+		netConn := conn1.(*NetConn)
+		_, err := netConn.conn.Write(buf[0:1]) // <- too less for a detection
+		assert.NoError(t, err)
+
+		err = netConn.conn.Close()
+		assert.NoError(t, err)
+	})
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
 }
