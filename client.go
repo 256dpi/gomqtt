@@ -308,8 +308,6 @@ func (c *Client) process() error {
 				if subscribeFuture, ok := future.(*SubscribeFuture); ok {
 					subscribeFuture.complete()
 					c.futureStore.del(suback.PacketID)
-				} else {
-					// TODO: what happens if there is no future?
 				}
 			case packet.UNSUBACK:
 				unsuback := pkt.(*packet.UnsubackPacket)
@@ -318,25 +316,28 @@ func (c *Client) process() error {
 				if subscribeFuture, ok := future.(*UnsubscribeFuture); ok {
 					subscribeFuture.complete()
 					c.futureStore.del(unsuback.PacketID)
-				} else {
-					// TODO: what happens if there is no future?
 				}
 			case packet.PINGRESP:
 				c.pingrespPending = false
 				c.log("Received PingrespPacket")
 			case packet.PUBLISH:
 				publish := pkt.(*packet.PublishPacket)
+
 				if c.messageCallback != nil {
 					go c.messageCallback(string(publish.Topic), publish.Payload)
 				}
-			case packet.PUBACK:
-				// TODO: Remove message from store and complete future
+			case packet.PUBACK, packet.PUBCOMP:
+				// Retrieve Future from store
+				// Remove Future from store
+				// Remove Packet from store
+				// Complete Future
 			case packet.PUBREC:
-				// TODO: Send Pubrel
+				// Send PubrelPacket
 			case packet.PUBREL:
-				// TODO: Send Pubcomp
-			case packet.PUBCOMP:
-				// TODO: Remove message from store and complete future.
+				// Check store for matching PublishPacket
+				// Call OnMessage callback
+				// Save PubrelPacket to Store (why not remove it?)
+				// Send Pubcomp packet
 			default:
 				c.log(fmt.Sprintf("Unhandled Packet: %s", pkt.Type().String()))
 			}
