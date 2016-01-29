@@ -37,6 +37,9 @@ type (
 type Client struct {
 	conn transport.Conn
 
+	IncomingStore Store
+	OutgoingStore Store
+
 	futureStore *futureStore
 	idGenerator *idGenerator
 
@@ -59,6 +62,8 @@ type Client struct {
 // NewClient returns a new client.
 func NewClient() *Client {
 	return &Client{
+		IncomingStore: NewMemoryStore(),
+		OutgoingStore: NewMemoryStore(),
 		futureStore: newFutureStore(),
 		idGenerator: newIDGenerator(),
 	}
@@ -114,6 +119,18 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	c.keepAlive, err = time.ParseDuration(opts.KeepAlive)
 	if err != nil {
 		return nil, err
+	}
+
+	// open incoming store
+	err = c.IncomingStore.Open()
+	if err != nil {
+		return nil, c.cleanup(err)
+	}
+
+	// open outgoing store
+	err = c.OutgoingStore.Open()
+	if err != nil {
+		return nil, c.cleanup(err)
 	}
 
 	// prepare connect packet

@@ -20,7 +20,7 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// A store is used to persists incoming and outgoing packets until they are
+// A store is used to persists incoming or outgoing packets until they are
 // successfully acknowledged by the other side.
 type Store interface {
 	// Open will open the store.
@@ -41,7 +41,8 @@ type Store interface {
 	// Reset will completely reset the store.
 	Reset() error
 
-	// Close will close the store.
+	// Close will close the store. Closing an already closed store must not
+	// return an error.
 	Close() error
 }
 
