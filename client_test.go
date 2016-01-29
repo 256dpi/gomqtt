@@ -22,12 +22,17 @@ import (
 
 	"github.com/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
+	"github.com/satori/go.uuid"
 )
+
+func testOptions() *Options {
+	return NewOptions("test/" + uuid.NewV4().String())
+}
 
 func TestClientConnect(t *testing.T) {
 	c := NewClient()
 
-	future, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	future, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -44,7 +49,7 @@ func TestClientConnectWebSocket(t *testing.T) {
 
 	c := NewClient()
 
-	future, err := c.Connect("ws://localhost:1884", NewOptions("test"))
+	future, err := c.Connect("ws://localhost:1884", testOptions())
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -57,13 +62,13 @@ func TestClientConnectWebSocket(t *testing.T) {
 func TestClientConnectAfterConnect(t *testing.T) {
 	c := NewClient()
 
-	future, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	future, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
-	future, err = c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	future, err = c.Connect("mqtt://localhost:1883", testOptions())
 	assert.Equal(t, ErrAlreadyConnecting, err)
 	assert.Nil(t, future)
 
@@ -82,7 +87,7 @@ func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 		close(done)
 	})
 
-	connectFuture, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -133,7 +138,7 @@ func TestClientUnsubscribe(t *testing.T) {
 		close(done)
 	})
 
-	connectFuture, err := c.Connect("mqtt://localhost:1883", NewOptions("test"))
+	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -170,7 +175,7 @@ func TestClientConnectError(t *testing.T) {
 	c := NewClient()
 
 	// wrong port
-	future, err := c.Connect("mqtt://localhost:1234", NewOptions("test"))
+	future, err := c.Connect("mqtt://localhost:1234", testOptions())
 	assert.Error(t, err)
 	assert.Nil(t, future)
 }
@@ -202,7 +207,7 @@ func TestClientKeepAlive(t *testing.T) {
 		}
 	})
 
-	opts := NewOptions("test")
+	opts := testOptions()
 	opts.KeepAlive = "2s"
 
 	future, err := c.Connect("mqtt://localhost:1883", opts)
