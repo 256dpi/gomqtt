@@ -191,7 +191,13 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	publish.Dup = false
 	publish.PacketID = c.idGenerator.next()
 
-	// TODO: store packet
+	// store packet
+	if qos >= 1 {
+		err := c.OutgoingStore.Put(publish)
+		if err != nil {
+			return nil, c.cleanup(err)
+		}
+	}
 
 	// send packet
 	err := c.send(publish)
@@ -236,10 +242,14 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 		})
 	}
 
-	// TODO: store packet
+	// store packet
+	err := c.OutgoingStore.Put(subscribe)
+	if err != nil {
+		return nil, c.cleanup(err)
+	}
 
 	// send packet
-	err := c.send(subscribe)
+	err = c.send(subscribe)
 	if err != nil {
 		return nil, c.cleanup(err)
 	}
@@ -271,10 +281,14 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 		unsubscribe.Topics = append(unsubscribe.Topics, []byte(t))
 	}
 
-	// TODO: store packet
+	// store packet
+	err := c.OutgoingStore.Put(unsubscribe)
+	if err != nil {
+		return nil, c.cleanup(err)
+	}
 
 	// send packet
-	err := c.send(unsubscribe)
+	err = c.send(unsubscribe)
 	if err != nil {
 		return nil, c.cleanup(err)
 	}
@@ -323,6 +337,7 @@ func (c *Client) process() error {
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
 		default:
+			// get next packet from connection
 			pkt, err := c.conn.Receive()
 			if err != nil {
 				return c.cleanup(err)
@@ -338,23 +353,22 @@ func (c *Client) process() error {
 			case packet.PINGRESP:
 				c.handlePingresp()
 			case packet.PUBLISH:
-				err := c.handlePublish(pkt.(*packet.PublishPacket))
-				if err != nil {
-					return c.cleanup(err)
-				}
+				err = c.handlePublish(pkt.(*packet.PublishPacket))
 			case packet.PUBACK:
 				c.handlePubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
 			case packet.PUBCOMP:
 				c.handlePubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
 			case packet.PUBREC:
-				err := c.handlePubrec(pkt.(*packet.PubrecPacket).PacketID)
-				if err != nil {
-					return c.cleanup(err)
-				}
+				err = c.handlePubrec(pkt.(*packet.PubrecPacket).PacketID)
 			case packet.PUBREL:
-				c.handlePubrel(pkt.(*packet.PubrelPacket).PacketID)
+				err = c.handlePubrel(pkt.(*packet.PubrelPacket).PacketID)
 			default:
 				return c.cleanup(ErrInvalidPacketType)
+			}
+
+			// return and cleanup on error
+			if err != nil {
+				return c.cleanup(err)
 			}
 		}
 	}
@@ -370,25 +384,36 @@ func (c *Client) handleConnack(connack *packet.ConnackPacket) {
 
 // handle an incoming SubackPacket
 func (c *Client) handleSuback(suback *packet.SubackPacket) {
+	// remove packet from store
+	c.OutgoingStore.Del(suback.PacketID)
+
+	// find future
 	future := c.futureStore.get(suback.PacketID)
 
+	// complete future
 	if subscribeFuture, ok := future.(*SubscribeFuture); ok {
+		subscribeFuture.ReturnCodes = suback.ReturnCodes
 		subscribeFuture.complete()
 		c.futureStore.del(suback.PacketID)
 	} else {
-		// ignore a wrongly set SubackPacket
+		// ignore a wrongly sent SubackPacket
 	}
 }
 
 // handle an incoming UnsubackPacket
 func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) {
+	// remove packet from store
+	c.OutgoingStore.Del(unsuback.PacketID)
+
+	// find future
 	future := c.futureStore.get(unsuback.PacketID)
 
-	if subscribeFuture, ok := future.(*UnsubscribeFuture); ok {
-		subscribeFuture.complete()
+	// complete future
+	if unsubscribeFuture, ok := future.(*UnsubscribeFuture); ok {
+		unsubscribeFuture.complete()
 		c.futureStore.del(unsuback.PacketID)
 	} else {
-		// ignore a wrongly set UnsubackPacket
+		// ignore a wrongly sent UnsubackPacket
 	}
 }
 
@@ -407,28 +432,30 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 		// acknowledge qos 1 publish
 		err := c.send(puback)
 		if err != nil {
-			return c.cleanup(err)
+			return err
 		}
 	}
 
 	if publish.QOS == 2 {
-		// TODO: store packet
+		// store packet
+		err := c.IncomingStore.Put(publish)
+		if err != nil {
+			return err
+		}
 
 		pubrec := packet.NewPubrecPacket()
 		pubrec.PacketID = publish.PacketID
 
 		// signal qos 2 publish
-		err := c.send(pubrec)
+		err = c.send(pubrec)
 		if err != nil {
-			return c.cleanup(err)
+			return err
 		}
 	}
 
 	if publish.QOS <= 1 {
 		// call callback
-		if c.messageCallback != nil {
-			c.message(publish)
-		}
+		c.message(publish)
 	}
 
 	return nil
@@ -436,16 +463,19 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) handlePubackAndPubcomp(packetID uint16) {
+	// remove packet from store
+	c.OutgoingStore.Del(packetID)
+
+	// find future
 	future := c.futureStore.get(packetID)
 
+	// complete future
 	if publishFuture, ok := future.(*PublishFuture); ok {
 		publishFuture.complete()
 		c.futureStore.del(packetID)
 	} else {
 		// ignore a wrongly sent PubackPacket or PubcompPacket
 	}
-
-	// TODO: Remove Packet from store
 }
 
 // handle an incoming PubrecPacket
@@ -457,11 +487,38 @@ func (c *Client) handlePubrec(packetID uint16) error {
 }
 
 // handle an incoming PubrelPacket
-func (c *Client) handlePubrel(packetID uint16) {
-	// Check store for matching PublishPacket
-	// Call OnMessage callback
-	// Save PubrelPacket to Store (why not remove it?)
-	// Send Pubcomp packet
+func (c *Client) handlePubrel(packetID uint16) error {
+	// get packet from store
+	pkt, err := c.IncomingStore.Get(packetID)
+	if err != nil {
+		return err
+	}
+
+	// get packet from store
+	publish, ok := pkt.(*packet.PublishPacket)
+	if !ok {
+		// ignore a wrongly sent PubrelPacket
+	}
+
+	pubcomp := packet.NewPubcompPacket()
+	pubcomp.PacketID = publish.PacketID
+
+	// acknowledge PublishPacket
+	err = c.send(pubcomp)
+	if err != nil {
+		return err
+	}
+
+	// remove packet from store
+	err = c.IncomingStore.Del(packetID)
+	if err != nil {
+		return err
+	}
+
+	// call callback
+	c.message(publish)
+
+	return nil
 }
 
 // sends message and updates lastSend

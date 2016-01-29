@@ -79,11 +79,11 @@ type PublishFuture struct {
 }
 
 type SubscribeFuture struct {
-	// TODO: Expose Grants
 	abstractFuture
+
+	ReturnCodes []byte
 }
 
 type UnsubscribeFuture struct {
-	// TODO: Expose something?
 	abstractFuture
 }

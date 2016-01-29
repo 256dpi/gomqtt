@@ -91,6 +91,7 @@ func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 	future, err := c.Subscribe("test", qos)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
+	assert.Equal(t, []byte{qos}, future.ReturnCodes)
 
 	publishFuture, err := c.Publish("test", []byte("test"), qos, false)
 	assert.NoError(t, err)
@@ -99,6 +100,14 @@ func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 	<-done
 	err = c.Disconnect()
 	assert.NoError(t, err)
+
+	in, err := c.IncomingStore.All()
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(in))
+
+	out, err := c.OutgoingStore.All()
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(out))
 }
 
 func TestClientPublishSubscribeQOS0(t *testing.T) {
@@ -109,9 +118,9 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	abstractPublishSubscribeTest(t, 1)
 }
 
-//func TestClientPublishSubscribeQOS2(t *testing.T) {
-//	abstractPublishSubscribeTest(t, 2)
-//}
+func TestClientPublishSubscribeQOS2(t *testing.T) {
+	abstractPublishSubscribeTest(t, 2)
+}
 
 func TestClientUnsubscribe(t *testing.T) {
 	c := NewClient()
@@ -133,6 +142,7 @@ func TestClientUnsubscribe(t *testing.T) {
 	future1, err := c.Subscribe("foo", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, future1.Wait())
+	assert.Equal(t, []byte{0}, future1.ReturnCodes)
 
 	future2, err := c.Unsubscribe("foo")
 	assert.NoError(t, err)
@@ -141,6 +151,7 @@ func TestClientUnsubscribe(t *testing.T) {
 	future1, err = c.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, future1.Wait())
+	assert.Equal(t, []byte{0}, future1.ReturnCodes)
 
 	publishFuture, err := c.Publish("foo", []byte("test"), 0, false)
 	assert.NoError(t, err)

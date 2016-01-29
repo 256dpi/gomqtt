@@ -36,7 +36,7 @@ type Store interface {
 	Del(uint16) error
 
 	// All will return all packets currently in the store.
-	All() (error, []packet.Packet)
+	All() ([]packet.Packet, error)
 
 	// Reset will completely reset the store.
 	Reset() error
@@ -89,11 +89,19 @@ func (s *MemoryStore) Del(id uint16) error {
 	return nil
 }
 
-func (s *MemoryStore) All() (error, []packet.Packet) {
+func (s *MemoryStore) All() ([]packet.Packet, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	return nil, nil
+	all := make([]packet.Packet, len(s.store))
+
+	i := 0
+	for _, pkt := range s.store {
+		all[i] = pkt
+		i++
+	}
+
+	return all, nil
 }
 
 func (s *MemoryStore) Reset() error {
