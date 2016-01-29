@@ -79,9 +79,11 @@ type PublishFuture struct {
 }
 
 type SubscribeFuture struct {
+	// TODO: Expose Grants
 	abstractFuture
 }
 
 type UnsubscribeFuture struct {
+	// TODO: Expose something?
 	abstractFuture
 }
