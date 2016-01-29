@@ -71,7 +71,7 @@ func TestClientConnectAfterConnect(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestClientPublishSubscribe(t *testing.T) {
+func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 	c := NewClient()
 	done := make(chan struct{})
 
@@ -88,11 +88,11 @@ func TestClientPublishSubscribe(t *testing.T) {
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
-	future, err := c.Subscribe("test", 0)
+	future, err := c.Subscribe("test", qos)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 
-	publishFuture, err := c.Publish("test", []byte("test"), 0, false)
+	publishFuture, err := c.Publish("test", []byte("test"), qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -100,6 +100,18 @@ func TestClientPublishSubscribe(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 }
+
+func TestClientPublishSubscribeQOS0(t *testing.T) {
+	abstractPublishSubscribeTest(t, 0)
+}
+
+func TestClientPublishSubscribeQOS1(t *testing.T) {
+	abstractPublishSubscribeTest(t, 1)
+}
+
+//func TestClientPublishSubscribeQOS2(t *testing.T) {
+//	abstractPublishSubscribeTest(t, 2)
+//}
 
 func TestClientUnsubscribe(t *testing.T) {
 	c := NewClient()
