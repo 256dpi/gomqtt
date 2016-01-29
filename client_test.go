@@ -227,27 +227,15 @@ func TestClientKeepAlive(t *testing.T) {
 // should emit close after end called
 // should stop ping timer after end called
 // should require a clientId with clean=false
-// should emit connect
-// should provide connack packet with connect event
 // should mark the client as connected
 // should emit error
 // should have different client ids
 // should queue message until connected
 // should delay closing everything up until the queue is depleted
 // should delay ending up until all inflight messages are delivered
-// wait QoS 1 publish messages
 // does not wait acks when force-closing
 // should publish a message (offline)
-// should publish a message (online)
-// should accept options
-// should fire a callback (qos 0)
-// should fire a callback (qos 1)
-// should fire a callback (qos 2)
-// Publish 10 QoS 2 and receive them
 // should send an unsubscribe packet (offline)
-// should send an unsubscribe packet
-// should accept an array of unsubs
-// should fire a callback on unsuback
 // should checkPing at keepalive interval
 // should set a ping timer
 // should not set a ping timer keepalive=0
@@ -255,22 +243,8 @@ func TestClientKeepAlive(t *testing.T) {
 // should not reconnect if pingresp is successful
 // should defer the next ping when sending a control packet
 // should send a subscribe message (offline)
-// should send a subscribe message
-// should accept an array of subscriptions
-// should accept an hash of subscriptions
-// should accept an options parameter
-// should fire a callback on suback
 // should fire a callback with error if disconnected (options provided)
 // should fire a callback with error if disconnected (options not provided)
-// should subscribe with a chinese topic
-// should fire the message event
-// should support binary data
-// should emit a message event (qos=2)
-// should emit a message event (qos=2) - repeated publish
-// should support chinese topic
-// should follow qos 0 semantics (trivial)
-// should follow qos 1 semantics
-// should follow qos 2 semantics
 // should mark the client disconnecting if #end called
 // should reconnect after stream disconnect
 // should emit \'reconnect\' when reconnecting
@@ -288,16 +262,3 @@ func TestClientKeepAlive(t *testing.T) {
 // should replace a packet when doing put with the same messageId
 // should return the original packet on del
 // should get a packet with the same messageId
-
-// -- mqtt
-// should throw an error when it is called with cert and key set but no protocol specified
-// should throw an error when it is called with cert and key set and protocol other than allowed: mqtt,mqtts,ws,wss
-// should return a MqttClient with mqtts set when connect is called key and cert set and protocol mqtt
-// should return a MqttClient with mqtts set when connect is called key and cert set and protocol mqtts
-// should return a MqttClient with wss set when connect is called key and cert set and protocol ws
-// should return a MqttClient with wss set when connect is called key and cert set and protocol wss
-// should support passing the key and cert
-// should support passing the key, cert and CA list
-// should fire callback on net connect
-// should bind stream close to connection
-// should bind stream error to conn
