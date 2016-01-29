@@ -191,6 +191,8 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	publish.Dup = false
 	publish.PacketID = c.idGenerator.next()
 
+	// TODO: store packet
+
 	// send packet
 	err := c.send(publish)
 	if err != nil {
@@ -201,12 +203,13 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	future := &PublishFuture{}
 	future.initialize()
 
-	// instantly complete qos 0 future
-	if qos == packet.QOSAtMostOnce {
+	if qos == 0 {
+		// instantly complete future
 		future.complete()
+	} else {
+		// store future
+		c.futureStore.put(publish.PacketID, future)
 	}
-
-	// TODO: handle qos1 and qos2
 
 	return future, nil
 }
@@ -232,6 +235,8 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 			QOS:   qos,
 		})
 	}
+
+	// TODO: store packet
 
 	// send packet
 	err := c.send(subscribe)
@@ -266,6 +271,8 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 		unsubscribe.Topics = append(unsubscribe.Topics, []byte(t))
 	}
 
+	// TODO: store packet
+
 	// send packet
 	err := c.send(unsubscribe)
 	if err != nil {
@@ -285,6 +292,8 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 // Disconnect will send a DisconnectPacket and close the connection.
 func (c *Client) Disconnect() error {
 	m := packet.NewDisconnectPacket()
+
+	// TODO: finish outstanding work (set timeout parameter)
 
 	// send disconnect packet
 	err := c.send(m)
@@ -329,13 +338,19 @@ func (c *Client) process() error {
 			case packet.PINGRESP:
 				c.handlePingresp()
 			case packet.PUBLISH:
-				c.handlePublish(pkt.(*packet.PublishPacket))
+				err := c.handlePublish(pkt.(*packet.PublishPacket))
+				if err != nil {
+					return c.cleanup(err)
+				}
 			case packet.PUBACK:
 				c.handlePubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
 			case packet.PUBCOMP:
 				c.handlePubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
 			case packet.PUBREC:
-				c.handlePubrec(pkt.(*packet.PubrecPacket).PacketID)
+				err := c.handlePubrec(pkt.(*packet.PubrecPacket).PacketID)
+				if err != nil {
+					return c.cleanup(err)
+				}
 			case packet.PUBREL:
 				c.handlePubrel(pkt.(*packet.PubrelPacket).PacketID)
 			default:
@@ -384,25 +399,61 @@ func (c *Client) handlePingresp() {
 }
 
 // handle an incoming PublishPacket
-func (c *Client) handlePublish(publish *packet.PublishPacket) {
-	// TODO: handle qos 1 and qos 2
+func (c *Client) handlePublish(publish *packet.PublishPacket) error {
+	if publish.QOS == 1 {
+		puback := packet.NewPubackPacket()
+		puback.PacketID = publish.PacketID
 
-	if c.messageCallback != nil {
-		go c.messageCallback(string(publish.Topic), publish.Payload)
+		// acknowledge qos 1 publish
+		err := c.send(puback)
+		if err != nil {
+			return c.cleanup(err)
+		}
 	}
+
+	if publish.QOS == 2 {
+		// TODO: store packet
+
+		pubrec := packet.NewPubrecPacket()
+		pubrec.PacketID = publish.PacketID
+
+		// signal qos 2 publish
+		err := c.send(pubrec)
+		if err != nil {
+			return c.cleanup(err)
+		}
+	}
+
+	if publish.QOS <= 1 {
+		// call callback
+		if c.messageCallback != nil {
+			c.message(publish)
+		}
+	}
+
+	return nil
 }
 
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) handlePubackAndPubcomp(packetID uint16) {
-	// Retrieve Future from store
-	// Remove Future from store
-	// Remove Packet from store
-	// Complete Future
+	future := c.futureStore.get(packetID)
+
+	if publishFuture, ok := future.(*PublishFuture); ok {
+		publishFuture.complete()
+		c.futureStore.del(packetID)
+	} else {
+		// ignore a wrongly sent PubackPacket or PubcompPacket
+	}
+
+	// TODO: Remove Packet from store
 }
 
 // handle an incoming PubrecPacket
-func (c *Client) handlePubrec(packetID uint16) {
-	// Send PubrelPacket
+func (c *Client) handlePubrec(packetID uint16) error {
+	pubrel := packet.NewPubrelPacket()
+	pubrel.PacketID = packetID
+
+	return c.send(pubrel)
 }
 
 // handle an incoming PubrelPacket
@@ -425,14 +476,21 @@ func (c *Client) send(msg packet.Packet) error {
 // calls the error callback
 func (c *Client) error(err error) {
 	if c.errorCallback != nil {
-		go c.errorCallback(err)
+		c.errorCallback(err)
 	}
 }
 
 // calls the log callback
 func (c *Client) log(message string) {
 	if c.logCallback != nil {
-		go c.logCallback(message)
+		c.logCallback(message)
+	}
+}
+
+// calls the message callback
+func (c *Client) message(packet *packet.PublishPacket) {
+	if c.messageCallback != nil {
+		c.messageCallback(string(packet.Topic), packet.Payload)
 	}
 }
 
