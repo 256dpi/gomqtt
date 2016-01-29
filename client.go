@@ -27,6 +27,7 @@ import (
 )
 
 var ErrAlreadyConnecting = errors.New("already connecting")
+var ErrInvalidPacketType = errors.New("invalid packet type")
 
 type (
 	MessageCallback func(string, []byte)
@@ -104,12 +105,6 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		return nil, err
 	}
 
-	// dial broker
-	c.conn, err = transport.Dial(urlString)
-	if err != nil {
-		return nil, err
-	}
-
 	// save opts
 	if opts == nil {
 		opts = NewOptions("gomqtt/client")
@@ -120,6 +115,14 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	if err != nil {
 		return nil, err
 	}
+
+	// dial broker
+	c.conn, err = transport.Dial(urlString)
+	if err != nil {
+		return nil, err
+	}
+
+	// from now on we have to cleanup on a subsequent error
 
 	// open incoming store
 	err = c.IncomingStore.Open()
@@ -155,7 +158,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	// send connect packet
 	err = c.send(connect)
 	if err != nil {
-		return nil, err
+		return nil, c.cleanup(err)
 	}
 
 	// create new ConnackFuture
@@ -191,7 +194,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	// send packet
 	err := c.send(publish)
 	if err != nil {
-		return nil, err
+		return nil, c.cleanup(err)
 	}
 
 	// create future
@@ -233,7 +236,7 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	// send packet
 	err := c.send(subscribe)
 	if err != nil {
-		return nil, err
+		return nil, c.cleanup(err)
 	}
 
 	// create future
@@ -266,7 +269,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	// send packet
 	err := c.send(unsubscribe)
 	if err != nil {
-		return nil, err
+		return nil, c.cleanup(err)
 	}
 
 	// create future
@@ -283,18 +286,23 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 func (c *Client) Disconnect() error {
 	m := packet.NewDisconnectPacket()
 
+	// send disconnect packet
 	err := c.send(m)
 	if err != nil {
-		_err, ok := err.(transport.Error)
+		transportErr, ok := err.(transport.Error)
 
-		if ok && _err.Code() != transport.ExpectedClose {
-			return err
+		if ok && transportErr.Code() == transport.ExpectedClose {
+			err = nil // do not treat expected close as an error
 		}
 	}
 
+	// do cleanup
+	err = c.cleanup(err)
+
+	// wait for all goroutines to exit
 	c.tomb.Wait()
 
-	return nil
+	return err
 }
 
 // process incoming packets
@@ -308,7 +316,7 @@ func (c *Client) process() error {
 		default:
 			pkt, err := c.conn.Receive()
 			if err != nil {
-				return err
+				return c.cleanup(err)
 			}
 
 			switch pkt.Type() {
@@ -331,7 +339,7 @@ func (c *Client) process() error {
 			case packet.PUBREL:
 				c.handlePubrel(pkt.(*packet.PubrelPacket).PacketID)
 			default:
-				c.log(fmt.Sprintf("Unhandled Packet: %s", pkt.Type().String()))
+				return c.cleanup(ErrInvalidPacketType)
 			}
 		}
 	}
@@ -352,6 +360,8 @@ func (c *Client) handleSuback(suback *packet.SubackPacket) {
 	if subscribeFuture, ok := future.(*SubscribeFuture); ok {
 		subscribeFuture.complete()
 		c.futureStore.del(suback.PacketID)
+	} else {
+		// ignore a wrongly set SubackPacket
 	}
 }
 
@@ -362,6 +372,8 @@ func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) {
 	if subscribeFuture, ok := future.(*UnsubscribeFuture); ok {
 		subscribeFuture.complete()
 		c.futureStore.del(unsuback.PacketID)
+	} else {
+		// ignore a wrongly set UnsubackPacket
 	}
 }
 
@@ -373,6 +385,8 @@ func (c *Client) handlePingresp() {
 
 // handle an incoming PublishPacket
 func (c *Client) handlePublish(publish *packet.PublishPacket) {
+	// TODO: handle qos 1 and qos 2
+
 	if c.messageCallback != nil {
 		go c.messageCallback(string(publish.Topic), publish.Payload)
 	}
@@ -436,7 +450,7 @@ func (c *Client) ping() error {
 		if timeElapsed > c.keepAlive {
 			err := c.send(packet.NewPingreqPacket())
 			if err != nil {
-				return err
+				return c.cleanup(err)
 			}
 
 			c.log(fmt.Sprintf("Sent PingreqPacket"))
@@ -453,4 +467,27 @@ func (c *Client) ping() error {
 			continue
 		}
 	}
+}
+
+// will try to cleanup as many resources as possible
+func (c *Client) cleanup(err error) error {
+	// ensure that the connection gets closed
+	_err := c.conn.Close()
+	if err == nil {
+		err = _err
+	}
+
+	// close incoming store
+	_err = c.IncomingStore.Close()
+	if err == nil {
+		err = _err
+	}
+
+	// close outgoing store
+	_err = c.OutgoingStore.Close()
+	if err == nil {
+		err = _err
+	}
+
+	return err
 }
