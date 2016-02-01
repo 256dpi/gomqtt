@@ -505,9 +505,14 @@ func (c *Client) handlePubackAndPubcomp(packetID uint16) {
 
 // handle an incoming PubrecPacket
 func (c *Client) handlePubrec(packetID uint16) error {
+	// allocate packet
 	pubrel := packet.NewPubrelPacket()
 	pubrel.PacketID = packetID
 
+	// overwrite stored PublishPacket with new PubRelPacket
+	c.OutgoingStore.Put(pubrel)
+
+	// send packet
 	return c.send(pubrel)
 }
 
