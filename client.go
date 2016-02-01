@@ -179,6 +179,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// set state
+	// TODO: mark as connecting earlier (Connect should be only called once...)
 	c.connecting = true
 
 	// wait for all goroutines to start
@@ -191,6 +192,12 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*PublishFuture, error) {
 	c.Lock()
 	defer c.Unlock()
+
+	// check if connected
+	// TODO: implement this check everywhere
+	if !c.connecting || c.disconnecting {
+		return nil, ErrNotConnected
+	}
 
 	// allocate packet
 	publish := packet.NewPublishPacket()
@@ -411,6 +418,8 @@ func (c *Client) handleConnack(connack *packet.ConnackPacket) {
 		c.connectFuture.SessionPresent = connack.SessionPresent
 		c.connectFuture.ReturnCode = connack.ReturnCode
 		c.connectFuture.complete()
+
+		// TODO: resend stored unacked packets
 	} else {
 		// ignore a wrongly sent ConnackPacket
 	}
