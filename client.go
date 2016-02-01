@@ -56,6 +56,7 @@ type Client struct {
 	keepAlive       time.Duration
 	lastSend        time.Time
 	lastSendMutex   sync.Mutex
+	pingrespMutex   sync.Mutex
 	pingrespPending bool
 
 	tomb tomb.Tomb
@@ -469,6 +470,9 @@ func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) {
 
 // handle an incoming Pingresp
 func (c *Client) handlePingresp() {
+	c.pingrespMutex.Lock()
+	defer c.pingrespMutex.Unlock()
+
 	c.pingrespPending = false
 	c.log("Received PingrespPacket")
 }
@@ -627,7 +631,11 @@ func (c *Client) ping() error {
 		timeToWait := c.keepAlive
 
 		if timeElapsed > c.keepAlive {
-			if c.pingrespPending {
+			c.pingrespMutex.Lock()
+			pending := c.pingrespPending
+			c.pingrespMutex.Unlock()
+
+			if pending {
 				return c.die(ErrMissingPong, true)
 			}
 
