@@ -124,6 +124,11 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		return nil, c.cleanup(err)
 	}
 
+	// reset stores when clean session is set
+	if opts.CleanSession {
+		err = c.resetStores()
+	}
+
 	// allocate packet
 	connect := packet.NewConnectPacket()
 	connect.ClientID = []byte(opts.ClientID)
@@ -635,4 +640,21 @@ func (c *Client) cleanup(err error) error {
 	}
 
 	return err
+}
+
+// resets the incoming and outgoing store
+func (c *Client) resetStores() error {
+	// reset incoming store
+	err := c.IncomingStore.Reset()
+	if err != nil {
+		return nil, c.cleanup(err)
+	}
+
+	// reset outgoing store
+	err = c.OutgoingStore.Reset()
+	if err != nil {
+		return nil, c.cleanup(err)
+	}
+
+	return nil
 }
