@@ -29,8 +29,17 @@ func testOptions() *Options {
 	return NewOptions("test/" + uuid.NewV4().String())
 }
 
+func callbackWithNothing(t *testing.T) func(string, []byte, error) {
+	return func(topic string, payload []byte, err error) {
+		assert.Empty(t, topic)
+		assert.Nil(t, payload)
+		assert.NoError(t, err)
+	}
+}
+
 func TestClientConnect(t *testing.T) {
 	c := NewClient()
+	c.Callback = callbackWithNothing(t)
 
 	future, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.NoError(t, err)
@@ -48,6 +57,7 @@ func TestClientConnectWebSocket(t *testing.T) {
 	}
 
 	c := NewClient()
+	c.Callback = callbackWithNothing(t)
 
 	future, err := c.Connect("ws://localhost:1884", testOptions())
 	assert.NoError(t, err)
@@ -61,6 +71,7 @@ func TestClientConnectWebSocket(t *testing.T) {
 
 func TestClientConnectAfterConnect(t *testing.T) {
 	c := NewClient()
+	c.Callback = callbackWithNothing(t)
 
 	future, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.NoError(t, err)
@@ -78,6 +89,7 @@ func TestClientConnectAfterConnect(t *testing.T) {
 
 func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 	c := NewClient()
+	c.Callback = callbackWithNothing(t)
 	done := make(chan struct{})
 
 	c.Callback = func(topic string, payload []byte, err error) {
@@ -130,6 +142,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 
 func TestClientUnsubscribe(t *testing.T) {
 	c := NewClient()
+	c.Callback = callbackWithNothing(t)
 	done := make(chan struct{})
 
 	c.Callback = func(topic string, payload []byte, err error) {
@@ -175,6 +188,7 @@ func TestClientUnsubscribe(t *testing.T) {
 
 func TestClientConnectError(t *testing.T) {
 	c := NewClient()
+	c.Callback = callbackWithNothing(t)
 
 	// wrong port
 	future, err := c.Connect("mqtt://localhost:1234", testOptions())
@@ -184,6 +198,7 @@ func TestClientConnectError(t *testing.T) {
 
 func TestClientAuthenticationError(t *testing.T) {
 	c := NewClient()
+	c.Callback = callbackWithNothing(t)
 
 	// missing clientID
 	future, err := c.Connect("mqtt://localhost:1883", &Options{})
@@ -197,6 +212,7 @@ func TestClientKeepAlive(t *testing.T) {
 	}
 
 	c := NewClient()
+	c.Callback = callbackWithNothing(t)
 
 	var reqCounter int32 = 0
 	var respCounter int32 = 0

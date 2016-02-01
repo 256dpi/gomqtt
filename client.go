@@ -27,6 +27,7 @@ import (
 )
 
 var ErrAlreadyConnecting = errors.New("already connecting")
+var ErrNotConnected = errors.New("not connected")
 var ErrMissingClientID = errors.New("missing client id")
 var ErrAlreadyDisconnecting = errors.New("already disconnecting")
 var ErrInvalidPacketType = errors.New("invalid packet type")
@@ -120,20 +121,20 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	// open incoming store
 	err = c.IncomingStore.Open()
 	if err != nil {
-		return nil, c.cleanup(err)
+		return nil, c.cleanup(err, true)
 	}
 
 	// open outgoing store
 	err = c.OutgoingStore.Open()
 	if err != nil {
-		return nil, c.cleanup(err)
+		return nil, c.cleanup(err, true)
 	}
 
 	// reset stores when clean session is set
 	if opts.CleanSession {
 		err = c.resetStores()
 		if err != nil {
-			return nil, c.cleanup(err)
+			return nil, c.cleanup(err, true)
 		}
 	}
 
@@ -159,7 +160,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	// send connect packet
 	err = c.send(connect)
 	if err != nil {
-		return nil, c.cleanup(err)
+		return nil, c.cleanup(err, false)
 	}
 
 	// create new ConnackFuture
@@ -217,14 +218,14 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	if qos >= 1 {
 		err := c.OutgoingStore.Put(publish)
 		if err != nil {
-			return nil, c.cleanup(err)
+			return nil, c.cleanup(err, true)
 		}
 	}
 
 	// send packet
 	err := c.send(publish)
 	if err != nil {
-		return nil, c.cleanup(err)
+		return nil, c.cleanup(err, false)
 	}
 
 	// create future
@@ -271,13 +272,13 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	// store packet
 	err := c.OutgoingStore.Put(subscribe)
 	if err != nil {
-		return nil, c.cleanup(err)
+		return nil, c.cleanup(err, true)
 	}
 
 	// send packet
 	err = c.send(subscribe)
 	if err != nil {
-		return nil, c.cleanup(err)
+		return nil, c.cleanup(err, false)
 	}
 
 	// create future
@@ -314,13 +315,13 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	// store packet
 	err := c.OutgoingStore.Put(unsubscribe)
 	if err != nil {
-		return nil, c.cleanup(err)
+		return nil, c.cleanup(err, true)
 	}
 
 	// send packet
 	err = c.send(unsubscribe)
 	if err != nil {
-		return nil, c.cleanup(err)
+		return nil, c.cleanup(err, false)
 	}
 
 	// create future
@@ -350,19 +351,15 @@ func (c *Client) Disconnect() error {
 
 	// send disconnect packet
 	err := c.send(m)
-	if err != nil {
-		transportErr, ok := err.(transport.Error)
 
-		if ok && transportErr.Code() == transport.ExpectedClose {
-			err = nil // do not treat expected close as an error
-		}
-	}
-
-	// do cleanup
-	err = c.cleanup(err)
+	// shutdown goroutines
+	c.tomb.Kill(nil)
 
 	// wait for all goroutines to exit
 	c.tomb.Wait()
+
+	// do cleanup
+	err = c.cleanup(err, false)
 
 	return err
 }
@@ -379,7 +376,15 @@ func (c *Client) process() error {
 			// get next packet from connection
 			pkt, err := c.conn.Receive()
 			if err != nil {
-				return c.cleanup(err)
+				transportErr, ok := err.(transport.Error)
+
+				if ok && transportErr.Code() == transport.ExpectedClose {
+					// cleanly close goroutine
+					return tomb.ErrDying
+				}
+
+				// die on any other error
+				return c.die(err, false)
 			}
 
 			switch pkt.Type() {
@@ -402,12 +407,13 @@ func (c *Client) process() error {
 			case packet.PUBREL:
 				err = c.handlePubrel(pkt.(*packet.PubrelPacket).PacketID)
 			default:
-				return c.cleanup(ErrInvalidPacketType)
+				// die on an invalid packet type
+				return c.die(ErrInvalidPacketType, true)
 			}
 
-			// return and cleanup on error
+			// return eventual handled errors
 			if err != nil {
-				return c.cleanup(err)
+				return err
 			}
 		}
 	}
@@ -476,15 +482,17 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 		// acknowledge qos 1 publish
 		err := c.send(puback)
 		if err != nil {
-			return err
+			return c.die(err, false)
 		}
+
+		c.log("Sent PubackPacket for id '%d'", publish.PacketID)
 	}
 
 	if publish.QOS == 2 {
 		// store packet
 		err := c.IncomingStore.Put(publish)
 		if err != nil {
-			return err
+			return c.die(err, true)
 		}
 
 		pubrec := packet.NewPubrecPacket()
@@ -493,8 +501,10 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 		// signal qos 2 publish
 		err = c.send(pubrec)
 		if err != nil {
-			return err
+			return c.die(err, false)
 		}
+
+		c.log("Sent PubrecPacket for id '%d'", publish.PacketID)
 	}
 
 	if publish.QOS <= 1 {
@@ -529,10 +539,20 @@ func (c *Client) handlePubrec(packetID uint16) error {
 	pubrel.PacketID = packetID
 
 	// overwrite stored PublishPacket with new PubRelPacket
-	c.OutgoingStore.Put(pubrel)
+	err := c.OutgoingStore.Put(pubrel)
+	if err != nil {
+		return c.die(err, true)
+	}
 
 	// send packet
-	return c.send(pubrel)
+	err = c.send(pubrel)
+	if err != nil {
+		return c.die(err, false)
+	}
+
+	c.log("Sent PubrelPacket for '%d'", packetID)
+
+	return nil
 }
 
 // handle an incoming PubrelPacket
@@ -540,7 +560,7 @@ func (c *Client) handlePubrel(packetID uint16) error {
 	// get packet from store
 	pkt, err := c.IncomingStore.Get(packetID)
 	if err != nil {
-		return err
+		return c.die(err, true)
 	}
 
 	// get packet from store
@@ -555,13 +575,15 @@ func (c *Client) handlePubrel(packetID uint16) error {
 	// acknowledge PublishPacket
 	err = c.send(pubcomp)
 	if err != nil {
-		return err
+		return c.die(err, false)
 	}
+
+	c.log("Sent PubcompPacket for '%d'", packetID)
 
 	// remove packet from store
 	err = c.IncomingStore.Del(packetID)
 	if err != nil {
-		return err
+		return c.die(err, true)
 	}
 
 	// call callback
@@ -579,13 +601,6 @@ func (c *Client) send(msg packet.Packet) error {
 	return c.conn.Send(msg)
 }
 
-// calls the callback with an error
-func (c *Client) error(err error) {
-	if c.Callback != nil {
-		c.Callback("", nil, err)
-	}
-}
-
 // calls the callback with a new message
 func (c *Client) forward(packet *packet.PublishPacket) {
 	if c.Callback != nil {
@@ -594,9 +609,9 @@ func (c *Client) forward(packet *packet.PublishPacket) {
 }
 
 // log a message
-func (c *Client) log(message string) {
+func (c *Client) log(format string, a ...interface{}) {
 	if c.Logger != nil {
-		c.Logger(message)
+		c.Logger(fmt.Sprintf(format, a...))
 	}
 }
 
@@ -618,7 +633,7 @@ func (c *Client) ping() error {
 
 			err := c.send(packet.NewPingreqPacket())
 			if err != nil {
-				return c.cleanup(err)
+				return c.die(err, false)
 			}
 
 			c.log(fmt.Sprintf("Sent PingreqPacket"))
@@ -638,26 +653,28 @@ func (c *Client) ping() error {
 }
 
 // will try to cleanup as many resources as possible
-func (c *Client) cleanup(err error) error {
+func (c *Client) cleanup(err error, close bool) error {
 	// set state
 	c.disconnecting = true
 
 	// ensure that the connection gets closed
-	_err := c.conn.Close()
-	if err == nil {
-		err = _err
+	if close {
+		_err := c.conn.Close()
+		if err == nil {
+			err = _err
+		}
 	}
 
 	// reset stores if client has connected with a clean session
 	if c.cleanSession {
-		_err = c.resetStores()
+		_err := c.resetStores()
 		if err == nil {
 			err = _err
 		}
 	}
 
 	// close incoming store
-	_err = c.IncomingStore.Close()
+	_err := c.IncomingStore.Close()
 	if err == nil {
 		err = _err
 	}
@@ -666,6 +683,17 @@ func (c *Client) cleanup(err error) error {
 	_err = c.OutgoingStore.Close()
 	if err == nil {
 		err = _err
+	}
+
+	return err
+}
+
+// used for closing and cleaning up from inside internal goroutines
+func (c *Client) die(err error, close bool) error {
+	err = c.cleanup(err, close)
+
+	if c.Callback != nil {
+		c.Callback("", nil, err)
 	}
 
 	return err
