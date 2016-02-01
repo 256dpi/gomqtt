@@ -182,8 +182,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		c.tomb.Go(c.ping)
 	}
 
-	// set state
-	// TODO: mark as connecting earlier (Connect should be only called once...)
+	// set to connecting as from this point the client cannot be reused
 	c.connecting = true
 
 	// wait for all goroutines to start
