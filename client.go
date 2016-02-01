@@ -197,7 +197,6 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	defer c.Unlock()
 
 	// check if connected
-	// TODO: implement this check everywhere
 	if !c.connecting || c.disconnecting {
 		return nil, ErrNotConnected
 	}
@@ -257,6 +256,11 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	c.Lock()
 	defer c.Unlock()
 
+	// check if connected
+	if !c.connecting || c.disconnecting {
+		return nil, ErrNotConnected
+	}
+
 	// allocate packet
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = make([]packet.Subscription, 0, len(filters))
@@ -302,6 +306,11 @@ func (c *Client) Unsubscribe(topic string) (*UnsubscribeFuture, error) {
 func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error) {
 	c.Lock()
 	defer c.Unlock()
+
+	// check if connected
+	if !c.connecting || c.disconnecting {
+		return nil, ErrNotConnected
+	}
 
 	// allocate packet
 	unsubscribe := packet.NewUnsubscribePacket()
