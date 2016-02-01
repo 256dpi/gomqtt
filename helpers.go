@@ -20,8 +20,9 @@ import (
 
 // a futureStore is used to store active Futures
 type futureStore struct {
+	sync.Mutex
+
 	store map[uint16]Future
-	mutex sync.Mutex
 }
 
 // newFutureStore will create a new futureStore
@@ -31,45 +32,46 @@ func newFutureStore() *futureStore {
 	}
 }
 
-// put will store a Future
+// put will save a Future to the store
 func (s *futureStore) put(id uint16, future Future) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	s.store[id] = future
 }
 
-// get will retrieve a Future
+// get will retrieve a Future from the store
 func (s *futureStore) get(id uint16) Future {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	return s.store[id]
 }
 
-// del will remove a Future
+// del will remove a Future from the store
 func (s *futureStore) del(id uint16) {
 	delete(s.store, id)
 }
 
-// a packetIDGenerator generates continuously packet ids
-type idGenerator struct {
-	nextID uint16
-	mutex  sync.Mutex
+// a counter keeps track of packet ids
+type counter struct {
+	sync.Mutex
+
+	id uint16
 }
 
-// newIDGenerator will return a new idGenerator
-func newIDGenerator() *idGenerator {
-	return &idGenerator{}
+// newCounter will return a new counter
+func newCounter() *counter {
+	return &counter{}
 }
 
 // next will generate the next packet id
-func (g *idGenerator) next() uint16 {
-	g.mutex.Lock()
-	defer func() {
-		g.nextID++ // its safe to overflow an unsigned int
-		g.mutex.Unlock()
+func (c *counter) next() uint16 {
+	c.Lock()
+	defer func(){
+		c.id++
+		c.Unlock()
 	}()
 
-	return g.nextID
+	return c.id
 }

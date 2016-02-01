@@ -39,8 +39,8 @@ type Client struct {
 	Logger        Logger
 
 	conn        transport.Conn
+	counter     *counter
 	futureStore *futureStore
-	idGenerator *idGenerator
 
 	connectFuture *ConnectFuture
 	connectMutex  sync.Mutex
@@ -60,7 +60,7 @@ func NewClient() *Client {
 		IncomingStore: NewMemoryStore(),
 		OutgoingStore: NewMemoryStore(),
 		futureStore:   newFutureStore(),
-		idGenerator:   newIDGenerator(),
+		counter:       newCounter(),
 	}
 }
 
@@ -168,7 +168,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	publish.QOS = qos
 	publish.Retain = retain
 	publish.Dup = false
-	publish.PacketID = c.idGenerator.next()
+	publish.PacketID = c.counter.next()
 
 	// store packet
 	if qos >= 1 {
@@ -211,7 +211,7 @@ func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
 func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, error) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = make([]packet.Subscription, 0, len(filters))
-	subscribe.PacketID = c.idGenerator.next()
+	subscribe.PacketID = c.counter.next()
 
 	// append filters
 	for topic, qos := range filters {
@@ -253,7 +253,7 @@ func (c *Client) Unsubscribe(topic string) (*UnsubscribeFuture, error) {
 func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error) {
 	unsubscribe := packet.NewUnsubscribePacket()
 	unsubscribe.Topics = make([][]byte, 0, len(topics))
-	unsubscribe.PacketID = c.idGenerator.next()
+	unsubscribe.PacketID = c.counter.next()
 
 	// append topics
 	for _, t := range topics {

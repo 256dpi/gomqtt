@@ -31,11 +31,11 @@ func TestFutureStore(t *testing.T) {
 	assert.Nil(t, s.get(1))
 }
 
-func TestIDGenerator(t *testing.T) {
-	g := newIDGenerator()
-	assert.Equal(t, uint16(0), g.next())
+func TestCounter(t *testing.T) {
+	c := newCounter()
+	assert.Equal(t, uint16(0), c.next())
 
-	g.nextID = math.MaxUint16
-	assert.Equal(t, uint16(math.MaxUint16), g.next())
-	assert.Equal(t, uint16(0), g.next())
+	c.id = math.MaxUint16
+	assert.Equal(t, uint16(math.MaxUint16), c.next())
+	assert.Equal(t, uint16(0), c.next())
 }
