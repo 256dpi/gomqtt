@@ -80,12 +80,13 @@ func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 	c := NewClient()
 	done := make(chan struct{})
 
-	c.OnMessage(func(topic string, payload []byte) {
+	c.Callback = func(topic string, payload []byte, err error) {
+		assert.NoError(t, err)
 		assert.Equal(t, "test", topic)
 		assert.Equal(t, []byte("test"), payload)
 
 		close(done)
-	})
+	}
 
 	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.NoError(t, err)
@@ -131,12 +132,13 @@ func TestClientUnsubscribe(t *testing.T) {
 	c := NewClient()
 	done := make(chan struct{})
 
-	c.OnMessage(func(topic string, payload []byte) {
+	c.Callback = func(topic string, payload []byte, err error) {
+		assert.NoError(t, err)
 		assert.Equal(t, "test", topic)
 		assert.Equal(t, []byte("test"), payload)
 
 		close(done)
-	})
+	}
 
 	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.NoError(t, err)
@@ -199,13 +201,13 @@ func TestClientKeepAlive(t *testing.T) {
 	var reqCounter int32 = 0
 	var respCounter int32 = 0
 
-	c.OnLog(func(message string) {
+	c.Logger = func(message string) {
 		if strings.Contains(message, "PingreqPacket") {
 			atomic.AddInt32(&reqCounter, 1)
 		} else if strings.Contains(message, "PingrespPacket") {
 			atomic.AddInt32(&respCounter, 1)
 		}
-	})
+	}
 
 	opts := testOptions()
 	opts.KeepAlive = "2s"

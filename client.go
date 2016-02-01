@@ -29,32 +29,26 @@ import (
 var ErrAlreadyConnecting = errors.New("already connecting")
 var ErrInvalidPacketType = errors.New("invalid packet type")
 
-type (
-	MessageCallback func(string, []byte)
-	ErrorCallback   func(error)
-	LogCallback     func(string)
-)
+type Callback func(string, []byte, error)
+type Logger func(string)
 
 type Client struct {
-	conn transport.Conn
-
 	IncomingStore Store
 	OutgoingStore Store
+	Callback      Callback
+	Logger        Logger
 
+	conn        transport.Conn
 	futureStore *futureStore
 	idGenerator *idGenerator
 
-	messageCallback MessageCallback
-	errorCallback   ErrorCallback
-	logCallback     LogCallback
+	connectFuture *ConnectFuture
+	connectMutex  sync.Mutex
 
 	keepAlive       time.Duration
 	lastSend        time.Time
 	lastSendMutex   sync.Mutex
 	pingrespPending bool
-
-	connectFuture *ConnectFuture
-	connectMutex  sync.Mutex
 
 	tomb tomb.Tomb
 	boot sync.WaitGroup
@@ -68,21 +62,6 @@ func NewClient() *Client {
 		futureStore: newFutureStore(),
 		idGenerator: newIDGenerator(),
 	}
-}
-
-// OnMessage sets the callback for incoming messages.
-func (c *Client) OnMessage(callback MessageCallback) {
-	c.messageCallback = callback
-}
-
-// OnError sets the callback for failed connection attempts and parsing errors.
-func (c *Client) OnError(callback ErrorCallback) {
-	c.errorCallback = callback
-}
-
-// OnLog sets the callback for log messages.
-func (c *Client) OnLog(callback LogCallback) {
-	c.logCallback = callback
 }
 
 // Connect opens the connection to the broker and sends a ConnectPacket. It will
@@ -532,22 +511,22 @@ func (c *Client) send(msg packet.Packet) error {
 
 // calls the error callback
 func (c *Client) error(err error) {
-	if c.errorCallback != nil {
-		c.errorCallback(err)
+	if c.Callback != nil {
+		c.Callback("", nil, err)
 	}
 }
 
 // calls the log callback
 func (c *Client) log(message string) {
-	if c.logCallback != nil {
-		c.logCallback(message)
+	if c.Logger != nil {
+		c.Logger(message)
 	}
 }
 
 // calls the message callback
 func (c *Client) message(packet *packet.PublishPacket) {
-	if c.messageCallback != nil {
-		c.messageCallback(string(packet.Topic), packet.Payload)
+	if c.Callback != nil {
+		c.Callback(string(packet.Topic), packet.Payload, nil)
 	}
 }
 
