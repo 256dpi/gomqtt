@@ -49,6 +49,7 @@ type Client struct {
 	connecting    bool
 	disconnecting bool
 	connectFuture *ConnectFuture
+	cleanSession  bool
 
 	keepAlive       time.Duration
 	lastSend        time.Time
@@ -92,6 +93,9 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	if opts == nil {
 		opts = NewOptions("gomqtt/client")
 	}
+
+	// save clean session
+	c.cleanSession = opts.CleanSession
 
 	// check client id
 	if !opts.CleanSession && opts.ClientID == "" {
@@ -625,6 +629,14 @@ func (c *Client) cleanup(err error) error {
 	_err := c.conn.Close()
 	if err == nil {
 		err = _err
+	}
+
+	// reset stores if client has connected with a clean session
+	if c.cleanSession {
+		_err = c.resetStores()
+		if _err == nil {
+			err = _err
+		}
 	}
 
 	// close incoming store
