@@ -637,7 +637,7 @@ func (c *Client) cleanup(err error) error {
 	// reset stores if client has connected with a clean session
 	if c.cleanSession {
 		_err = c.resetStores()
-		if _err == nil {
+		if err == nil {
 			err = _err
 		}
 	}
