@@ -30,6 +30,7 @@ var ErrAlreadyConnecting = errors.New("already connecting")
 var ErrMissingClientID = errors.New("missing client id")
 var ErrAlreadyDisconnecting = errors.New("already disconnecting")
 var ErrInvalidPacketType = errors.New("invalid packet type")
+var ErrMissingPong = errors.New("missing pong")
 
 type Callback func(string, []byte, error)
 type Logger func(string)
@@ -611,6 +612,10 @@ func (c *Client) ping() error {
 		timeToWait := c.keepAlive
 
 		if timeElapsed > c.keepAlive {
+			if c.pingrespPending {
+				return c.die(ErrMissingPong, true)
+			}
+
 			err := c.send(packet.NewPingreqPacket())
 			if err != nil {
 				return c.cleanup(err)
