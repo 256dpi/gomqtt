@@ -94,10 +94,10 @@ func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
-	future, err := c.Subscribe("test", qos)
+	subscribeFuture, err := c.Subscribe("test", qos)
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
-	assert.Equal(t, []byte{qos}, future.ReturnCodes)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []byte{qos}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish("test", []byte("test"), qos, false)
 	assert.NoError(t, err)
@@ -146,19 +146,19 @@ func TestClientUnsubscribe(t *testing.T) {
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
-	future1, err := c.Subscribe("foo", 0)
+	subscribeFuture, err := c.Subscribe("foo", 0)
 	assert.NoError(t, err)
-	assert.NoError(t, future1.Wait())
-	assert.Equal(t, []byte{0}, future1.ReturnCodes)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []byte{0}, subscribeFuture.ReturnCodes)
 
-	future2, err := c.Unsubscribe("foo")
+	unsubscribeFuture, err := c.Unsubscribe("foo")
 	assert.NoError(t, err)
-	assert.NoError(t, future2.Wait())
+	assert.NoError(t, unsubscribeFuture.Wait())
 
-	future1, err = c.Subscribe("test", 0)
+	subscribeFuture, err = c.Subscribe("test", 0)
 	assert.NoError(t, err)
-	assert.NoError(t, future1.Wait())
-	assert.Equal(t, []byte{0}, future1.ReturnCodes)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []byte{0}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish("foo", []byte("test"), 0, false)
 	assert.NoError(t, err)
