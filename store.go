@@ -23,16 +23,19 @@ import (
 // A store is used to persists incoming or outgoing packets until they are
 // successfully acknowledged by the other side.
 type Store interface {
-	// Open will open the store.
+	// Open will open the store. Opening an already opened store must not
+	// return an error.
 	Open() error
 
-	// Put will persist a packet to the store.
+	// Put will persist a packet to the store. An eventual existing packet with
+	// the same id gets overwritten.
 	Put(packet.Packet) error
 
 	// Get will retrieve a packet from the store.
 	Get(uint16) (packet.Packet, error)
 
-	// Del will remove a packet from the store.
+	// Del will remove a packet from the store. Removing a nonexistent packet
+	// must not return an error.
 	Del(uint16) error
 
 	// All will return all packets currently in the store.

@@ -117,7 +117,8 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		return nil, err
 	}
 
-	// from now on we have to cleanup on a subsequent error
+	// from now on the connection has been used and we have to close the
+	// connection and cleanup on any subsequent error
 
 	// open incoming store
 	err = c.IncomingStore.Open()
