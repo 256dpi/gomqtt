@@ -187,7 +187,11 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	publish.QOS = qos
 	publish.Retain = retain
 	publish.Dup = false
-	publish.PacketID = c.counter.next()
+
+	// set packet id
+	if qos > 0 {
+		publish.PacketID = c.counter.next()
+	}
 
 	// store packet
 	if qos >= 1 {
