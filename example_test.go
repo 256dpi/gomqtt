@@ -69,4 +69,7 @@ func ExampleClient() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Output:
+	// test: test
 }

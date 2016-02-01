@@ -218,9 +218,9 @@ func TestClientKeepAlive(t *testing.T) {
 	var respCounter int32 = 0
 
 	c.Logger = func(message string) {
-		if strings.Contains(message, "PingreqPacket") {
+		if strings.Contains(message, "PINGREQ") {
 			atomic.AddInt32(&reqCounter, 1)
-		} else if strings.Contains(message, "PingrespPacket") {
+		} else if strings.Contains(message, "PINGRESP") {
 			atomic.AddInt32(&respCounter, 1)
 		}
 	}

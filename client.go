@@ -397,6 +397,8 @@ func (c *Client) process() error {
 				return c.die(err, false)
 			}
 
+			c.log("Received: %s", pkt.String())
+
 			switch pkt.Type() {
 			case packet.CONNACK:
 				c.handleConnack(pkt.(*packet.ConnackPacket))
@@ -483,7 +485,6 @@ func (c *Client) handlePingresp() {
 	defer c.pingrespMutex.Unlock()
 
 	c.pingrespPending = false
-	c.log("Received PingrespPacket")
 }
 
 // handle an incoming PublishPacket
@@ -497,8 +498,6 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 		if err != nil {
 			return c.die(err, false)
 		}
-
-		c.log("Sent PubackPacket for id '%d'", publish.PacketID)
 	}
 
 	if publish.QOS == 2 {
@@ -516,8 +515,6 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 		if err != nil {
 			return c.die(err, false)
 		}
-
-		c.log("Sent PubrecPacket for id '%d'", publish.PacketID)
 	}
 
 	if publish.QOS <= 1 {
@@ -563,8 +560,6 @@ func (c *Client) handlePubrec(packetID uint16) error {
 		return c.die(err, false)
 	}
 
-	c.log("Sent PubrelPacket for '%d'", packetID)
-
 	return nil
 }
 
@@ -591,8 +586,6 @@ func (c *Client) handlePubrel(packetID uint16) error {
 		return c.die(err, false)
 	}
 
-	c.log("Sent PubcompPacket for '%d'", packetID)
-
 	// remove packet from store
 	err = c.IncomingStore.Del(packetID)
 	if err != nil {
@@ -606,12 +599,20 @@ func (c *Client) handlePubrel(packetID uint16) error {
 }
 
 // sends message and updates lastSend
-func (c *Client) send(msg packet.Packet) error {
+func (c *Client) send(pkt packet.Packet) error {
 	c.lastSendMutex.Lock()
 	c.lastSend = time.Now()
 	c.lastSendMutex.Unlock()
 
-	return c.conn.Send(msg)
+	// send packet
+	err := c.conn.Send(pkt)
+	if err != nil {
+		return err
+	}
+
+	c.log("Sent: %s", pkt.String())
+
+	return nil
 }
 
 // calls the callback with a new message
@@ -652,8 +653,6 @@ func (c *Client) ping() error {
 			if err != nil {
 				return c.die(err, false)
 			}
-
-			c.log(fmt.Sprintf("Sent PingreqPacket"))
 		} else {
 			timeToWait = c.keepAlive - timeElapsed
 
