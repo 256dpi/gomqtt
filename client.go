@@ -27,6 +27,7 @@ import (
 )
 
 var ErrAlreadyConnecting = errors.New("already connecting")
+var ErrAlreadyDisconnecting = errors.New("already disconnecting")
 var ErrInvalidPacketType = errors.New("invalid packet type")
 
 type Callback func(string, []byte, error)
@@ -44,6 +45,8 @@ type Client struct {
 	counter     *counter
 	futureStore *futureStore
 
+	connecting    bool
+	disconnecting bool
 	connectFuture *ConnectFuture
 
 	keepAlive       time.Duration
@@ -73,9 +76,8 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	c.Lock()
 	defer c.Unlock()
 
-	// TODO: we might use another identifier for that?
-	// check for existing ConnectFuture
-	if c.connectFuture != nil {
+	// check if already connecting
+	if c.connecting {
 		return nil, ErrAlreadyConnecting
 	}
 
@@ -142,8 +144,11 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// create new ConnackFuture
-	c.connectFuture = &ConnectFuture{}
-	c.connectFuture.initialize()
+	future := &ConnectFuture{}
+	future.initialize()
+
+	// store future
+	c.connectFuture = future
 
 	// start process routine
 	c.boot.Add(1)
@@ -155,10 +160,13 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		c.tomb.Go(c.ping)
 	}
 
+	// set state
+	c.connecting = true
+
 	// wait for all goroutines to start
 	c.boot.Wait()
 
-	return c.connectFuture, nil
+	return future, nil
 }
 
 // Publish will send a PublishPacket containing the passed parameters.
@@ -300,6 +308,11 @@ func (c *Client) Disconnect() error {
 	c.Lock()
 	defer c.Unlock()
 
+	// check if already disconnecting
+	if c.disconnecting {
+		return ErrAlreadyDisconnecting
+	}
+
 	// allocate packet
 	m := packet.NewDisconnectPacket()
 
@@ -317,6 +330,9 @@ func (c *Client) Disconnect() error {
 
 	// do cleanup
 	err = c.cleanup(err)
+
+	// set state
+	c.disconnecting = true
 
 	// wait for all goroutines to exit
 	c.tomb.Wait()
@@ -372,10 +388,13 @@ func (c *Client) process() error {
 
 // handle the incoming ConnackPacket
 func (c *Client) handleConnack(connack *packet.ConnackPacket) {
-	// TODO: return error if future is already completed?
-	c.connectFuture.SessionPresent = connack.SessionPresent
-	c.connectFuture.ReturnCode = connack.ReturnCode
-	c.connectFuture.complete()
+	if !c.connectFuture.Completed() {
+		c.connectFuture.SessionPresent = connack.SessionPresent
+		c.connectFuture.ReturnCode = connack.ReturnCode
+		c.connectFuture.complete()
+	} else {
+		// ignore a wrongly sent ConnackPacket
+	}
 }
 
 // handle an incoming SubackPacket
