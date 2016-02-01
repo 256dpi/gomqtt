@@ -346,9 +346,6 @@ func (c *Client) Disconnect() error {
 	// do cleanup
 	err = c.cleanup(err)
 
-	// set state
-	c.disconnecting = true
-
 	// wait for all goroutines to exit
 	c.tomb.Wait()
 
@@ -621,6 +618,9 @@ func (c *Client) ping() error {
 
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error) error {
+	// set state
+	c.disconnecting = true
+
 	// ensure that the connection gets closed
 	_err := c.conn.Close()
 	if err == nil {
