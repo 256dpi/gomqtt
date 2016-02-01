@@ -131,6 +131,9 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	// reset stores when clean session is set
 	if opts.CleanSession {
 		err = c.resetStores()
+		if err != nil {
+			return nil, c.cleanup(err)
+		}
 	}
 
 	// allocate packet
@@ -659,13 +662,13 @@ func (c *Client) resetStores() error {
 	// reset incoming store
 	err := c.IncomingStore.Reset()
 	if err != nil {
-		return nil, c.cleanup(err)
+		return err
 	}
 
 	// reset outgoing store
 	err = c.OutgoingStore.Reset()
 	if err != nil {
-		return nil, c.cleanup(err)
+		return err
 	}
 
 	return nil
