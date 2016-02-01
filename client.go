@@ -480,7 +480,7 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 
 	if publish.QOS <= 1 {
 		// call callback
-		c.message(publish)
+		c.forward(publish)
 	}
 
 	return nil
@@ -546,7 +546,7 @@ func (c *Client) handlePubrel(packetID uint16) error {
 	}
 
 	// call callback
-	c.message(publish)
+	c.forward(publish)
 
 	return nil
 }
@@ -560,24 +560,24 @@ func (c *Client) send(msg packet.Packet) error {
 	return c.conn.Send(msg)
 }
 
-// calls the error callback
+// calls the callback with an error
 func (c *Client) error(err error) {
 	if c.Callback != nil {
 		c.Callback("", nil, err)
 	}
 }
 
-// calls the log callback
-func (c *Client) log(message string) {
-	if c.Logger != nil {
-		c.Logger(message)
+// calls the callback with a new message
+func (c *Client) forward(packet *packet.PublishPacket) {
+	if c.Callback != nil {
+		c.Callback(string(packet.Topic), packet.Payload, nil)
 	}
 }
 
-// calls the message callback
-func (c *Client) message(packet *packet.PublishPacket) {
-	if c.Callback != nil {
-		c.Callback(string(packet.Topic), packet.Payload, nil)
+// log a message
+func (c *Client) log(message string) {
+	if c.Logger != nil {
+		c.Logger(message)
 	}
 }
 
