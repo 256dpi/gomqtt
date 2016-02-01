@@ -227,42 +227,21 @@ func TestClientKeepAlive(t *testing.T) {
 	assert.Equal(t, int32(3), atomic.LoadInt32(&respCounter))
 }
 
-// -- abstract client
-// should emit close if stream closes
-// should mark the client as disconnected
-// should stop ping timer if stream closes
-// should emit close after end called
-// should stop ping timer after end called
+// -- client
 // should require a clientId with clean=false
-// should mark the client as connected
-// should emit error
 // should have different client ids
-// should queue message until connected
 // should delay closing everything up until the queue is depleted
 // should delay ending up until all inflight messages are delivered
 // does not wait acks when force-closing
-// should publish a message (offline)
-// should send an unsubscribe packet (offline)
-// should checkPing at keepalive interval
-// should set a ping timer
-// should not set a ping timer keepalive=0
 // should reconnect if pingresp is not sent
 // should not reconnect if pingresp is successful
 // should defer the next ping when sending a control packet
-// should send a subscribe message (offline)
 // should fire a callback with error if disconnected (options provided)
 // should fire a callback with error if disconnected (options not provided)
-// should mark the client disconnecting if #end called
-// should reconnect after stream disconnect
-// should emit \'reconnect\' when reconnecting
-// should emit \'offline\' after going offline
-// should not reconnect if it was ended by the user
-// should setup a reconnect timer on disconnect
-// should allow specification of a reconnect period
 // should resend in-flight QoS 1 publish messages from the client
 // should resend in-flight QoS 2 publish messages from the client
 
-// -- abstract core
+// -- store
 // should put and stream in-flight packets
 // should support destroying the stream
 // should add and del in-flight packets
