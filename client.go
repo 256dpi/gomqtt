@@ -27,6 +27,7 @@ import (
 )
 
 var ErrAlreadyConnecting = errors.New("already connecting")
+var ErrMissingClientID = errors.New("missing client id")
 var ErrAlreadyDisconnecting = errors.New("already disconnecting")
 var ErrInvalidPacketType = errors.New("invalid packet type")
 
@@ -90,6 +91,11 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	// save opts
 	if opts == nil {
 		opts = NewOptions("gomqtt/client")
+	}
+
+	// check client id
+	if !opts.CleanSession && opts.ClientID == "" {
+		return nil, ErrMissingClientID
 	}
 
 	// parse keep alive
