@@ -33,6 +33,8 @@ type Callback func(string, []byte, error)
 type Logger func(string)
 
 type Client struct {
+	sync.Mutex
+
 	IncomingStore Store
 	OutgoingStore Store
 	Callback      Callback
@@ -43,7 +45,6 @@ type Client struct {
 	futureStore *futureStore
 
 	connectFuture *ConnectFuture
-	connectMutex  sync.Mutex
 
 	keepAlive       time.Duration
 	lastSend        time.Time
@@ -69,8 +70,8 @@ func NewClient() *Client {
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
 // It will return ErrAlreadyConnecting if Connect has been called before.
 func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error) {
-	c.connectMutex.Lock()
-	defer c.connectMutex.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	// TODO: we might use another identifier for that?
 	// check for existing ConnectFuture
@@ -115,7 +116,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		return nil, c.cleanup(err)
 	}
 
-	// prepare connect packet
+	// allocate packet
 	connect := packet.NewConnectPacket()
 	connect.ClientID = []byte(opts.ClientID)
 	connect.KeepAlive = uint16(c.keepAlive.Seconds())
@@ -162,6 +163,10 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 
 // Publish will send a PublishPacket containing the passed parameters.
 func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*PublishFuture, error) {
+	c.Lock()
+	defer c.Unlock()
+
+	// allocate packet
 	publish := packet.NewPublishPacket()
 	publish.Topic = []byte(topic)
 	publish.Payload = payload
@@ -209,6 +214,10 @@ func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe.
 func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, error) {
+	c.Lock()
+	defer c.Unlock()
+
+	// allocate packet
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = make([]packet.Subscription, 0, len(filters))
 	subscribe.PacketID = c.counter.next()
@@ -251,6 +260,10 @@ func (c *Client) Unsubscribe(topic string) (*UnsubscribeFuture, error) {
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
 // topics to unsubscribe.
 func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error) {
+	c.Lock()
+	defer c.Unlock()
+
+	// allocate packet
 	unsubscribe := packet.NewUnsubscribePacket()
 	unsubscribe.Topics = make([][]byte, 0, len(topics))
 	unsubscribe.PacketID = c.counter.next()
@@ -284,6 +297,10 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 
 // Disconnect will send a DisconnectPacket and close the connection.
 func (c *Client) Disconnect() error {
+	c.Lock()
+	defer c.Unlock()
+
+	// allocate packet
 	m := packet.NewDisconnectPacket()
 
 	// TODO: finish outstanding work (set timeout parameter)
