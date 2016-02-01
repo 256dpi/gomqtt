@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/gomqtt/packet"
-	"github.com/stretchr/testify/assert"
 	"github.com/satori/go.uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func testOptions() *Options {

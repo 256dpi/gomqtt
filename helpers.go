@@ -40,7 +40,7 @@ func (s *futureStore) put(id uint16, future Future) {
 }
 
 // get will retrieve a Future
-func (s *futureStore) get(id uint16) (Future) {
+func (s *futureStore) get(id uint16) Future {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -55,7 +55,7 @@ func (s *futureStore) del(id uint16) {
 // a packetIDGenerator generates continuously packet ids
 type idGenerator struct {
 	nextID uint16
-	mutex sync.Mutex
+	mutex  sync.Mutex
 }
 
 // newIDGenerator will return a new idGenerator

@@ -59,8 +59,8 @@ func NewClient() *Client {
 	return &Client{
 		IncomingStore: NewMemoryStore(),
 		OutgoingStore: NewMemoryStore(),
-		futureStore: newFutureStore(),
-		idGenerator: newIDGenerator(),
+		futureStore:   newFutureStore(),
+		idGenerator:   newIDGenerator(),
 	}
 }
 

@@ -15,9 +15,9 @@
 package client
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"math"
+	"testing"
 )
 
 func TestFutureStore(t *testing.T) {
