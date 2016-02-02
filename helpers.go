@@ -18,6 +18,8 @@ import (
 	"sync"
 )
 
+/* futureStore */
+
 // a futureStore is used to store active Futures
 type futureStore struct {
 	sync.Mutex
@@ -53,6 +55,8 @@ func (s *futureStore) del(id uint16) {
 	delete(s.store, id)
 }
 
+/* counter */
+
 // a counter keeps track of packet ids
 type counter struct {
 	sync.Mutex
@@ -74,4 +78,46 @@ func (c *counter) next() uint16 {
 	}()
 
 	return c.id
+}
+
+/* ClientState */
+
+type State byte
+
+const(
+	StateInitialized State = iota
+	StateConnecting
+	StateConnected
+	StateDisconnecting
+	StateDisconnected
+)
+
+// a state keeps track of the clients current state
+type state struct {
+	sync.Mutex
+
+	current State
+}
+
+// create new state
+func newState() *state {
+	return &state{
+		current: StateInitialized,
+	}
+}
+
+// set will change to the specified state
+func (s *state) set(state State) {
+	s.Lock()
+	defer s.Unlock()
+
+	s.current = state
+}
+
+// get will retrieve the current state
+func (s *state) get() State {
+	s.Lock()
+	defer s.Unlock()
+
+	return s.current
 }

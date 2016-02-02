@@ -29,9 +29,10 @@ import (
 var ErrAlreadyConnecting = errors.New("already connecting")
 var ErrNotConnected = errors.New("not connected")
 var ErrMissingClientID = errors.New("missing client id")
-var ErrAlreadyDisconnecting = errors.New("already disconnecting")
+var ErrConnectionDenied = errors.New("connection denied")
 var ErrInvalidPacketType = errors.New("invalid packet type")
 var ErrMissingPong = errors.New("missing pong")
+var ErrUnexpectedClose = errors.New("unexpected close")
 
 type Callback func(string, []byte, error)
 type Logger func(string)
@@ -45,11 +46,10 @@ type Client struct {
 	Logger        Logger
 
 	conn        transport.Conn
+	state       *state
 	counter     *counter
 	futureStore *futureStore
 
-	connecting    bool
-	disconnecting bool
 	connectFuture *ConnectFuture
 	cleanSession  bool
 
@@ -68,8 +68,9 @@ func NewClient() *Client {
 	return &Client{
 		IncomingStore: NewMemoryStore(),
 		OutgoingStore: NewMemoryStore(),
-		futureStore:   newFutureStore(),
+		state:         newState(),
 		counter:       newCounter(),
+		futureStore:   newFutureStore(),
 	}
 }
 
@@ -82,7 +83,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	defer c.Unlock()
 
 	// check if already connecting
-	if c.connecting {
+	if c.state.get() >= StateConnecting {
 		return nil, ErrAlreadyConnecting
 	}
 
@@ -165,6 +166,9 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		return nil, c.cleanup(err, false)
 	}
 
+	// set to connecting as from this point the client cannot be reused
+	c.state.set(StateConnecting)
+
 	// create new ConnackFuture
 	future := &ConnectFuture{}
 	future.initialize()
@@ -182,9 +186,6 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		c.tomb.Go(c.ping)
 	}
 
-	// set to connecting as from this point the client cannot be reused
-	c.connecting = true
-
 	// wait for all goroutines to start
 	c.boot.Wait()
 
@@ -197,7 +198,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	defer c.Unlock()
 
 	// check if connected
-	if !c.connecting || c.disconnecting {
+	if c.state.get() != StateConnected {
 		return nil, ErrNotConnected
 	}
 
@@ -257,7 +258,7 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	defer c.Unlock()
 
 	// check if connected
-	if !c.connecting || c.disconnecting {
+	if c.state.get() != StateConnected {
 		return nil, ErrNotConnected
 	}
 
@@ -308,7 +309,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	defer c.Unlock()
 
 	// check if connected
-	if !c.connecting || c.disconnecting {
+	if c.state.get() != StateConnected {
 		return nil, ErrNotConnected
 	}
 
@@ -349,9 +350,9 @@ func (c *Client) Disconnect() error {
 	c.Lock()
 	defer c.Unlock()
 
-	// check if already disconnecting
-	if c.disconnecting {
-		return ErrAlreadyDisconnecting
+	// check if connected
+	if c.state.get() != StateConnected {
+		return ErrNotConnected
 	}
 
 	// allocate packet
@@ -361,6 +362,9 @@ func (c *Client) Disconnect() error {
 
 	// send disconnect packet
 	err := c.send(m)
+
+	// set state
+	c.state.set(StateDisconnecting)
 
 	// shutdown goroutines
 	c.tomb.Kill(nil)
@@ -389,8 +393,11 @@ func (c *Client) process() error {
 				transportErr, ok := err.(transport.Error)
 
 				if ok && transportErr.Code() == transport.ExpectedClose {
-					// cleanly close goroutine
-					return tomb.ErrDying
+					if c.state.get() != StateDisconnecting {
+						return c.die(ErrUnexpectedClose, false)
+					} else {
+						return nil
+					}
 				}
 
 				// die on any other error
@@ -401,7 +408,7 @@ func (c *Client) process() error {
 
 			switch pkt.Type() {
 			case packet.CONNACK:
-				c.handleConnack(pkt.(*packet.ConnackPacket))
+				err = c.handleConnack(pkt.(*packet.ConnackPacket))
 			case packet.SUBACK:
 				c.handleSuback(pkt.(*packet.SubackPacket))
 			case packet.UNSUBACK:
@@ -432,16 +439,24 @@ func (c *Client) process() error {
 }
 
 // handle the incoming ConnackPacket
-func (c *Client) handleConnack(connack *packet.ConnackPacket) {
+func (c *Client) handleConnack(connack *packet.ConnackPacket) error {
 	if !c.connectFuture.Completed() {
 		c.connectFuture.SessionPresent = connack.SessionPresent
 		c.connectFuture.ReturnCode = connack.ReturnCode
 		c.connectFuture.complete()
 
-		// TODO: resend stored unacked packets
+		if connack.ReturnCode == packet.ConnectionAccepted {
+			c.state.set(StateConnected)
+
+			// TODO: resend stored unacked packets
+		} else {
+			return c.die(ErrConnectionDenied, true)
+		}
 	} else {
 		// ignore a wrongly sent ConnackPacket
 	}
+
+	return nil
 }
 
 // handle an incoming SubackPacket
@@ -671,7 +686,7 @@ func (c *Client) ping() error {
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error, close bool) error {
 	// set state
-	c.disconnecting = true
+	c.state.set(StateDisconnected)
 
 	// ensure that the connection gets closed
 	if close {
