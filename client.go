@@ -360,11 +360,11 @@ func (c *Client) Disconnect() error {
 
 	// TODO: finish outstanding work (set timeout parameter)
 
-	// send disconnect packet
-	err := c.send(m)
-
 	// set state
 	c.state.set(StateDisconnecting)
+
+	// send disconnect packet
+	err := c.send(m)
 
 	// shutdown goroutines
 	c.tomb.Kill(nil)
