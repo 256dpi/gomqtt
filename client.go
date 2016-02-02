@@ -410,17 +410,17 @@ func (c *Client) process() error {
 			case packet.CONNACK:
 				err = c.handleConnack(pkt.(*packet.ConnackPacket))
 			case packet.SUBACK:
-				c.handleSuback(pkt.(*packet.SubackPacket))
+				err = c.handleSuback(pkt.(*packet.SubackPacket))
 			case packet.UNSUBACK:
-				c.handleUnsuback(pkt.(*packet.UnsubackPacket))
+				err = c.handleUnsuback(pkt.(*packet.UnsubackPacket))
 			case packet.PINGRESP:
-				c.handlePingresp()
+				err = c.handlePingresp()
 			case packet.PUBLISH:
 				err = c.handlePublish(pkt.(*packet.PublishPacket))
 			case packet.PUBACK:
-				c.handlePubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
+				err = c.handlePubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
 			case packet.PUBCOMP:
-				c.handlePubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
+				err = c.handlePubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
 			case packet.PUBREC:
 				err = c.handlePubrec(pkt.(*packet.PubrecPacket).PacketID)
 			case packet.PUBREL:
@@ -460,7 +460,7 @@ func (c *Client) handleConnack(connack *packet.ConnackPacket) error {
 }
 
 // handle an incoming SubackPacket
-func (c *Client) handleSuback(suback *packet.SubackPacket) {
+func (c *Client) handleSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
 	c.OutgoingStore.Del(suback.PacketID)
 
@@ -475,10 +475,12 @@ func (c *Client) handleSuback(suback *packet.SubackPacket) {
 	} else {
 		// ignore a wrongly sent SubackPacket
 	}
+
+	return nil
 }
 
 // handle an incoming UnsubackPacket
-func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) {
+func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
 	c.OutgoingStore.Del(unsuback.PacketID)
 
@@ -492,14 +494,17 @@ func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) {
 	} else {
 		// ignore a wrongly sent UnsubackPacket
 	}
+
+	return nil
 }
 
 // handle an incoming Pingresp
-func (c *Client) handlePingresp() {
+func (c *Client) handlePingresp() error {
 	c.pingrespMutex.Lock()
 	defer c.pingrespMutex.Unlock()
 
 	c.pingrespPending = false
+	return nil
 }
 
 // handle an incoming PublishPacket
@@ -541,7 +546,7 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 }
 
 // handle an incoming PubackPacket or PubcompPacket
-func (c *Client) handlePubackAndPubcomp(packetID uint16) {
+func (c *Client) handlePubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
 	c.OutgoingStore.Del(packetID)
 
@@ -555,6 +560,8 @@ func (c *Client) handlePubackAndPubcomp(packetID uint16) {
 	} else {
 		// ignore a wrongly sent PubackPacket or PubcompPacket
 	}
+
+	return nil
 }
 
 // handle an incoming PubrecPacket
