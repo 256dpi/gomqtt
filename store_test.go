@@ -17,8 +17,8 @@ package client
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/packet"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMemoryStore(t *testing.T) {

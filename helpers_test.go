@@ -47,7 +47,7 @@ func TestFutureStoreAwait(t *testing.T) {
 	assert.Equal(t, f, s.get(1))
 	assert.Equal(t, 1, len(s.all()))
 
-	go func(){
+	go func() {
 		time.Sleep(1 * time.Millisecond)
 		f.complete()
 		s.del(1)

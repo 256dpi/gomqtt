@@ -76,7 +76,7 @@ func (s *futureStore) all() []Future {
 }
 
 // will wait until all futures have completed and removed or timeout is reached
-func (s* futureStore) await(timeout time.Duration) error {
+func (s *futureStore) await(timeout time.Duration) error {
 	stop := time.Now().Add(timeout)
 
 	for {
@@ -113,7 +113,7 @@ func newCounter() *counter {
 // next will generate the next packet id
 func (c *counter) next() uint16 {
 	c.Lock()
-	defer func(){
+	defer func() {
 		c.id++
 		c.Unlock()
 	}()
@@ -125,7 +125,7 @@ func (c *counter) next() uint16 {
 
 type State byte
 
-const(
+const (
 	StateInitialized State = iota
 	StateConnecting
 	StateConnected
@@ -177,7 +177,7 @@ type tracker struct {
 // returns a new tracker
 func newTracker(timeout time.Duration) *tracker {
 	return &tracker{
-		last: time.Now(),
+		last:    time.Now(),
 		timeout: timeout,
 	}
 }

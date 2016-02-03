@@ -40,17 +40,19 @@ type Logger func(string)
 type Client struct {
 	sync.Mutex
 
+	conn transport.Conn
+
 	IncomingStore Store
 	OutgoingStore Store
 	Callback      Callback
 	Logger        Logger
 
-	conn        transport.Conn
 	state       *state
 	counter     *counter
 	tracker     *tracker
 	futureStore *futureStore
 
+	// TODO: save in future store with first id
 	connectFuture *ConnectFuture
 
 	tomb tomb.Tomb
@@ -715,7 +717,7 @@ func (c *Client) die(err error, close bool) error {
 }
 
 // resend left packets in the store
-func (c* Client) resendPackets() error {
+func (c *Client) resendPackets() error {
 	// retrieve packets
 	packets, err := c.OutgoingStore.All()
 	if err != nil {
