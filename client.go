@@ -373,9 +373,7 @@ func (c *Client) Disconnect() error {
 	c.tomb.Wait()
 
 	// do cleanup
-	err = c.cleanup(err, false)
-
-	return err
+	return c.cleanup(err, false)
 }
 
 // process incoming packets
