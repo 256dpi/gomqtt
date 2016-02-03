@@ -346,7 +346,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 }
 
 // Disconnect will send a DisconnectPacket and close the connection.
-func (c *Client) Disconnect() error {
+func (c *Client) Disconnect(timeout ...time.Duration) error {
 	c.Lock()
 	defer c.Unlock()
 
@@ -358,10 +358,13 @@ func (c *Client) Disconnect() error {
 	// allocate packet
 	m := packet.NewDisconnectPacket()
 
-	// TODO: finish outstanding work (set timeout parameter)
-
 	// set state
 	c.state.set(StateDisconnecting)
+
+	// finish current packets
+	if len(timeout) > 0 {
+		c.awaitFutures(timeout[0])
+	}
 
 	// send disconnect packet
 	err := c.send(m)
@@ -785,4 +788,24 @@ func (c* Client) resendPackets() error {
 	}
 
 	return nil
+}
+
+// will wait until all futures completed or timeout
+func (c* Client) awaitFutures(timeout time.Duration) {
+	stop := time.Now().Add(timeout)
+
+	for {
+		if time.Now().After(stop) {
+			// timeout exceeded
+			return
+		}
+
+		if len(c.futureStore.all()) == 0 {
+			return
+		}
+
+		time.Sleep(1 * time.Millisecond)
+	}
+
+	return
 }

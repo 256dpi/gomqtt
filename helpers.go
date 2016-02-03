@@ -55,6 +55,19 @@ func (s *futureStore) del(id uint16) {
 	delete(s.store, id)
 }
 
+// return a slice with all stored futures
+func (s *futureStore) all() []Future {
+	all := make([]Future, len(s.store))
+
+	i := 0
+	for _, future := range s.store {
+		all[i] = future
+		i++
+	}
+
+	return all
+}
+
 /* counter */
 
 // a counter keeps track of packet ids
