@@ -21,51 +21,32 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-func TestMemoryStore1(t *testing.T) {
+func TestMemoryStore(t *testing.T) {
 	store := NewMemoryStore()
 
-	err := store.Open()
+	err := store.Open(true)
 	assert.NoError(t, err)
 
-	pkt1 := packet.NewPublishPacket()
-	pkt1.PacketID = 1
+	publish := packet.NewPublishPacket()
+	publish.PacketID = 1
 
-	err = store.Put(pkt1)
+	err = store.Put(publish)
 	assert.NoError(t, err)
 
-	pkt2, err := store.Get(1)
+	pkt, err := store.Get(1)
 	assert.NoError(t, err)
-	assert.Equal(t, pkt1, pkt2)
-
-	err = store.Del(1)
-	assert.NoError(t, err)
-
-	pkt3, err := store.Get(1)
-	assert.NoError(t, err)
-	assert.Nil(t, pkt3)
-
-	err = store.Close()
-	assert.NoError(t, err)
-}
-
-func TestMemoryStore2(t *testing.T) {
-	store := NewMemoryStore()
-
-	err := store.Open()
-	assert.NoError(t, err)
-
-	pkt1 := packet.NewPublishPacket()
-	pkt1.PacketID = 1
-
-	err = store.Put(pkt1)
-	assert.NoError(t, err)
+	assert.Equal(t, publish, pkt)
 
 	pkts, err := store.All()
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(pkts))
 
-	err = store.Reset()
+	err = store.Del(1)
 	assert.NoError(t, err)
+
+	pkt, err = store.Get(1)
+	assert.NoError(t, err)
+	assert.Nil(t, pkt)
 
 	pkts, err = store.All()
 	assert.NoError(t, err)

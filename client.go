@@ -52,7 +52,6 @@ type Client struct {
 	futureStore *futureStore
 
 	connectFuture *ConnectFuture
-	cleanSession  bool
 
 	tomb tomb.Tomb
 	boot sync.WaitGroup
@@ -93,9 +92,6 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		opts = NewOptions("gomqtt/client")
 	}
 
-	// save clean session
-	c.cleanSession = opts.CleanSession
-
 	// check client id
 	if !opts.CleanSession && opts.ClientID == "" {
 		return nil, ErrMissingClientID
@@ -120,23 +116,15 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	// connection and cleanup on any subsequent error
 
 	// open incoming store
-	err = c.IncomingStore.Open()
+	err = c.IncomingStore.Open(opts.CleanSession)
 	if err != nil {
 		return nil, c.cleanup(err, true)
 	}
 
 	// open outgoing store
-	err = c.OutgoingStore.Open()
+	err = c.OutgoingStore.Open(opts.CleanSession)
 	if err != nil {
 		return nil, c.cleanup(err, true)
-	}
-
-	// reset stores when clean session is set
-	if opts.CleanSession {
-		err = c.resetStores()
-		if err != nil {
-			return nil, c.cleanup(err, true)
-		}
 	}
 
 	// allocate packet
@@ -700,14 +688,6 @@ func (c *Client) cleanup(err error, close bool) error {
 		}
 	}
 
-	// reset stores if client has connected with a clean session
-	if c.cleanSession {
-		_err := c.resetStores()
-		if err == nil {
-			err = _err
-		}
-	}
-
 	// close incoming store
 	_err := c.IncomingStore.Close()
 	if err == nil {
@@ -732,23 +712,6 @@ func (c *Client) die(err error, close bool) error {
 	}
 
 	return err
-}
-
-// resets the incoming and outgoing store
-func (c *Client) resetStores() error {
-	// reset incoming store
-	err := c.IncomingStore.Reset()
-	if err != nil {
-		return err
-	}
-
-	// reset outgoing store
-	err = c.OutgoingStore.Reset()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // resend left packets in the store

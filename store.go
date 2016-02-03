@@ -24,8 +24,8 @@ import (
 // successfully acknowledged by the other side.
 type Store interface {
 	// Open will open the store. Opening an already opened store must not
-	// return an error.
-	Open() error
+	// return an error. If clean is true the store gets also reset.
+	Open(clean bool) error
 
 	// Put will persist a packet to the store. An eventual existing packet with
 	// the same id gets overwritten.
@@ -41,17 +41,16 @@ type Store interface {
 	// All will return all packets currently in the store.
 	All() ([]packet.Packet, error)
 
-	// Reset will completely reset the store.
-	Reset() error
-
 	// Close will close the store. Closing an already closed store must not
-	// return an error.
+	// return an error. Stores gets reset if clean was true during Open.
 	Close() error
 }
 
 type MemoryStore struct {
+	sync.Mutex
+
+	clean bool
 	store map[uint16]packet.Packet
-	mutex sync.Mutex
 }
 
 func NewMemoryStore() *MemoryStore {
@@ -60,13 +59,17 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
-func (s *MemoryStore) Open() error {
+func (s *MemoryStore) Open(clean bool) error {
+	s.Lock()
+	defer s.Unlock()
+
+	s.clean = clean // a memory store is anyway clean, no need for a reset
 	return nil
 }
 
 func (s *MemoryStore) Put(pkt packet.Packet) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	id, ok := packet.PacketID(pkt)
 	if ok {
@@ -77,15 +80,15 @@ func (s *MemoryStore) Put(pkt packet.Packet) error {
 }
 
 func (s *MemoryStore) Get(id uint16) (packet.Packet, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	return s.store[id], nil
 }
 
 func (s *MemoryStore) Del(id uint16) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	delete(s.store, id)
 
@@ -93,8 +96,8 @@ func (s *MemoryStore) Del(id uint16) error {
 }
 
 func (s *MemoryStore) All() ([]packet.Packet, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	all := make([]packet.Packet, len(s.store))
 
@@ -107,15 +110,13 @@ func (s *MemoryStore) All() ([]packet.Packet, error) {
 	return all, nil
 }
 
-func (s *MemoryStore) Reset() error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	s.store = make(map[uint16]packet.Packet)
-
-	return nil
-}
-
 func (s *MemoryStore) Close() error {
+	s.Lock()
+	defer s.Unlock()
+
+	if s.clean {
+		s.store = make(map[uint16]packet.Packet)
+	}
+
 	return nil
 }
