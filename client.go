@@ -48,16 +48,11 @@ type Client struct {
 	conn        transport.Conn
 	state       *state
 	counter     *counter
+	tracker     *tracker
 	futureStore *futureStore
 
 	connectFuture *ConnectFuture
 	cleanSession  bool
-
-	keepAlive       time.Duration
-	lastSend        time.Time
-	lastSendMutex   sync.Mutex
-	pingrespMutex   sync.Mutex
-	pingrespPending bool
 
 	tomb tomb.Tomb
 	boot sync.WaitGroup
@@ -107,10 +102,13 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// parse keep alive
-	c.keepAlive, err = time.ParseDuration(opts.KeepAlive)
+	keepAlive, err := time.ParseDuration(opts.KeepAlive)
 	if err != nil {
 		return nil, err
 	}
+
+	// create tracker
+	c.tracker = newTracker(keepAlive)
 
 	// dial broker
 	c.conn, err = transport.Dial(urlString)
@@ -144,7 +142,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	// allocate packet
 	connect := packet.NewConnectPacket()
 	connect.ClientID = []byte(opts.ClientID)
-	connect.KeepAlive = uint16(c.keepAlive.Seconds())
+	connect.KeepAlive = uint16(keepAlive.Seconds())
 	connect.CleanSession = opts.CleanSession
 
 	// check for credentials
@@ -181,7 +179,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	c.tomb.Go(c.process)
 
 	// start keep alive if greater than zero
-	if c.keepAlive > 0 {
+	if keepAlive > 0 {
 		c.boot.Add(1)
 		c.tomb.Go(c.ping)
 	}
@@ -417,7 +415,7 @@ func (c *Client) process() error {
 			case packet.UNSUBACK:
 				err = c.handleUnsuback(pkt.(*packet.UnsubackPacket))
 			case packet.PINGRESP:
-				err = c.handlePingresp()
+				c.tracker.pong()
 			case packet.PUBLISH:
 				err = c.handlePublish(pkt.(*packet.PublishPacket))
 			case packet.PUBACK:
@@ -511,15 +509,6 @@ func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) error {
 		// ignore a wrongly sent UnsubackPacket
 	}
 
-	return nil
-}
-
-// handle an incoming Pingresp
-func (c *Client) handlePingresp() error {
-	c.pingrespMutex.Lock()
-	defer c.pingrespMutex.Unlock()
-
-	c.pingrespPending = false
 	return nil
 }
 
@@ -640,9 +629,7 @@ func (c *Client) handlePubrel(packetID uint16) error {
 
 // sends message and updates lastSend
 func (c *Client) send(pkt packet.Packet) error {
-	c.lastSendMutex.Lock()
-	c.lastSend = time.Now()
-	c.lastSendMutex.Unlock()
+	c.tracker.reset()
 
 	// send packet
 	err := c.conn.Send(pkt)
@@ -674,18 +661,10 @@ func (c *Client) ping() error {
 	c.boot.Done()
 
 	for {
-		c.lastSendMutex.Lock()
-		timeElapsed := time.Since(c.lastSend)
-		c.lastSendMutex.Unlock()
+		window := c.tracker.window()
 
-		timeToWait := c.keepAlive
-
-		if timeElapsed > c.keepAlive {
-			c.pingrespMutex.Lock()
-			pending := c.pingrespPending
-			c.pingrespMutex.Unlock()
-
-			if pending {
+		if window < 0 {
+			if c.tracker.pending() {
 				return c.die(ErrMissingPong, true)
 			}
 
@@ -693,16 +672,16 @@ func (c *Client) ping() error {
 			if err != nil {
 				return c.die(err, false)
 			}
-		} else {
-			timeToWait = c.keepAlive - timeElapsed
 
-			c.log(fmt.Sprintf("Delay KeepAlive by %s", timeToWait.String()))
+			c.tracker.ping()
+		} else {
+			c.log(fmt.Sprintf("Delay KeepAlive by %s", window.String()))
 		}
 
 		select {
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
-		case <-time.After(timeToWait):
+		case <-time.After(window):
 			continue
 		}
 	}
