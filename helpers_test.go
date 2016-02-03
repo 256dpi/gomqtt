@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
+	"time"
 )
 
 func TestFutureStore(t *testing.T) {
@@ -33,6 +34,42 @@ func TestFutureStore(t *testing.T) {
 	s.del(1)
 	assert.Nil(t, s.get(1))
 	assert.Equal(t, 0, len(s.all()))
+}
+
+func TestFutureStoreAwait(t *testing.T) {
+	f := &ConnectFuture{}
+	f.initialize()
+
+	s := newFutureStore()
+	assert.Equal(t, 0, len(s.all()))
+
+	s.put(1, f)
+	assert.Equal(t, f, s.get(1))
+	assert.Equal(t, 1, len(s.all()))
+
+	go func(){
+		time.Sleep(1 * time.Millisecond)
+		f.complete()
+		s.del(1)
+	}()
+
+	err := s.await(10 * time.Millisecond)
+	assert.NoError(t, err)
+}
+
+func TestFutureStoreAwaitTimeout(t *testing.T) {
+	f := &ConnectFuture{}
+	f.initialize()
+
+	s := newFutureStore()
+	assert.Equal(t, 0, len(s.all()))
+
+	s.put(1, f)
+	assert.Equal(t, f, s.get(1))
+	assert.Equal(t, 1, len(s.all()))
+
+	err := s.await(10 * time.Millisecond)
+	assert.Equal(t, ErrTimeoutExceeded, err)
 }
 
 func TestCounter(t *testing.T) {

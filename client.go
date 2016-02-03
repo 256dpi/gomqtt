@@ -350,7 +350,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 
 	// finish current packets
 	if len(timeout) > 0 {
-		c.awaitFutures(timeout[0])
+		c.futureStore.await(timeout[0])
 	}
 
 	// send disconnect packet
@@ -731,27 +731,4 @@ func (c* Client) resendPackets() error {
 	}
 
 	return nil
-}
-
-// will wait until all futures have completed or timeout is reached
-func (c* Client) awaitFutures(timeout time.Duration) {
-	stop := time.Now().Add(timeout)
-
-	for {
-		// check if timeout exceeded
-		if time.Now().After(stop) {
-			return
-		}
-
-		// retrieve hanging futures
-		futures := c.futureStore.all()
-
-		// return if no futures are left
-		if len(futures) == 0 {
-			return
-		}
-
-		// wait for next future to complete
-		futures[0].Wait(stop.Sub(time.Now()))
-	}
 }

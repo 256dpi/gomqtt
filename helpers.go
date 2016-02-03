@@ -75,6 +75,27 @@ func (s *futureStore) all() []Future {
 	return all
 }
 
+// will wait until all futures have completed and removed or timeout is reached
+func (s* futureStore) await(timeout time.Duration) error {
+	stop := time.Now().Add(timeout)
+
+	for {
+		// get futures
+		futures := s.all()
+
+		// return if no futures are left
+		if len(futures) == 0 {
+			return nil
+		}
+
+		// wait for next future to complete
+		err := futures[0].Wait(stop.Sub(time.Now()))
+		if err != nil {
+			return err
+		}
+	}
+}
+
 /* counter */
 
 // a counter keeps track of packet ids
