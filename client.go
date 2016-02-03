@@ -790,22 +790,25 @@ func (c* Client) resendPackets() error {
 	return nil
 }
 
-// will wait until all futures completed or timeout
+// will wait until all futures have completed or timeout is reached
 func (c* Client) awaitFutures(timeout time.Duration) {
 	stop := time.Now().Add(timeout)
 
 	for {
+		// check if timeout exceeded
 		if time.Now().After(stop) {
-			// timeout exceeded
 			return
 		}
 
-		if len(c.futureStore.all()) == 0 {
+		// retrieve hanging futures
+		futures := c.futureStore.all()
+
+		// return if no futures are left
+		if len(futures) == 0 {
 			return
 		}
 
-		time.Sleep(1 * time.Millisecond)
+		// wait for next future to complete
+		futures[0].Wait(stop.Sub(time.Now()))
 	}
-
-	return
 }
