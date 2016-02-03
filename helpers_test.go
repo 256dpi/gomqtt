@@ -22,13 +22,17 @@ import (
 
 func TestFutureStore(t *testing.T) {
 	f := &ConnectFuture{}
+
 	s := newFutureStore()
+	assert.Equal(t, 0, len(s.all()))
 
 	s.put(1, f)
 	assert.Equal(t, f, s.get(1))
+	assert.Equal(t, 1, len(s.all()))
 
 	s.del(1)
 	assert.Nil(t, s.get(1))
+	assert.Equal(t, 0, len(s.all()))
 }
 
 func TestCounter(t *testing.T) {
