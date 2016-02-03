@@ -223,22 +223,23 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 		}
 	}
 
+	// create future
+	future := &PublishFuture{}
+	future.initialize()
+
+	// store future
+	c.futureStore.put(publish.PacketID, future)
+
 	// send packet
 	err := c.send(publish)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
 
-	// create future
-	future := &PublishFuture{}
-	future.initialize()
-
+	// complete and remove qos 1 future
 	if qos == 0 {
-		// instantly complete future
 		future.complete()
-	} else {
-		// store future
-		c.futureStore.put(publish.PacketID, future)
+		c.futureStore.del(publish.PacketID)
 	}
 
 	return future, nil
@@ -281,18 +282,18 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 		return nil, c.cleanup(err, true)
 	}
 
-	// send packet
-	err = c.send(subscribe)
-	if err != nil {
-		return nil, c.cleanup(err, false)
-	}
-
 	// create future
 	future := &SubscribeFuture{}
 	future.initialize()
 
 	// store future
 	c.futureStore.put(subscribe.PacketID, future)
+
+	// send packet
+	err = c.send(subscribe)
+	if err != nil {
+		return nil, c.cleanup(err, false)
+	}
 
 	return future, nil
 }
@@ -329,18 +330,18 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 		return nil, c.cleanup(err, true)
 	}
 
-	// send packet
-	err = c.send(unsubscribe)
-	if err != nil {
-		return nil, c.cleanup(err, false)
-	}
-
 	// create future
 	future := &UnsubscribeFuture{}
 	future.initialize()
 
 	// store future
 	c.futureStore.put(unsubscribe.PacketID, future)
+
+	// send packet
+	err = c.send(unsubscribe)
+	if err != nil {
+		return nil, c.cleanup(err, false)
+	}
 
 	return future, nil
 }
