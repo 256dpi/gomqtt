@@ -52,11 +52,17 @@ func (s *futureStore) get(id uint16) Future {
 
 // del will remove a Future from the store
 func (s *futureStore) del(id uint16) {
+	s.Lock()
+	defer s.Unlock()
+
 	delete(s.store, id)
 }
 
 // return a slice with all stored futures
 func (s *futureStore) all() []Future {
+	s.Lock()
+	defer s.Unlock()
+
 	all := make([]Future, len(s.store))
 
 	i := 0
