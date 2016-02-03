@@ -176,12 +176,12 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 
 	// start process routine
 	c.boot.Add(1)
-	c.tomb.Go(c.process)
+	c.tomb.Go(c.processor)
 
 	// start keep alive if greater than zero
 	if keepAlive > 0 {
 		c.boot.Add(1)
-		c.tomb.Go(c.ping)
+		c.tomb.Go(c.pinger)
 	}
 
 	// wait for all goroutines to start
@@ -378,8 +378,8 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	return c.cleanup(err, false)
 }
 
-// process incoming packets
-func (c *Client) process() error {
+// processes incoming packets
+func (c *Client) processor() error {
 	c.boot.Done()
 
 	for {
@@ -657,7 +657,7 @@ func (c *Client) log(format string, a ...interface{}) {
 }
 
 // manages the sending of ping packets to keep the connection alive
-func (c *Client) ping() error {
+func (c *Client) pinger() error {
 	c.boot.Done()
 
 	for {
