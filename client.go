@@ -406,6 +406,7 @@ func (c *Client) process() error {
 
 			c.log("Received: %s", pkt.String())
 
+			// call handlers for packet types
 			switch pkt.Type() {
 			case packet.CONNACK:
 				err = c.handleConnack(pkt.(*packet.ConnackPacket))
@@ -430,9 +431,9 @@ func (c *Client) process() error {
 				return c.die(ErrInvalidPacketType, true)
 			}
 
-			// return eventual handled errors
+			// return eventual error
 			if err != nil {
-				return err
+				return err // error has already been cleaned
 			}
 		}
 	}
@@ -440,16 +441,21 @@ func (c *Client) process() error {
 
 // handle the incoming ConnackPacket
 func (c *Client) handleConnack(connack *packet.ConnackPacket) error {
+	// check stored future
 	if !c.connectFuture.Completed() {
+		// complete future
 		c.connectFuture.SessionPresent = connack.SessionPresent
 		c.connectFuture.ReturnCode = connack.ReturnCode
 		c.connectFuture.complete()
 
+		// check return code
 		if connack.ReturnCode == packet.ConnectionAccepted {
+			// set state to connected
 			c.state.set(StateConnected)
 
 			// TODO: resend stored unacked packets
 		} else {
+			// return connection denied error and close connection
 			return c.die(ErrConnectionDenied, true)
 		}
 	} else {
@@ -471,6 +477,8 @@ func (c *Client) handleSuback(suback *packet.SubackPacket) error {
 	if subscribeFuture, ok := future.(*SubscribeFuture); ok {
 		subscribeFuture.ReturnCodes = suback.ReturnCodes
 		subscribeFuture.complete()
+
+		// remove future from store
 		c.futureStore.del(suback.PacketID)
 	} else {
 		// ignore a wrongly sent SubackPacket
@@ -490,6 +498,8 @@ func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) error {
 	// complete future
 	if unsubscribeFuture, ok := future.(*UnsubscribeFuture); ok {
 		unsubscribeFuture.complete()
+
+		// remove future from store
 		c.futureStore.del(unsuback.PacketID)
 	} else {
 		// ignore a wrongly sent UnsubackPacket
@@ -556,6 +566,8 @@ func (c *Client) handlePubackAndPubcomp(packetID uint16) error {
 	// complete future
 	if publishFuture, ok := future.(*PublishFuture); ok {
 		publishFuture.complete()
+
+		// remove future from store
 		c.futureStore.del(packetID)
 	} else {
 		// ignore a wrongly sent PubackPacket or PubcompPacket
