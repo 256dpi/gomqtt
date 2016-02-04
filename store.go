@@ -20,6 +20,8 @@ import (
 	"github.com/gomqtt/packet"
 )
 
+// TODO: Maybe the store can be externalized and used by client, service and broker?
+
 // Store is used to persists incoming or outgoing packets until they are
 // successfully acknowledged by the other side.
 type Store interface {
@@ -65,7 +67,13 @@ func (s *MemoryStore) Open(clean bool) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.clean = clean // a memory store is anyway clean, no need for a reset
+	// cache clean setting
+	s.clean = clean
+
+	if s.clean {
+		s.store = make(map[uint16]packet.Packet)
+	}
+
 	return nil
 }
 
@@ -116,7 +124,8 @@ func (s *MemoryStore) All() ([]packet.Packet, error) {
 	return all, nil
 }
 
-// Close will close the store.
+// Close will close the store. If the store has been opened cleanly, Close will
+// clean store again.
 func (s *MemoryStore) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
