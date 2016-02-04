@@ -377,9 +377,10 @@ func (c *Client) processor() error {
 				if ok && transportErr.Code() == transport.ExpectedClose {
 					if c.state.get() != StateDisconnecting {
 						return c.die(ErrUnexpectedClose, false)
-					} else {
-						return nil
 					}
+
+					// connection has been closed because of a clean Disonnect
+					return nil
 				}
 
 				// die on any other error
@@ -436,18 +437,22 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 		return nil // TODO: something bad happened?
 	}
 
-	// complete future
+	// fill future
 	connectFuture.SessionPresent = connack.SessionPresent
 	connectFuture.ReturnCode = connack.ReturnCode
-	connectFuture.complete()
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
-		return c.die(ErrConnectionDenied, true)
+		err := c.die(ErrConnectionDenied, true)
+		connectFuture.complete()
+		return err
 	}
 
 	// set state to connected
 	c.state.set(StateConnected)
+
+	// complete future
+	connectFuture.complete()
 
 	// retrieve stored packets
 	packets, err := c.OutgoingStore.All()
