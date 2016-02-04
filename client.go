@@ -109,7 +109,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// parse url
-	urlParts, err := url.Parse(urlString)
+	urlParts, err := url.ParseRequestURI(urlString)
 	if err != nil {
 		return nil, err
 	}
@@ -467,6 +467,9 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// fill future
 	connectFuture.SessionPresent = connack.SessionPresent
 	connectFuture.ReturnCode = connack.ReturnCode
+
+	// remove future
+	c.futureStore.del(0)
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
