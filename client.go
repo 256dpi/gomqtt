@@ -52,9 +52,6 @@ type Client struct {
 	tracker     *tracker
 	futureStore *futureStore
 
-	// TODO: save in future store with first id
-	connectFuture *ConnectFuture
-
 	tomb tomb.Tomb
 	boot sync.WaitGroup
 }
@@ -105,7 +102,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		return nil, err
 	}
 
-	// create tracker
+	// allocate and initialize tracker
 	c.tracker = newTracker(keepAlive)
 
 	// dial broker
@@ -113,6 +110,9 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	if err != nil {
 		return nil, err
 	}
+
+	// set to connecting as from this point the client cannot be reused
+	c.state.set(StateConnecting)
 
 	// from now on the connection has been used and we have to close the
 	// connection and cleanup on any subsequent error
@@ -148,21 +148,18 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	connect.WillQOS = opts.WillQos
 	connect.WillRetain = opts.WillRetained
 
+	// create new ConnackFuture
+	future := &ConnectFuture{}
+	future.initialize()
+
+	// store future with id 0
+	c.futureStore.put(c.counter.next(), future)
+
 	// send connect packet
 	err = c.send(connect)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
-
-	// set to connecting as from this point the client cannot be reused
-	c.state.set(StateConnecting)
-
-	// create new ConnackFuture
-	future := &ConnectFuture{}
-	future.initialize()
-
-	// store future
-	c.connectFuture = future
 
 	// start process routine
 	c.boot.Add(1)
@@ -431,29 +428,34 @@ func (c *Client) processor() error {
 
 // handle the incoming ConnackPacket
 func (c *Client) handleConnack(connack *packet.ConnackPacket) error {
-	// check stored future
-	if !c.connectFuture.Completed() {
-		// complete future
-		c.connectFuture.SessionPresent = connack.SessionPresent
-		c.connectFuture.ReturnCode = connack.ReturnCode
-		c.connectFuture.complete()
+	// check state
+	if c.state.get() != StateConnecting {
+		return nil // ignore wrongly sent ConnackPacket
+	}
 
-		// check return code
-		if connack.ReturnCode == packet.ConnectionAccepted {
-			// set state to connected
-			c.state.set(StateConnected)
+	// get future
+	connectFuture, ok := c.futureStore.get(0).(*ConnectFuture)
+	if !ok {
+		return nil // TODO: something bad happened?
+	}
 
-			// resend stored packets
-			err := c.resendPackets()
-			if err != nil {
-				return err // error has already been cleaned
-			}
-		} else {
-			// return connection denied error and close connection
-			return c.die(ErrConnectionDenied, true)
-		}
-	} else {
-		// ignore a wrongly sent ConnackPacket
+	// complete future
+	connectFuture.SessionPresent = connack.SessionPresent
+	connectFuture.ReturnCode = connack.ReturnCode
+	connectFuture.complete()
+
+	// return connection denied error and close connection if not accepted
+	if connack.ReturnCode != packet.ConnectionAccepted {
+		return c.die(ErrConnectionDenied, true)
+	}
+
+	// set state to connected
+	c.state.set(StateConnected)
+
+	// resend stored packets
+	err := c.resendPackets()
+	if err != nil {
+		return err // error has already been cleaned
 	}
 
 	return nil
