@@ -37,6 +37,16 @@ var ErrUnexpectedClose = errors.New("unexpected close")
 type Callback func(string, []byte, error)
 type Logger func(string)
 
+type State byte
+
+const (
+	StateInitialized State = iota
+	StateConnecting
+	StateConnected
+	StateDisconnecting
+	StateDisconnected
+)
+
 type Client struct {
 	conn transport.Conn
 

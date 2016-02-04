@@ -121,17 +121,7 @@ func (c *counter) next() uint16 {
 	return c.id
 }
 
-/* ClientState */
-
-type State byte
-
-const (
-	StateInitialized State = iota
-	StateConnecting
-	StateConnected
-	StateDisconnecting
-	StateDisconnected
-)
+/* state */
 
 // a state keeps track of the clients current state
 type state struct {
