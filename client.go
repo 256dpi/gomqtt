@@ -184,7 +184,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	c.futureStore.put(c.counter.next(), future)
 
 	// send connect packet
-	err = c.send(connect)
+	err = c.send(connect, false)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -223,14 +223,6 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 		publish.PacketID = c.counter.next()
 	}
 
-	// store packet
-	if qos >= 1 {
-		err := c.OutgoingStore.Put(publish)
-		if err != nil {
-			return nil, c.cleanup(err, true)
-		}
-	}
-
 	// create future
 	future := &PublishFuture{}
 	future.initialize()
@@ -238,8 +230,8 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	// store future
 	c.futureStore.put(publish.PacketID, future)
 
-	// send packet
-	err := c.send(publish)
+	// send packet and store it if at least qos 1
+	err := c.send(publish, qos >= 1)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -284,12 +276,6 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 		})
 	}
 
-	// store packet
-	err := c.OutgoingStore.Put(subscribe)
-	if err != nil {
-		return nil, c.cleanup(err, true)
-	}
-
 	// create future
 	future := &SubscribeFuture{}
 	future.initialize()
@@ -298,7 +284,7 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	c.futureStore.put(subscribe.PacketID, future)
 
 	// send packet
-	err = c.send(subscribe)
+	err := c.send(subscribe, true)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -332,12 +318,6 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 		unsubscribe.Topics = append(unsubscribe.Topics, []byte(t))
 	}
 
-	// store packet
-	err := c.OutgoingStore.Put(unsubscribe)
-	if err != nil {
-		return nil, c.cleanup(err, true)
-	}
-
 	// create future
 	future := &UnsubscribeFuture{}
 	future.initialize()
@@ -346,7 +326,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	c.futureStore.put(unsubscribe.PacketID, future)
 
 	// send packet
-	err = c.send(unsubscribe)
+	err := c.send(unsubscribe, true)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -376,7 +356,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	}
 
 	// send disconnect packet
-	err := c.send(m)
+	err := c.send(m, false)
 
 	// shutdown goroutines
 	c.tomb.Kill(nil)
@@ -493,7 +473,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 
 	// resend stored packets
 	for _, pkt := range packets {
-		err = c.send(pkt)
+		err = c.send(pkt, false)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -550,7 +530,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		puback.PacketID = publish.PacketID
 
 		// acknowledge qos 1 publish
-		err := c.send(puback)
+		err := c.send(puback, false)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -567,7 +547,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		pubrec.PacketID = publish.PacketID
 
 		// signal qos 2 publish
-		err = c.send(pubrec)
+		err = c.send(pubrec, false)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -607,14 +587,8 @@ func (c *Client) processPubrec(packetID uint16) error {
 	pubrel := packet.NewPubrelPacket()
 	pubrel.PacketID = packetID
 
-	// overwrite stored PublishPacket with new PubRelPacket
-	err := c.OutgoingStore.Put(pubrel)
-	if err != nil {
-		return c.die(err, true)
-	}
-
-	// send packet
-	err = c.send(pubrel)
+	// send packet and overwrite stored PublishPacket with PubrelPacket
+	err := c.send(pubrel, true)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -640,7 +614,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	pubcomp.PacketID = publish.PacketID
 
 	// acknowledge PublishPacket
-	err = c.send(pubcomp)
+	err = c.send(pubcomp, false)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -671,7 +645,7 @@ func (c *Client) pinger() error {
 				return c.die(ErrMissingPong, true)
 			}
 
-			err := c.send(packet.NewPingreqPacket())
+			err := c.send(packet.NewPingreqPacket(), false)
 			if err != nil {
 				return c.die(err, false)
 			}
@@ -693,8 +667,16 @@ func (c *Client) pinger() error {
 /* helpers */
 
 // sends message and updates lastSend
-func (c *Client) send(pkt packet.Packet) error {
+func (c *Client) send(pkt packet.Packet, store bool) error {
 	c.tracker.reset()
+
+	// store packet
+	if store {
+		err := c.OutgoingStore.Put(pkt)
+		if err != nil {
+			return err
+		}
+	}
 
 	// send packet
 	err := c.conn.Send(pkt)
