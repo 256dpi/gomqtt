@@ -14,6 +14,7 @@
 
 package client
 
+// Options are passed to a Client on Connect.
 type Options struct {
 	ClientID     string
 	CleanSession bool
@@ -26,6 +27,7 @@ type Options struct {
 	WillRetained bool
 }
 
+// NewOptions will initialize and return new Options.
 func NewOptions(clientID string) *Options {
 	return &Options{
 		ClientID:     clientID,

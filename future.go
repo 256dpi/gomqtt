@@ -21,8 +21,10 @@ import (
 	"github.com/gomqtt/packet"
 )
 
+// ErrTimeoutExceeded is returned by Wait if the specified timeout is exceeded.
 var ErrTimeoutExceeded = errors.New("timeout exceeded")
 
+// Future represents information that might become available in the future.
 type Future interface {
 	// Wait will block until the future is completed. If a timeout is specified
 	// it might return a ErrTimeoutExceeded.
@@ -67,6 +69,7 @@ func (f *abstractFuture) Completed() bool {
 	}
 }
 
+// ConnectFuture is returned by the Client on Connect.
 type ConnectFuture struct {
 	abstractFuture
 
@@ -74,16 +77,19 @@ type ConnectFuture struct {
 	ReturnCode     packet.ConnackCode
 }
 
+// PublishFuture is returned by the Client on Publish.
 type PublishFuture struct {
 	abstractFuture
 }
 
+// SubscribeFuture is returned by the Client on Subscribe.
 type SubscribeFuture struct {
 	abstractFuture
 
 	ReturnCodes []byte
 }
 
+// UnsubscribeFuture is returned by the Client on Unsubscribe.
 type UnsubscribeFuture struct {
 	abstractFuture
 }

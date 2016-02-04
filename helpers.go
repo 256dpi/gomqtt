@@ -132,22 +132,30 @@ func (c *counter) next() uint16 {
 
 /* state */
 
+const (
+	stateInitialized byte = iota
+	stateConnecting
+	stateConnected
+	stateDisconnecting
+	stateDisconnected
+)
+
 // a state keeps track of the clients current state
 type state struct {
 	sync.Mutex
 
-	current State
+	current byte
 }
 
 // create new state
 func newState() *state {
 	return &state{
-		current: StateInitialized,
+		current: stateInitialized,
 	}
 }
 
 // set will change to the specified state
-func (s *state) set(state State) {
+func (s *state) set(state byte) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -155,7 +163,7 @@ func (s *state) set(state State) {
 }
 
 // get will retrieve the current state
-func (s *state) get() State {
+func (s *state) get() byte {
 	s.Lock()
 	defer s.Unlock()
 

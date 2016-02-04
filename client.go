@@ -26,31 +26,45 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
+// Message encapsulates a Topic and a Payload and is returned to the Callback
+// when received from a broker.
 type Message struct {
 	Topic   string
 	Payload []byte
 }
 
+// ErrAlreadyConnecting is returned by Connect if there was already a connection
+// attempt.
 var ErrAlreadyConnecting = errors.New("already connecting")
+
+// ErrNotConnected is returned by Publish, Subscribe and Unsubscribe if the
+// client is not currently connected.
 var ErrNotConnected = errors.New("not connected")
+
+// ErrMissingClientID is returned by Connect if no ClientID has been provided in
+// the options.
 var ErrMissingClientID = errors.New("missing client id")
+
+// ErrConnectionDenied is returned in the Callback if the connection has been
+// reject by the broker.
 var ErrConnectionDenied = errors.New("connection denied")
+
+// ErrMissingPong is returned in the Callback if the broker did not respond to
+// a PingreqPacket.
 var ErrMissingPong = errors.New("missing pong")
+
+// ErrUnexpectedClose is returned in the Callback if the broker closed the
+// connection without receiving a DisconnectPacket from the client.
 var ErrUnexpectedClose = errors.New("unexpected close")
 
+// Callback is a function called by the client upon received messages or internal
+// errors.
 type Callback func(*Message, error)
+
+// Logger is a function called by the client to log activity.
 type Logger func(string)
 
-type State byte
-
-const (
-	StateInitialized State = iota
-	StateConnecting
-	StateConnected
-	StateDisconnecting
-	StateDisconnected
-)
-
+// Client connects to a broker and handles the transmission of packets between them.
 type Client struct {
 	conn transport.Conn
 
@@ -90,7 +104,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	defer c.mutex.Unlock()
 
 	// check if already connecting
-	if c.state.get() >= StateConnecting {
+	if c.state.get() >= stateConnecting {
 		return nil, ErrAlreadyConnecting
 	}
 
@@ -126,7 +140,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// set to connecting as from this point the client cannot be reused
-	c.state.set(StateConnecting)
+	c.state.set(stateConnecting)
 
 	// from now on the connection has been used and we have to close the
 	// connection and cleanup on any subsequent error
@@ -192,7 +206,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != StateConnected {
+	if c.state.get() != stateConnected {
 		return nil, ErrNotConnected
 	}
 
@@ -253,7 +267,7 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != StateConnected {
+	if c.state.get() != stateConnected {
 		return nil, ErrNotConnected
 	}
 
@@ -304,7 +318,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != StateConnected {
+	if c.state.get() != stateConnected {
 		return nil, ErrNotConnected
 	}
 
@@ -346,7 +360,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != StateConnected {
+	if c.state.get() != stateConnected {
 		return ErrNotConnected
 	}
 
@@ -354,7 +368,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	m := packet.NewDisconnectPacket()
 
 	// set state
-	c.state.set(StateDisconnecting)
+	c.state.set(stateDisconnecting)
 
 	// finish current packets
 	if len(timeout) > 0 {
@@ -389,7 +403,7 @@ func (c *Client) processor() error {
 				transportErr, ok := err.(transport.Error)
 
 				if ok && transportErr.Code() == transport.ExpectedClose {
-					if c.state.get() != StateDisconnecting {
+					if c.state.get() != stateDisconnecting {
 						return c.die(ErrUnexpectedClose, false)
 					}
 
@@ -440,7 +454,7 @@ func (c *Client) processor() error {
 // handle the incoming ConnackPacket
 func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// check state
-	if c.state.get() != StateConnecting {
+	if c.state.get() != stateConnecting {
 		return nil // ignore wrongly sent ConnackPacket
 	}
 
@@ -462,7 +476,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	}
 
 	// set state to connected
-	c.state.set(StateConnected)
+	c.state.set(stateConnected)
 
 	// complete future
 	connectFuture.complete()
@@ -711,7 +725,7 @@ func (c *Client) log(format string, a ...interface{}) {
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error, close bool) error {
 	// set state
-	c.state.set(StateDisconnected)
+	c.state.set(stateDisconnected)
 
 	// ensure that the connection gets closed
 	if close {

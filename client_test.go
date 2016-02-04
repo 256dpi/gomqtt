@@ -212,8 +212,8 @@ func TestClientKeepAlive(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
-	var reqCounter int32 = 0
-	var respCounter int32 = 0
+	var reqCounter int32
+	var respCounter int32
 
 	c.Logger = func(message string) {
 		if strings.Contains(message, "PINGREQ") {

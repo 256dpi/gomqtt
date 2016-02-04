@@ -20,7 +20,7 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// A store is used to persists incoming or outgoing packets until they are
+// Store is used to persists incoming or outgoing packets until they are
 // successfully acknowledged by the other side.
 type Store interface {
 	// Open will open the store. Opening an already opened store must not
@@ -46,18 +46,21 @@ type Store interface {
 	Close() error
 }
 
+// MemoryStore organizes packets in memory.
 type MemoryStore struct {
 	clean bool
 	store map[uint16]packet.Packet
 	mutex sync.Mutex
 }
 
+// NewMemoryStore returns a new MemoryStore.
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		store: make(map[uint16]packet.Packet),
 	}
 }
 
+// Open opens the store and cleans it on request.
 func (s *MemoryStore) Open(clean bool) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -66,6 +69,7 @@ func (s *MemoryStore) Open(clean bool) error {
 	return nil
 }
 
+// Put will store the specified packet in the store.
 func (s *MemoryStore) Put(pkt packet.Packet) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -78,6 +82,7 @@ func (s *MemoryStore) Put(pkt packet.Packet) error {
 	return nil
 }
 
+// Get will retrieve and return a packet by its packetId.
 func (s *MemoryStore) Get(id uint16) (packet.Packet, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -85,6 +90,7 @@ func (s *MemoryStore) Get(id uint16) (packet.Packet, error) {
 	return s.store[id], nil
 }
 
+// Del will remove the a packet using its packetId.
 func (s *MemoryStore) Del(id uint16) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -94,6 +100,7 @@ func (s *MemoryStore) Del(id uint16) error {
 	return nil
 }
 
+// All will return all stored packets.
 func (s *MemoryStore) All() ([]packet.Packet, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -109,6 +116,7 @@ func (s *MemoryStore) All() ([]packet.Packet, error) {
 	return all, nil
 }
 
+// Close will close the store.
 func (s *MemoryStore) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
