@@ -383,6 +383,8 @@ func (c *Client) processor() error {
 				return c.die(err, false)
 			}
 
+			// TODO: Lock processor as well?
+
 			c.log("Received: %s", pkt.String())
 
 			// call handlers for packet types
@@ -644,6 +646,8 @@ func (c *Client) log(format string, a ...interface{}) {
 func (c *Client) pinger() error {
 	for {
 		window := c.tracker.window()
+
+		// TODO: Lock pinger as well?
 
 		if window < 0 {
 			if c.tracker.pending() {
