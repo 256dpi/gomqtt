@@ -461,7 +461,8 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// get future
 	connectFuture, ok := c.futureStore.get(0).(*ConnectFuture)
 	if !ok {
-		return nil // TODO: something bad happened?
+		// must be available otherwise the broker messed completely up...
+		return nil
 	}
 
 	// fill future
@@ -509,16 +510,18 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// find future
 	future := c.futureStore.get(suback.PacketID)
 
-	// complete future
-	if subscribeFuture, ok := future.(*SubscribeFuture); ok {
-		subscribeFuture.ReturnCodes = suback.ReturnCodes
-		subscribeFuture.complete()
-
-		// remove future from store
-		c.futureStore.del(suback.PacketID)
-	} else {
-		// ignore a wrongly sent SubackPacket
+	// check future
+	subscribeFuture, ok := future.(*SubscribeFuture)
+	if !ok {
+		return nil // ignore a wrongly sent SubackPacket
 	}
+
+	// complete future
+	subscribeFuture.ReturnCodes = suback.ReturnCodes
+	subscribeFuture.complete()
+
+	// remove future from store
+	c.futureStore.del(suback.PacketID)
 
 	return nil
 }
@@ -531,15 +534,17 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// find future
 	future := c.futureStore.get(unsuback.PacketID)
 
-	// complete future
-	if unsubscribeFuture, ok := future.(*UnsubscribeFuture); ok {
-		unsubscribeFuture.complete()
-
-		// remove future from store
-		c.futureStore.del(unsuback.PacketID)
-	} else {
-		// ignore a wrongly sent UnsubackPacket
+	// check future
+	unsubscribeFuture, ok := future.(*UnsubscribeFuture)
+	if !ok {
+		return nil // ignore a wrongly sent UnsubackPacket
 	}
+
+	// complete future
+	unsubscribeFuture.complete()
+
+	// remove future from store
+	c.futureStore.del(unsuback.PacketID)
 
 	return nil
 }
@@ -590,15 +595,17 @@ func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// find future
 	future := c.futureStore.get(packetID)
 
-	// complete future
-	if publishFuture, ok := future.(*PublishFuture); ok {
-		publishFuture.complete()
-
-		// remove future from store
-		c.futureStore.del(packetID)
-	} else {
-		// ignore a wrongly sent PubackPacket or PubcompPacket
+	// check future
+	publishFuture, ok := future.(*PublishFuture)
+	if !ok {
+		return nil // ignore a wrongly sent PubackPacket or PubcompPacket
 	}
+
+	// complete future
+	publishFuture.complete()
+
+	// remove future from store
+	c.futureStore.del(packetID)
 
 	return nil
 }
@@ -635,7 +642,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
 	publish, ok := pkt.(*packet.PublishPacket)
 	if !ok {
-		// ignore a wrongly sent PubrelPacket
+		return nil // ignore a wrongly sent PubrelPacket
 	}
 
 	pubcomp := packet.NewPubcompPacket()
