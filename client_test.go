@@ -285,7 +285,7 @@ func TestClientKeepAlive(t *testing.T) {
 	assert.Equal(t, int32(1), atomic.LoadInt32(&respCounter))
 }
 
-func TestDisconnectWithTimeout(t *testing.T) {
+func TestClientDisconnectWithTimeout(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
@@ -307,4 +307,26 @@ func TestDisconnectWithTimeout(t *testing.T) {
 	pkts, err := c.OutgoingStore.All()
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
+}
+
+func TestClientInvalidPackets(t *testing.T) {
+	c := NewClient()
+
+	// state not connecting
+	err := c.processConnack(packet.NewConnackPacket())
+	assert.NoError(t, err)
+
+	c.state.set(stateConnecting)
+
+	err = c.processConnack(packet.NewConnackPacket())
+	assert.NoError(t, err)
+
+	err = c.processSuback(packet.NewSubackPacket())
+	assert.NoError(t, err)
+
+	err = c.processUnsuback(packet.NewUnsubackPacket())
+	assert.NoError(t, err)
+
+	err = c.processPubackAndPubcomp(0)
+	assert.NoError(t, err)
 }

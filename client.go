@@ -507,11 +507,8 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
 	c.OutgoingStore.Del(suback.PacketID)
 
-	// find future
-	future := c.futureStore.get(suback.PacketID)
-
-	// check future
-	subscribeFuture, ok := future.(*SubscribeFuture)
+	// get future
+	subscribeFuture, ok := c.futureStore.get(suback.PacketID).(*SubscribeFuture)
 	if !ok {
 		return nil // ignore a wrongly sent SubackPacket
 	}
@@ -531,11 +528,8 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
 	c.OutgoingStore.Del(unsuback.PacketID)
 
-	// find future
-	future := c.futureStore.get(unsuback.PacketID)
-
-	// check future
-	unsubscribeFuture, ok := future.(*UnsubscribeFuture)
+	// get future
+	unsubscribeFuture, ok := c.futureStore.get(unsuback.PacketID).(*UnsubscribeFuture)
 	if !ok {
 		return nil // ignore a wrongly sent UnsubackPacket
 	}
@@ -592,11 +586,8 @@ func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
 	c.OutgoingStore.Del(packetID)
 
-	// find future
-	future := c.futureStore.get(packetID)
-
-	// check future
-	publishFuture, ok := future.(*PublishFuture)
+	// get future
+	publishFuture, ok := c.futureStore.get(packetID).(*PublishFuture)
 	if !ok {
 		return nil // ignore a wrongly sent PubackPacket or PubcompPacket
 	}
