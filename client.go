@@ -362,6 +362,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	c.tomb.Kill(nil)
 
 	// wait for all goroutines to exit
+	// goroutines will send eventual errors through the callback
 	c.tomb.Wait()
 
 	// do cleanup
@@ -741,5 +742,5 @@ func (c *Client) die(err error, close bool) error {
 		c.Callback(nil, err)
 	}
 
-	return err
+	return nil
 }
