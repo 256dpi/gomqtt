@@ -23,7 +23,7 @@ import (
 
 func newMessage(topic string, payload []byte) *Message {
 	return &Message{
-		Topic: topic,
+		Topic:   topic,
 		Payload: payload,
 	}
 }

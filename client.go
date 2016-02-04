@@ -27,7 +27,7 @@ import (
 )
 
 type Message struct {
-	Topic string
+	Topic   string
 	Payload []byte
 }
 
