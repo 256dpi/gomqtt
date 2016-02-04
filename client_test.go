@@ -21,25 +21,28 @@ import (
 	"time"
 
 	"github.com/gomqtt/packet"
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
-
-func testOptions() *Options {
-	return NewOptions("test/" + uuid.NewV4().String())
-}
-
-func errorCallback(t *testing.T) func(*Message, error) {
-	return func(msg *Message, err error) {
-		assert.Fail(t, "callback should not have been called")
-	}
-}
 
 func TestClientConnect(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
 	future, err := c.Connect("mqtt://localhost:1883", testOptions())
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+}
+
+func TestClientConnectWithCredentials(t *testing.T) {
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	future, err := c.Connect("mqtt://test:test@localhost:1883", testOptions())
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -83,6 +86,48 @@ func TestClientConnectAfterConnect(t *testing.T) {
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
+}
+
+func TestClientConnectError1(t *testing.T) {
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	// wrong url
+	future, err := c.Connect("foo", testOptions())
+	assert.Error(t, err)
+	assert.Nil(t, future)
+}
+
+func TestClientConnectError2(t *testing.T) {
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	// wrong keep alive
+	future, err := c.Connect("mqtt://localhost:1234", &Options{
+		KeepAlive: "foo", CleanSession: true,
+	})
+	assert.Error(t, err)
+	assert.Nil(t, future)
+}
+
+func TestClientConnectError3(t *testing.T) {
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	// wrong port
+	future, err := c.Connect("mqtt://localhost:1234", testOptions())
+	assert.Error(t, err)
+	assert.Nil(t, future)
+}
+
+func TestClientConnectError4(t *testing.T) {
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	// missing clientID when clean=false
+	future, err := c.Connect("mqtt://localhost:1883", &Options{})
+	assert.Error(t, err)
+	assert.Nil(t, future)
 }
 
 func abstractPublishSubscribeTest(t *testing.T, qos byte) {
@@ -184,24 +229,23 @@ func TestClientUnsubscribe(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestClientConnectError(t *testing.T) {
+func TestClientNotConnected(t *testing.T) {
 	c := NewClient()
-	c.Callback = errorCallback(t)
 
-	// wrong port
-	future, err := c.Connect("mqtt://localhost:1234", testOptions())
-	assert.Error(t, err)
-	assert.Nil(t, future)
-}
+	future1, err := c.Publish("test", []byte("test"), 0, false)
+	assert.Nil(t, future1)
+	assert.Equal(t, ErrNotConnected, err)
 
-func TestClientAuthenticationError(t *testing.T) {
-	c := NewClient()
-	c.Callback = errorCallback(t)
+	future2, err := c.Subscribe("test", 0)
+	assert.Nil(t, future2)
+	assert.Equal(t, ErrNotConnected, err)
 
-	// missing clientID
-	future, err := c.Connect("mqtt://localhost:1883", &Options{})
-	assert.Error(t, err)
-	assert.Nil(t, future)
+	future3, err := c.Unsubscribe("test")
+	assert.Nil(t, future3)
+	assert.Equal(t, ErrNotConnected, err)
+
+	err = c.Disconnect()
+	assert.Equal(t, ErrNotConnected, err)
 }
 
 func TestClientKeepAlive(t *testing.T) {
@@ -232,11 +276,35 @@ func TestClientKeepAlive(t *testing.T) {
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
-	<-time.After(7 * time.Second)
+	<-time.After(3 * time.Second)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	assert.Equal(t, int32(3), atomic.LoadInt32(&reqCounter))
-	assert.Equal(t, int32(3), atomic.LoadInt32(&respCounter))
+	assert.Equal(t, int32(1), atomic.LoadInt32(&reqCounter))
+	assert.Equal(t, int32(1), atomic.LoadInt32(&respCounter))
+}
+
+func TestDisconnectWithTimeout(t *testing.T) {
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.False(t, connectFuture.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+
+	for i:=0; i<10; i++ {
+		publishFuture, err := c.Publish("test", []byte("test"), 2, false)
+		assert.NoError(t, err)
+		assert.NotNil(t, publishFuture)
+	}
+
+	err = c.Disconnect(10 * time.Second)
+	assert.NoError(t, err)
+
+	pkts, err := c.OutgoingStore.All()
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(pkts))
 }
