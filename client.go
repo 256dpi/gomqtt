@@ -35,7 +35,6 @@ var ErrAlreadyConnecting = errors.New("already connecting")
 var ErrNotConnected = errors.New("not connected")
 var ErrMissingClientID = errors.New("missing client id")
 var ErrConnectionDenied = errors.New("connection denied")
-var ErrInvalidPacketType = errors.New("invalid packet type")
 var ErrMissingPong = errors.New("missing pong")
 var ErrUnexpectedClose = errors.New("unexpected close")
 
@@ -427,8 +426,7 @@ func (c *Client) processor() error {
 			case packet.PUBREL:
 				err = c.processPubrel(pkt.(*packet.PubrelPacket).PacketID)
 			default:
-				// die on an invalid packet type
-				return c.die(ErrInvalidPacketType, true)
+				// ignore unsupported packet types
 			}
 
 			// return eventual error
