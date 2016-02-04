@@ -47,10 +47,9 @@ type Store interface {
 }
 
 type MemoryStore struct {
-	sync.Mutex
-
 	clean bool
 	store map[uint16]packet.Packet
+	mutex sync.Mutex
 }
 
 func NewMemoryStore() *MemoryStore {
@@ -60,16 +59,16 @@ func NewMemoryStore() *MemoryStore {
 }
 
 func (s *MemoryStore) Open(clean bool) error {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	s.clean = clean // a memory store is anyway clean, no need for a reset
 	return nil
 }
 
 func (s *MemoryStore) Put(pkt packet.Packet) error {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	id, ok := packet.PacketID(pkt)
 	if ok {
@@ -80,15 +79,15 @@ func (s *MemoryStore) Put(pkt packet.Packet) error {
 }
 
 func (s *MemoryStore) Get(id uint16) (packet.Packet, error) {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	return s.store[id], nil
 }
 
 func (s *MemoryStore) Del(id uint16) error {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	delete(s.store, id)
 
@@ -96,8 +95,8 @@ func (s *MemoryStore) Del(id uint16) error {
 }
 
 func (s *MemoryStore) All() ([]packet.Packet, error) {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	all := make([]packet.Packet, len(s.store))
 
@@ -111,8 +110,8 @@ func (s *MemoryStore) All() ([]packet.Packet, error) {
 }
 
 func (s *MemoryStore) Close() error {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	if s.clean {
 		s.store = make(map[uint16]packet.Packet)

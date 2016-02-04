@@ -38,8 +38,6 @@ type Callback func(string, []byte, error)
 type Logger func(string)
 
 type Client struct {
-	sync.Mutex
-
 	conn transport.Conn
 
 	IncomingStore Store
@@ -52,7 +50,8 @@ type Client struct {
 	tracker     *tracker
 	futureStore *futureStore
 
-	tomb tomb.Tomb
+	tomb  tomb.Tomb
+	mutex sync.Mutex
 }
 
 // NewClient returns a new client.
@@ -73,8 +72,8 @@ func NewClient() *Client {
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
 // It will return ErrAlreadyConnecting if Connect has been called before.
 func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error) {
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	// check if already connecting
 	if c.state.get() >= StateConnecting {
@@ -175,8 +174,8 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 
 // Publish will send a PublishPacket containing the passed parameters.
 func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*PublishFuture, error) {
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	// check if connected
 	if c.state.get() != StateConnected {
@@ -236,8 +235,8 @@ func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe.
 func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, error) {
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	// check if connected
 	if c.state.get() != StateConnected {
@@ -287,8 +286,8 @@ func (c *Client) Unsubscribe(topic string) (*UnsubscribeFuture, error) {
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
 // topics to unsubscribe.
 func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error) {
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	// check if connected
 	if c.state.get() != StateConnected {
@@ -329,8 +328,8 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 
 // Disconnect will send a DisconnectPacket and close the connection.
 func (c *Client) Disconnect(timeout ...time.Duration) error {
-	c.Lock()
-	defer c.Unlock()
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	// check if connected
 	if c.state.get() != StateConnected {
