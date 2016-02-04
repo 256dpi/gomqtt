@@ -446,10 +446,18 @@ func (c *Client) handleConnack(connack *packet.ConnackPacket) error {
 	// set state to connected
 	c.state.set(StateConnected)
 
-	// resend stored packets
-	err := c.resendPackets()
+	// retrieve stored packets
+	packets, err := c.OutgoingStore.All()
 	if err != nil {
-		return err // error has already been cleaned
+		return c.die(err, true)
+	}
+
+	// resend stored packets
+	for _, pkt := range packets {
+		err = c.send(pkt)
+		if err != nil {
+			return c.die(err, false)
+		}
 	}
 
 	return nil
@@ -710,23 +718,4 @@ func (c *Client) die(err error, close bool) error {
 	}
 
 	return err
-}
-
-// resend left packets in the store
-func (c *Client) resendPackets() error {
-	// retrieve packets
-	packets, err := c.OutgoingStore.All()
-	if err != nil {
-		return c.cleanup(err, true)
-	}
-
-	// resend packets
-	for _, pkt := range packets {
-		err = c.send(pkt)
-		if err != nil {
-			return c.cleanup(err, false)
-		}
-	}
-
-	return nil
 }
