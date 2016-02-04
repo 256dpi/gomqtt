@@ -66,6 +66,8 @@ func NewClient() *Client {
 	}
 }
 
+/* exported interface */
+
 // Connect opens the connection to the broker and sends a ConnectPacket. It will
 // return a ConnectFuture that gets completed once a ConnackPacket has been
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
@@ -359,6 +361,8 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	return c.cleanup(err, false)
 }
 
+/* processor goroutine */
+
 // processes incoming packets
 func (c *Client) processor() error {
 	for {
@@ -390,23 +394,23 @@ func (c *Client) processor() error {
 			// call handlers for packet types
 			switch pkt.Type() {
 			case packet.CONNACK:
-				err = c.handleConnack(pkt.(*packet.ConnackPacket))
+				err = c.processConnack(pkt.(*packet.ConnackPacket))
 			case packet.SUBACK:
-				err = c.handleSuback(pkt.(*packet.SubackPacket))
+				err = c.processSuback(pkt.(*packet.SubackPacket))
 			case packet.UNSUBACK:
-				err = c.handleUnsuback(pkt.(*packet.UnsubackPacket))
+				err = c.processUnsuback(pkt.(*packet.UnsubackPacket))
 			case packet.PINGRESP:
 				c.tracker.pong()
 			case packet.PUBLISH:
-				err = c.handlePublish(pkt.(*packet.PublishPacket))
+				err = c.processPublish(pkt.(*packet.PublishPacket))
 			case packet.PUBACK:
-				err = c.handlePubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
+				err = c.processPubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
 			case packet.PUBCOMP:
-				err = c.handlePubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
+				err = c.processPubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
 			case packet.PUBREC:
-				err = c.handlePubrec(pkt.(*packet.PubrecPacket).PacketID)
+				err = c.processPubrec(pkt.(*packet.PubrecPacket).PacketID)
 			case packet.PUBREL:
-				err = c.handlePubrel(pkt.(*packet.PubrelPacket).PacketID)
+				err = c.processPubrel(pkt.(*packet.PubrelPacket).PacketID)
 			default:
 				// die on an invalid packet type
 				return c.die(ErrInvalidPacketType, true)
@@ -421,7 +425,7 @@ func (c *Client) processor() error {
 }
 
 // handle the incoming ConnackPacket
-func (c *Client) handleConnack(connack *packet.ConnackPacket) error {
+func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// check state
 	if c.state.get() != StateConnecting {
 		return nil // ignore wrongly sent ConnackPacket
@@ -464,7 +468,7 @@ func (c *Client) handleConnack(connack *packet.ConnackPacket) error {
 }
 
 // handle an incoming SubackPacket
-func (c *Client) handleSuback(suback *packet.SubackPacket) error {
+func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
 	c.OutgoingStore.Del(suback.PacketID)
 
@@ -486,7 +490,7 @@ func (c *Client) handleSuback(suback *packet.SubackPacket) error {
 }
 
 // handle an incoming UnsubackPacket
-func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) error {
+func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
 	c.OutgoingStore.Del(unsuback.PacketID)
 
@@ -507,7 +511,7 @@ func (c *Client) handleUnsuback(unsuback *packet.UnsubackPacket) error {
 }
 
 // handle an incoming PublishPacket
-func (c *Client) handlePublish(publish *packet.PublishPacket) error {
+func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	if publish.QOS == 1 {
 		puback := packet.NewPubackPacket()
 		puback.PacketID = publish.PacketID
@@ -545,7 +549,7 @@ func (c *Client) handlePublish(publish *packet.PublishPacket) error {
 }
 
 // handle an incoming PubackPacket or PubcompPacket
-func (c *Client) handlePubackAndPubcomp(packetID uint16) error {
+func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
 	c.OutgoingStore.Del(packetID)
 
@@ -566,7 +570,7 @@ func (c *Client) handlePubackAndPubcomp(packetID uint16) error {
 }
 
 // handle an incoming PubrecPacket
-func (c *Client) handlePubrec(packetID uint16) error {
+func (c *Client) processPubrec(packetID uint16) error {
 	// allocate packet
 	pubrel := packet.NewPubrelPacket()
 	pubrel.PacketID = packetID
@@ -587,7 +591,7 @@ func (c *Client) handlePubrec(packetID uint16) error {
 }
 
 // handle an incoming PubrelPacket
-func (c *Client) handlePubrel(packetID uint16) error {
+func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
 	pkt, err := c.IncomingStore.Get(packetID)
 	if err != nil {
@@ -621,34 +625,7 @@ func (c *Client) handlePubrel(packetID uint16) error {
 	return nil
 }
 
-// sends message and updates lastSend
-func (c *Client) send(pkt packet.Packet) error {
-	c.tracker.reset()
-
-	// send packet
-	err := c.conn.Send(pkt)
-	if err != nil {
-		return err
-	}
-
-	c.log("Sent: %s", pkt.String())
-
-	return nil
-}
-
-// calls the callback with a new message
-func (c *Client) forward(packet *packet.PublishPacket) {
-	if c.Callback != nil {
-		c.Callback(string(packet.Topic), packet.Payload, nil)
-	}
-}
-
-// log a message
-func (c *Client) log(format string, a ...interface{}) {
-	if c.Logger != nil {
-		c.Logger(fmt.Sprintf(format, a...))
-	}
-}
+/* pinger goroutine */
 
 // manages the sending of ping packets to keep the connection alive
 func (c *Client) pinger() error {
@@ -678,6 +655,37 @@ func (c *Client) pinger() error {
 		case <-time.After(window):
 			continue
 		}
+	}
+}
+
+/* helpers */
+
+// sends message and updates lastSend
+func (c *Client) send(pkt packet.Packet) error {
+	c.tracker.reset()
+
+	// send packet
+	err := c.conn.Send(pkt)
+	if err != nil {
+		return err
+	}
+
+	c.log("Sent: %s", pkt.String())
+
+	return nil
+}
+
+// calls the callback with a new message
+func (c *Client) forward(packet *packet.PublishPacket) {
+	if c.Callback != nil {
+		c.Callback(string(packet.Topic), packet.Payload, nil)
+	}
+}
+
+// log a message
+func (c *Client) log(format string, a ...interface{}) {
+	if c.Logger != nil {
+		c.Logger(fmt.Sprintf(format, a...))
 	}
 }
 
