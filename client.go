@@ -26,6 +26,11 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
+type Message struct {
+	Topic string
+	Payload []byte
+}
+
 var ErrAlreadyConnecting = errors.New("already connecting")
 var ErrNotConnected = errors.New("not connected")
 var ErrMissingClientID = errors.New("missing client id")
@@ -34,7 +39,7 @@ var ErrInvalidPacketType = errors.New("invalid packet type")
 var ErrMissingPong = errors.New("missing pong")
 var ErrUnexpectedClose = errors.New("unexpected close")
 
-type Callback func(string, []byte, error)
+type Callback func(*Message, error)
 type Logger func(string)
 
 type State byte
@@ -691,8 +696,10 @@ func (c *Client) send(pkt packet.Packet) error {
 
 // calls the callback with a new message
 func (c *Client) forward(packet *packet.PublishPacket) {
+	msg := newMessage(string(packet.Topic), packet.Payload)
+
 	if c.Callback != nil {
-		c.Callback(string(packet.Topic), packet.Payload, nil)
+		c.Callback(msg, nil)
 	}
 }
 
@@ -736,7 +743,7 @@ func (c *Client) die(err error, close bool) error {
 	err = c.cleanup(err, close)
 
 	if c.Callback != nil {
-		c.Callback("", nil, err)
+		c.Callback(nil, err)
 	}
 
 	return err

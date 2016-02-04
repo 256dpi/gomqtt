@@ -24,12 +24,12 @@ func ExampleClient() {
 
 	c := NewClient()
 
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *Message, err error) {
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Printf("%s: %s\n", topic, payload)
+		fmt.Printf("%s: %s\n", msg.Topic, msg.Payload)
 		close(done)
 	}
 
