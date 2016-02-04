@@ -53,7 +53,6 @@ type Client struct {
 	futureStore *futureStore
 
 	tomb tomb.Tomb
-	boot sync.WaitGroup
 }
 
 // NewClient returns a new client.
@@ -162,17 +161,12 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// start process routine
-	c.boot.Add(1)
 	c.tomb.Go(c.processor)
 
 	// start keep alive if greater than zero
 	if keepAlive > 0 {
-		c.boot.Add(1)
 		c.tomb.Go(c.pinger)
 	}
-
-	// wait for all goroutines to start
-	c.boot.Wait()
 
 	return future, nil
 }
@@ -367,8 +361,6 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 
 // processes incoming packets
 func (c *Client) processor() error {
-	c.boot.Done()
-
 	for {
 		select {
 		case <-c.tomb.Dying():
@@ -650,8 +642,6 @@ func (c *Client) log(format string, a ...interface{}) {
 
 // manages the sending of ping packets to keep the connection alive
 func (c *Client) pinger() error {
-	c.boot.Done()
-
 	for {
 		window := c.tracker.window()
 
