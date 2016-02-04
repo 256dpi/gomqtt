@@ -240,25 +240,3 @@ func TestClientKeepAlive(t *testing.T) {
 	assert.Equal(t, int32(3), atomic.LoadInt32(&reqCounter))
 	assert.Equal(t, int32(3), atomic.LoadInt32(&respCounter))
 }
-
-// -- client
-// should require a clientId with clean=false
-// should have different client ids
-// should delay closing everything up until the queue is depleted
-// should delay ending up until all inflight messages are delivered
-// does not wait acks when force-closing
-// should reconnect if pingresp is not sent
-// should not reconnect if pingresp is successful
-// should defer the next ping when sending a control packet
-// should fire a callback with error if disconnected (options provided)
-// should fire a callback with error if disconnected (options not provided)
-// should resend in-flight QoS 1 publish messages from the client
-// should resend in-flight QoS 2 publish messages from the client
-
-// -- store
-// should put and stream in-flight packets
-// should support destroying the stream
-// should add and del in-flight packets
-// should replace a packet when doing put with the same messageId
-// should return the original packet on del
-// should get a packet with the same messageId

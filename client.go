@@ -42,7 +42,7 @@ var ErrAlreadyConnecting = errors.New("already connecting")
 var ErrNotConnected = errors.New("not connected")
 
 // ErrMissingClientID is returned by Connect if no ClientID has been provided in
-// the options.
+// the options while requesting an unclean session.
 var ErrMissingClientID = errors.New("missing client id")
 
 // ErrConnectionDenied is returned in the Callback if the connection has been
