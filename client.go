@@ -372,60 +372,53 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 // processes incoming packets
 func (c *Client) processor() error {
 	for {
-		select {
-		case <-c.tomb.Dying():
-			return tomb.ErrDying
-		default:
-			// get next packet from connection
-			pkt, err := c.conn.Receive()
-			if err != nil {
-				transportErr, ok := err.(transport.Error)
+		// get next packet from connection
+		pkt, err := c.conn.Receive()
+		if err != nil {
+			transportErr, ok := err.(transport.Error)
 
-				if ok && transportErr.Code() == transport.ExpectedClose {
-					if c.state.get() != stateDisconnecting {
-						return c.die(ErrUnexpectedClose, false)
-					}
-
-					// connection has been closed because of a clean Disonnect
+			if ok && transportErr.Code() == transport.ExpectedClose {
+				if c.state.get() == stateDisconnecting {
+					// connection has been closed because of a clean Disconnect
 					return nil
 				}
 
-				// die on any other error
-				return c.die(err, false)
+				return c.die(ErrUnexpectedClose, false)
 			}
 
-			// TODO: Lock processor as well?
+			// die on any other error
+			return c.die(err, false)
+		}
 
-			c.log("Received: %s", pkt.String())
+		// TODO: Lock processor as well?
 
-			// call handlers for packet types
-			switch pkt.Type() {
-			case packet.CONNACK:
-				err = c.processConnack(pkt.(*packet.ConnackPacket))
-			case packet.SUBACK:
-				err = c.processSuback(pkt.(*packet.SubackPacket))
-			case packet.UNSUBACK:
-				err = c.processUnsuback(pkt.(*packet.UnsubackPacket))
-			case packet.PINGRESP:
-				c.tracker.pong()
-			case packet.PUBLISH:
-				err = c.processPublish(pkt.(*packet.PublishPacket))
-			case packet.PUBACK:
-				err = c.processPubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
-			case packet.PUBCOMP:
-				err = c.processPubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
-			case packet.PUBREC:
-				err = c.processPubrec(pkt.(*packet.PubrecPacket).PacketID)
-			case packet.PUBREL:
-				err = c.processPubrel(pkt.(*packet.PubrelPacket).PacketID)
-			default:
-				// ignore unsupported packet types
-			}
+		c.log("Received: %s", pkt.String())
 
-			// return eventual error
-			if err != nil {
-				return err // error has already been cleaned
-			}
+		// call handlers for packet types and ignore other packets
+		switch pkt.Type() {
+		case packet.CONNACK:
+			err = c.processConnack(pkt.(*packet.ConnackPacket))
+		case packet.SUBACK:
+			err = c.processSuback(pkt.(*packet.SubackPacket))
+		case packet.UNSUBACK:
+			err = c.processUnsuback(pkt.(*packet.UnsubackPacket))
+		case packet.PINGRESP:
+			c.tracker.pong()
+		case packet.PUBLISH:
+			err = c.processPublish(pkt.(*packet.PublishPacket))
+		case packet.PUBACK:
+			err = c.processPubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
+		case packet.PUBCOMP:
+			err = c.processPubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
+		case packet.PUBREC:
+			err = c.processPubrec(pkt.(*packet.PubrecPacket).PacketID)
+		case packet.PUBREL:
+			err = c.processPubrel(pkt.(*packet.PubrelPacket).PacketID)
+		}
+
+		// return eventual error
+		if err != nil {
+			return err // error has already been cleaned
 		}
 	}
 }
