@@ -16,123 +16,110 @@ package client
 
 import (
 	"sync"
+	"strings"
 
 	"github.com/gomqtt/packet"
 )
 
 // TODO: Maybe the store can be externalized and used by client, service and broker?
 
+const(
+	Incoming string = "in"
+	Outgoing string = "out"
+)
+
 // Store is used to persists incoming or outgoing packets until they are
 // successfully acknowledged by the other side.
 type Store interface {
-	// Open will open the store. Opening an already opened store must not
-	// return an error. If clean is true the store gets also reset.
-	Open(clean bool) error
-
 	// Put will persist a packet to the store. An eventual existing packet with
 	// the same id gets overwritten.
-	Put(packet.Packet) error
+	Put(string, packet.Packet) error
 
 	// Get will retrieve a packet from the store.
-	Get(uint16) (packet.Packet, error)
+	Get(string, uint16) (packet.Packet, error)
 
 	// Del will remove a packet from the store. Removing a nonexistent packet
 	// must not return an error.
-	Del(uint16) error
+	Del(string, uint16) error
 
 	// All will return all packets currently in the store.
-	All() ([]packet.Packet, error)
+	All(string) ([]packet.Packet, error)
 
-	// Close will close the store. Closing an already closed store must not
-	// return an error. Stores gets reset if clean was true during Open.
-	Close() error
+	// Reset will wipe all packets currently stored.
+	Reset() error
 }
 
 // MemoryStore organizes packets in memory.
 type MemoryStore struct {
-	clean bool
-	store map[uint16]packet.Packet
+	store map[string]packet.Packet
 	mutex sync.Mutex
 }
 
 // NewMemoryStore returns a new MemoryStore.
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		store: make(map[uint16]packet.Packet),
+		store: make(map[string]packet.Packet),
 	}
 }
 
-// Open opens the store and cleans it on request.
-func (s *MemoryStore) Open(clean bool) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	// cache clean setting
-	s.clean = clean
-
-	if s.clean {
-		s.store = make(map[uint16]packet.Packet)
-	}
-
-	return nil
+// return a string key based on direction and id
+func (s *MemoryStore) key(dir string, id uint16) string {
+	return dir + "-" + string(id)
 }
 
 // Put will store the specified packet in the store.
-func (s *MemoryStore) Put(pkt packet.Packet) error {
+func (s *MemoryStore) Put(dir string, pkt packet.Packet) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	id, ok := packet.PacketID(pkt)
 	if ok {
-		s.store[id] = pkt
+		s.store[s.key(dir, id)] = pkt
 	}
 
 	return nil
 }
 
 // Get will retrieve and return a packet by its packetId.
-func (s *MemoryStore) Get(id uint16) (packet.Packet, error) {
+func (s *MemoryStore) Get(dir string, id uint16) (packet.Packet, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	return s.store[id], nil
+	return s.store[s.key(dir, id)], nil
 }
 
 // Del will remove the a packet using its packetId.
-func (s *MemoryStore) Del(id uint16) error {
+func (s *MemoryStore) Del(dir string, id uint16) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	delete(s.store, id)
+	delete(s.store, s.key(dir, id))
 
 	return nil
 }
 
 // All will return all stored packets.
-func (s *MemoryStore) All() ([]packet.Packet, error) {
+func (s *MemoryStore) All(dir string) ([]packet.Packet, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	all := make([]packet.Packet, len(s.store))
+	all := make([]packet.Packet, 0)
 
-	i := 0
-	for _, pkt := range s.store {
-		all[i] = pkt
-		i++
+	for key, pkt := range s.store {
+		if strings.HasPrefix(key, dir) {
+			all = append(all, pkt)
+		}
 	}
 
 	return all, nil
 }
 
-// Close will close the store. If the store has been opened cleanly, Close will
-// clean store again.
-func (s *MemoryStore) Close() error {
+// Reset will wipe all packets currently stored.
+func (s *MemoryStore) Reset() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if s.clean {
-		s.store = make(map[uint16]packet.Packet)
-	}
+	s.store = make(map[string]packet.Packet)
 
 	return nil
 }

@@ -24,34 +24,42 @@ import (
 func TestMemoryStore(t *testing.T) {
 	store := NewMemoryStore()
 
-	err := store.Open(true)
-	assert.NoError(t, err)
-
 	publish := packet.NewPublishPacket()
 	publish.PacketID = 1
 
-	err = store.Put(publish)
+	err := store.Put(Incoming, publish)
 	assert.NoError(t, err)
 
-	pkt, err := store.Get(1)
+	pkt, err := store.Get(Incoming, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, publish, pkt)
 
-	pkts, err := store.All()
+	pkts, err := store.All(Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(pkts))
 
-	err = store.Del(1)
+	err = store.Del(Incoming, 1)
 	assert.NoError(t, err)
 
-	pkt, err = store.Get(1)
+	pkt, err = store.Get(Incoming, 1)
 	assert.NoError(t, err)
 	assert.Nil(t, pkt)
 
-	pkts, err = store.All()
+	pkts, err = store.All(Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
 
-	err = store.Close()
+	err = store.Put(Incoming, publish)
 	assert.NoError(t, err)
+
+	pkts, err = store.All(Incoming)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(pkts))
+
+	err = store.Reset()
+	assert.NoError(t, err)
+
+	pkts, err = store.All(Incoming)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(pkts))
 }

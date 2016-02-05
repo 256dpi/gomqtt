@@ -162,11 +162,11 @@ func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	in, err := c.IncomingStore.All()
+	in, err := c.Store.All(Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(in))
 
-	out, err := c.OutgoingStore.All()
+	out, err := c.Store.All(Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(out))
 }
@@ -304,7 +304,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	err = c.Disconnect(10 * time.Second)
 	assert.NoError(t, err)
 
-	pkts, err := c.OutgoingStore.All()
+	pkts, err := c.Store.All(Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
 }
