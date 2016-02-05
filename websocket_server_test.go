@@ -91,5 +91,5 @@ func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Equal(t, ConnectionClose, toError(err).Code())
 }

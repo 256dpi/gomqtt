@@ -77,7 +77,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 
 		// the closing is always expected from the receiver side as it its
 		// transmitted cleanly
-		return nil, newTransportError(ExpectedClose, err)
+		return nil, newTransportError(ConnectionClose, err)
 	}
 
 	// return read limit error instead

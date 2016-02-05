@@ -87,7 +87,7 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 		if err == io.EOF && len(header) == 0 {
 			// only if Peek returned no bytes the close is expected
 			c.conn.Close()
-			return nil, newTransportError(ExpectedClose, err)
+			return nil, newTransportError(ConnectionClose, err)
 		} else if err != nil {
 			c.conn.Close()
 			return nil, newTransportError(NetworkError, err)

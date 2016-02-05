@@ -49,9 +49,8 @@ type ErrorCode int
 const (
 	_ ErrorCode = iota
 
-	// ExpectedClose marks errors that symbolizes the expected close of an
-	// connection.
-	ExpectedClose
+	// ConnectionClose marks errors that symbolizes the close of a connection.
+	ConnectionClose
 
 	// DialError marks errors that came up during a Dial call.
 	DialError
@@ -99,8 +98,8 @@ func newTransportError(code ErrorCode, err error) *transportError {
 
 func (err *transportError) Error() string {
 	switch err.code {
-	case ExpectedClose:
-		return fmt.Sprintf("expected close: %s", err.err.Error())
+	case ConnectionClose:
+		return fmt.Sprintf("connection close: %s", err.err.Error())
 	case DialError:
 		return fmt.Sprintf("dial error: %s", err.err.Error())
 	case LaunchError:

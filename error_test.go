@@ -22,8 +22,8 @@ import (
 )
 
 func TestErrorStrings(t *testing.T) {
-	err := newTransportError(ExpectedClose, fmt.Errorf("foo"))
-	assert.Equal(t, "expected close: foo", err.Error())
+	err := newTransportError(ConnectionClose, fmt.Errorf("foo"))
+	assert.Equal(t, "connection close: foo", err.Error())
 
 	err = newTransportError(DialError, fmt.Errorf("foo"))
 	assert.Equal(t, "dial error: foo", err.Error())

@@ -33,7 +33,7 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 
 		pkt, err = conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Equal(t, ConnectionClose, toError(err).Code())
 	})
 
 	err := conn2.Send(packet.NewConnectPacket())
@@ -57,7 +57,7 @@ func abstractConnCloseTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Equal(t, ConnectionClose, toError(err).Code())
 
 	<-done
 }
@@ -73,7 +73,7 @@ func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Equal(t, ConnectionClose, toError(err).Code())
 
 	<-done
 }
@@ -90,7 +90,7 @@ func abstractConnDecodeError1Test(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Equal(t, ConnectionClose, toError(err).Code())
 	})
 
 	pkt, err := conn2.Receive()
@@ -112,7 +112,7 @@ func abstractConnDecodeError2Test(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Equal(t, ConnectionClose, toError(err).Code())
 	})
 
 	pkt, err := conn2.Receive()
@@ -134,7 +134,7 @@ func abstractConnDecodeError3Test(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Equal(t, ConnectionClose, toError(err).Code())
 	})
 
 	pkt, err := conn2.Receive()
@@ -152,7 +152,7 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Equal(t, ConnectionClose, toError(err).Code())
 
 	err = conn2.Send(packet.NewConnectPacket())
 	assert.Equal(t, NetworkError, toError(err).Code())
@@ -202,7 +202,7 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Equal(t, ConnectionClose, toError(err).Code())
 
 	<-done
 }
@@ -218,7 +218,7 @@ func abstractConnCloseAfterCloseTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, ExpectedClose, toError(err).Code())
+	assert.Equal(t, ConnectionClose, toError(err).Code())
 
 	<-done
 }

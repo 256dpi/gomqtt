@@ -44,7 +44,7 @@ func abstractServerTest(t *testing.T, protocol string) {
 
 		pkt, err = conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, ExpectedClose, toError(err).Code())
+		assert.Equal(t, ConnectionClose, toError(err).Code())
 	}()
 
 	conn2, err := testDialer.Dial(tp.url(protocol))
