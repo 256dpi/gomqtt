@@ -378,7 +378,7 @@ func (c *Client) processor() error {
 		if err != nil {
 			transportErr, ok := err.(transport.Error)
 
-			if ok && transportErr.Code() == transport.ExpectedClose {
+			if ok && transportErr.Code() == transport.ConnectionClose {
 				if c.state.get() == stateDisconnecting {
 					// connection has been closed because of a clean Disconnect
 					return nil
