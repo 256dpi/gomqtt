@@ -330,3 +330,12 @@ func TestClientInvalidPackets(t *testing.T) {
 	err = c.processPubackAndPubcomp(0)
 	assert.NoError(t, err)
 }
+
+func TestClientStoreError1(t *testing.T) {
+	c := NewClient()
+	c.Store = &errorStore{ reset: true }
+
+	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
+	assert.Error(t, err)
+	assert.Nil(t, connectFuture)
+}
