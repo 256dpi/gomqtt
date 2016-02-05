@@ -15,9 +15,6 @@
 package client
 
 import (
-	"sync"
-	"strings"
-
 	"github.com/gomqtt/packet"
 )
 
@@ -47,79 +44,4 @@ type Store interface {
 
 	// Reset will wipe all packets currently stored.
 	Reset() error
-}
-
-// MemoryStore organizes packets in memory.
-type MemoryStore struct {
-	store map[string]packet.Packet
-	mutex sync.Mutex
-}
-
-// NewMemoryStore returns a new MemoryStore.
-func NewMemoryStore() *MemoryStore {
-	return &MemoryStore{
-		store: make(map[string]packet.Packet),
-	}
-}
-
-// return a string key based on direction and id
-func (s *MemoryStore) key(dir string, id uint16) string {
-	return dir + "-" + string(id)
-}
-
-// Put will store the specified packet in the store.
-func (s *MemoryStore) Put(dir string, pkt packet.Packet) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	id, ok := packet.PacketID(pkt)
-	if ok {
-		s.store[s.key(dir, id)] = pkt
-	}
-
-	return nil
-}
-
-// Get will retrieve and return a packet by its packetId.
-func (s *MemoryStore) Get(dir string, id uint16) (packet.Packet, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	return s.store[s.key(dir, id)], nil
-}
-
-// Del will remove the a packet using its packetId.
-func (s *MemoryStore) Del(dir string, id uint16) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	delete(s.store, s.key(dir, id))
-
-	return nil
-}
-
-// All will return all stored packets.
-func (s *MemoryStore) All(dir string) ([]packet.Packet, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	all := make([]packet.Packet, 0)
-
-	for key, pkt := range s.store {
-		if strings.HasPrefix(key, dir) {
-			all = append(all, pkt)
-		}
-	}
-
-	return all, nil
-}
-
-// Reset will wipe all packets currently stored.
-func (s *MemoryStore) Reset() error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	s.store = make(map[string]packet.Packet)
-
-	return nil
 }

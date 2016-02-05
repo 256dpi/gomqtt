@@ -21,9 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMemoryStore(t *testing.T) {
-	store := NewMemoryStore()
-
+func abstractStoreTest(t *testing.T, store Store) {
 	publish := packet.NewPublishPacket()
 	publish.PacketID = 1
 
