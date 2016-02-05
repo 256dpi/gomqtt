@@ -23,6 +23,7 @@ import (
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
+	"github.com/gomqtt/session"
 	"gopkg.in/tomb.v2"
 )
 
@@ -68,7 +69,7 @@ type Logger func(string)
 type Client struct {
 	conn transport.Conn
 
-	Store    Store
+	Session  session.Session
 	Callback Callback
 	Logger   Logger
 
@@ -82,10 +83,10 @@ type Client struct {
 	mutex sync.Mutex
 }
 
-// NewClient returns a new client.
+// NewClient returns a new client that by default uses a fresh MemorySession.
 func NewClient() *Client {
 	return &Client{
-		Store:       NewMemoryStore(),
+		Session:     session.NewMemorySession(),
 		state:       newState(),
 		counter:     newCounter(),
 		futureStore: newFutureStore(),
@@ -149,7 +150,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 
 	// reset store
 	if c.clean {
-		err = c.Store.Reset()
+		err = c.Session.Reset()
 		if err != nil {
 			return nil, c.cleanup(err, true)
 		}
@@ -458,7 +459,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	connectFuture.complete()
 
 	// retrieve stored packets
-	packets, err := c.Store.All(Outgoing)
+	packets, err := c.Session.AllPackets(session.Outgoing)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -477,7 +478,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 // handle an incoming SubackPacket
 func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
-	c.Store.Del(Outgoing, suback.PacketID)
+	c.Session.DeletePacket(session.Outgoing, suback.PacketID)
 
 	// get future
 	subscribeFuture, ok := c.futureStore.get(suback.PacketID).(*SubscribeFuture)
@@ -498,7 +499,7 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 // handle an incoming UnsubackPacket
 func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
-	c.Store.Del(Outgoing, unsuback.PacketID)
+	c.Session.DeletePacket(session.Outgoing, unsuback.PacketID)
 
 	// get future
 	unsubscribeFuture, ok := c.futureStore.get(unsuback.PacketID).(*UnsubscribeFuture)
@@ -530,7 +531,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 	if publish.QOS == 2 {
 		// store packet
-		err := c.Store.Put(Incoming, publish)
+		err := c.Session.SavePacket(session.Incoming, publish)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -556,7 +557,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
-	c.Store.Del(Outgoing, packetID)
+	c.Session.DeletePacket(session.Outgoing, packetID)
 
 	// get future
 	publishFuture, ok := c.futureStore.get(packetID).(*PublishFuture)
@@ -591,7 +592,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
-	pkt, err := c.Store.Get(Incoming, packetID)
+	pkt, err := c.Session.LookupPacket(session.Incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -612,7 +613,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// remove packet from store
-	err = c.Store.Del(Incoming, packetID)
+	err = c.Session.DeletePacket(session.Incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -664,7 +665,7 @@ func (c *Client) send(pkt packet.Packet, store bool) error {
 
 	// store packet
 	if store {
-		err := c.Store.Put(Outgoing, pkt)
+		err := c.Session.SavePacket(session.Outgoing, pkt)
 		if err != nil {
 			return err
 		}
@@ -712,7 +713,7 @@ func (c *Client) cleanup(err error, close bool) error {
 
 	// reset store
 	if c.clean {
-		_err := c.Store.Reset()
+		_err := c.Session.Reset()
 		if err == nil {
 			err = _err
 		}

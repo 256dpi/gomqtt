@@ -21,6 +21,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/session"
 )
 
 func testOptions() *Options {
@@ -33,8 +34,8 @@ func errorCallback(t *testing.T) func(*Message, error) {
 	}
 }
 
-type errorStore struct {
-	MemoryStore
+type errorSession struct {
+	session.MemorySession
 
 	put   bool
 	get   bool
@@ -43,42 +44,42 @@ type errorStore struct {
 	reset bool
 }
 
-func (s *errorStore) Put(dir string, pkt packet.Packet) error {
+func (s *errorSession) SavePacket(direction string, pkt packet.Packet) error {
 	if s.put {
 		return errors.New("error")
 	}
 
-	return s.MemoryStore.Put(dir, pkt)
+	return s.MemorySession.SavePacket(direction, pkt)
 }
 
-func (s *errorStore) Get(dir string, id uint16) (packet.Packet, error) {
+func (s *errorSession) LookupPacket(direction string, id uint16) (packet.Packet, error) {
 	if s.get {
 		return nil, errors.New("error")
 	}
 
-	return s.MemoryStore.Get(dir, id)
+	return s.MemorySession.LookupPacket(direction, id)
 }
 
-func (s *errorStore) Del(dir string, id uint16) error {
+func (s *errorSession) DeletePacket(direction string, id uint16) error {
 	if s.del {
 		return errors.New("error")
 	}
 
-	return s.MemoryStore.Del(dir, id)
+	return s.MemorySession.DeletePacket(direction, id)
 }
 
-func (s *errorStore) All(dir string) ([]packet.Packet, error) {
+func (s *errorSession) AllPackets(direction string) ([]packet.Packet, error) {
 	if s.all {
 		return nil, errors.New("error")
 	}
 
-	return s.MemoryStore.All(dir)
+	return s.MemorySession.AllPackets(direction)
 }
 
-func (s *errorStore) Reset() error {
+func (s *errorSession) Reset() error {
 	if s.reset {
 		return errors.New("error")
 	}
 
-	return s.MemoryStore.Reset()
+	return s.MemorySession.Reset()
 }

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/session"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -162,11 +163,11 @@ func abstractPublishSubscribeTest(t *testing.T, qos byte) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	in, err := c.Store.All(Incoming)
+	in, err := c.Session.AllPackets(session.Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(in))
 
-	out, err := c.Store.All(Outgoing)
+	out, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(out))
 }
@@ -304,7 +305,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	err = c.Disconnect(10 * time.Second)
 	assert.NoError(t, err)
 
-	pkts, err := c.Store.All(Outgoing)
+	pkts, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
 }
@@ -333,7 +334,7 @@ func TestClientInvalidPackets(t *testing.T) {
 
 func TestClientStoreError1(t *testing.T) {
 	c := NewClient()
-	c.Store = &errorStore{ reset: true }
+	c.Session = &errorSession{ reset: true }
 
 	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.Error(t, err)
