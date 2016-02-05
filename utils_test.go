@@ -84,6 +84,7 @@ func toError(err error) Error {
 	return nil
 }
 
+// returns a client-ish and server-ish pair of connections
 func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 	done := make(chan struct{})
 	tp := newTestPort()
