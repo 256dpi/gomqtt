@@ -22,37 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func abstractConnTestPreparer(protocol string, handler func(Conn)) (Conn, chan struct{}) {
-	done := make(chan struct{})
-	tp := newTestPort()
-
-	server, err := testLauncher.Launch(tp.url(protocol))
-	if err != nil {
-		panic(err)
-	}
-
-	go func() {
-		conn, err := server.Accept()
-		if err != nil {
-			panic(err)
-		}
-
-		handler(conn)
-
-		server.Close()
-		close(done)
-	}()
-
-	conn, err := testDialer.Dial(tp.url(protocol))
-	if err != nil {
-		panic(err)
-	}
-
-	return conn, done
-}
-
 func abstractConnConnectTest(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
@@ -79,7 +50,7 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 }
 
 func abstractConnCloseTest(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		err := conn1.Close()
 		assert.NoError(t, err)
 	})
@@ -92,7 +63,7 @@ func abstractConnCloseTest(t *testing.T, protocol string) {
 }
 
 func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt := packet.NewConnackPacket()
 		pkt.ReturnCode = 11 // <- invalid return code
 
@@ -108,7 +79,7 @@ func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
 }
 
 func abstractConnDecodeError1Test(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		buf := []byte{0x00, 0x00} // <- too small
 
 		if netConn, ok := conn1.(*NetConn); ok {
@@ -130,7 +101,7 @@ func abstractConnDecodeError1Test(t *testing.T, protocol string) {
 }
 
 func abstractConnDecodeError2Test(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		buf := []byte{0x10, 0xff, 0xff, 0xff, 0x80} // <- too long
 
 		if netConn, ok := conn1.(*NetConn); ok {
@@ -152,7 +123,7 @@ func abstractConnDecodeError2Test(t *testing.T, protocol string) {
 }
 
 func abstractConnDecodeError3Test(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		buf := []byte{0x20, 0x02, 0x00, 0x06} // <- invalid packet
 
 		if netConn, ok := conn1.(*NetConn); ok {
@@ -174,7 +145,7 @@ func abstractConnDecodeError3Test(t *testing.T, protocol string) {
 }
 
 func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		err := conn1.Close()
 		assert.NoError(t, err)
 	})
@@ -190,7 +161,7 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 }
 
 func abstractConnCountersTest(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
 		assert.NoError(t, err)
 		assert.Equal(t, int64(pkt.Len()), conn1.BytesRead())
@@ -218,7 +189,7 @@ func abstractConnCountersTest(t *testing.T, protocol string) {
 }
 
 func abstractConnReadLimitTest(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		conn1.SetReadLimit(1)
 
 		pkt, err := conn1.Receive()
@@ -237,7 +208,7 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 }
 
 func abstractConnCloseAfterCloseTest(t *testing.T, protocol string) {
-	conn2, done := abstractConnTestPreparer(protocol, func(conn1 Conn) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		err := conn1.Close()
 		assert.NoError(t, err)
 

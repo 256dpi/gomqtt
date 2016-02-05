@@ -83,3 +83,32 @@ func toError(err error) Error {
 
 	return nil
 }
+
+func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
+	done := make(chan struct{})
+	tp := newTestPort()
+
+	server, err := testLauncher.Launch(tp.url(protocol))
+	if err != nil {
+		panic(err)
+	}
+
+	go func() {
+		conn, err := server.Accept()
+		if err != nil {
+			panic(err)
+		}
+
+		handler(conn)
+
+		server.Close()
+		close(done)
+	}()
+
+	conn, err := testDialer.Dial(tp.url(protocol))
+	if err != nil {
+		panic(err)
+	}
+
+	return conn, done
+}

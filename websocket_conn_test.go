@@ -61,7 +61,7 @@ func TestWebSocketConnCloseAfterClose(t *testing.T) {
 }
 
 func TestWebSocketBadFrameError(t *testing.T) {
-	conn2, done := abstractConnTestPreparer("ws", func(conn1 Conn) {
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // <- bad frame
 
 		if webSocketConn, ok := conn1.(*WebSocketConn); ok {

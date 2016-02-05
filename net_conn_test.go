@@ -62,7 +62,7 @@ func TestNetConnCloseAfterClose(t *testing.T) {
 }
 
 func TestNetConnCloseWhileReadError(t *testing.T) {
-	conn2, done := abstractConnTestPreparer("tcp", func(conn1 Conn) {
+	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublishPacket()
 		pkt.Topic = []byte("foo/bar/baz")
 		buf := make([]byte, pkt.Len())
@@ -84,7 +84,7 @@ func TestNetConnCloseWhileReadError(t *testing.T) {
 }
 
 func TestNetConnCloseWhileDetectError(t *testing.T) {
-	conn2, done := abstractConnTestPreparer("tcp", func(conn1 Conn) {
+	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublishPacket()
 		pkt.Topic = []byte("foo/bar/baz")
 		buf := make([]byte, pkt.Len())
