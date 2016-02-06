@@ -209,8 +209,6 @@ func TestClientKeepAlive(t *testing.T) {
 		Send(pingresp).
 		Receive(pingreq).
 		Send(pingresp).
-		Receive(pingreq).
-		Send(pingresp).
 		Receive(disconnectPacket()).
 		Close()
 
@@ -239,13 +237,13 @@ func TestClientKeepAlive(t *testing.T) {
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
-	<-time.After(350 * time.Millisecond)
+	<-time.After(250 * time.Millisecond)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	assert.Equal(t, int32(3), atomic.LoadInt32(&reqCounter))
-	assert.Equal(t, int32(3), atomic.LoadInt32(&respCounter))
+	assert.Equal(t, int32(2), atomic.LoadInt32(&reqCounter))
+	assert.Equal(t, int32(2), atomic.LoadInt32(&respCounter))
 
 	<-done
 }
