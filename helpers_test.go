@@ -22,61 +22,79 @@ import (
 )
 
 func TestFutureStore(t *testing.T) {
-	f := &ConnectFuture{}
+	future := &ConnectFuture{}
 
-	s := newFutureStore()
-	assert.Equal(t, 0, len(s.all()))
+	store := newFutureStore()
+	assert.Equal(t, 0, len(store.all()))
 
-	s.put(1, f)
-	assert.Equal(t, f, s.get(1))
-	assert.Equal(t, 1, len(s.all()))
+	store.put(1, future)
+	assert.Equal(t, future, store.get(1))
+	assert.Equal(t, 1, len(store.all()))
 
-	s.del(1)
-	assert.Nil(t, s.get(1))
-	assert.Equal(t, 0, len(s.all()))
+	store.del(1)
+	assert.Nil(t, store.get(1))
+	assert.Equal(t, 0, len(store.all()))
 }
 
 func TestFutureStoreAwait(t *testing.T) {
-	f := &ConnectFuture{}
-	f.initialize()
+	future := &ConnectFuture{}
+	future.initialize()
 
-	s := newFutureStore()
-	assert.Equal(t, 0, len(s.all()))
+	store := newFutureStore()
+	assert.Equal(t, 0, len(store.all()))
 
-	s.put(1, f)
-	assert.Equal(t, f, s.get(1))
-	assert.Equal(t, 1, len(s.all()))
+	store.put(1, future)
+	assert.Equal(t, future, store.get(1))
+	assert.Equal(t, 1, len(store.all()))
 
 	go func() {
 		time.Sleep(1 * time.Millisecond)
-		f.complete()
-		s.del(1)
+		future.complete()
+		store.del(1)
 	}()
 
-	err := s.await(10 * time.Millisecond)
+	err := store.await(10 * time.Millisecond)
 	assert.NoError(t, err)
 }
 
 func TestFutureStoreAwaitTimeout(t *testing.T) {
-	f := &ConnectFuture{}
-	f.initialize()
+	future := &ConnectFuture{}
+	future.initialize()
 
-	s := newFutureStore()
-	assert.Equal(t, 0, len(s.all()))
+	store := newFutureStore()
+	assert.Equal(t, 0, len(store.all()))
 
-	s.put(1, f)
-	assert.Equal(t, f, s.get(1))
-	assert.Equal(t, 1, len(s.all()))
+	store.put(1, future)
+	assert.Equal(t, future, store.get(1))
+	assert.Equal(t, 1, len(store.all()))
 
-	err := s.await(10 * time.Millisecond)
+	err := store.await(10 * time.Millisecond)
 	assert.Equal(t, ErrTimeoutExceeded, err)
 }
 
 func TestCounter(t *testing.T) {
-	c := newCounter()
-	assert.Equal(t, uint16(0), c.next())
+	counter := newCounter()
+	assert.Equal(t, uint16(0), counter.next())
 
-	c.id = math.MaxUint16
-	assert.Equal(t, uint16(math.MaxUint16), c.next())
-	assert.Equal(t, uint16(0), c.next())
+	counter.id = math.MaxUint16
+	assert.Equal(t, uint16(math.MaxUint16), counter.next())
+	assert.Equal(t, uint16(0), counter.next())
+}
+
+func TestTracker(t *testing.T) {
+	tracker := newTracker(10 * time.Millisecond)
+	assert.False(t, tracker.pending())
+	assert.True(t, tracker.window() > 0)
+
+	time.Sleep(10 * time.Millisecond)
+	assert.True(t, tracker.window() <= 0)
+
+	tracker.reset()
+	assert.True(t, tracker.window() > 0)
+
+	tracker.ping()
+	assert.True(t, tracker.pending())
+
+	tracker.pong()
+	assert.False(t, tracker.pending())
 }
