@@ -15,18 +15,17 @@
 package client
 
 import (
+	"fmt"
+	"net"
 	"testing"
 	"errors"
 
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
+	"github.com/gomqtt/flow"
+	"github.com/gomqtt/transport"
 )
-
-func testOptions() *Options {
-	return NewOptions("test/" + uuid.NewV4().String())
-}
 
 func errorCallback(t *testing.T) func(*Message, error) {
 	return func(msg *Message, err error) {
@@ -82,4 +81,77 @@ func (s *testSession) Reset() error {
 	}
 
 	return s.MemorySession.Reset()
+}
+
+// the testPort
+type testPort int
+
+// returns a new testPort
+func newTestPort() *testPort {
+	// taken from: https://github.com/phayes/freeport/blob/master/freeport.go
+
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
+	defer l.Close()
+
+	p := testPort(l.Addr().(*net.TCPAddr).Port)
+	return &p
+}
+
+// generates the url for that testPort
+func (p *testPort) url(protocol string) string {
+	return fmt.Sprintf("%s://localhost:%d/", protocol, int(*p))
+}
+
+// generates a protected url for that testPort
+func (p *testPort) protectedURL(protocol, user, password string) string {
+	return fmt.Sprintf("%s://%s:%s@localhost:%d/", protocol, user, password, int(*p))
+}
+
+func fakeBroker(t *testing.T, testFlow *flow.Flow) (chan struct{}, *testPort) {
+	tp := newTestPort()
+	done := make(chan struct{})
+
+	server, err := transport.Launch(tp.url("tcp"))
+	assert.NoError(t, err)
+
+	go func(){
+		conn, err := server.Accept()
+		assert.NoError(t, err)
+
+		testFlow.Test(t, conn)
+
+		err = server.Close()
+		assert.NoError(t, err)
+
+		close(done)
+	}()
+
+	return done, tp
+}
+
+func connectPacket() *packet.ConnectPacket {
+	pkt := packet.NewConnectPacket()
+	pkt.ClientID = []byte("gomqtt/client")
+	pkt.CleanSession = true
+	pkt.KeepAlive = 30
+	return pkt
+}
+
+func connackPacket(returnCode packet.ConnackCode) *packet.ConnackPacket {
+	pkt := packet.NewConnackPacket()
+	pkt.ReturnCode = returnCode
+	pkt.SessionPresent = false
+	return pkt
+}
+
+func disconnectPacket() *packet.DisconnectPacket {
+	return packet.NewDisconnectPacket()
 }
