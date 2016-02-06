@@ -334,7 +334,7 @@ func TestClientInvalidPackets(t *testing.T) {
 
 func TestClientStoreError1(t *testing.T) {
 	c := NewClient()
-	c.Session = &errorSession{ reset: true }
+	c.Session = &testSession{ resetError: true }
 
 	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
 	assert.Error(t, err)

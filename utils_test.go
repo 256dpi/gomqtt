@@ -34,50 +34,50 @@ func errorCallback(t *testing.T) func(*Message, error) {
 	}
 }
 
-type errorSession struct {
+type testSession struct {
 	session.MemorySession
 
-	put   bool
-	get   bool
-	del   bool
-	all   bool
-	reset bool
+	saveError   bool
+	lookupError bool
+	deleteError bool
+	allError    bool
+	resetError  bool
 }
 
-func (s *errorSession) SavePacket(direction string, pkt packet.Packet) error {
-	if s.put {
+func (s *testSession) SavePacket(direction string, pkt packet.Packet) error {
+	if s.saveError {
 		return errors.New("error")
 	}
 
 	return s.MemorySession.SavePacket(direction, pkt)
 }
 
-func (s *errorSession) LookupPacket(direction string, id uint16) (packet.Packet, error) {
-	if s.get {
+func (s *testSession) LookupPacket(direction string, id uint16) (packet.Packet, error) {
+	if s.lookupError {
 		return nil, errors.New("error")
 	}
 
 	return s.MemorySession.LookupPacket(direction, id)
 }
 
-func (s *errorSession) DeletePacket(direction string, id uint16) error {
-	if s.del {
+func (s *testSession) DeletePacket(direction string, id uint16) error {
+	if s.deleteError {
 		return errors.New("error")
 	}
 
 	return s.MemorySession.DeletePacket(direction, id)
 }
 
-func (s *errorSession) AllPackets(direction string) ([]packet.Packet, error) {
-	if s.all {
+func (s *testSession) AllPackets(direction string) ([]packet.Packet, error) {
+	if s.allError {
 		return nil, errors.New("error")
 	}
 
 	return s.MemorySession.AllPackets(direction)
 }
 
-func (s *errorSession) Reset() error {
-	if s.reset {
+func (s *testSession) Reset() error {
+	if s.resetError {
 		return errors.New("error")
 	}
 
