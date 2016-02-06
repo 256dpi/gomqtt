@@ -20,10 +20,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gomqtt/flow"
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
 	"github.com/stretchr/testify/assert"
-	"github.com/gomqtt/flow"
 )
 
 func TestClientConnectError1(t *testing.T) {
@@ -221,10 +221,10 @@ func TestClientKeepAlive(t *testing.T) {
 
 func TestClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
-	subscribe.PacketID = 1
 	subscribe.Subscriptions = []packet.Subscription{
-		{ Topic: []byte("test") },
+		{Topic: []byte("test")},
 	}
+	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = []byte{0}
@@ -288,10 +288,10 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 
 func TestClientPublishSubscribeQOS1(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
-	subscribe.PacketID = 1
 	subscribe.Subscriptions = []packet.Subscription{
-		{ Topic: []byte("test"), QOS: 1 },
+		{Topic: []byte("test"), QOS: 1},
 	}
+	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = []byte{1}

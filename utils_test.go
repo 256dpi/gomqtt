@@ -15,16 +15,16 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"testing"
-	"errors"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/gomqtt/flow"
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
-	"github.com/gomqtt/flow"
 	"github.com/gomqtt/transport"
+	"github.com/stretchr/testify/assert"
 )
 
 func errorCallback(t *testing.T) func(*Message, error) {
@@ -122,7 +122,7 @@ func fakeBroker(t *testing.T, testFlow *flow.Flow) (chan struct{}, *testPort) {
 	server, err := transport.Launch(tp.url("tcp"))
 	assert.NoError(t, err)
 
-	go func(){
+	go func() {
 		conn, err := server.Accept()
 		assert.NoError(t, err)
 

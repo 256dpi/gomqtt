@@ -22,8 +22,8 @@ import (
 	"time"
 
 	"github.com/gomqtt/packet"
-	"github.com/gomqtt/transport"
 	"github.com/gomqtt/session"
+	"github.com/gomqtt/transport"
 	"gopkg.in/tomb.v2"
 )
 
