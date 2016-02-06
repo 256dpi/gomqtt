@@ -695,14 +695,14 @@ func TestClientSessionResumption(t *testing.T) {
 	puback2.PacketID = 3
 
 	broker := flow.New().
-	Receive(connect).
-	Send(connackPacket(packet.ConnectionAccepted)).
-	Receive(publish1).
-	Send(puback1).
-	Receive(publish2).
-	Send(puback2).
-	Receive(disconnectPacket()).
-	Close()
+		Receive(connect).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(publish1).
+		Send(puback1).
+		Receive(publish2).
+		Send(puback2).
+		Receive(disconnectPacket()).
+		Close()
 
 	done, tp := fakeBroker(t, broker)
 
