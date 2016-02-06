@@ -608,28 +608,36 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	assert.Equal(t, 0, len(pkts))
 }
 
-//func TestClientInvalidPackets(t *testing.T) {
-//	c := NewClient()
-//
-//	// state not connecting
-//	err := c.processConnack(packet.NewConnackPacket())
-//	assert.NoError(t, err)
-//
-//	c.state.set(stateConnecting)
-//
-//	err = c.processConnack(packet.NewConnackPacket())
-//	assert.NoError(t, err)
-//
-//	err = c.processSuback(packet.NewSubackPacket())
-//	assert.NoError(t, err)
-//
-//	err = c.processUnsuback(packet.NewUnsubackPacket())
-//	assert.NoError(t, err)
-//
-//	err = c.processPubackAndPubcomp(0)
-//	assert.NoError(t, err)
-//}
-//
+func TestClientInvalidPackets(t *testing.T) {
+	c := NewClient()
+
+	// state not connecting
+	err := c.processConnack(packet.NewConnackPacket())
+	assert.NoError(t, err)
+
+	c.state.set(stateConnecting)
+
+	// missing future
+	err = c.processConnack(packet.NewConnackPacket())
+	assert.NoError(t, err)
+
+	// missing future
+	err = c.processSuback(packet.NewSubackPacket())
+	assert.NoError(t, err)
+
+	// missing future
+	err = c.processUnsuback(packet.NewUnsubackPacket())
+	assert.NoError(t, err)
+
+	// missing future
+	err = c.processPubrel(0)
+	assert.NoError(t, err)
+
+	// missing future
+	err = c.processPubackAndPubcomp(0)
+	assert.NoError(t, err)
+}
+
 //func TestClientStoreError1(t *testing.T) {
 //	c := NewClient()
 //	c.Session = &testSession{ resetError: true }
