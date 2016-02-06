@@ -1,8 +1,9 @@
-test:
-  pre:
+dependencies:
+  post:
     - go get github.com/axw/gocov/gocov
     - go get github.com/mattn/goveralls
-    - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+    - go get github.com/golang/tools/cmd/cover
+test:
   override:
     - go test -v -cover -race -coverprofile=/home/ubuntu/coverage.out
   post:
