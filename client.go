@@ -79,8 +79,9 @@ type Client struct {
 	futureStore *futureStore
 	clean       bool
 
-	tomb  tomb.Tomb
-	mutex sync.Mutex
+	tomb   tomb.Tomb
+	mutex  sync.Mutex
+	finish sync.Once
 }
 
 // NewClient returns a new client that by default uses a fresh MemorySession.
@@ -724,11 +725,13 @@ func (c *Client) cleanup(err error, close bool) error {
 
 // used for closing and cleaning up from inside internal goroutines
 func (c *Client) die(err error, close bool) error {
-	err = c.cleanup(err, close)
+	c.finish.Do(func(){
+		err = c.cleanup(err, close)
 
-	if c.Callback != nil {
-		c.Callback(nil, err)
-	}
+		if c.Callback != nil {
+			c.Callback(nil, err)
+		}
+	})
 
 	return err
 }
