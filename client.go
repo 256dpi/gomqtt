@@ -730,5 +730,5 @@ func (c *Client) die(err error, close bool) error {
 		c.Callback(nil, err)
 	}
 
-	return nil
+	return err
 }
