@@ -69,12 +69,13 @@ func TestClientConnectError4(t *testing.T) {
 }
 
 func TestClientConnect(t *testing.T) {
-	done, tp := fakeBroker(t, flow.New(
-		flow.Receive(connectPacket()),
-		flow.Send(connackPacket(packet.ConnectionAccepted)),
-		flow.Receive(disconnectPacket()),
-		flow.Close(),
-	))
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
 
 	c := NewClient()
 	c.Callback = errorCallback(t)
@@ -92,12 +93,13 @@ func TestClientConnect(t *testing.T) {
 }
 
 func TestClientConnectAfterConnect(t *testing.T) {
-	done, tp := fakeBroker(t, flow.New(
-		flow.Receive(connectPacket()),
-		flow.Send(connackPacket(packet.ConnectionAccepted)),
-		flow.Receive(disconnectPacket()),
-		flow.Close(),
-	))
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
 
 	c := NewClient()
 	c.Callback = errorCallback(t)
@@ -123,12 +125,13 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	connect.Username = []byte("test")
 	connect.Password = []byte("test")
 
-	done, tp := fakeBroker(t, flow.New(
-		flow.Receive(connect),
-		flow.Send(connackPacket(packet.ConnectionAccepted)),
-		flow.Receive(disconnectPacket()),
-		flow.Close(),
-	))
+	broker := flow.New().
+		Receive(connect).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
 
 	c := NewClient()
 	c.Callback = errorCallback(t)
@@ -172,18 +175,19 @@ func TestClientKeepAlive(t *testing.T) {
 	pingreq := packet.NewPingreqPacket()
 	pingresp := packet.NewPingrespPacket()
 
-	done, tp := fakeBroker(t, flow.New(
-		flow.Receive(connect),
-		flow.Send(connackPacket(packet.ConnectionAccepted)),
-		flow.Receive(pingreq),
-		flow.Send(pingresp),
-		flow.Receive(pingreq),
-		flow.Send(pingresp),
-		flow.Receive(pingreq),
-		flow.Send(pingresp),
-		flow.Receive(disconnectPacket()),
-		flow.Close(),
-	))
+	broker := flow.New().
+		Receive(connect).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(pingreq).
+		Send(pingresp).
+		Receive(pingreq).
+		Send(pingresp).
+		Receive(pingreq).
+		Send(pingresp).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
 
 	c := NewClient()
 	c.Callback = errorCallback(t)
@@ -234,16 +238,17 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	publish.Topic = []byte("test")
 	publish.Payload = []byte("test")
 
-	done, tp := fakeBroker(t, flow.New(
-		flow.Receive(connectPacket()),
-		flow.Send(connackPacket(packet.ConnectionAccepted)),
-		flow.Receive(subscribe),
-		flow.Send(suback),
-		flow.Receive(publish),
-		flow.Send(publish),
-		flow.Receive(disconnectPacket()),
-		flow.Close(),
-	))
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(publish).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -306,18 +311,19 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	puback := packet.NewPubackPacket()
 	puback.PacketID = 2
 
-	done, tp := fakeBroker(t, flow.New(
-		flow.Receive(connectPacket()),
-		flow.Send(connackPacket(packet.ConnectionAccepted)),
-		flow.Receive(subscribe),
-		flow.Send(suback),
-		flow.Receive(publish),
-		flow.Send(puback),
-		flow.Send(publish),
-		flow.Receive(puback),
-		flow.Receive(disconnectPacket()),
-		flow.Close(),
-	))
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(puback).
+		Send(publish).
+		Receive(puback).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
