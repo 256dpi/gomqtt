@@ -25,11 +25,15 @@ type Conn interface {
 	// Send will write the packet to the underlying connection. It will return
 	// an Error if there was an error while encoding or writing to the
 	// underlying connection.
+	//
+	// Note: Only one goroutine can Send at the same time.
 	Send(packet.Packet) error
 
 	// Receive will read from the underlying connection and return a fully read
 	// packet. It will return an Error if there was an error while decoding or
 	// reading from the underlying connection.
+	//
+	// Note: Only one goroutine can Receive at the same time.
 	Receive() (packet.Packet, error)
 
 	// Close will close the underlying connection and cleanup resources. It will

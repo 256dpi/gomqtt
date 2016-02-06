@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"io"
 	"net"
+	"sync"
 	"sync/atomic"
 
 	"github.com/gomqtt/packet"
@@ -27,6 +28,9 @@ import (
 type NetConn struct {
 	conn   net.Conn
 	reader *bufio.Reader
+
+	sMutex sync.Mutex
+	rMutex sync.Mutex
 
 	writeCounter int64
 	readCounter  int64
@@ -44,7 +48,12 @@ func NewNetConn(conn net.Conn) *NetConn {
 // Send will write the packet to the underlying connection. It will return
 // an Error if there was an error while encoding or writing to the
 // underlying connection.
+//
+// Note: Only one goroutine can Send at the same time.
 func (c *NetConn) Send(pkt packet.Packet) error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
 	// allocate buffer
 	buf := make([]byte, pkt.Len())
 
@@ -71,7 +80,12 @@ func (c *NetConn) Send(pkt packet.Packet) error {
 // Receive will read from the underlying connection and return a fully read
 // packet. It will return an Error if there was an error while decoding or
 // reading from the underlying connection.
+//
+// Note: Only one goroutine can Receive at the same time.
 func (c *NetConn) Receive() (packet.Packet, error) {
+	c.rMutex.Lock()
+	defer c.rMutex.Unlock()
+
 	// initial detection length
 	detectionLength := 2
 

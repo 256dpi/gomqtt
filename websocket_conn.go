@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"sync"
 	"sync/atomic"
 
 	"github.com/gomqtt/packet"
@@ -24,6 +25,9 @@ import (
 // The WebSocketConn wraps a gorilla WebSocket.Conn.
 type WebSocketConn struct {
 	conn *websocket.Conn
+
+	sMutex sync.Mutex
+	rMutex sync.Mutex
 
 	writeCounter int64
 	readCounter  int64
@@ -39,7 +43,12 @@ func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 // Send will write the packet to the underlying connection. It will return
 // an Error if there was an error while encoding or writing to the
 // underlying connection.
+//
+// Note: Only one goroutine can Send at the same time.
 func (c *WebSocketConn) Send(pkt packet.Packet) error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
 	// allocate buffer
 	buf := make([]byte, pkt.Len())
 
@@ -66,7 +75,12 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 // Receive will read from the underlying connection and return a fully read
 // packet. It will return an Error if there was an error while decoding or
 // reading from the underlying connection.
+//
+// Note: Only one goroutine can Receive at the same time.
 func (c *WebSocketConn) Receive() (packet.Packet, error) {
+	c.rMutex.Lock()
+	defer c.rMutex.Unlock()
+
 	// read next message from connection
 	_, buf, err := c.conn.ReadMessage()
 
