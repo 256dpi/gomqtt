@@ -735,6 +735,33 @@ func TestClientSessionResumption(t *testing.T) {
 	assert.Equal(t, 0, len(pkts))
 }
 
+func TestClientUnexpectedClose(t *testing.T) {
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	wait := make(chan struct{})
+
+	c := NewClient()
+	c.Callback = func(msg *Message, err error){
+		assert.Equal(t, ErrUnexpectedClose, err)
+		assert.Nil(t, msg)
+		close(wait)
+	}
+
+	future, err := c.Connect(tp.url("tcp"), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
+
+	<-wait
+	<-done
+}
+
 //func TestClientStoreError1(t *testing.T) {
 //	c := NewClient()
 //	c.Session = &testSession{ resetError: true }
