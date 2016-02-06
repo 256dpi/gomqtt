@@ -366,76 +366,221 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	assert.Equal(t, 0, len(out))
 }
 
-//func TestClientUnsubscribe(t *testing.T) {
-//	c := NewClient()
-//	c.Callback = errorCallback(t)
-//	done := make(chan struct{})
-//
-//	c.Callback = func(msg *Message, err error) {
-//		assert.NoError(t, err)
-//		assert.Equal(t, "test", msg.Topic)
-//		assert.Equal(t, []byte("test"), msg.Payload)
-//
-//		close(done)
-//	}
-//
-//	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
-//	assert.NoError(t, err)
-//	assert.NoError(t, connectFuture.Wait())
-//	assert.False(t, connectFuture.SessionPresent)
-//	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-//
-//	subscribeFuture, err := c.Subscribe("foo", 0)
-//	assert.NoError(t, err)
-//	assert.NoError(t, subscribeFuture.Wait())
-//	assert.Equal(t, []byte{0}, subscribeFuture.ReturnCodes)
-//
-//	unsubscribeFuture, err := c.Unsubscribe("foo")
-//	assert.NoError(t, err)
-//	assert.NoError(t, unsubscribeFuture.Wait())
-//
-//	subscribeFuture, err = c.Subscribe("test", 0)
-//	assert.NoError(t, err)
-//	assert.NoError(t, subscribeFuture.Wait())
-//	assert.Equal(t, []byte{0}, subscribeFuture.ReturnCodes)
-//
-//	publishFuture, err := c.Publish("foo", []byte("test"), 0, false)
-//	assert.NoError(t, err)
-//	assert.NoError(t, publishFuture.Wait())
-//
-//	publishFuture, err = c.Publish("test", []byte("test"), 0, false)
-//	assert.NoError(t, err)
-//	assert.NoError(t, publishFuture.Wait())
-//
-//	<-done
-//	err = c.Disconnect()
-//	assert.NoError(t, err)
-//}
-//
-//func TestClientDisconnectWithTimeout(t *testing.T) {
-//	c := NewClient()
-//	c.Callback = errorCallback(t)
-//
-//	connectFuture, err := c.Connect("mqtt://localhost:1883", testOptions())
-//	assert.NoError(t, err)
-//	assert.NoError(t, connectFuture.Wait())
-//	assert.False(t, connectFuture.SessionPresent)
-//	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-//
-//	for i:=0; i<10; i++ {
-//		publishFuture, err := c.Publish("test", []byte("test"), 2, false)
-//		assert.NoError(t, err)
-//		assert.NotNil(t, publishFuture)
-//	}
-//
-//	err = c.Disconnect(10 * time.Second)
-//	assert.NoError(t, err)
-//
-//	pkts, err := c.Session.AllPackets(session.Outgoing)
-//	assert.NoError(t, err)
-//	assert.Equal(t, 0, len(pkts))
-//}
-//
+func TestClientPublishSubscribeQOS2(t *testing.T) {
+	subscribe := packet.NewSubscribePacket()
+	subscribe.Subscriptions = []packet.Subscription{
+		{Topic: []byte("test"), QOS: 2},
+	}
+	subscribe.PacketID = 1
+
+	suback := packet.NewSubackPacket()
+	suback.ReturnCodes = []byte{2}
+	suback.PacketID = 1
+
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte("test")
+	publish.Payload = []byte("test")
+	publish.QOS = 2
+	publish.PacketID = 2
+
+	pubrec := packet.NewPubrecPacket()
+	pubrec.PacketID = 2
+
+	pubrel := packet.NewPubrelPacket()
+	pubrel.PacketID = 2
+
+	pubcomp := packet.NewPubcompPacket()
+	pubcomp.PacketID = 2
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(pubrec).
+		Receive(pubrel).
+		Send(pubcomp).
+		Send(publish).
+		Receive(pubrec).
+		Send(pubrel).
+		Receive(pubcomp).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	wait := make(chan struct{})
+
+	c := NewClient()
+	c.Callback = func(msg *Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		close(wait)
+	}
+
+	future, err := c.Connect(tp.url("tcp"), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
+
+	subscribeFuture, err := c.Subscribe("test", 2)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []byte{2}, subscribeFuture.ReturnCodes)
+
+	publishFuture, err := c.Publish("test", []byte("test"), 2, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+
+	in, err := c.Session.AllPackets(session.Incoming)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(in))
+
+	out, err := c.Session.AllPackets(session.Outgoing)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(out))
+}
+
+func TestClientUnsubscribe(t *testing.T) {
+	unsubscribe := packet.NewUnsubscribePacket()
+	unsubscribe.Topics = [][]byte{[]byte("test")}
+	unsubscribe.PacketID = 1
+
+	unsuback := packet.NewUnsubackPacket()
+	unsuback.PacketID = 1
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(unsubscribe).
+		Send(unsuback).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	future, err := c.Connect(tp.url("tcp"), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
+
+	unsubscribeFuture, err := c.Unsubscribe("test")
+	assert.NoError(t, err)
+	assert.NoError(t, unsubscribeFuture.Wait())
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func TestClientHardDisconnect(t *testing.T) {
+	connect := connectPacket()
+	connect.CleanSession = false
+
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte("test")
+	publish.Payload = []byte("test")
+	publish.QOS = 1
+	publish.PacketID = 1
+
+	broker := flow.New().
+		Receive(connect).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(publish).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	opts := NewOptions("gomqtt/client")
+	opts.CleanSession = false
+
+	connectFuture, err := c.Connect(tp.url("tcp"), opts)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.False(t, connectFuture.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+
+	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
+	assert.NoError(t, err)
+	assert.NotNil(t, publishFuture)
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+
+	pkts, err := c.Session.AllPackets(session.Outgoing)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(pkts))
+}
+
+func TestClientDisconnectWithTimeout(t *testing.T) {
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte("test")
+	publish.Payload = []byte("test")
+	publish.QOS = 1
+	publish.PacketID = 1
+
+	puback := packet.NewPubackPacket()
+	puback.PacketID = 1
+
+	wait := func(){
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(publish).
+		Run(wait).
+		Send(puback).
+		Receive(disconnectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	connectFuture, err := c.Connect(tp.url("tcp"), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.False(t, connectFuture.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+
+	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
+	assert.NoError(t, err)
+	assert.NotNil(t, publishFuture)
+
+	err = c.Disconnect(10 * time.Second)
+	assert.NoError(t, err)
+
+	<-done
+
+	pkts, err := c.Session.AllPackets(session.Outgoing)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(pkts))
+}
+
 //func TestClientInvalidPackets(t *testing.T) {
 //	c := NewClient()
 //
