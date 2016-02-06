@@ -130,6 +130,14 @@ func (c *counter) next() uint16 {
 	return c.id
 }
 
+// resume will continue to count from the provided id
+func (c *counter) resume(id uint16) {
+	c.Lock()
+	defer c.Unlock()
+
+	c.id = id + 1
+}
+
 /* state */
 
 const (

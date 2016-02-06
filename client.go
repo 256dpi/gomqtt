@@ -469,6 +469,12 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 		if err != nil {
 			return c.die(err, false)
 		}
+
+		// resume counter to avoid id conflicts
+		id, ok := packet.PacketID(pkt)
+		if ok {
+			c.counter.resume(id)
+		}
 	}
 
 	return nil
