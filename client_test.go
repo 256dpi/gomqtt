@@ -168,6 +168,33 @@ func TestClientNotConnected(t *testing.T) {
 	assert.Equal(t, ErrNotConnected, err)
 }
 
+func TestClientConnectionDenied(t *testing.T) {
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ErrNotAuthorized)).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	wait := make(chan struct{})
+
+	c := NewClient()
+	c.Callback = func(msg *Message, err error){
+		assert.Equal(t, ErrConnectionDenied, err)
+		assert.Nil(t, msg)
+		close(wait)
+	}
+
+	future, err := c.Connect(tp.url("tcp"), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ErrNotAuthorized, future.ReturnCode)
+
+	<-done
+	<-wait
+}
+
 func TestClientKeepAlive(t *testing.T) {
 	connect := connectPacket()
 	connect.KeepAlive = 0
