@@ -250,6 +250,42 @@ func TestClientKeepAlive(t *testing.T) {
 	<-done
 }
 
+func TestClientKeepAliveTimeout(t *testing.T) {
+	connect := connectPacket()
+	connect.KeepAlive = 0
+
+	pingreq := packet.NewPingreqPacket()
+
+	broker := flow.New().
+		Receive(connect).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(pingreq).
+		End()
+
+	done, tp := fakeBroker(t, broker)
+
+	wait := make(chan struct{})
+
+	c := NewClient()
+	c.Callback = func(msg *Message, err error){
+		assert.Nil(t, msg)
+		assert.Equal(t, ErrMissingPong, err)
+		close(wait)
+	}
+
+	opts := NewOptions("gomqtt/client")
+	opts.KeepAlive = "5ms"
+
+	future, err := c.Connect(tp.url("tcp"), opts)
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
+
+	<-wait
+	<-done
+}
+
 func TestClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{
