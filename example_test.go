@@ -33,7 +33,7 @@ func ExampleClient() {
 		close(done)
 	}
 
-	connectFuture, err := c.Connect("mqtt://localhost:1883", nil)
+	connectFuture, err := c.Connect("mqtt://try:try@broker.shiftr.io", nil)
 	if err != nil {
 		panic(err)
 	}
