@@ -672,6 +672,69 @@ func TestClientInvalidPackets(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestClientSessionResumption(t *testing.T) {
+	connect := connectPacket()
+	connect.CleanSession = false
+
+	publish1 := packet.NewPublishPacket()
+	publish1.Topic = []byte("test")
+	publish1.Payload = []byte("test")
+	publish1.QOS = 1
+	publish1.PacketID = 2
+
+	puback1 := packet.NewPubackPacket()
+	puback1.PacketID = 2
+
+	publish2 := packet.NewPublishPacket()
+	publish2.Topic = []byte("test")
+	publish2.Payload = []byte("test")
+	publish2.QOS = 1
+	publish2.PacketID = 3 // next publish packet should have a higher id
+
+	puback2 := packet.NewPubackPacket()
+	puback2.PacketID = 3
+
+	broker := flow.New().
+	Receive(connect).
+	Send(connackPacket(packet.ConnectionAccepted)).
+	Receive(publish1).
+	Send(puback1).
+	Receive(publish2).
+	Send(puback2).
+	Receive(disconnectPacket()).
+	Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	c := NewClient()
+	c.Session.SavePacket(session.Outgoing, publish1)
+	c.Callback = errorCallback(t)
+
+	opts := NewOptions("gomqtt/client")
+	opts.CleanSession = false
+
+	connectFuture, err := c.Connect(tp.url("tcp"), opts)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.False(t, connectFuture.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+
+	time.Sleep(20 * time.Millisecond)
+
+	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+
+	pkts, err := c.Session.AllPackets(session.Outgoing)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(pkts))
+}
+
 //func TestClientStoreError1(t *testing.T) {
 //	c := NewClient()
 //	c.Session = &testSession{ resetError: true }
