@@ -76,3 +76,48 @@ func ExampleClient() {
 	// Output:
 	// test: test
 }
+
+func ExampleService() {
+	wait := make(chan struct{})
+	done := make(chan struct{})
+
+	options := NewOptions()
+	options.ClientID = "gomqtt/service"
+
+	s := NewService()
+
+	s.Notifier = func(online bool, resumed bool) {
+		fmt.Printf("online: %v\n", online)
+
+		if online {
+			fmt.Printf("resumed: %v\n", resumed)
+		} else {
+			close(done)
+		}
+	}
+
+	s.Handler = func(topic string, payload []byte) {
+		fmt.Printf("%s: %s\n", topic, payload)
+		close(wait)
+	}
+
+	ClearSession("mqtt://try:try@broker.shiftr.io", "gomqtt/service")
+
+	s.Start("mqtt://try:try@broker.shiftr.io", options)
+
+	s.Subscribe("test", 0).Wait()
+
+	s.Publish("test", []byte("test"), 0, false)
+
+	<-wait
+
+	s.Stop()
+
+	<-done
+
+	// Output:
+	// online: true
+	// resumed: false
+	// test: test
+	// online: false
+}
