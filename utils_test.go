@@ -139,7 +139,6 @@ func fakeBroker(t *testing.T, testFlow *flow.Flow) (chan struct{}, *testPort) {
 
 func connectPacket() *packet.ConnectPacket {
 	pkt := packet.NewConnectPacket()
-	pkt.ClientID = []byte("gomqtt/client")
 	pkt.CleanSession = true
 	pkt.KeepAlive = 30
 	return pkt

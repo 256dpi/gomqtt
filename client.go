@@ -107,7 +107,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 
 	// save opts
 	if opts == nil {
-		opts = NewOptions("gomqtt/client")
+		opts = NewOptions()
 	}
 
 	// check client id

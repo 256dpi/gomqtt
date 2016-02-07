@@ -229,7 +229,7 @@ func TestClientKeepAlive(t *testing.T) {
 		}
 	}
 
-	opts := NewOptions("gomqtt/client")
+	opts := NewOptions()
 	opts.KeepAlive = "100ms"
 
 	future, err := c.Connect(tp.url("tcp"), opts)
@@ -273,7 +273,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 		close(wait)
 	}
 
-	opts := NewOptions("gomqtt/client")
+	opts := NewOptions()
 	opts.KeepAlive = "5ms"
 
 	future, err := c.Connect(tp.url("tcp"), opts)
@@ -553,6 +553,7 @@ func TestClientUnsubscribe(t *testing.T) {
 
 func TestClientHardDisconnect(t *testing.T) {
 	connect := connectPacket()
+	connect.ClientID = []byte("test")
 	connect.CleanSession = false
 
 	publish := packet.NewPublishPacket()
@@ -573,7 +574,8 @@ func TestClientHardDisconnect(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
-	opts := NewOptions("gomqtt/client")
+	opts := NewOptions()
+	opts.ClientID = "test"
 	opts.CleanSession = false
 
 	connectFuture, err := c.Connect(tp.url("tcp"), opts)
@@ -676,6 +678,7 @@ func TestClientInvalidPackets(t *testing.T) {
 
 func TestClientSessionResumption(t *testing.T) {
 	connect := connectPacket()
+	connect.ClientID = []byte("test")
 	connect.CleanSession = false
 
 	publish1 := packet.NewPublishPacket()
@@ -712,7 +715,8 @@ func TestClientSessionResumption(t *testing.T) {
 	c.Session.SavePacket(session.Outgoing, publish1)
 	c.Callback = errorCallback(t)
 
-	opts := NewOptions("gomqtt/client")
+	opts := NewOptions()
+	opts.ClientID = "test"
 	opts.CleanSession = false
 
 	connectFuture, err := c.Connect(tp.url("tcp"), opts)

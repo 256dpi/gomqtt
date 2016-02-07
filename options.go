@@ -28,9 +28,8 @@ type Options struct {
 }
 
 // NewOptions will initialize and return new Options.
-func NewOptions(clientID string) *Options {
+func NewOptions() *Options {
 	return &Options{
-		ClientID:     clientID,
 		CleanSession: true,
 		KeepAlive:    "30s",
 	}
