@@ -43,7 +43,7 @@ type Future interface {
 
 type abstractFuture struct {
 	completeChannel chan struct{}
-	cancelChannel  chan struct{}
+	cancelChannel   chan struct{}
 }
 
 func (f *abstractFuture) initialize() {
@@ -72,7 +72,7 @@ func (f *abstractFuture) Wait(timeout ...time.Duration) error {
 }
 
 func (f *abstractFuture) Call(callback func(error), timeout ...time.Duration) {
-	go func(){
+	go func() {
 		callback(f.Wait(timeout...))
 	}()
 }

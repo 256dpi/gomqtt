@@ -107,7 +107,7 @@ func TestAbstractFutureCall(t *testing.T) {
 	f := &abstractFuture{}
 	f.initialize()
 
-	f.Call(func(err error){
+	f.Call(func(err error) {
 		assert.NoError(t, err)
 		close(done)
 	})

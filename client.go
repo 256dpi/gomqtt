@@ -709,7 +709,7 @@ func (c *Client) cleanup(err error, close bool) error {
 
 // used for closing and cleaning up from inside internal goroutines
 func (c *Client) die(err error, close bool) error {
-	c.finish.Do(func(){
+	c.finish.Do(func() {
 		err = c.cleanup(err, close)
 
 		if c.Callback != nil {

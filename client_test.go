@@ -179,7 +179,7 @@ func TestClientConnectionDenied(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := NewClient()
-	c.Callback = func(topic string, payload []byte, err error){
+	c.Callback = func(topic string, payload []byte, err error) {
 		assert.Equal(t, ErrConnectionDenied, err)
 		assert.Empty(t, topic)
 		assert.Nil(t, payload)
@@ -266,7 +266,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := NewClient()
-	c.Callback = func(topic string, payload []byte, err error){
+	c.Callback = func(topic string, payload []byte, err error) {
 		assert.Empty(t, topic)
 		assert.Nil(t, payload)
 		assert.Equal(t, ErrMissingPong, err)
@@ -610,7 +610,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	puback := packet.NewPubackPacket()
 	puback.PacketID = 0
 
-	wait := func(){
+	wait := func() {
 		time.Sleep(100 * time.Millisecond)
 	}
 
@@ -738,7 +738,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := NewClient()
-	c.Callback = func(topic string, payload []byte, err error){
+	c.Callback = func(topic string, payload []byte, err error) {
 		assert.Equal(t, ErrUnexpectedClose, err)
 		assert.Empty(t, topic)
 		assert.Nil(t, payload)
