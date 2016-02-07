@@ -805,11 +805,15 @@ func TestClientLogger(t *testing.T) {
 
 	done, tp := fakeBroker(t, broker)
 
-	var counter uint32
+	wait := make(chan struct{})
 
 	c := NewClient()
+	c.Callback = func(topic string, payload []byte, err error) {
+		close(wait)
+	}
+
+	var counter uint32
 	c.Logger = func(msg string) {
-		println(msg)
 		atomic.AddUint32(&counter, 1)
 	}
 
@@ -822,11 +826,13 @@ func TestClientLogger(t *testing.T) {
 	publishFuture, _ := c.Publish("test", []byte("test"), 0, false)
 	publishFuture.Wait()
 
+	<-wait
+
 	c.Disconnect()
 
 	<-done
 
-	assert.Equal(t, uint32(7), counter)
+	assert.Equal(t, uint32(8), counter)
 }
 
 //func TestClientStoreError1(t *testing.T) {
