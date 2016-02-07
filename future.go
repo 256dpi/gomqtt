@@ -88,7 +88,8 @@ func (f *abstractFuture) cancel() {
 func (f *abstractFuture) bind(future *abstractFuture) {
 	future.Call(func(err error) {
 		if err != nil {
-			return f.cancel()
+			f.cancel()
+			return
 		}
 
 		f.complete()
@@ -118,7 +119,8 @@ type SubscribeFuture struct {
 func (f *SubscribeFuture) bind(future *SubscribeFuture) {
 	future.Call(func(err error) {
 		if err != nil {
-			return f.cancel()
+			f.cancel()
+			return
 		}
 
 		f.ReturnCodes = future.ReturnCodes
