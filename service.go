@@ -85,7 +85,9 @@ type Service struct {
 	Notifier Notifier
 	Logger   Logger
 
-	ConnackTimeout    time.Duration
+	MinReconnectDelay time.Duration
+	MaxReconnectDelay time.Duration
+	ConnectTimeout    time.Duration
 	DisconnectTimeout time.Duration
 
 	subscribeQueue   chan *subscribe
@@ -98,14 +100,10 @@ type Service struct {
 
 func NewService() *Service {
 	return &Service{
-		backoff: &backoff.Backoff{
-			Min:    1 * time.Second,
-			Max:    32 * time.Second,
-			Factor: 2,
-			Jitter: false,
-		},
 		Session:           session.NewMemorySession(),
-		ConnackTimeout:    5 * time.Second,
+		MinReconnectDelay: 1 * time.Second,
+		MaxReconnectDelay: 32 * time.Second,
+		ConnectTimeout:    5 * time.Second,
 		DisconnectTimeout: 10 * time.Second,
 		subscribeQueue:    make(chan *subscribe, 100),
 		unsubscribeQueue:  make(chan *unsubscribe, 100),
@@ -120,6 +118,12 @@ func (s *Service) Start(url string, opts *Options) {
 
 	s.broker = url
 	s.options = opts
+
+	s.backoff = &backoff.Backoff{
+		Min:    s.MinReconnectDelay,
+		Max:    s.MaxReconnectDelay,
+		Factor: 2,
+	}
 
 	go s.connect()
 }
@@ -191,15 +195,11 @@ func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 	return future
 }
 
-func (s *Service) Stop(timeout ...time.Duration) {
+func (s *Service) Stop() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if len(timeout) > 0 {
-		s.stopChannel <- timeout[0]
-	} else {
-		s.stopChannel <- s.DisconnectTimeout
-	}
+	s.stopChannel <- s.DisconnectTimeout
 }
 
 func (s *Service) connect() {
@@ -217,7 +217,7 @@ func (s *Service) connect() {
 		return
 	}
 
-	err = future.Wait(s.ConnackTimeout)
+	err = future.Wait(s.ConnectTimeout)
 	if err == ErrCanceled {
 		s.log("Connack: %v", err)
 		s.reconnect()
