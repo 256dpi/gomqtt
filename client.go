@@ -450,6 +450,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 
 	// resend stored packets
 	for _, pkt := range packets {
+		// TODO: Set dup flag on PublishPackets?
 		err = c.send(pkt, false)
 		if err != nil {
 			return c.die(err, false)
