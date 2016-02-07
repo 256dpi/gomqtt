@@ -95,7 +95,8 @@ type Service struct {
 	publishQueue     chan *publish
 	stopChannel      chan time.Duration
 
-	mutex sync.Mutex
+	started bool
+	mutex   sync.Mutex
 }
 
 func NewService() *Service {
@@ -116,6 +117,10 @@ func (s *Service) Start(url string, opts *Options) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	if s.started {
+		return
+	}
+
 	s.broker = url
 	s.options = opts
 
@@ -124,6 +129,8 @@ func (s *Service) Start(url string, opts *Options) {
 		Max:    s.MaxReconnectDelay,
 		Factor: 2,
 	}
+
+	s.started = true
 
 	go s.connect()
 }
@@ -198,6 +205,12 @@ func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 func (s *Service) Stop() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
+	if !s.started {
+		return
+	}
+
+	s.started = false
 
 	s.stopChannel <- s.DisconnectTimeout
 }
