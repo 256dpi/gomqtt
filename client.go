@@ -339,29 +339,35 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 		return ErrNotConnected
 	}
 
-	// allocate packet
-	m := packet.NewDisconnectPacket()
-
-	// set state
-	c.state.set(stateDisconnecting)
-
 	// finish current packets
 	if len(timeout) > 0 {
 		c.futureStore.await(timeout[0])
 	}
 
+	// set state
+	c.state.set(stateDisconnecting)
+
+	// allocate packet
+	m := packet.NewDisconnectPacket()
+
 	// send disconnect packet
 	err := c.send(m, false)
 
-	// shutdown goroutines
-	c.tomb.Kill(nil)
+	return c.end(err)
+}
 
-	// wait for all goroutines to exit
-	// goroutines will send eventual errors through the callback
-	c.tomb.Wait()
+// Close closes the client immediately without sending a DisconnectPacket and
+// waiting for outgoing transmissions to finish.
+func (c *Client) Close() error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
-	// do cleanup
-	return c.cleanup(err, false)
+	// check if connected
+	if c.state.get() != stateConnected {
+		return ErrNotConnected
+	}
+
+	return c.end(nil)
 }
 
 /* processor goroutine */
@@ -372,14 +378,15 @@ func (c *Client) processor() error {
 		// get next packet from connection
 		pkt, err := c.conn.Receive()
 		if err != nil {
+			// if we are disconnecting we can ignore the error
+			if c.state.get() >= stateDisconnecting {
+
+				return nil
+			}
+
+			// check if the connection has been closed by the server
 			transportErr, ok := err.(transport.Error)
-
 			if ok && transportErr.Code() == transport.ConnectionClose {
-				if c.state.get() == stateDisconnecting {
-					// connection has been closed because of a clean Disconnect
-					return nil
-				}
-
 				return c.die(ErrUnexpectedClose, false)
 			}
 
@@ -718,5 +725,21 @@ func (c *Client) die(err error, close bool) error {
 		}
 	})
 
+	return err
+}
+
+// called by Disconnect and Close
+func (c *Client) end(err error) error {
+	// close connection
+	err = c.cleanup(err, true)
+
+	// shutdown goroutines
+	c.tomb.Kill(nil)
+
+	// wait for all goroutines to exit
+	// goroutines will send eventual errors through the callback
+	c.tomb.Wait()
+
+	// do cleanup
 	return err
 }

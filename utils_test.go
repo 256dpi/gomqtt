@@ -29,6 +29,10 @@ import (
 
 func errorCallback(t *testing.T) func(string, []byte, error) {
 	return func(topic string, payload []byte, err error) {
+		if err != nil {
+			println(err.Error())
+		}
+
 		assert.Fail(t, "callback should not have been called")
 	}
 }

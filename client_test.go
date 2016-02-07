@@ -73,7 +73,7 @@ func TestClientConnect(t *testing.T) {
 		Receive(connectPacket()).
 		Send(connackPacket(packet.ConnectionAccepted)).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -97,7 +97,7 @@ func TestClientConnectAfterConnect(t *testing.T) {
 		Receive(connectPacket()).
 		Send(connackPacket(packet.ConnectionAccepted)).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -129,7 +129,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 		Receive(connect).
 		Send(connackPacket(packet.ConnectionAccepted)).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -211,7 +211,7 @@ func TestClientKeepAlive(t *testing.T) {
 		Receive(pingreq).
 		Send(pingresp).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -309,7 +309,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		Receive(publish).
 		Send(publish).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -384,7 +384,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		Send(publish).
 		Receive(puback).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -469,7 +469,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 		Send(pubrel).
 		Receive(pubcomp).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -528,7 +528,7 @@ func TestClientUnsubscribe(t *testing.T) {
 		Receive(unsubscribe).
 		Send(unsuback).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -567,7 +567,7 @@ func TestClientHardDisconnect(t *testing.T) {
 		Send(connackPacket(packet.ConnectionAccepted)).
 		Receive(publish).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -621,7 +621,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 		Run(wait).
 		Send(puback).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
@@ -648,6 +648,29 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	pkts, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
+}
+
+func TestClientClose(t *testing.T) {
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		End()
+
+	done, tp := fakeBroker(t, broker)
+
+	c := NewClient()
+	c.Callback = errorCallback(t)
+
+	connectFuture, err := c.Connect(tp.url("tcp"), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.False(t, connectFuture.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+
+	err = c.Close()
+	assert.NoError(t, err)
+
+	<-done
 }
 
 func TestClientInvalidPackets(t *testing.T) {
@@ -696,7 +719,7 @@ func TestClientSessionResumption(t *testing.T) {
 		Receive(publish1).
 		Send(puback1).
 		Receive(disconnectPacket()).
-		Close()
+		End()
 
 	done, tp := fakeBroker(t, broker)
 
