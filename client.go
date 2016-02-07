@@ -27,8 +27,8 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// ErrAlreadyConnecting is returned by Connect if there was already a connection
-// attempt.
+// ErrAlreadyConnecting is returned by Connect if there has been already a
+// connection attempt.
 var ErrAlreadyConnecting = errors.New("already connecting")
 
 // ErrNotConnected is returned by Publish, Subscribe and Unsubscribe if the
@@ -36,27 +36,27 @@ var ErrAlreadyConnecting = errors.New("already connecting")
 var ErrNotConnected = errors.New("not connected")
 
 // ErrMissingClientID is returned by Connect if no ClientID has been provided in
-// the options while requesting an unclean session.
+// the options while requesting to resume a session.
 var ErrMissingClientID = errors.New("missing client id")
 
 // ErrConnectionDenied is returned in the Callback if the connection has been
 // reject by the broker.
 var ErrConnectionDenied = errors.New("connection denied")
 
-// ErrMissingPong is returned in the Callback if the broker did not respond to
-// a PingreqPacket.
+// ErrMissingPong is returned in the Callback if the broker did not respond
+// in time to a PingreqPacket.
 var ErrMissingPong = errors.New("missing pong")
 
 // ErrUnexpectedClose is returned in the Callback if the broker closed the
 // connection without receiving a DisconnectPacket from the client.
 var ErrUnexpectedClose = errors.New("unexpected close")
 
-// Callback is a function called by the client upon received messages or internal
-// errors.
-type Callback func(string, []byte, error)
+// Callback is a function called by the client upon received messages or
+// internal errors.
+type Callback func(topic string, payload []byte, err error)
 
 // Logger is a function called by the client to log activity.
-type Logger func(string)
+type Logger func(msg string)
 
 // Client connects to a broker and handles the transmission of packets.
 type Client struct {
@@ -87,12 +87,9 @@ func NewClient() *Client {
 	}
 }
 
-/* exported interface */
-
 // Connect opens the connection to the broker and sends a ConnectPacket. It will
 // return a ConnectFuture that gets completed once a ConnackPacket has been
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
-// It will return ErrAlreadyConnecting if Connect has been called before.
 func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -193,7 +190,9 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	return future, nil
 }
 
-// Publish will send a PublishPacket containing the passed parameters.
+// Publish will send a PublishPacket containing the passed parameters. It will
+// return a PublishFuture that gets completed once the quality of service flow
+// has been completed.
 func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*PublishFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -238,7 +237,9 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	return future, nil
 }
 
-// Subscribe will send a SubscribePacket containing one topic to subscribe.
+// Subscribe will send a SubscribePacket containing one topic to subscribe. It
+// will return a SubscribeFuture that gets completed once a SubackPacket has
+// been received.
 func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
 	return c.SubscribeMultiple(map[string]byte{
 		topic: qos,
@@ -246,7 +247,8 @@ func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
 }
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
-// subscribe.
+// subscribe. It will return a SubscribeFuture that gets completed once a
+// SubackPacket has been received.
 func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -286,12 +288,15 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 }
 
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
+// It will return a UnsubscribeFuture that gets completed once a UnsubackPacket
+// has been received.
 func (c *Client) Unsubscribe(topic string) (*UnsubscribeFuture, error) {
 	return c.UnsubscribeMultiple([]string{topic})
 }
 
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
-// topics to unsubscribe.
+// topics to unsubscribe. It will return a UnsubscribeFuture that gets completed
+// once a UnsubackPacket has been received.
 func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
