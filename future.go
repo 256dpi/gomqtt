@@ -33,6 +33,9 @@ type Future interface {
 	// ErrCanceled  if the future gets canceled. If a timeout is specified it
 	// might return a ErrTimeoutExceeded.
 	Wait(timeout ...time.Duration) error
+
+	// Call calls the supplied callback in a separate goroutine when Wait returns.
+	Call(func(err error), ...time.Duration)
 }
 
 type abstractFuture struct {
@@ -63,8 +66,12 @@ func (f *abstractFuture) Wait(timeout ...time.Duration) error {
 	case <-f.cancelChannel:
 		return ErrCanceled
 	}
+}
 
-	return nil
+func (f *abstractFuture) Call(callback func(error), timeout ...time.Duration) {
+	go func(){
+		callback(f.Wait(timeout...))
+	}()
 }
 
 func (f *abstractFuture) complete() {
