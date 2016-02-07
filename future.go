@@ -85,7 +85,7 @@ func (f *abstractFuture) cancel() {
 	close(f.cancelChannel)
 }
 
-func (f *abstractFuture) bind(future *abstractFuture) {
+func (f *abstractFuture) bind(future Future) {
 	future.Call(func(err error) {
 		if err != nil {
 			f.cancel()
