@@ -33,7 +33,10 @@ func ExampleClient() {
 		close(done)
 	}
 
-	connectFuture, err := c.Connect("mqtt://try:try@broker.shiftr.io", nil)
+	options := NewOptions()
+	options.ClientID = "gomqtt/client"
+
+	connectFuture, err := c.Connect("mqtt://try:try@broker.shiftr.io", options)
 	if err != nil {
 		panic(err)
 	}
