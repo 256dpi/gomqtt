@@ -85,6 +85,16 @@ func (f *abstractFuture) cancel() {
 	close(f.cancelChannel)
 }
 
+func (f *abstractFuture) bind(future *abstractFuture) {
+	future.Call(func(err error) {
+		if err != nil {
+			return f.cancel()
+		}
+
+		f.complete()
+	})
+}
+
 // ConnectFuture is returned by the Client on Connect.
 type ConnectFuture struct {
 	abstractFuture
@@ -103,6 +113,17 @@ type SubscribeFuture struct {
 	abstractFuture
 
 	ReturnCodes []byte
+}
+
+func (f *SubscribeFuture) bind(future *SubscribeFuture) {
+	future.Call(func(err error) {
+		if err != nil {
+			return f.cancel()
+		}
+
+		f.ReturnCodes = future.ReturnCodes
+		f.complete()
+	})
 }
 
 // UnsubscribeFuture is returned by the Client on Unsubscribe.
