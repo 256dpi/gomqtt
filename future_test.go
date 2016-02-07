@@ -31,9 +31,23 @@ func TestAbstractFuture(t *testing.T) {
 		close(done)
 	}()
 
-	assert.False(t, f.Completed())
 	f.complete()
-	assert.True(t, f.Completed())
+
+	<-done
+}
+
+func TestAbstractFutureCancel(t *testing.T) {
+	done := make(chan struct{})
+
+	f := &abstractFuture{}
+	f.initialize()
+
+	go func() {
+		assert.Equal(t, ErrCanceled, f.Wait())
+		close(done)
+	}()
+
+	f.cancel()
 
 	<-done
 }
@@ -46,13 +60,10 @@ func TestAbstractFutureTimeout(t *testing.T) {
 
 	go func() {
 		assert.NoError(t, f.Wait(10*time.Millisecond))
-		assert.True(t, f.Completed())
 		close(done)
 	}()
 
-	assert.False(t, f.Completed())
 	f.complete()
-	assert.True(t, f.Completed())
 
 	<-done
 }
@@ -65,15 +76,12 @@ func TestAbstractFutureTimeoutExceeded(t *testing.T) {
 
 	go func() {
 		assert.Equal(t, ErrTimeoutExceeded, f.Wait(1*time.Millisecond))
-		assert.False(t, f.Completed())
 		close(done)
 	}()
 
 	<-time.After(10 * time.Millisecond)
 
-	assert.False(t, f.Completed())
 	f.complete()
-	assert.True(t, f.Completed())
 
 	<-done
 }

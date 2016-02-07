@@ -591,6 +591,8 @@ func TestClientHardDisconnect(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
+	assert.Equal(t, ErrCanceled, publishFuture.Wait())
+
 	<-done
 
 	pkts, err := c.Session.AllPackets(session.Outgoing)
@@ -640,6 +642,8 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	assert.NoError(t, err)
 
 	<-done
+
+	assert.NoError(t, publishFuture.Wait())
 
 	pkts, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)

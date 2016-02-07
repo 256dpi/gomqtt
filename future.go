@@ -24,49 +24,55 @@ import (
 // ErrTimeoutExceeded is returned by Wait if the specified timeout is exceeded.
 var ErrTimeoutExceeded = errors.New("timeout exceeded")
 
+// ErrCanceled is returned by Wait if the future gets canceled while waiting.
+var ErrCanceled = errors.New("canceled")
+
 // Future represents information that might become available in the future.
 type Future interface {
-	// Wait will block until the future is completed. If a timeout is specified
-	// it might return a ErrTimeoutExceeded.
+	// Wait will block until the future is completed or canceled. It will return
+	// ErrCanceled  if the future gets canceled. If a timeout is specified it
+	// might return a ErrTimeoutExceeded.
 	Wait(timeout ...time.Duration) error
-
-	// Completed returns true if the future is completed.
-	Completed() bool
 }
 
 type abstractFuture struct {
-	channel chan struct{}
+	completeChannel chan struct{}
+	cancelChannel  chan struct{}
 }
 
 func (f *abstractFuture) initialize() {
-	f.channel = make(chan struct{})
+	f.completeChannel = make(chan struct{})
+	f.cancelChannel = make(chan struct{})
 }
 
 func (f *abstractFuture) Wait(timeout ...time.Duration) error {
 	if len(timeout) > 0 {
 		select {
-		case <-f.channel:
+		case <-f.completeChannel:
 			return nil
+		case <-f.cancelChannel:
+			return ErrCanceled
 		case <-time.After(timeout[0]):
 			return ErrTimeoutExceeded
 		}
 	}
 
-	<-f.channel
+	select {
+	case <-f.completeChannel:
+		return nil
+	case <-f.cancelChannel:
+		return ErrCanceled
+	}
+
 	return nil
 }
 
 func (f *abstractFuture) complete() {
-	close(f.channel)
+	close(f.completeChannel)
 }
 
-func (f *abstractFuture) Completed() bool {
-	select {
-	case <-f.channel:
-		return true
-	default:
-		return false
-	}
+func (f *abstractFuture) cancel() {
+	close(f.cancelChannel)
 }
 
 // ConnectFuture is returned by the Client on Connect.
