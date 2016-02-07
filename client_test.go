@@ -778,6 +778,66 @@ func TestClientUnexpectedClose(t *testing.T) {
 	<-done
 }
 
+func TestClientConnackFutureCancellation(t *testing.T) {
+	broker := flow.New().
+		Receive(connectPacket()).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	wait := make(chan struct{})
+
+	c := NewClient()
+	c.Callback = func(topic string, payload []byte, err error) {
+		assert.Equal(t, ErrUnexpectedClose, err)
+		assert.Empty(t, topic)
+		assert.Nil(t, payload)
+		close(wait)
+	}
+
+	future, err := c.Connect(tp.url("tcp"), nil)
+	assert.NoError(t, err)
+	assert.Equal(t, ErrCanceled, future.Wait())
+
+	<-wait
+	<-done
+}
+
+func TestClientFutureCancellation(t *testing.T) {
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte("test")
+	publish.Payload = []byte("test")
+	publish.QOS = 1
+	publish.PacketID = 0
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(publish).
+		Close()
+
+	done, tp := fakeBroker(t, broker)
+
+	c := NewClient()
+	c.Callback = func(topic string, payload []byte, err error) {
+		assert.Equal(t, ErrUnexpectedClose, err)
+		assert.Empty(t, topic)
+		assert.Nil(t, payload)
+	}
+
+	connectFuture, err := c.Connect(tp.url("tcp"), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.False(t, connectFuture.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+
+	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
+	assert.NoError(t, err)
+	assert.Equal(t, ErrCanceled, publishFuture.Wait())
+
+	<-done
+}
+
 func TestClientLogger(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{
