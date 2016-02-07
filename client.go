@@ -65,7 +65,7 @@ type Callback func(*Message, error)
 // Logger is a function called by the client to log activity.
 type Logger func(string)
 
-// Client connects to a broker and handles the transmission of packets between them.
+// Client connects to a broker and handles the transmission of packets.
 type Client struct {
 	conn transport.Conn
 
