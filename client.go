@@ -438,6 +438,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
+		c.state.set(stateConnacked)
 		err := c.die(ErrConnectionDenied, true)
 		c.connectFuture.complete()
 		return err
@@ -688,6 +689,11 @@ func (c *Client) log(format string, a ...interface{}) {
 
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error, close bool) error {
+	// cancel connect future if appropriate
+	if c.state.get() < stateConnacked && c.connectFuture != nil {
+		c.connectFuture.cancel()
+	}
+
 	// set state
 	c.state.set(stateDisconnected)
 

@@ -101,6 +101,7 @@ func (s *futureStore) await(timeout time.Duration) error {
 const (
 	stateInitialized byte = iota
 	stateConnecting
+	stateConnacked
 	stateConnected
 	stateDisconnecting
 	stateDisconnected
