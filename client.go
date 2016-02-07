@@ -27,13 +27,6 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// Message encapsulates a Topic and a Payload and is returned to the Callback
-// when received from a broker.
-type Message struct {
-	Topic   string
-	Payload []byte
-}
-
 // ErrAlreadyConnecting is returned by Connect if there was already a connection
 // attempt.
 var ErrAlreadyConnecting = errors.New("already connecting")
@@ -60,7 +53,7 @@ var ErrUnexpectedClose = errors.New("unexpected close")
 
 // Callback is a function called by the client upon received messages or internal
 // errors.
-type Callback func(*Message, error)
+type Callback func(string, []byte, error)
 
 // Logger is a function called by the client to log activity.
 type Logger func(string)
@@ -687,10 +680,8 @@ func (c *Client) send(pkt packet.Packet, store bool) error {
 
 // calls the callback with a new message
 func (c *Client) forward(packet *packet.PublishPacket) {
-	msg := newMessage(string(packet.Topic), packet.Payload)
-
 	if c.Callback != nil {
-		c.Callback(msg, nil)
+		c.Callback(string(packet.Topic), packet.Payload, nil)
 	}
 }
 
@@ -731,7 +722,7 @@ func (c *Client) die(err error, close bool) error {
 		err = c.cleanup(err, close)
 
 		if c.Callback != nil {
-			c.Callback(nil, err)
+			c.Callback("", nil, err)
 		}
 	})
 

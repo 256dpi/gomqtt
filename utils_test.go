@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func errorCallback(t *testing.T) func(*Message, error) {
-	return func(msg *Message, err error) {
+func errorCallback(t *testing.T) func(string, []byte, error) {
+	return func(topic string, payload []byte, err error) {
 		assert.Fail(t, "callback should not have been called")
 	}
 }

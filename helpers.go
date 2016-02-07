@@ -19,15 +19,6 @@ import (
 	"time"
 )
 
-/* message */
-
-func newMessage(topic string, payload []byte) *Message {
-	return &Message{
-		Topic:   topic,
-		Payload: payload,
-	}
-}
-
 /* futureStore */
 
 // a futureStore is used to store active Futures
