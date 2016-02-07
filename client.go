@@ -67,10 +67,11 @@ type Client struct {
 	Logger   Logger
 
 	state       *state
-	counter     *counter
 	tracker     *tracker
 	futureStore *futureStore
 	clean       bool
+
+	connectFuture *ConnectFuture
 
 	tomb   tomb.Tomb
 	mutex  sync.Mutex
@@ -82,7 +83,6 @@ func NewClient() *Client {
 	return &Client{
 		Session:     session.NewMemorySession(),
 		state:       newState(),
-		counter:     newCounter(),
 		futureStore: newFutureStore(),
 	}
 }
@@ -167,11 +167,8 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	connect.WillRetain = opts.WillRetained
 
 	// create new ConnackFuture
-	future := &ConnectFuture{}
-	future.initialize()
-
-	// store future with id 0
-	c.futureStore.put(c.counter.next(), future)
+	c.connectFuture = &ConnectFuture{}
+	c.connectFuture.initialize()
 
 	// send connect packet
 	err = c.send(connect, false)
@@ -187,7 +184,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 		c.tomb.Go(c.pinger)
 	}
 
-	return future, nil
+	return c.connectFuture, nil
 }
 
 // Publish will send a PublishPacket containing the passed parameters. It will
@@ -212,7 +209,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 
 	// set packet id
 	if qos > 0 {
-		publish.PacketID = c.counter.next()
+		publish.PacketID = c.Session.PacketID()
 	}
 
 	// create future
@@ -261,7 +258,7 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	// allocate packet
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = make([]packet.Subscription, 0, len(filters))
-	subscribe.PacketID = c.counter.next()
+	subscribe.PacketID = c.Session.PacketID()
 
 	// append filters
 	for topic, qos := range filters {
@@ -309,7 +306,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	// allocate packet
 	unsubscribe := packet.NewUnsubscribePacket()
 	unsubscribe.Topics = make([][]byte, 0, len(topics))
-	unsubscribe.PacketID = c.counter.next()
+	unsubscribe.PacketID = c.Session.PacketID()
 
 	// append topics
 	for _, t := range topics {
@@ -428,24 +425,14 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 		return nil // ignore wrongly sent ConnackPacket
 	}
 
-	// get future
-	connectFuture, ok := c.futureStore.get(0).(*ConnectFuture)
-	if !ok {
-		// must be available otherwise the broker messed completely up...
-		return nil
-	}
-
 	// fill future
-	connectFuture.SessionPresent = connack.SessionPresent
-	connectFuture.ReturnCode = connack.ReturnCode
-
-	// remove future
-	c.futureStore.del(0)
+	c.connectFuture.SessionPresent = connack.SessionPresent
+	c.connectFuture.ReturnCode = connack.ReturnCode
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
 		err := c.die(ErrConnectionDenied, true)
-		connectFuture.complete()
+		c.connectFuture.complete()
 		return err
 	}
 
@@ -453,7 +440,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	c.state.set(stateConnected)
 
 	// complete future
-	connectFuture.complete()
+	c.connectFuture.complete()
 
 	// retrieve stored packets
 	packets, err := c.Session.AllPackets(session.Outgoing)
@@ -466,12 +453,6 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 		err = c.send(pkt, false)
 		if err != nil {
 			return c.die(err, false)
-		}
-
-		// resume counter to avoid id conflicts
-		id, ok := packet.PacketID(pkt)
-		if ok {
-			c.counter.resume(id)
 		}
 	}
 

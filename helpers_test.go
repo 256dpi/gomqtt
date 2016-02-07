@@ -15,10 +15,10 @@
 package client
 
 import (
-	"github.com/stretchr/testify/assert"
-	"math"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFutureStore(t *testing.T) {
@@ -70,15 +70,6 @@ func TestFutureStoreAwaitTimeout(t *testing.T) {
 
 	err := store.await(10 * time.Millisecond)
 	assert.Equal(t, ErrTimeoutExceeded, err)
-}
-
-func TestCounter(t *testing.T) {
-	counter := newCounter()
-	assert.Equal(t, uint16(0), counter.next())
-
-	counter.id = math.MaxUint16
-	assert.Equal(t, uint16(math.MaxUint16), counter.next())
-	assert.Equal(t, uint16(0), counter.next())
 }
 
 func TestTracker(t *testing.T) {

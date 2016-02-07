@@ -96,39 +96,6 @@ func (s *futureStore) await(timeout time.Duration) error {
 	}
 }
 
-/* counter */
-
-// a counter keeps track of packet ids
-type counter struct {
-	sync.Mutex
-
-	id uint16
-}
-
-// newCounter will return a new counter
-func newCounter() *counter {
-	return &counter{}
-}
-
-// next will generate the next packet id
-func (c *counter) next() uint16 {
-	c.Lock()
-	defer func() {
-		c.id++
-		c.Unlock()
-	}()
-
-	return c.id
-}
-
-// resume will continue to count from the provided id
-func (c *counter) resume(id uint16) {
-	c.Lock()
-	defer c.Unlock()
-
-	c.id = id + 1
-}
-
 /* state */
 
 const (
