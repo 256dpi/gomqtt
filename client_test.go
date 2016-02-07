@@ -778,6 +778,57 @@ func TestClientUnexpectedClose(t *testing.T) {
 	<-done
 }
 
+func TestClientLogger(t *testing.T) {
+	subscribe := packet.NewSubscribePacket()
+	subscribe.Subscriptions = []packet.Subscription{
+		{Topic: []byte("test")},
+	}
+	subscribe.PacketID = 0
+
+	suback := packet.NewSubackPacket()
+	suback.ReturnCodes = []byte{0}
+	suback.PacketID = 0
+
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte("test")
+	publish.Payload = []byte("test")
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, tp := fakeBroker(t, broker)
+
+	var counter uint32
+
+	c := NewClient()
+	c.Logger = func(msg string) {
+		println(msg)
+		atomic.AddUint32(&counter, 1)
+	}
+
+	future, _ := c.Connect(tp.url("tcp"), nil)
+	future.Wait()
+
+	subscribeFuture, _ := c.Subscribe("test", 0)
+	subscribeFuture.Wait()
+
+	publishFuture, _ := c.Publish("test", []byte("test"), 0, false)
+	publishFuture.Wait()
+
+	c.Disconnect()
+
+	<-done
+
+	assert.Equal(t, uint32(7), counter)
+}
+
 //func TestClientStoreError1(t *testing.T) {
 //	c := NewClient()
 //	c.Session = &testSession{ resetError: true }
