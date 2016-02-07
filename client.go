@@ -720,14 +720,7 @@ func (c *Client) cleanup(err error, close bool) error {
 
 	// cancel futures
 	for _, future := range c.futureStore.all() {
-		switch f := future.(type) {
-		case *PublishFuture:
-			f.cancel()
-		case *SubscribeFuture:
-			f.cancel()
-		case *UnsubscribeFuture:
-			f.cancel()
-		}
+		future.cancel()
 	}
 
 	return err

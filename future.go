@@ -36,6 +36,9 @@ type Future interface {
 
 	// Call calls the supplied callback in a separate goroutine when Wait returns.
 	Call(func(err error), ...time.Duration)
+
+	complete()
+	cancel()
 }
 
 type abstractFuture struct {
