@@ -71,19 +71,22 @@ type unsubscribe struct {
 	future *UnsubscribeFuture
 }
 
-type Handler func(topic string, payload []byte)
+type Online func(resumed bool)
 
-type Notifier func(online bool, sessionPresent bool)
+type Message func(topic string, payload []byte)
+
+type Offline func()
 
 type Service struct {
 	broker  string
 	options *Options
 	backoff *backoff.Backoff
 
-	Session  session.Session
-	Handler  Handler
-	Notifier Notifier
-	Logger   Logger
+	Session session.Session
+	Online  Online
+	Message Message
+	Offline Offline
+	Logger  Logger
 
 	MinReconnectDelay time.Duration
 	MaxReconnectDelay time.Duration
@@ -323,14 +326,16 @@ func (s *Service) callback(topic string, payload []byte, err error) {
 	}
 
 	// call the handler
-	if s.Handler != nil {
-		s.Handler(topic, payload)
+	if s.Message != nil {
+		s.Message(topic, payload)
 	}
 }
 
 func (s *Service) notify(online bool, resumed bool) {
-	if s.Notifier != nil {
-		s.Notifier(online, resumed)
+	if online {
+		s.Online(resumed)
+	} else {
+		s.Offline()
 	}
 }
 

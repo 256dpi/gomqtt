@@ -86,18 +86,18 @@ func ExampleService() {
 
 	s := NewService()
 
-	s.Notifier = func(online bool, resumed bool) {
-		fmt.Printf("online: %v\n", online)
-
-		if online {
-			fmt.Printf("resumed: %v\n", resumed)
-		} else {
-			close(done)
-		}
+	s.Online = func(resumed bool) {
+		fmt.Println("online!")
+		fmt.Printf("resumed: %v\n", resumed)
 	}
 
-	s.Handler = func(topic string, payload []byte) {
-		fmt.Printf("%s: %s\n", topic, payload)
+	s.Offline = func(){
+		fmt.Println("offline!")
+		close(done)
+	}
+
+	s.Message = func(topic string, payload []byte) {
+		fmt.Printf("message: %s - %s\n", topic, payload)
 		close(wait)
 	}
 
@@ -116,8 +116,8 @@ func ExampleService() {
 	<-done
 
 	// Output:
-	// online: true
+	// online!
 	// resumed: false
-	// test: test
-	// online: false
+	// message: test - test
+	// offline!
 }
