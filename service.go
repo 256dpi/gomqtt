@@ -77,6 +77,11 @@ type Message func(topic string, payload []byte)
 
 type Offline func()
 
+// Service is an abstraction for Client that provides a stable interface to the
+// application, while it automatically connects and reconnects clients in the
+// background. Errors are not returned but logged using the Logger callback.
+// All methods return Futures that get completed once the acknowledgements are
+// received.
 type Service struct {
 	broker  string
 	options *Options
@@ -97,6 +102,7 @@ type Service struct {
 	unsubscribeQueue chan *unsubscribe
 	publishQueue     chan *publish
 	stopChannel      chan time.Duration
+	futureStore		 *futureStore
 
 	started bool
 	mutex   sync.Mutex
@@ -113,6 +119,7 @@ func NewService() *Service {
 		unsubscribeQueue:  make(chan *unsubscribe, 100),
 		publishQueue:      make(chan *publish, 100),
 		stopChannel:       make(chan time.Duration),
+		futureStore:       newFutureStore(),
 	}
 }
 
@@ -223,6 +230,7 @@ func (s *Service) connect() {
 	client.Session = s.Session
 	client.Callback = s.callback
 	client.Logger = s.Logger
+	client.futureStore = s.futureStore
 
 	s.log("Reconnect")
 
@@ -305,8 +313,6 @@ Loop:
 			if err != nil {
 				s.log("Disconnect Error: %v", err)
 			}
-
-			// TODO: Retain the clients future store
 
 			break Loop
 		}

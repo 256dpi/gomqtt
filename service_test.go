@@ -66,33 +66,72 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	done, tp := fakeBroker(t, broker)
 
-	wait := make(chan struct{})
+	online := make(chan struct{})
+	message := make(chan struct{})
+	offline := make(chan struct{})
 
 	s := NewService()
 
 	s.Online = func(resumed bool) {
 		assert.False(t, resumed)
+		close(online)
 	}
 
 	s.Offline = func() {
-
+		close(offline)
 	}
 
 	s.Message = func(topic string, payload []byte) {
 		assert.Equal(t, "test", topic)
 		assert.Equal(t, []byte("test"), payload)
-		close(wait)
+		close(message)
 	}
 
 	s.Start(tp.url(), nil)
 
 	s.Subscribe("test", 0).Wait()
-
 	s.Publish("test", []byte("test"), 0, false)
 
-	<-wait
+	<-online
+	<-message
 
 	s.Stop()
 
+	<-offline
+	<-done
+}
+
+func TestStartStopVariations(t *testing.T) {
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(disconnectPacket()).
+		End()
+
+	done, tp := fakeBroker(t, broker)
+
+	online := make(chan struct{})
+	offline := make(chan struct{})
+
+	s := NewService()
+
+	s.Online = func(resumed bool) {
+		assert.False(t, resumed)
+		close(online)
+	}
+
+	s.Offline = func() {
+		close(offline)
+	}
+
+	s.Start(tp.url(), nil)
+	s.Start(tp.url(), nil) // <- does nothing
+
+	<-online
+
+	s.Stop()
+	s.Stop() // <- does nothing
+
+	<-offline
 	<-done
 }
