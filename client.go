@@ -58,7 +58,12 @@ type Callback func(topic string, payload []byte, err error)
 // Logger is a function called by the client to log activity.
 type Logger func(msg string)
 
-// Client connects to a broker and handles the transmission of packets.
+// Client connects to a broker and handles the transmission of packets. It will
+// automatically send PingreqPackets to keep the connection alive. Outgoing
+// publish related packets will be stored in session and resend when the
+// connection gets closed abruptly. All methods return Futures that get completed
+// when the packets get acknowledged by the broker. Once the connection is closed
+// all waiting futures get canceled.
 type Client struct {
 	conn transport.Conn
 
