@@ -14,6 +14,30 @@
 
 package client
 
+import (
+	"testing"
+
+	"github.com/gomqtt/flow"
+	"github.com/gomqtt/packet"
+)
+
+func TestClearSession(t *testing.T){
+	connect := connectPacket()
+	connect.ClientID = []byte("test")
+
+	broker := flow.New().
+		Receive(connect).
+		Send(connackPacket(packet.ConnectionAccepted)).
+		Receive(disconnectPacket()).
+		End()
+
+	done, tp := fakeBroker(t, broker)
+
+	ClearSession(tp.url(), "test")
+
+	<-done
+}
+
 // -- client
 // should attempt to reconnect once server is down
 // should reconnect to multiple host-ports combination if servers is passed
