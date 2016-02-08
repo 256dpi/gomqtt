@@ -166,6 +166,9 @@ func TestClientNotConnected(t *testing.T) {
 
 	err = c.Disconnect()
 	assert.Equal(t, ErrNotConnected, err)
+
+	err = c.Close()
+	assert.Equal(t, ErrNotConnected, err)
 }
 
 func TestClientConnectionDenied(t *testing.T) {
