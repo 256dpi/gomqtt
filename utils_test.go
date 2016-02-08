@@ -148,9 +148,9 @@ func connectPacket() *packet.ConnectPacket {
 	return pkt
 }
 
-func connackPacket(returnCode packet.ConnackCode) *packet.ConnackPacket {
+func connackPacket() *packet.ConnackPacket {
 	pkt := packet.NewConnackPacket()
-	pkt.ReturnCode = returnCode
+	pkt.ReturnCode = packet.ConnectionAccepted
 	pkt.SessionPresent = false
 	return pkt
 }

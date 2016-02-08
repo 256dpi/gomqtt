@@ -71,7 +71,7 @@ func TestClientConnectError4(t *testing.T) {
 func TestClientConnect(t *testing.T) {
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(disconnectPacket()).
 		End()
 
@@ -95,7 +95,7 @@ func TestClientConnect(t *testing.T) {
 func TestClientConnectAfterConnect(t *testing.T) {
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(disconnectPacket()).
 		End()
 
@@ -127,7 +127,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connect).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(disconnectPacket()).
 		End()
 
@@ -169,9 +169,12 @@ func TestClientNotConnected(t *testing.T) {
 }
 
 func TestClientConnectionDenied(t *testing.T) {
+	connack := connackPacket()
+	connack.ReturnCode = packet.ErrNotAuthorized
+
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ErrNotAuthorized)).
+		Send(connack).
 		Close()
 
 	done, tp := fakeBroker(t, broker)
@@ -205,7 +208,7 @@ func TestClientKeepAlive(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connect).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(pingreq).
 		Send(pingresp).
 		Receive(pingreq).
@@ -257,7 +260,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connect).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(pingreq).
 		End()
 
@@ -303,7 +306,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(subscribe).
 		Send(suback).
 		Receive(publish).
@@ -376,7 +379,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(subscribe).
 		Send(suback).
 		Receive(publish).
@@ -457,7 +460,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(subscribe).
 		Send(suback).
 		Receive(publish).
@@ -524,7 +527,7 @@ func TestClientUnsubscribe(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(unsubscribe).
 		Send(unsuback).
 		Receive(disconnectPacket()).
@@ -564,7 +567,7 @@ func TestClientHardDisconnect(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connect).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(publish).
 		Receive(disconnectPacket()).
 		End()
@@ -616,7 +619,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(publish).
 		Run(wait).
 		Send(puback).
@@ -653,7 +656,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 func TestClientClose(t *testing.T) {
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		End()
 
 	done, tp := fakeBroker(t, broker)
@@ -715,7 +718,7 @@ func TestClientSessionResumption(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connect).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(publish1).
 		Send(puback1).
 		Receive(disconnectPacket()).
@@ -753,7 +756,7 @@ func TestClientSessionResumption(t *testing.T) {
 func TestClientUnexpectedClose(t *testing.T) {
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Close()
 
 	done, tp := fakeBroker(t, broker)
@@ -812,7 +815,7 @@ func TestClientFutureCancellation(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(publish).
 		Close()
 
@@ -855,7 +858,7 @@ func TestClientLogger(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(subscribe).
 		Send(suback).
 		Receive(publish).

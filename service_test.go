@@ -28,7 +28,7 @@ func TestClearSession(t *testing.T){
 
 	broker := flow.New().
 		Receive(connect).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(disconnectPacket()).
 		End()
 
@@ -56,7 +56,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(connackPacket(packet.ConnectionAccepted)).
+		Send(connackPacket()).
 		Receive(subscribe).
 		Send(suback).
 		Receive(publish).
