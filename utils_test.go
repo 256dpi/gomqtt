@@ -110,20 +110,20 @@ func newTestPort() *testPort {
 }
 
 // generates the url for that testPort
-func (p *testPort) url(protocol string) string {
-	return fmt.Sprintf("%s://localhost:%d/", protocol, int(*p))
+func (p *testPort) url() string {
+	return fmt.Sprintf("tcp://localhost:%d/", int(*p))
 }
 
 // generates a protected url for that testPort
-func (p *testPort) protectedURL(protocol, user, password string) string {
-	return fmt.Sprintf("%s://%s:%s@localhost:%d/", protocol, user, password, int(*p))
+func (p *testPort) protectedURL(user, password string) string {
+	return fmt.Sprintf("tcp://%s:%s@localhost:%d/", user, password, int(*p))
 }
 
 func fakeBroker(t *testing.T, testFlow *flow.Flow) (chan struct{}, *testPort) {
 	tp := newTestPort()
 	done := make(chan struct{})
 
-	server, err := transport.Launch(tp.url("tcp"))
+	server, err := transport.Launch(tp.url())
 	assert.NoError(t, err)
 
 	go func() {

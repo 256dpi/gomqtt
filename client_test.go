@@ -80,7 +80,7 @@ func TestClientConnect(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -104,13 +104,13 @@ func TestClientConnectAfterConnect(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
-	future, err = c.Connect(tp.url("tcp"), nil)
+	future, err = c.Connect(tp.url(), nil)
 	assert.Equal(t, ErrAlreadyConnecting, err)
 	assert.Nil(t, future)
 
@@ -136,7 +136,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(tp.protectedURL("tcp", "test", "test"), nil)
+	future, err := c.Connect(tp.protectedURL("test", "test"), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -186,7 +186,7 @@ func TestClientConnectionDenied(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -232,7 +232,7 @@ func TestClientKeepAlive(t *testing.T) {
 	opts := NewOptions()
 	opts.KeepAlive = "100ms"
 
-	future, err := c.Connect(tp.url("tcp"), opts)
+	future, err := c.Connect(tp.url(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -276,7 +276,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	opts := NewOptions()
 	opts.KeepAlive = "5ms"
 
-	future, err := c.Connect(tp.url("tcp"), opts)
+	future, err := c.Connect(tp.url(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -323,7 +323,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -398,7 +398,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -483,7 +483,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -535,7 +535,7 @@ func TestClientUnsubscribe(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -578,7 +578,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	opts.ClientID = "test"
 	opts.CleanSession = false
 
-	connectFuture, err := c.Connect(tp.url("tcp"), opts)
+	connectFuture, err := c.Connect(tp.url(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -628,7 +628,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
-	connectFuture, err := c.Connect(tp.url("tcp"), nil)
+	connectFuture, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -661,7 +661,7 @@ func TestClientClose(t *testing.T) {
 	c := NewClient()
 	c.Callback = errorCallback(t)
 
-	connectFuture, err := c.Connect(tp.url("tcp"), nil)
+	connectFuture, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -732,7 +732,7 @@ func TestClientSessionResumption(t *testing.T) {
 	opts.ClientID = "test"
 	opts.CleanSession = false
 
-	connectFuture, err := c.Connect(tp.url("tcp"), opts)
+	connectFuture, err := c.Connect(tp.url(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -768,7 +768,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -795,7 +795,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url("tcp"), nil)
+	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.Equal(t, ErrCanceled, future.Wait())
 
@@ -825,7 +825,7 @@ func TestClientFutureCancellation(t *testing.T) {
 		assert.Nil(t, payload)
 	}
 
-	connectFuture, err := c.Connect(tp.url("tcp"), nil)
+	connectFuture, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -877,7 +877,7 @@ func TestClientLogger(t *testing.T) {
 		atomic.AddUint32(&counter, 1)
 	}
 
-	future, _ := c.Connect(tp.url("tcp"), nil)
+	future, _ := c.Connect(tp.url(), nil)
 	future.Wait()
 
 	subscribeFuture, _ := c.Subscribe("test", 0)
