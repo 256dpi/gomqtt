@@ -29,27 +29,27 @@ import (
 
 // ErrAlreadyConnecting is returned by Connect if there has been already a
 // connection attempt.
-var ErrAlreadyConnecting = errors.New("already connecting")
+var ErrClientAlreadyConnecting = errors.New("client already connecting")
 
 // ErrNotConnected is returned by Publish, Subscribe and Unsubscribe if the
 // client is not currently connected.
-var ErrNotConnected = errors.New("not connected")
+var ErrClientNotConnected = errors.New("client not connected")
 
 // ErrMissingClientID is returned by Connect if no ClientID has been provided in
 // the options while requesting to resume a session.
-var ErrMissingClientID = errors.New("missing client id")
+var ErrClientMissingID = errors.New("client missing id")
 
 // ErrConnectionDenied is returned in the Callback if the connection has been
 // reject by the broker.
-var ErrConnectionDenied = errors.New("connection denied")
+var ErrClientConnectionDenied = errors.New("client connection denied")
 
 // ErrMissingPong is returned in the Callback if the broker did not respond
 // in time to a PingreqPacket.
-var ErrMissingPong = errors.New("missing pong")
+var ErrClientMissingPong = errors.New("client missing pong")
 
 // ErrUnexpectedClose is returned in the Callback if the broker closed the
 // connection without receiving a DisconnectPacket from the client.
-var ErrUnexpectedClose = errors.New("unexpected close")
+var ErrClientUnexpectedClose = errors.New("client unexpected close")
 
 // Callback is a function called by the client upon received messages or
 // internal errors.
@@ -96,7 +96,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 
 	// check if already connecting
 	if c.state.get() >= stateConnecting {
-		return nil, ErrAlreadyConnecting
+		return nil, ErrClientAlreadyConnecting
 	}
 
 	// parse url
@@ -112,7 +112,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 
 	// check client id
 	if !opts.CleanSession && opts.ClientID == "" {
-		return nil, ErrMissingClientID
+		return nil, ErrClientMissingID
 	}
 
 	// parse keep alive
@@ -196,7 +196,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 
 	// check if connected
 	if c.state.get() != stateConnected {
-		return nil, ErrNotConnected
+		return nil, ErrClientNotConnected
 	}
 
 	// allocate packet
@@ -252,7 +252,7 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 
 	// check if connected
 	if c.state.get() != stateConnected {
-		return nil, ErrNotConnected
+		return nil, ErrClientNotConnected
 	}
 
 	// allocate packet
@@ -300,7 +300,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 
 	// check if connected
 	if c.state.get() != stateConnected {
-		return nil, ErrNotConnected
+		return nil, ErrClientNotConnected
 	}
 
 	// allocate packet
@@ -336,7 +336,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 
 	// check if connected
 	if c.state.get() != stateConnected {
-		return ErrNotConnected
+		return ErrClientNotConnected
 	}
 
 	// finish current packets
@@ -364,7 +364,7 @@ func (c *Client) Close() error {
 
 	// check if connected
 	if c.state.get() != stateConnected {
-		return ErrNotConnected
+		return ErrClientNotConnected
 	}
 
 	return c.end(nil)
@@ -387,7 +387,7 @@ func (c *Client) processor() error {
 			// check if the connection has been closed by the server
 			transportErr, ok := err.(transport.Error)
 			if ok && transportErr.Code() == transport.ConnectionClose {
-				return c.die(ErrUnexpectedClose, false)
+				return c.die(ErrClientUnexpectedClose, false)
 			}
 
 			// die on any other error
@@ -439,7 +439,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
 		c.state.set(stateConnacked)
-		err := c.die(ErrConnectionDenied, true)
+		err := c.die(ErrClientConnectionDenied, true)
 		c.connectFuture.complete()
 		return err
 	}
@@ -626,7 +626,7 @@ func (c *Client) pinger() error {
 
 		if window < 0 {
 			if c.tracker.pending() {
-				return c.die(ErrMissingPong, true)
+				return c.die(ErrClientMissingPong, true)
 			}
 
 			err := c.send(packet.NewPingreqPacket(), false)

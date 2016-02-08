@@ -46,7 +46,7 @@ func ClearSession(url string, clientID string) error {
 
 	// check if connection has been accepted
 	if future.ReturnCode != packet.ConnectionAccepted {
-		return ErrConnectionDenied
+		return ErrClientConnectionDenied
 	}
 
 	// disconnect

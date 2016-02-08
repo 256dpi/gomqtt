@@ -111,7 +111,7 @@ func TestClientConnectAfterConnect(t *testing.T) {
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	future, err = c.Connect(tp.url(), nil)
-	assert.Equal(t, ErrAlreadyConnecting, err)
+	assert.Equal(t, ErrClientAlreadyConnecting, err)
 	assert.Nil(t, future)
 
 	err = c.Disconnect()
@@ -154,21 +154,21 @@ func TestClientNotConnected(t *testing.T) {
 
 	future1, err := c.Publish("test", []byte("test"), 0, false)
 	assert.Nil(t, future1)
-	assert.Equal(t, ErrNotConnected, err)
+	assert.Equal(t, ErrClientNotConnected, err)
 
 	future2, err := c.Subscribe("test", 0)
 	assert.Nil(t, future2)
-	assert.Equal(t, ErrNotConnected, err)
+	assert.Equal(t, ErrClientNotConnected, err)
 
 	future3, err := c.Unsubscribe("test")
 	assert.Nil(t, future3)
-	assert.Equal(t, ErrNotConnected, err)
+	assert.Equal(t, ErrClientNotConnected, err)
 
 	err = c.Disconnect()
-	assert.Equal(t, ErrNotConnected, err)
+	assert.Equal(t, ErrClientNotConnected, err)
 
 	err = c.Close()
-	assert.Equal(t, ErrNotConnected, err)
+	assert.Equal(t, ErrClientNotConnected, err)
 }
 
 func TestClientConnectionDenied(t *testing.T) {
@@ -186,7 +186,7 @@ func TestClientConnectionDenied(t *testing.T) {
 
 	c := NewClient()
 	c.Callback = func(topic string, payload []byte, err error) {
-		assert.Equal(t, ErrConnectionDenied, err)
+		assert.Equal(t, ErrClientConnectionDenied, err)
 		assert.Empty(t, topic)
 		assert.Nil(t, payload)
 		close(wait)
@@ -275,7 +275,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	c.Callback = func(topic string, payload []byte, err error) {
 		assert.Empty(t, topic)
 		assert.Nil(t, payload)
-		assert.Equal(t, ErrMissingPong, err)
+		assert.Equal(t, ErrClientMissingPong, err)
 		close(wait)
 	}
 
@@ -768,7 +768,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 
 	c := NewClient()
 	c.Callback = func(topic string, payload []byte, err error) {
-		assert.Equal(t, ErrUnexpectedClose, err)
+		assert.Equal(t, ErrClientUnexpectedClose, err)
 		assert.Empty(t, topic)
 		assert.Nil(t, payload)
 		close(wait)
@@ -795,7 +795,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 
 	c := NewClient()
 	c.Callback = func(topic string, payload []byte, err error) {
-		assert.Equal(t, ErrUnexpectedClose, err)
+		assert.Equal(t, ErrClientUnexpectedClose, err)
 		assert.Empty(t, topic)
 		assert.Nil(t, payload)
 		close(wait)
@@ -826,7 +826,7 @@ func TestClientFutureCancellation(t *testing.T) {
 
 	c := NewClient()
 	c.Callback = func(topic string, payload []byte, err error) {
-		assert.Equal(t, ErrUnexpectedClose, err)
+		assert.Equal(t, ErrClientUnexpectedClose, err)
 		assert.Empty(t, topic)
 		assert.Nil(t, payload)
 	}
