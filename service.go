@@ -15,9 +15,9 @@
 package client
 
 import (
+	"fmt"
 	"sync"
 	"time"
-	"fmt"
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
@@ -268,7 +268,7 @@ func (s *Service) reconnect() {
 
 // reads from the queues and calls the current client
 func (s *Service) dispatcher(client *Client) {
-	Loop:
+Loop:
 	for {
 		select {
 		case sub := <-s.subscribeQueue:

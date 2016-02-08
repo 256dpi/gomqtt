@@ -66,11 +66,11 @@ type Client struct {
 	Callback Callback
 	Logger   Logger
 
-	state       *state
-	tracker     *tracker
-	futureStore *futureStore
-	clean       bool
+	state   *state
+	tracker *tracker
+	clean   bool
 
+	futureStore   *futureStore
 	connectFuture *ConnectFuture
 
 	tomb   tomb.Tomb
@@ -458,7 +458,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 
 	// resend stored packets
 	for _, pkt := range packets {
-		// TODO: Set dup flag on PublishPackets?
+		// TODO: Set dup flag on PublishPackets
 		err = c.send(pkt, false)
 		if err != nil {
 			return c.die(err, false)
