@@ -89,10 +89,11 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	s.Start(tp.url(), nil)
 
+	<-online
+
 	s.Subscribe("test", 0).Wait()
 	s.Publish("test", []byte("test"), 0, false)
 
-	<-online
 	<-message
 
 	s.Stop()
@@ -131,6 +132,50 @@ func TestStartStopVariations(t *testing.T) {
 
 	s.Stop()
 	s.Stop() // <- does nothing
+
+	<-offline
+	<-done
+}
+
+func TestServiceUnsubscribe(t *testing.T){
+	unsubscribe := packet.NewUnsubscribePacket()
+	unsubscribe.Topics = [][]byte{ []byte("test") }
+	unsubscribe.PacketID = 0
+
+	unsuback := packet.NewUnsubackPacket()
+	unsuback.PacketID = 0
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(unsubscribe).
+		Send(unsuback).
+		Receive(disconnectPacket()).
+		End()
+
+	done, tp := fakeBroker(t, broker)
+
+	online := make(chan struct{})
+	offline := make(chan struct{})
+
+	s := NewService()
+
+	s.Online = func(resumed bool) {
+		assert.False(t, resumed)
+		close(online)
+	}
+
+	s.Offline = func() {
+		close(offline)
+	}
+
+	s.Start(tp.url(), nil)
+
+	<-online
+
+	s.Unsubscribe("test").Wait()
+
+	s.Stop()
 
 	<-offline
 	<-done
