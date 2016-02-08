@@ -96,20 +96,3 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	<-done
 }
-
-// -- client
-// should attempt to reconnect once server is down
-// should reconnect to multiple host-ports combination if servers is passed
-// should reconnect if a connack is not received in an interval
-// shoud not be cleared by the connack timer
-// shoud not keep requeueing the first message when offline
-// should queue message until connected
-// should publish a message (offline)
-// should send a subscribe message (offline)
-// should send an unsubscribe packet (offline)
-// should reconnect after stream disconnect
-// should emit \'reconnect\' when reconnecting
-// should emit \'offline\' after going offline
-// should not reconnect if it was ended by the user
-// should setup a reconnect timer on disconnect
-// should allow specification of a reconnect period
