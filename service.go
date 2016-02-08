@@ -234,11 +234,11 @@ func (s *Service) connect() {
 	}
 
 	err = future.Wait(s.ConnectTimeout)
-	if err == ErrCanceled {
+	if err == ErrFutureCanceled {
 		s.log("Connack: %v", err)
 		s.reconnect()
 		return
-	} else if err == ErrTimeoutExceeded {
+	} else if err == ErrFutureTimeout {
 		client.Close()
 
 		s.log("Connack: %v", err)

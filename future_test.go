@@ -43,7 +43,7 @@ func TestAbstractFutureCancel(t *testing.T) {
 	f.initialize()
 
 	go func() {
-		assert.Equal(t, ErrCanceled, f.Wait())
+		assert.Equal(t, ErrFutureCanceled, f.Wait())
 		close(done)
 	}()
 
@@ -75,7 +75,7 @@ func TestAbstractFutureCancelTimeout(t *testing.T) {
 	f.initialize()
 
 	go func() {
-		assert.Equal(t, ErrCanceled, f.Wait(10*time.Millisecond))
+		assert.Equal(t, ErrFutureCanceled, f.Wait(10*time.Millisecond))
 		close(done)
 	}()
 
@@ -91,7 +91,7 @@ func TestAbstractFutureTimeoutExceeded(t *testing.T) {
 	f.initialize()
 
 	go func() {
-		assert.Equal(t, ErrTimeoutExceeded, f.Wait(1*time.Millisecond))
+		assert.Equal(t, ErrFutureTimeout, f.Wait(1*time.Millisecond))
 		close(done)
 	}()
 

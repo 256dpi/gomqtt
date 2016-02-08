@@ -597,7 +597,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	assert.Equal(t, ErrCanceled, publishFuture.Wait())
+	assert.Equal(t, ErrFutureCanceled, publishFuture.Wait())
 
 	<-done
 
@@ -803,7 +803,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 
 	future, err := c.Connect(tp.url(), nil)
 	assert.NoError(t, err)
-	assert.Equal(t, ErrCanceled, future.Wait())
+	assert.Equal(t, ErrFutureCanceled, future.Wait())
 
 	<-wait
 	<-done
@@ -839,7 +839,7 @@ func TestClientFutureCancellation(t *testing.T) {
 
 	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
 	assert.NoError(t, err)
-	assert.Equal(t, ErrCanceled, publishFuture.Wait())
+	assert.Equal(t, ErrFutureCanceled, publishFuture.Wait())
 
 	<-done
 }

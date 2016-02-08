@@ -21,11 +21,11 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// ErrTimeoutExceeded is returned by Wait if the specified timeout is exceeded.
-var ErrTimeoutExceeded = errors.New("timeout exceeded")
+// ErrFutureTimeout is returned by Wait if the specified timeout is exceeded.
+var ErrFutureTimeout = errors.New("future timeout")
 
-// ErrCanceled is returned by Wait if the future gets canceled while waiting.
-var ErrCanceled = errors.New("canceled")
+// ErrFutureCanceled is returned by Wait if the future gets canceled while waiting.
+var ErrFutureCanceled = errors.New("future canceled")
 
 // Future represents information that might become available in the future.
 type Future interface {
@@ -57,9 +57,9 @@ func (f *abstractFuture) Wait(timeout ...time.Duration) error {
 		case <-f.completeChannel:
 			return nil
 		case <-f.cancelChannel:
-			return ErrCanceled
+			return ErrFutureCanceled
 		case <-time.After(timeout[0]):
-			return ErrTimeoutExceeded
+			return ErrFutureTimeout
 		}
 	}
 
@@ -67,7 +67,7 @@ func (f *abstractFuture) Wait(timeout ...time.Duration) error {
 	case <-f.completeChannel:
 		return nil
 	case <-f.cancelChannel:
-		return ErrCanceled
+		return ErrFutureCanceled
 	}
 }
 

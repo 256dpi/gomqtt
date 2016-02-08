@@ -69,7 +69,7 @@ func TestFutureStoreAwaitTimeout(t *testing.T) {
 	assert.Equal(t, 1, len(store.all()))
 
 	err := store.await(10 * time.Millisecond)
-	assert.Equal(t, ErrTimeoutExceeded, err)
+	assert.Equal(t, ErrFutureTimeout, err)
 }
 
 func TestTracker(t *testing.T) {
