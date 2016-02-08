@@ -101,6 +101,7 @@ func TestAbstractFutureTimeoutExceeded(t *testing.T) {
 
 	<-done
 }
+
 func TestAbstractFutureCall(t *testing.T) {
 	done := make(chan struct{})
 
@@ -113,6 +114,22 @@ func TestAbstractFutureCall(t *testing.T) {
 	})
 
 	f.complete()
+
+	<-done
+}
+
+func TestAbstractFutureCallCancel(t *testing.T) {
+	done := make(chan struct{})
+
+	f := &abstractFuture{}
+	f.initialize()
+
+	f.Call(func(err error) {
+		assert.Equal(t, ErrFutureCanceled, err)
+		close(done)
+	})
+
+	f.cancel()
 
 	<-done
 }
