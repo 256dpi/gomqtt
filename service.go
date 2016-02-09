@@ -22,6 +22,7 @@ import (
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
 	"github.com/jpillora/backoff"
+	"gopkg.in/tomb.v2"
 )
 
 // ClearSession will connect/disconnect once with a clean session request to force
@@ -101,11 +102,11 @@ type Service struct {
 	subscribeQueue   chan *subscribe
 	unsubscribeQueue chan *unsubscribe
 	publishQueue     chan *publish
-	stopChannel      chan time.Duration
 	futureStore		 *futureStore
 
 	started bool
 	mutex   sync.Mutex
+	tomb    *tomb.Tomb
 }
 
 func NewService() *Service {
@@ -118,7 +119,6 @@ func NewService() *Service {
 		subscribeQueue:    make(chan *subscribe, 100),
 		unsubscribeQueue:  make(chan *unsubscribe, 100),
 		publishQueue:      make(chan *publish, 100),
-		stopChannel:       make(chan time.Duration),
 		futureStore:       newFutureStore(),
 	}
 }
@@ -142,7 +142,8 @@ func (s *Service) Start(url string, opts *Options) {
 
 	s.started = true
 
-	go s.connect()
+	s.tomb = &tomb.Tomb{}
+	s.tomb.Go(s.reconnector)
 }
 
 // Publish will send a PublishPacket containing the passed parameters. It will
@@ -222,84 +223,128 @@ func (s *Service) Stop() {
 
 	s.started = false
 
-	// TODO: Stop by closing a channel to support multiple goroutines.
-	// Maybe even use tomb?
-
-	s.stopChannel <- s.DisconnectTimeout
+	s.tomb.Kill(nil)
+	s.tomb.Wait()
 }
 
-func (s *Service) connect() {
+func (s *Service) reconnector() error {
+	first := true
+
+	for {
+		if first {
+			// no delay on first attempt
+			first = false
+		} else {
+			// get backoff duration
+			d := s.backoff.Duration()
+			s.log("Delay Reconnect: %v", d)
+
+			// sleep but return on Stop
+			select {
+			case <-time.After(d):
+			case <-s.tomb.Dying():
+				return tomb.ErrDying
+			}
+		}
+
+		s.log("Next Reconnect")
+
+		// prepare the stop channel
+		fail := make(chan struct{})
+
+		// try once to get a client
+		client, resumed := s.getClient(fail)
+		if client == nil {
+			continue
+		}
+
+		// run callback
+		s.notify(true, resumed)
+
+		// run dispatcher on client
+		dying := s.dispatcher(client, fail)
+
+		// run callback
+		s.notify(false, false)
+
+		// return goroutine if dying
+		if dying {
+			return tomb.ErrDying
+		}
+	}
+}
+
+// will try to connect one client to the broker
+func (s *Service) getClient(fail chan struct{}) (*Client, bool) {
 	client := New()
 	client.Session = s.Session
-	client.Callback = s.callback
 	client.Logger = s.Logger
 	client.futureStore = s.futureStore
 
-	s.log("Reconnect")
+	client.Callback = func(topic string, payload []byte, err error) {
+		if err != nil {
+			s.log("Error: %v", err)
+			close(fail)
+			return
+		}
+
+		// call the handler
+		if s.Message != nil {
+			s.Message(topic, payload)
+		}
+	}
 
 	future, err := client.Connect(s.broker, s.options)
 	if err != nil {
 		s.log("Connect Error: %v", err)
-		s.reconnect()
-		return
+		return nil, false
 	}
 
 	err = future.Wait(s.ConnectTimeout)
+
 	if err == ErrFutureCanceled {
 		s.log("Connack: %v", err)
-		s.reconnect()
-		return
-	} else if err == ErrFutureTimeout {
+		return nil, false
+	}
+
+	if err == ErrFutureTimeout {
 		client.Close()
 
 		s.log("Connack: %v", err)
-		s.reconnect()
-		return
+		return nil, false
 	}
 
 	if future.ReturnCode != packet.ConnectionAccepted {
 		client.Close()
 
 		s.log("Connack: %s", future.ReturnCode.Error())
-		s.reconnect()
-		return
+		return nil, false
 	}
 
-	s.notify(true, future.SessionPresent)
-
-	s.dispatcher(client)
-}
-
-func (s *Service) reconnect() {
-	d := s.backoff.Duration()
-	s.log("Delay Reconnect: %v", d)
-
-	// TODO: break on Stop()
-	time.Sleep(d)
-
-	s.connect()
+	return client, future.SessionPresent
 }
 
 // reads from the queues and calls the current client
-func (s *Service) dispatcher(client *Client) {
-Loop:
+func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 	for {
 		select {
 		case sub := <-s.subscribeQueue:
 			future, err := client.SubscribeMultiple(sub.filters)
 			if err != nil {
-				//TODO: requeue subscribe?
 				s.log("Subscribe Error: %v", err)
-				break Loop
+
+				//TODO: requeue subscribe?
+				return false
 			}
 
 			sub.future.bind(future)
 		case unsub := <-s.unsubscribeQueue:
 			future, err := client.UnsubscribeMultiple(unsub.topics)
 			if err != nil {
-				//TODO: requeue unsubscribe?
 				s.log("Unsubscribe Error: %v", err)
-				break Loop
+
+				//TODO: requeue unsubscribe?
+				return false
 			}
 
 			unsub.future.bind(future)
@@ -307,41 +352,26 @@ Loop:
 			future, err := client.Publish(msg.topic, msg.payload, msg.qos, msg.retain)
 			if err != nil {
 				s.log("Publish Error: %v", err)
-				break Loop
+				return false
 			}
 
 			msg.future.bind(future)
-		case timeout := <-s.stopChannel:
-			err := client.Disconnect(timeout)
+		case <-s.tomb.Dying():
+			// disconnect client on Stop
+			err := client.Disconnect(s.DisconnectTimeout)
 			if err != nil {
 				s.log("Disconnect Error: %v", err)
 			}
 
+			return true
+		case <-fail:
 			// TODO: Prevent cancellation of all futures.
-
-			break Loop
+			return false
 		}
 	}
-
-	s.notify(false, false)
 }
 
-func (s *Service) callback(topic string, payload []byte, err error) {
-	if err != nil {
-		s.log("Error: %v", err)
-
-		// begin reconnect
-		go s.reconnect()
-
-		return
-	}
-
-	// call the handler
-	if s.Message != nil {
-		s.Message(topic, payload)
-	}
-}
-
+// run online or offline callback
 func (s *Service) notify(online bool, resumed bool) {
 	if online {
 		s.Online(resumed)
