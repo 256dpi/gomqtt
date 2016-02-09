@@ -222,6 +222,9 @@ func (s *Service) Stop() {
 
 	s.started = false
 
+	// TODO: Stop by closing a channel to support multiple goroutines.
+	// Maybe even use tomb?
+
 	s.stopChannel <- s.DisconnectTimeout
 }
 
@@ -313,6 +316,8 @@ Loop:
 			if err != nil {
 				s.log("Disconnect Error: %v", err)
 			}
+
+			// TODO: Prevent cancellation of all futures.
 
 			break Loop
 		}
