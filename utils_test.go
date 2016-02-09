@@ -119,7 +119,7 @@ func (p *testPort) protectedURL(user, password string) string {
 	return fmt.Sprintf("tcp://%s:%s@localhost:%d/", user, password, int(*p))
 }
 
-func fakeBroker(t *testing.T, testFlow *flow.Flow) (chan struct{}, *testPort) {
+func fakeBroker(t *testing.T, testFlows... *flow.Flow) (chan struct{}, *testPort) {
 	tp := newTestPort()
 	done := make(chan struct{})
 
@@ -127,10 +127,12 @@ func fakeBroker(t *testing.T, testFlow *flow.Flow) (chan struct{}, *testPort) {
 	assert.NoError(t, err)
 
 	go func() {
-		conn, err := server.Accept()
-		assert.NoError(t, err)
+		for _, flow := range testFlows {
+			conn, err := server.Accept()
+			assert.NoError(t, err)
 
-		testFlow.Test(t, conn)
+			flow.Test(t, conn)
+		}
 
 		err = server.Close()
 		assert.NoError(t, err)
