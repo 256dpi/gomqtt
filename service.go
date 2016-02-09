@@ -28,7 +28,7 @@ import (
 // the broker to reset the clients session. This is useful in situations where
 // its not clear in what state the last session was left.
 func ClearSession(url string, clientID string) error {
-	client := NewClient()
+	client := New()
 
 	// prepare options
 	options := NewOptions()
@@ -226,7 +226,7 @@ func (s *Service) Stop() {
 }
 
 func (s *Service) connect() {
-	client := NewClient()
+	client := New()
 	client.Session = s.Session
 	client.Callback = s.callback
 	client.Logger = s.Logger

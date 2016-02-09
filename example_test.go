@@ -22,7 +22,7 @@ import (
 func ExampleClient() {
 	done := make(chan struct{})
 
-	c := NewClient()
+	c := New()
 
 	c.Callback = func(topic string, payload []byte, err error) {
 		if err != nil {

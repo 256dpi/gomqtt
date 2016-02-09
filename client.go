@@ -83,8 +83,8 @@ type Client struct {
 	finish sync.Once
 }
 
-// NewClient returns a new client that by default uses a fresh MemorySession.
-func NewClient() *Client {
+// New returns a new client that by default uses a fresh MemorySession.
+func New() *Client {
 	return &Client{
 		Session:     session.NewMemorySession(),
 		state:       newState(),
