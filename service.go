@@ -74,10 +74,13 @@ type unsubscribe struct {
 	requeue bool
 }
 
+// Online is a function that is called when the service is connected.
 type Online func(resumed bool)
 
+// Message is a function that is called when a message is received.
 type Message func(topic string, payload []byte)
 
+// Offline is a function that is called when the service is disconnected.
 type Offline func()
 
 const (
@@ -121,6 +124,7 @@ type Service struct {
 	tomb  *tomb.Tomb
 }
 
+// NewService allocates and returns a new service.
 func NewService() *Service {
 	return &Service{
 		state:             newState(serviceInitialized),

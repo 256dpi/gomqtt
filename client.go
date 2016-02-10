@@ -27,27 +27,27 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// ErrAlreadyConnecting is returned by Connect if there has been already a
+// ErrClientAlreadyConnecting is returned by Connect if there has been already a
 // connection attempt.
 var ErrClientAlreadyConnecting = errors.New("client already connecting")
 
-// ErrNotConnected is returned by Publish, Subscribe and Unsubscribe if the
+// ErrClientNotConnected is returned by Publish, Subscribe and Unsubscribe if the
 // client is not currently connected.
 var ErrClientNotConnected = errors.New("client not connected")
 
-// ErrMissingClientID is returned by Connect if no ClientID has been provided in
+// ErrClientMissingID is returned by Connect if no ClientID has been provided in
 // the options while requesting to resume a session.
 var ErrClientMissingID = errors.New("client missing id")
 
-// ErrConnectionDenied is returned in the Callback if the connection has been
-// reject by the broker.
+// ErrClientConnectionDenied is returned in the Callback if the connection has
+// been reject by the broker.
 var ErrClientConnectionDenied = errors.New("client connection denied")
 
-// ErrMissingPong is returned in the Callback if the broker did not respond
+// ErrClientMissingPong is returned in the Callback if the broker did not respond
 // in time to a PingreqPacket.
 var ErrClientMissingPong = errors.New("client missing pong")
 
-// ErrUnexpectedClose is returned in the Callback if the broker closed the
+// ErrClientUnexpectedClose is returned in the Callback if the broker closed the
 // connection without receiving a DisconnectPacket from the client.
 var ErrClientUnexpectedClose = errors.New("client unexpected close")
 
