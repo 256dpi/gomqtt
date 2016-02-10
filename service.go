@@ -69,8 +69,8 @@ type subscribe struct {
 }
 
 type unsubscribe struct {
-	topics []string
-	future *UnsubscribeFuture
+	topics  []string
+	future  *UnsubscribeFuture
 	requeue bool
 }
 
@@ -117,8 +117,8 @@ type Service struct {
 	publishQueue     chan *publish
 	futureStore      *futureStore
 
-	mutex   sync.Mutex
-	tomb    *tomb.Tomb
+	mutex sync.Mutex
+	tomb  *tomb.Tomb
 }
 
 func NewService() *Service {

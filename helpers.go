@@ -26,7 +26,7 @@ type futureStore struct {
 	sync.RWMutex
 
 	protected bool
-	store map[uint16]Future
+	store     map[uint16]Future
 }
 
 // newFutureStore will create a new futureStore
