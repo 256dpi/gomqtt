@@ -722,7 +722,7 @@ func (c *Client) cleanup(err error, close bool) error {
 	}
 
 	// cancel all futures
-	c.futureStore.cancelAll()
+	c.futureStore.clear()
 
 	return err
 }

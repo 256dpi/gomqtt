@@ -23,7 +23,7 @@ import (
 
 // a futureStore is used to store active Futures
 type futureStore struct {
-	sync.Mutex
+	sync.RWMutex
 
 	protected bool
 	store map[uint16]Future
@@ -46,8 +46,8 @@ func (s *futureStore) put(id uint16, future Future) {
 
 // get will retrieve a Future from the store
 func (s *futureStore) get(id uint16) Future {
-	s.Lock()
-	defer s.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 
 	return s.store[id]
 }
@@ -62,8 +62,8 @@ func (s *futureStore) del(id uint16) {
 
 // return a slice with all stored futures
 func (s *futureStore) all() []Future {
-	s.Lock()
-	defer s.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 
 	all := make([]Future, len(s.store))
 
@@ -76,7 +76,7 @@ func (s *futureStore) all() []Future {
 	return all
 }
 
-// set the protection attribute
+// set the protection attribute and if true prevents the store from being cleared
 func (s *futureStore) protect(value bool) {
 	s.Lock()
 	defer s.Unlock()
@@ -84,19 +84,20 @@ func (s *futureStore) protect(value bool) {
 	s.protected = value
 }
 
-// will cancel all stored futures
-func (s *futureStore) cancelAll() {
+// will cancel all stored futures and remove them if the store is unprotected
+func (s *futureStore) clear() {
 	s.Lock()
+	defer s.Unlock()
 
 	if s.protected {
 		return
 	}
 
-	s.Unlock()
-
-	for _, future := range s.all() {
+	for _, future := range s.store {
 		future.cancel()
 	}
+
+	s.store = make(map[uint16]Future)
 }
 
 // will wait until all futures have completed and removed or timeout is reached
