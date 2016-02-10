@@ -111,7 +111,7 @@ func ExampleService() {
 
 	<-wait
 
-	s.Stop()
+	s.Stop(true)
 
 	<-done
 

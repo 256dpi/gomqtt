@@ -78,6 +78,12 @@ type Message func(topic string, payload []byte)
 
 type Offline func()
 
+const (
+	serviceInitialized byte = iota
+	serviceStarted
+	serviceStopped
+)
+
 // Service is an abstraction for Client that provides a stable interface to the
 // application, while it automatically connects and reconnects clients in the
 // background. Errors are not returned but logged using the Logger callback.
@@ -89,6 +95,8 @@ type Offline func()
 type Service struct {
 	broker  string
 	options *Options
+
+	state   *state
 	backoff *backoff.Backoff
 
 	Session session.Session
@@ -107,13 +115,13 @@ type Service struct {
 	publishQueue     chan *publish
 	futureStore      *futureStore
 
-	started bool
 	mutex   sync.Mutex
 	tomb    *tomb.Tomb
 }
 
 func NewService() *Service {
 	return &Service{
+		state:             newState(serviceInitialized),
 		Session:           session.NewMemorySession(),
 		MinReconnectDelay: 1 * time.Second,
 		MaxReconnectDelay: 32 * time.Second,
@@ -126,41 +134,53 @@ func NewService() *Service {
 	}
 }
 
+// Start will start the service with the specified configuration. From now on
+// the service will automatically reconnect on any error until Stop is called.
 func (s *Service) Start(url string, opts *Options) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if s.started {
+	// return if already started
+	if s.state.get() == serviceStarted {
 		return
 	}
 
+	// set state
+	s.state.set(serviceStarted)
+
+	// save configuration
 	s.broker = url
 	s.options = opts
 
+	// initialize backoff
 	s.backoff = &backoff.Backoff{
 		Min:    s.MinReconnectDelay,
 		Max:    s.MaxReconnectDelay,
 		Factor: 2,
 	}
 
+	// mark future store as protected
 	s.futureStore.protect(true)
 
-	s.started = true
-
+	// create new tomb
 	s.tomb = &tomb.Tomb{}
+
+	// start reconnector
 	s.tomb.Go(s.reconnector)
 }
 
 // Publish will send a PublishPacket containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
-// has been completed.
+// has been completed. Returns nil if the service is already stopped.
 func (s *Service) Publish(topic string, payload []byte, qos byte, retain bool) *PublishFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	// allocate future
 	future := &PublishFuture{}
 	future.initialize()
 
+	// queue publish
 	s.publishQueue <- &publish{
 		topic:   topic,
 		payload: payload,
@@ -185,9 +205,11 @@ func (s *Service) SubscribeMultiple(filters map[string]byte) *SubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	// allocate future
 	future := &SubscribeFuture{}
 	future.initialize()
 
+	// queue subscribe
 	s.subscribeQueue <- &subscribe{
 		filters: filters,
 		future:  future,
@@ -207,9 +229,11 @@ func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	// allocate future
 	future := &UnsubscribeFuture{}
 	future.initialize()
 
+	// queue unsubscribe
 	s.unsubscribeQueue <- &unsubscribe{
 		topics: topics,
 		future: future,
@@ -218,20 +242,35 @@ func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 	return future
 }
 
-func (s *Service) Stop() {
+// Stop will disconnect the client if online and cancel all futures if requested.
+// After the service is stopped in can be started again.
+//
+// Note: You should clear the futures on the last shutdown before exiting to
+// ensure that all goroutines return that wait on futures.
+func (s *Service) Stop(clearFutures bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if !s.started {
+	// return if service not started
+	if s.state.get() != serviceStarted {
 		return
 	}
 
-	s.started = false
-
+	// kill and wait
 	s.tomb.Kill(nil)
 	s.tomb.Wait()
+
+	// clear futures if requested
+	if clearFutures {
+		s.futureStore.protect(false)
+		s.futureStore.clear()
+	}
+
+	// set state
+	s.state.set(serviceStopped)
 }
 
+// the reconnect loop
 func (s *Service) reconnector() error {
 	first := true
 
@@ -370,7 +409,6 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 
 			return true
 		case <-fail:
-			// TODO: Prevent cancellation of all futures.
 			return false
 		}
 	}

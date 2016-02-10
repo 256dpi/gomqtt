@@ -97,7 +97,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	<-message
 
-	s.Stop()
+	s.Stop(true)
 
 	<-offline
 	<-done
@@ -131,8 +131,8 @@ func TestStartStopVariations(t *testing.T) {
 
 	<-online
 
-	s.Stop()
-	s.Stop() // <- does nothing
+	s.Stop(true)
+	s.Stop(true) // <- does nothing
 
 	<-offline
 	<-done
@@ -176,7 +176,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 
 	s.Unsubscribe("test").Wait()
 
-	s.Stop()
+	s.Stop(true)
 
 	<-offline
 	<-done
@@ -223,7 +223,7 @@ func TestServiceReconnect(t *testing.T) {
 
 	<-online
 
-	s.Stop()
+	s.Stop(true)
 
 	<-offline
 	<-done
