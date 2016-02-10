@@ -239,11 +239,18 @@ func TestServiceFutureSurvival(t *testing.T) {
 	connack := connackPacket()
 	connack.SessionPresent = true
 
-	publish := packet.NewPublishPacket()
-	publish.Topic = []byte("test")
-	publish.Payload = []byte("test")
-	publish.QOS = 1
-	publish.PacketID = 0
+	publish1 := packet.NewPublishPacket()
+	publish1.Topic = []byte("test")
+	publish1.Payload = []byte("test")
+	publish1.QOS = 1
+	publish1.PacketID = 0
+
+	publish2 := packet.NewPublishPacket()
+	publish2.Topic = []byte("test")
+	publish2.Payload = []byte("test")
+	publish2.QOS = 1
+	publish2.Dup = true
+	publish2.PacketID = 0
 
 	puback := packet.NewPubackPacket()
 	puback.PacketID = 0
@@ -251,13 +258,13 @@ func TestServiceFutureSurvival(t *testing.T) {
 	broker1 := flow.New().
 		Receive(connect).
 		Send(connack).
-		Receive(publish).
+		Receive(publish1).
 		Close()
 
 	broker2 := flow.New().
 		Receive(connect).
 		Send(connack).
-		Receive(publish).
+		Receive(publish2).
 		Send(puback).
 		Receive(disconnectPacket()).
 		End()
