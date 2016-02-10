@@ -25,6 +25,7 @@ import (
 type futureStore struct {
 	sync.Mutex
 
+	protected bool
 	store map[uint16]Future
 }
 
@@ -73,6 +74,29 @@ func (s *futureStore) all() []Future {
 	}
 
 	return all
+}
+
+// set the protection attribute
+func (s *futureStore) protect(value bool) {
+	s.Lock()
+	defer s.Unlock()
+
+	s.protected = value
+}
+
+// will cancel all stored futures
+func (s *futureStore) cancelAll() {
+	s.Lock()
+
+	if s.protected {
+		return
+	}
+
+	s.Unlock()
+
+	for _, future := range s.all() {
+		future.cancel()
+	}
 }
 
 // will wait until all futures have completed and removed or timeout is reached

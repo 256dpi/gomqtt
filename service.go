@@ -143,6 +143,8 @@ func (s *Service) Start(url string, opts *Options) {
 		Factor: 2,
 	}
 
+	s.futureStore.protect(true)
+
 	s.started = true
 
 	s.tomb = &tomb.Tomb{}

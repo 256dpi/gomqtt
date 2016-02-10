@@ -721,10 +721,8 @@ func (c *Client) cleanup(err error, close bool) error {
 		}
 	}
 
-	// cancel futures
-	for _, future := range c.futureStore.all() {
-		future.cancel()
-	}
+	// cancel all futures
+	c.futureStore.cancelAll()
 
 	return err
 }
