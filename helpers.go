@@ -123,15 +123,6 @@ func (s *futureStore) await(timeout time.Duration) error {
 
 /* state */
 
-const (
-	clientInitialized byte = iota
-	clientConnecting
-	clientConnacked
-	clientConnected
-	clientDisconnecting
-	clientDisconnected
-)
-
 // a state keeps track of the clients current state
 type state struct {
 	sync.Mutex
@@ -140,9 +131,9 @@ type state struct {
 }
 
 // create new state
-func newState() *state {
+func newState(init byte) *state {
 	return &state{
-		current: clientInitialized,
+		current: init,
 	}
 }
 

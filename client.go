@@ -58,6 +58,15 @@ type Callback func(topic string, payload []byte, err error)
 // Logger is a function called by the client to log activity.
 type Logger func(msg string)
 
+const (
+	clientInitialized byte = iota
+	clientConnecting
+	clientConnacked
+	clientConnected
+	clientDisconnecting
+	clientDisconnected
+)
+
 // Client connects to a broker and handles the transmission of packets. It will
 // automatically send PingreqPackets to keep the connection alive. Outgoing
 // publish related packets will be stored in session and resend when the
@@ -90,7 +99,7 @@ type Client struct {
 func New() *Client {
 	return &Client{
 		Session:     session.NewMemorySession(),
-		state:       newState(),
+		state:       newState(clientInitialized),
 		futureStore: newFutureStore(),
 	}
 }
