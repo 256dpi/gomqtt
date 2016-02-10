@@ -124,12 +124,12 @@ func (s *futureStore) await(timeout time.Duration) error {
 /* state */
 
 const (
-	stateInitialized byte = iota
-	stateConnecting
-	stateConnacked
-	stateConnected
-	stateDisconnecting
-	stateDisconnected
+	clientInitialized byte = iota
+	clientConnecting
+	clientConnacked
+	clientConnected
+	clientDisconnecting
+	clientDisconnected
 )
 
 // a state keeps track of the clients current state
@@ -142,7 +142,7 @@ type state struct {
 // create new state
 func newState() *state {
 	return &state{
-		current: stateInitialized,
+		current: clientInitialized,
 	}
 }
 

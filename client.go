@@ -103,7 +103,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	defer c.mutex.Unlock()
 
 	// check if already connecting
-	if c.state.get() >= stateConnecting {
+	if c.state.get() >= clientConnecting {
 		return nil, ErrClientAlreadyConnecting
 	}
 
@@ -139,7 +139,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// set to connecting as from this point the client cannot be reused
-	c.state.set(stateConnecting)
+	c.state.set(clientConnecting)
 
 	// from now on the connection has been used and we have to close the
 	// connection and cleanup on any subsequent error
@@ -203,7 +203,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != stateConnected {
+	if c.state.get() != clientConnected {
 		return nil, ErrClientNotConnected
 	}
 
@@ -259,7 +259,7 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != stateConnected {
+	if c.state.get() != clientConnected {
 		return nil, ErrClientNotConnected
 	}
 
@@ -307,7 +307,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != stateConnected {
+	if c.state.get() != clientConnected {
 		return nil, ErrClientNotConnected
 	}
 
@@ -343,7 +343,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != stateConnected {
+	if c.state.get() != clientConnected {
 		return ErrClientNotConnected
 	}
 
@@ -353,7 +353,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	}
 
 	// set state
-	c.state.set(stateDisconnecting)
+	c.state.set(clientDisconnecting)
 
 	// allocate packet
 	m := packet.NewDisconnectPacket()
@@ -371,7 +371,7 @@ func (c *Client) Close() error {
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() < stateConnecting {
+	if c.state.get() < clientConnecting {
 		return ErrClientNotConnected
 	}
 
@@ -387,7 +387,7 @@ func (c *Client) processor() error {
 		pkt, err := c.conn.Receive()
 		if err != nil {
 			// if we are disconnecting we can ignore the error
-			if c.state.get() >= stateDisconnecting {
+			if c.state.get() >= clientDisconnecting {
 
 				return nil
 			}
@@ -436,7 +436,7 @@ func (c *Client) processor() error {
 // handle the incoming ConnackPacket
 func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// check state
-	if c.state.get() != stateConnecting {
+	if c.state.get() != clientConnecting {
 		return nil // ignore wrongly sent ConnackPacket
 	}
 
@@ -446,14 +446,14 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
-		c.state.set(stateConnacked)
+		c.state.set(clientConnacked)
 		err := c.die(ErrClientConnectionDenied, true)
 		c.connectFuture.complete()
 		return err
 	}
 
 	// set state to connected
-	c.state.set(stateConnected)
+	c.state.set(clientConnected)
 
 	// complete future
 	c.connectFuture.complete()
@@ -698,12 +698,12 @@ func (c *Client) log(format string, a ...interface{}) {
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error, close bool) error {
 	// cancel connect future if appropriate
-	if c.state.get() < stateConnacked && c.connectFuture != nil {
+	if c.state.get() < clientConnacked && c.connectFuture != nil {
 		c.connectFuture.cancel()
 	}
 
 	// set state
-	c.state.set(stateDisconnected)
+	c.state.set(clientDisconnected)
 
 	// ensure that the connection gets closed
 	if close {
