@@ -105,7 +105,7 @@ func ExampleService() {
 
 	s.Start("mqtt://try:try@broker.shiftr.io", options)
 
-	s.Subscribe("test", 0).Wait()
+	s.Subscribe("test", 0, false).Wait()
 
 	s.Publish("test", []byte("test"), 0, false)
 

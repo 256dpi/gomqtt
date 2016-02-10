@@ -65,11 +65,13 @@ type publish struct {
 type subscribe struct {
 	filters map[string]byte
 	future  *SubscribeFuture
+	requeue bool
 }
 
 type unsubscribe struct {
 	topics []string
 	future *UnsubscribeFuture
+	requeue bool
 }
 
 type Online func(resumed bool)
@@ -193,15 +195,16 @@ func (s *Service) Publish(topic string, payload []byte, qos byte, retain bool) *
 }
 
 // Subscribe will send a SubscribePacket containing one topic to subscribe.
-func (s *Service) Subscribe(topic string, qos byte) *SubscribeFuture {
+// If requeue is set to true the packet will be retried on an error.
+func (s *Service) Subscribe(topic string, qos byte, requeue bool) *SubscribeFuture {
 	return s.SubscribeMultiple(map[string]byte{
 		topic: qos,
-	})
+	}, requeue)
 }
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
-// subscribe.
-func (s *Service) SubscribeMultiple(filters map[string]byte) *SubscribeFuture {
+// subscribe. If requeue is set to true the packet will be retried on an error.
+func (s *Service) SubscribeMultiple(filters map[string]byte, requeue bool) *SubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -213,19 +216,22 @@ func (s *Service) SubscribeMultiple(filters map[string]byte) *SubscribeFuture {
 	s.subscribeQueue <- &subscribe{
 		filters: filters,
 		future:  future,
+		requeue: requeue,
 	}
 
 	return future
 }
 
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
-func (s *Service) Unsubscribe(topic string) *UnsubscribeFuture {
-	return s.UnsubscribeMultiple([]string{topic})
+// If requeue is set to true the packet will be retried on an error.
+func (s *Service) Unsubscribe(topic string, requeue bool) *UnsubscribeFuture {
+	return s.UnsubscribeMultiple([]string{topic}, requeue)
 }
 
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
-// topics to unsubscribe.
-func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
+// topics to unsubscribe. If requeue is set to true the packet will be retried
+// on an error.
+func (s *Service) UnsubscribeMultiple(topics []string, requeue bool) *UnsubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -235,8 +241,9 @@ func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 
 	// queue unsubscribe
 	s.unsubscribeQueue <- &unsubscribe{
-		topics: topics,
-		future: future,
+		topics:  topics,
+		future:  future,
+		requeue: requeue,
 	}
 
 	return future
@@ -381,8 +388,13 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			if err != nil {
 				s.log("Subscribe Error: %v", err)
 
-				//TODO: requeue subscribe?
-				sub.future.cancel()
+				if sub.requeue {
+					// requeue if enabled
+					s.subscribeQueue <- sub
+				} else {
+					// otherwise cancel future
+					sub.future.cancel()
+				}
 
 				return false
 			}
@@ -393,9 +405,14 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			if err != nil {
 				s.log("Unsubscribe Error: %v", err)
 
-				//TODO: requeue unsubscribe?
-				unsub.future.cancel()
-				
+				if unsub.requeue {
+					// requeue if enabled
+					s.unsubscribeQueue <- unsub
+				} else {
+					// otherwise cancel future
+					unsub.future.cancel()
+				}
+
 				return false
 			}
 
