@@ -166,7 +166,7 @@ func (s *Service) Start(url string, opts *Options) {
 	s.tomb = &tomb.Tomb{}
 
 	// start reconnector
-	s.tomb.Go(s.reconnector)
+	s.tomb.Go(s.supervisor)
 }
 
 // Publish will send a PublishPacket containing the passed parameters. It will
@@ -270,8 +270,8 @@ func (s *Service) Stop(clearFutures bool) {
 	s.state.set(serviceStopped)
 }
 
-// the reconnect loop
-func (s *Service) reconnector() error {
+// the supervised reconnect loop
+func (s *Service) supervisor() error {
 	first := true
 
 	for {
