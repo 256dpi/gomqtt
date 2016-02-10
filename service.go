@@ -382,6 +382,8 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 				s.log("Subscribe Error: %v", err)
 
 				//TODO: requeue subscribe?
+				sub.future.cancel()
+
 				return false
 			}
 
@@ -392,6 +394,8 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 				s.log("Unsubscribe Error: %v", err)
 
 				//TODO: requeue unsubscribe?
+				unsub.future.cancel()
+				
 				return false
 			}
 
