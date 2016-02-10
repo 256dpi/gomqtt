@@ -64,6 +64,9 @@ type Logger func(msg string)
 // connection gets closed abruptly. All methods return Futures that get completed
 // when the packets get acknowledged by the broker. Once the connection is closed
 // all waiting futures get canceled.
+//
+// Note: If clean session is false and there are packets in the store, messages
+// might get completed after connecting without triggering any futures to complete.
 type Client struct {
 	conn transport.Conn
 

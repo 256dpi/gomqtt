@@ -82,7 +82,10 @@ type Offline func()
 // application, while it automatically connects and reconnects clients in the
 // background. Errors are not returned but logged using the Logger callback.
 // All methods return Futures that get completed once the acknowledgements are
-// received.
+// received. Once the services is stopped all waiting futures get canceled.
+//
+// Note: If clean session is false and there are packets in the store, messages
+// might get completed after starting without triggering any futures to complete.
 type Service struct {
 	broker  string
 	options *Options
