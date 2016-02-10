@@ -297,7 +297,7 @@ func (s *Service) reconnector() error {
 		fail := make(chan struct{})
 
 		// try once to get a client
-		client, resumed := s.getClient(fail)
+		client, resumed := s.connect(fail)
 		if client == nil {
 			continue
 		}
@@ -323,7 +323,7 @@ func (s *Service) reconnector() error {
 }
 
 // will try to connect one client to the broker
-func (s *Service) getClient(fail chan struct{}) (*Client, bool) {
+func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 	client := New()
 	client.Session = s.Session
 	client.Logger = s.Logger
