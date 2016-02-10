@@ -119,7 +119,7 @@ func (p *testPort) protectedURL(user, password string) string {
 	return fmt.Sprintf("tcp://%s:%s@localhost:%d/", user, password, int(*p))
 }
 
-func fakeBroker(t *testing.T, testFlows... *flow.Flow) (chan struct{}, *testPort) {
+func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, *testPort) {
 	tp := newTestPort()
 	done := make(chan struct{})
 

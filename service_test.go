@@ -16,13 +16,14 @@ package client
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gomqtt/flow"
 	"github.com/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClearSession(t *testing.T){
+func TestClearSession(t *testing.T) {
 	connect := connectPacket()
 	connect.ClientID = []byte("test")
 
@@ -137,9 +138,9 @@ func TestStartStopVariations(t *testing.T) {
 	<-done
 }
 
-func TestServiceUnsubscribe(t *testing.T){
+func TestServiceUnsubscribe(t *testing.T) {
 	unsubscribe := packet.NewUnsubscribePacket()
-	unsubscribe.Topics = [][]byte{ []byte("test") }
+	unsubscribe.Topics = [][]byte{[]byte("test")}
 	unsubscribe.PacketID = 0
 
 	unsuback := packet.NewUnsubackPacket()
@@ -179,4 +180,53 @@ func TestServiceUnsubscribe(t *testing.T){
 
 	<-offline
 	<-done
+}
+
+func TestServiceReconnect(t *testing.T) {
+	delay := flow.New().
+		Receive(connectPacket()).
+		Delay(55 * time.Millisecond).
+		End()
+
+	noDelay := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(disconnectPacket()).
+		End()
+
+	done, tp := fakeBroker(t, delay, delay, delay, noDelay)
+
+	online := make(chan struct{})
+	offline := make(chan struct{})
+
+	s := NewService()
+	s.MinReconnectDelay = 50 * time.Millisecond
+	s.ConnectTimeout = 50 * time.Millisecond
+
+	i := 0
+	s.Logger = func(msg string) {
+		if msg == "Next Reconnect" {
+			i++
+		}
+	}
+
+	s.Online = func(resumed bool) {
+		assert.False(t, resumed)
+		close(online)
+	}
+
+	s.Offline = func() {
+		close(offline)
+	}
+
+	s.Start(tp.url(), nil)
+
+	<-online
+
+	s.Stop()
+
+	<-offline
+	<-done
+
+	assert.Equal(t, 4, i)
 }

@@ -91,7 +91,7 @@ func ExampleService() {
 		fmt.Printf("resumed: %v\n", resumed)
 	}
 
-	s.Offline = func(){
+	s.Offline = func() {
 		fmt.Println("offline!")
 		close(done)
 	}

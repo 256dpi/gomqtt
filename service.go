@@ -102,7 +102,7 @@ type Service struct {
 	subscribeQueue   chan *subscribe
 	unsubscribeQueue chan *unsubscribe
 	publishQueue     chan *publish
-	futureStore		 *futureStore
+	futureStore      *futureStore
 
 	started bool
 	mutex   sync.Mutex

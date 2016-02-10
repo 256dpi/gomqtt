@@ -368,7 +368,7 @@ func (c *Client) Close() error {
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != stateConnected {
+	if c.state.get() < stateConnecting {
 		return ErrClientNotConnected
 	}
 
