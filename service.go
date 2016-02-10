@@ -303,13 +303,17 @@ func (s *Service) reconnector() error {
 		}
 
 		// run callback
-		s.notify(true, resumed)
+		if s.Online != nil {
+			s.Online(resumed)
+		}
 
 		// run dispatcher on client
 		dying := s.dispatcher(client, fail)
 
 		// run callback
-		s.notify(false, false)
+		if s.Offline != nil {
+			s.Offline()
+		}
 
 		// return goroutine if dying
 		if dying {
@@ -411,15 +415,6 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 		case <-fail:
 			return false
 		}
-	}
-}
-
-// run online or offline callback
-func (s *Service) notify(online bool, resumed bool) {
-	if online {
-		s.Online(resumed)
-	} else {
-		s.Offline()
 	}
 }
 
