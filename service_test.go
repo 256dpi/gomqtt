@@ -230,3 +230,52 @@ func TestServiceReconnect(t *testing.T) {
 
 	assert.Equal(t, 4, i)
 }
+
+func TestServiceFutureSurvival(t *testing.T) {
+	connect := connectPacket()
+	connect.ClientID = []byte("test")
+	connect.CleanSession = false
+
+	connack := connackPacket()
+	connack.SessionPresent = true
+
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte("test")
+	publish.Payload = []byte("test")
+	publish.QOS = 1
+	publish.PacketID = 0
+
+	puback := packet.NewPubackPacket()
+	puback.PacketID = 0
+
+	broker1 := flow.New().
+		Receive(connect).
+		Send(connack).
+		Receive(publish).
+		Close()
+
+	broker2 := flow.New().
+		Receive(connect).
+		Send(connack).
+		Receive(publish).
+		Send(puback).
+		Receive(disconnectPacket()).
+		End()
+
+	done, tp := fakeBroker(t, broker1, broker2)
+
+	options := NewOptions()
+	options.ClientID = "test"
+	options.CleanSession = false
+
+	s := NewService()
+
+	s.Start(tp.url(), options)
+
+	err := s.Publish("test", []byte("test"), 1, false).Wait()
+	assert.NoError(t, err)
+
+	s.Stop(true)
+
+	<-done
+}
