@@ -115,6 +115,23 @@ func TestUnsubscribePacketDecodeError4(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestUnsubscribePacketDecodeError5(t *testing.T) {
+	pktBytes := []byte{
+		byte(UNSUBSCRIBE<<4) | 2,
+		11,
+		0, // packet ID MSB
+		0, // packet ID LSB <- zero packet id
+		0, // topic name MSB
+		7, // topic name LSB
+		's', 'u', 'r', 'g', 'e', 'm', 'q',
+	}
+
+	pkt := NewUnsubscribePacket()
+	_, err := pkt.Decode(pktBytes)
+
+	assert.Error(t, err)
+}
+
 func TestUnsubscribePacketEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
@@ -174,6 +191,17 @@ func TestUnsubscribePacketEncodeError2(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 6, n)
+}
+
+func TestUnsubscribePacketEncodeError3(t *testing.T) {
+	pkt := NewUnsubscribePacket()
+	pkt.PacketID = 0 // <- zero packet id
+
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
+
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
 }
 
 // test to ensure encoding and decoding are the same

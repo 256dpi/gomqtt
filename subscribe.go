@@ -91,6 +91,11 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 	sp.PacketID = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
+	// check packet id
+	if sp.PacketID == 0 {
+		return total, fmt.Errorf("Packet id must be grater than zero")
+	}
+
 	// reset subscriptions
 	sp.Subscriptions = sp.Subscriptions[:0]
 
@@ -131,6 +136,11 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 // the way. If there is an error, the byte slice should be considered invalid.
 func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
 	total := 0
+
+	// check packet id
+	if sp.PacketID == 0 {
+		return total, fmt.Errorf("Packet id must be grater than zero")
+	}
 
 	// encode header
 	n, err := headerEncode(dst[total:], 0, sp.len(), sp.Len(), SUBSCRIBE)

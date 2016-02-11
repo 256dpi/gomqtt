@@ -65,6 +65,21 @@ func TestIdentifiedPacketDecodeError2(t *testing.T) {
 	assert.Equal(t, 0, int(pid))
 }
 
+func TestIdentifiedPacketDecodeError3(t *testing.T) {
+	pktBytes := []byte{
+		byte(PUBACK << 4),
+		2,
+		0, // packet ID LSB
+		0, // packet ID MSB <- zero id
+	}
+
+	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
+
+	assert.Error(t, err)
+	assert.Equal(t, 4, n)
+	assert.Equal(t, 0, int(pid))
+}
+
 func TestIdentifiedPacketEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
@@ -84,6 +99,14 @@ func TestIdentifiedPacketEncode(t *testing.T) {
 func TestIdentifiedPacketEncodeError1(t *testing.T) {
 	dst := make([]byte, 3) // <- insufficient buffer
 	n, err := identifiedPacketEncode(dst, 7, PUBACK)
+
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+}
+
+func TestIdentifiedPacketEncodeError2(t *testing.T) {
+	dst := make([]byte, identifiedPacketLen())
+	n, err := identifiedPacketEncode(dst, 0, PUBACK)  // <- zero id
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)
@@ -149,10 +172,7 @@ func BenchmarkIdentifiedPacketDecode(b *testing.B) {
 	}
 }
 
-func testIdentifiedPacketImplementation(t *testing.T, _t Type) {
-	pkt, err := _t.New()
-	assert.NoError(t, err)
-	assert.Equal(t, _t, pkt.Type())
+func testIdentifiedPacketImplementation(t *testing.T, pkt Packet) {
 	assert.NotEmpty(t, pkt.String())
 
 	buf := make([]byte, pkt.Len())
@@ -166,21 +186,36 @@ func testIdentifiedPacketImplementation(t *testing.T, _t Type) {
 }
 
 func TestPubackImplementation(t *testing.T) {
-	testIdentifiedPacketImplementation(t, PUBACK)
+	pkt := NewPubackPacket()
+	pkt.PacketID = 1
+
+	testIdentifiedPacketImplementation(t, pkt)
 }
 
 func TestPubcompImplementation(t *testing.T) {
-	testIdentifiedPacketImplementation(t, PUBCOMP)
+	pkt := NewPubcompPacket()
+	pkt.PacketID = 1
+
+	testIdentifiedPacketImplementation(t, pkt)
 }
 
 func TestPubrecImplementation(t *testing.T) {
-	testIdentifiedPacketImplementation(t, PUBREC)
+	pkt := NewPubrecPacket()
+	pkt.PacketID = 1
+
+	testIdentifiedPacketImplementation(t, pkt)
 }
 
 func TestPubrelImplementation(t *testing.T) {
-	testIdentifiedPacketImplementation(t, PUBREL)
+	pkt := NewPubrelPacket()
+	pkt.PacketID = 1
+
+	testIdentifiedPacketImplementation(t, pkt)
 }
 
 func TestUnsubackImplementation(t *testing.T) {
-	testIdentifiedPacketImplementation(t, UNSUBACK)
+	pkt := NewUnsubackPacket()
+	pkt.PacketID = 1
+
+	testIdentifiedPacketImplementation(t, pkt)
 }

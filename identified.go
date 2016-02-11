@@ -44,12 +44,22 @@ func identifiedPacketDecode(src []byte, t Type) (int, uint16, error) {
 	packetID := binary.BigEndian.Uint16(src[total:])
 	total += 2
 
+	// check packet id
+	if packetID == 0 {
+		return total, 0, fmt.Errorf("Packet id must be grater than zero")
+	}
+
 	return total, packetID, nil
 }
 
 // Encodes an identified packet.
 func identifiedPacketEncode(dst []byte, packetID uint16, mt Type) (int, error) {
 	total := 0
+
+	// check packet id
+	if packetID == 0 {
+		return total, fmt.Errorf("Packet id must be grater than zero")
+	}
 
 	// encode header
 	n, err := headerEncode(dst[total:], 0, 2, identifiedPacketLen(), mt)

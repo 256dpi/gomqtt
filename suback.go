@@ -81,6 +81,11 @@ func (sp *SubackPacket) Decode(src []byte) (int, error) {
 	sp.PacketID = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
+	// check packet id
+	if sp.PacketID == 0 {
+		return total, fmt.Errorf("Packet id must be grater than zero")
+	}
+
 	// calculate number of return codes
 	rcl := int(rl) - 2
 
@@ -109,6 +114,11 @@ func (sp *SubackPacket) Encode(dst []byte) (int, error) {
 		if !validQOS(code) && code != QOSFailure {
 			return total, fmt.Errorf("Invalid return code %d for topic %d", code, i)
 		}
+	}
+
+	// check packet id
+	if sp.PacketID == 0 {
+		return total, fmt.Errorf("Packet id must be grater than zero")
 	}
 
 	// encode header

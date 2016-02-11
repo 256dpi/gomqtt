@@ -143,6 +143,23 @@ func TestPublishPacketDecodeError5(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestPublishPacketDecodeError6(t *testing.T) {
+	pktBytes := []byte{
+		byte(PUBLISH<<4) | 2,
+		2,
+		0, // topic name MSB
+		1, // topic name LSB
+		't',
+		0,
+		0, // <- zero packet id
+	}
+
+	pkt := NewPublishPacket()
+	_, err := pkt.Decode(pktBytes)
+
+	assert.Error(t, err)
+}
+
 func TestPublishPacketEncode1(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 11,
@@ -227,6 +244,18 @@ func TestPublishPacketEncodeError3(t *testing.T) {
 func TestPublishPacketEncodeError4(t *testing.T) {
 	pkt := NewPublishPacket()
 	pkt.Topic = make([]byte, 65536) // <- too big
+
+	dst := make([]byte, pkt.Len())
+	_, err := pkt.Encode(dst)
+
+	assert.Error(t, err)
+}
+
+func TestPublishPacketEncodeError5(t *testing.T) {
+	pkt := NewPublishPacket()
+	pkt.Topic = []byte("test")
+	pkt.QOS = 1
+	pkt.PacketID = 0 // <- zero packet id
 
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)

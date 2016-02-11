@@ -118,6 +118,11 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 		// read packet id
 		pp.PacketID = binary.BigEndian.Uint16(src[total:])
 		total += 2
+
+		// check packet id
+		if pp.PacketID == 0 {
+			return total, fmt.Errorf("Packet id must be grater than zero")
+		}
 	}
 
 	// calculate payload length
@@ -162,6 +167,11 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 	// check qos
 	if !validQOS(pp.QOS) {
 		return 0, fmt.Errorf("Invalid QOS level %d", pp.QOS)
+	}
+
+	// check packet id
+	if pp.QOS > 0 && pp.PacketID == 0 {
+		return total, fmt.Errorf("Packet id must be grater than zero")
 	}
 
 	// set qos

@@ -139,6 +139,24 @@ func TestSubscribePacketDecodeError5(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestSubscribePacketDecodeError6(t *testing.T) {
+	pktBytes := []byte{
+		byte(SUBSCRIBE<<4) | 2,
+		5,
+		0, // packet ID MSB
+		0, // packet ID LSB <- zero packet id
+		0, // topic name MSB
+		1, // topic name LSB
+		's',
+		0,
+	}
+
+	pkt := NewSubscribePacket()
+	_, err := pkt.Decode(pktBytes)
+
+	assert.Error(t, err)
+}
+
 func TestSubscribePacketEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
@@ -177,6 +195,7 @@ func TestSubscribePacketEncode(t *testing.T) {
 
 func TestSubscribePacketEncodeError1(t *testing.T) {
 	pkt := NewSubscribePacket()
+	pkt.PacketID = 7
 
 	dst := make([]byte, 1) // <- too small
 	_, err := pkt.Encode(dst)
@@ -186,9 +205,20 @@ func TestSubscribePacketEncodeError1(t *testing.T) {
 
 func TestSubscribePacketEncodeError2(t *testing.T) {
 	pkt := NewSubscribePacket()
+	pkt.PacketID = 7
 	pkt.Subscriptions = []Subscription{
 		{make([]byte, 65536), 0}, // too big
 	}
+
+	dst := make([]byte, pkt.Len())
+	_, err := pkt.Encode(dst)
+
+	assert.Error(t, err)
+}
+
+func TestSubscribePacketEncodeError3(t *testing.T) {
+	pkt := NewSubscribePacket()
+	pkt.PacketID = 0 // <- zero packet id
 
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)

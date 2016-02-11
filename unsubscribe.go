@@ -80,6 +80,11 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 	up.PacketID = binary.BigEndian.Uint16(src[total:])
 	total += 2
 
+	// check packet id
+	if up.PacketID == 0 {
+		return total, fmt.Errorf("Packet id must be grater than zero")
+	}
+
 	// prepare counter
 	tl := int(rl) - 2
 
@@ -114,6 +119,11 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 // the way. If there is an error, the byte slice should be considered invalid.
 func (up *UnsubscribePacket) Encode(dst []byte) (int, error) {
 	total := 0
+
+	// check packet id
+	if up.PacketID == 0 {
+		return total, fmt.Errorf("Packet id must be grater than zero")
+	}
 
 	// encode header
 	n, err := headerEncode(dst[total:], 0, up.len(), up.Len(), UNSUBSCRIBE)
