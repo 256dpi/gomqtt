@@ -297,11 +297,11 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: []byte("test")},
 	}
-	subscribe.PacketID = 0
+	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = []byte{0}
-	suback.PacketID = 0
+	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
 	publish.Topic = []byte("test")
@@ -365,20 +365,20 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: []byte("test"), QOS: 1},
 	}
-	subscribe.PacketID = 0
+	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = []byte{1}
-	suback.PacketID = 0
+	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
 	publish.Topic = []byte("test")
 	publish.Payload = []byte("test")
 	publish.QOS = 1
-	publish.PacketID = 1
+	publish.PacketID = 2
 
 	puback := packet.NewPubackPacket()
-	puback.PacketID = 1
+	puback.PacketID = 2
 
 	broker := flow.New().
 		Receive(connectPacket()).
@@ -440,26 +440,26 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: []byte("test"), QOS: 2},
 	}
-	subscribe.PacketID = 0
+	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = []byte{2}
-	suback.PacketID = 0
+	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
 	publish.Topic = []byte("test")
 	publish.Payload = []byte("test")
 	publish.QOS = 2
-	publish.PacketID = 1
+	publish.PacketID = 2
 
 	pubrec := packet.NewPubrecPacket()
-	pubrec.PacketID = 1
+	pubrec.PacketID = 2
 
 	pubrel := packet.NewPubrelPacket()
-	pubrel.PacketID = 1
+	pubrel.PacketID = 2
 
 	pubcomp := packet.NewPubcompPacket()
-	pubcomp.PacketID = 1
+	pubcomp.PacketID = 2
 
 	broker := flow.New().
 		Receive(connectPacket()).
@@ -523,10 +523,10 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 func TestClientUnsubscribe(t *testing.T) {
 	unsubscribe := packet.NewUnsubscribePacket()
 	unsubscribe.Topics = [][]byte{[]byte("test")}
-	unsubscribe.PacketID = 0
+	unsubscribe.PacketID = 1
 
 	unsuback := packet.NewUnsubackPacket()
-	unsuback.PacketID = 0
+	unsuback.PacketID = 1
 
 	broker := flow.New().
 		Receive(connectPacket()).
@@ -566,7 +566,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	publish.Topic = []byte("test")
 	publish.Payload = []byte("test")
 	publish.QOS = 1
-	publish.PacketID = 0
+	publish.PacketID = 1
 
 	broker := flow.New().
 		Receive(connect).
@@ -611,10 +611,10 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	publish.Topic = []byte("test")
 	publish.Payload = []byte("test")
 	publish.QOS = 1
-	publish.PacketID = 0
+	publish.PacketID = 1
 
 	puback := packet.NewPubackPacket()
-	puback.PacketID = 0
+	puback.PacketID = 1
 
 	wait := func() {
 		time.Sleep(100 * time.Millisecond)
@@ -714,10 +714,10 @@ func TestClientSessionResumption(t *testing.T) {
 	publish1.Topic = []byte("test")
 	publish1.Payload = []byte("test")
 	publish1.QOS = 1
-	publish1.PacketID = 0
+	publish1.PacketID = 1
 
 	puback1 := packet.NewPubackPacket()
-	puback1.PacketID = 0
+	puback1.PacketID = 1
 
 	broker := flow.New().
 		Receive(connect).
@@ -814,7 +814,7 @@ func TestClientFutureCancellation(t *testing.T) {
 	publish.Topic = []byte("test")
 	publish.Payload = []byte("test")
 	publish.QOS = 1
-	publish.PacketID = 0
+	publish.PacketID = 1
 
 	broker := flow.New().
 		Receive(connectPacket()).
@@ -849,11 +849,11 @@ func TestClientLogger(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: []byte("test")},
 	}
-	subscribe.PacketID = 0
+	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = []byte{0}
-	suback.PacketID = 0
+	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
 	publish.Topic = []byte("test")
