@@ -106,7 +106,7 @@ func TestIdentifiedPacketEncodeError1(t *testing.T) {
 
 func TestIdentifiedPacketEncodeError2(t *testing.T) {
 	dst := make([]byte, identifiedPacketLen())
-	n, err := identifiedPacketEncode(dst, 0, PUBACK)  // <- zero id
+	n, err := identifiedPacketEncode(dst, 0, PUBACK) // <- zero id
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)

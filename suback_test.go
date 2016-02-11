@@ -178,7 +178,7 @@ func TestSubackPacketEncodeError3(t *testing.T) {
 
 	dst := make([]byte, pkt.Len()-1)
 	n, err := pkt.Encode(dst)
-	
+
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)
 }
