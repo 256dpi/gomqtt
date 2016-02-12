@@ -14,32 +14,36 @@
 
 package broker
 
-import (
-	"github.com/gomqtt/transport"
-)
+import "sync"
 
-type Logger func(msg string)
+/* state */
 
-type Broker struct {
-	QueueBackend    QueueBackend
-	RetainedBackend RetainedBackend
-	WillBackend     WillBackend
+// a state keeps track of the clients current state
+type state struct {
+	sync.Mutex
 
-	Logger Logger
+	current byte
 }
 
-// New returns a new Broker with a basic MemoryBackend.
-func New() *Broker {
-	backend := NewMemoryBackend()
-
-	return &Broker{
-		QueueBackend:    backend,
-		RetainedBackend: backend,
-		WillBackend:     backend,
+// create new state
+func newState(init byte) *state {
+	return &state{
+		current: init,
 	}
 }
 
-// Handle handles a transport.Conn.
-func (b *Broker) Handle(conn transport.Conn) {
-	NewClient(b, conn)
+// set will change to the specified state
+func (s *state) set(state byte) {
+	s.Lock()
+	defer s.Unlock()
+
+	s.current = state
+}
+
+// get will retrieve the current state
+func (s *state) get() byte {
+	s.Lock()
+	defer s.Unlock()
+
+	return s.current
 }

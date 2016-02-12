@@ -16,13 +16,13 @@ package main
 
 import (
 	"flag"
-	"time"
 	"fmt"
-	"sync/atomic"
 	"strconv"
+	"sync/atomic"
+	"time"
 
-	"github.com/gomqtt/transport"
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/transport"
 )
 
 const interval = 100
@@ -37,7 +37,7 @@ var received = make(chan int)
 func main() {
 	flag.Parse()
 
-	fmt.Println("start benchmark of '" + *url +"' with " + strconv.Itoa(*workers) + " workers")
+	fmt.Println("start benchmark of '" + *url + "' with " + strconv.Itoa(*workers) + " workers")
 
 	for i := 0; i < *workers; i++ {
 		id := "id-" + strconv.Itoa(i)
@@ -85,9 +85,9 @@ func counter(id string) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1
 	subscribe.Subscriptions = []packet.Subscription{
-		packet.Subscription{
+		{
 			Topic: []byte(id),
-			QOS: 0,
+			QOS:   0,
 		},
 	}
 
@@ -98,7 +98,7 @@ func counter(id string) {
 
 	fmt.Println(id + ": subscribed to '" + id + "'")
 
-	counter:= 0
+	counter := 0
 
 	for {
 		_, err := conn.Receive()
@@ -143,13 +143,13 @@ func reporter() {
 	var sentCounter int32 = 0
 	var receivedCounter int32 = 0
 
-	go func(){
+	go func() {
 		for {
 			atomic.AddInt32(&sentCounter, int32(<-sent))
 		}
 	}()
 
-	go func(){
+	go func() {
 		for {
 			atomic.AddInt32(&receivedCounter, int32(<-received))
 		}
@@ -163,7 +163,7 @@ func reporter() {
 
 		fmt.Printf("sent: %d msg/s, ", sentPerSecond)
 		fmt.Printf("received: %d msg/s, ", receivedPerSecond)
-		fmt.Printf("diff: %d\n", sentPerSecond - receivedPerSecond)
+		fmt.Printf("diff: %d\n", sentPerSecond-receivedPerSecond)
 
 		atomic.StoreInt32(&sentCounter, 0)
 		atomic.StoreInt32(&receivedCounter, 0)

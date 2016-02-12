@@ -16,15 +16,15 @@ package main
 
 import (
 	"flag"
-	"os"
-	"log"
-	"runtime/pprof"
-	"os/signal"
-	"syscall"
 	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"runtime/pprof"
+	"syscall"
 
-	"github.com/gomqtt/transport"
 	"github.com/gomqtt/broker"
+	"github.com/gomqtt/transport"
 )
 
 var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
@@ -60,7 +60,7 @@ func main() {
 
 	broker := broker.New()
 
-	go func(){
+	go func() {
 		for {
 			conn, err := server.Accept()
 			if err != nil {

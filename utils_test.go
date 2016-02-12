@@ -15,11 +15,12 @@
 package broker
 
 import (
-	"net"
 	"fmt"
+	"net"
+	"testing"
+
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
-"testing"
 )
 
 // the testPort
@@ -54,7 +55,13 @@ func (p *testPort) protectedURL(user, password string) string {
 	return fmt.Sprintf("tcp://%s:%s@localhost:%d/", user, password, int(*p))
 }
 
-func startBroker(t *testing.T, broker *Broker, num int) (*testPort, chan struct{}) {
+func startBroker(t *testing.T, broker *Broker, num int, log bool) (*testPort, chan struct{}) {
+	if log {
+		broker.Logger = func(msg string) {
+			fmt.Println(msg)
+		}
+	}
+
 	tp := newTestPort()
 
 	server, err := transport.Launch(tp.url())
@@ -62,8 +69,8 @@ func startBroker(t *testing.T, broker *Broker, num int) (*testPort, chan struct{
 
 	done := make(chan struct{})
 
-	go func(){
-		for i:=0; i<num; i++ {
+	go func() {
+		for i := 0; i < num; i++ {
 			conn, err := server.Accept()
 			assert.NoError(t, err)
 

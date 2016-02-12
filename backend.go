@@ -15,8 +15,8 @@
 package broker
 
 import (
-	"github.com/gomqtt/topic"
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/topic"
 )
 
 type QueueBackend interface {
