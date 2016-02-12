@@ -63,7 +63,7 @@ func (m *MemoryBackend) Remove(conn *Client) {
 
 func (m *MemoryBackend) Publish(pkt *packet.PublishPacket) {
 	for _, v := range m.tree.Match(string(pkt.Topic)) {
-		v.(*Client).publish(pkt)
+		v.(*Client).Publish(pkt)
 	}
 }
 

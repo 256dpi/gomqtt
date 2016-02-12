@@ -44,7 +44,7 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 	return c
 }
 
-func (c *Client) publish(pkt *packet.PublishPacket) {
+func (c *Client) Publish(pkt *packet.PublishPacket) {
 	c.send(pkt) // TODO: handle errors
 }
 
@@ -111,7 +111,7 @@ func (c *Client) handleSubscribe(pkt *packet.SubscribePacket) error {
 	return c.send(suback)
 }
 
-func (c *Client) close() {
+func (c *Client) Close() {
 	c.tomb.Kill(nil)
 	c.tomb.Wait()
 }
