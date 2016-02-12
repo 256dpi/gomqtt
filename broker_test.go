@@ -92,30 +92,13 @@ func TestPublishSubscribeQOS0(t *testing.T) {
 // subscribe a client programmatically
 // subscribe a client programmatically multiple topics
 // subscribe a client programmatically with full packet
-
-// -- events
-// publishes an heartbeat
-// does not forward $SYS topics to # subscription
-// does not store $SYS topics to QoS 1 # subscription
+// handle multiple subscriptions with the same filter
 
 // -- keepalive
 // supports pingreq/pingresp
 // supports keep alive disconnections
 // supports keep alive disconnections after a pingreq
 // disconnect if a connect does not arrive in time
-
-// -- meta
-// count connected clients
-// call published method
-// call published method with client
-// emit publish event with client
-// emit subscribe event
-// emit unsubscribe event
-// emit clientDisconnect event
-// emits client
-
-// -- others
-// do not block after a subscription
 
 // -- qos1
 // publish QoS 1
