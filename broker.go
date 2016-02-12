@@ -21,21 +21,14 @@ import (
 type Logger func(msg string)
 
 type Broker struct {
-	QueueBackend    QueueBackend
-	RetainedBackend RetainedBackend
-	WillBackend     WillBackend
-
-	Logger Logger
+	Backend Backend
+	Logger  Logger
 }
 
 // New returns a new Broker with a basic MemoryBackend.
 func New() *Broker {
-	backend := NewMemoryBackend()
-
 	return &Broker{
-		QueueBackend:    backend,
-		RetainedBackend: backend,
-		WillBackend:     backend,
+		Backend: NewMemoryBackend(),
 	}
 }
 

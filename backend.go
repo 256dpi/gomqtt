@@ -15,33 +15,29 @@
 package broker
 
 import (
-	"github.com/gomqtt/packet"
+	"sync"
+
 	"github.com/gomqtt/topic"
 )
 
-type QueueBackend interface {
+type Backend interface {
 	Subscribe(*Client, string)
 	Unsubscribe(*Client, string)
 	Remove(*Client)
 	Publish(*Client, string, []byte)
-}
 
-type RetainedBackend interface {
-	StoreRetained(*Client, *packet.PublishPacket)
+	StoreRetained(*Client, string, []byte)
 	// TODO: support streaming of retained messages
-	RetrieveRetained(*Client, string) []*packet.PublishPacket
-}
-
-type WillBackend interface {
-	StoreWill(*Client, *packet.PublishPacket)
-	RetrieveWill(*Client) *packet.PublishPacket
-	ClearWill(*Client)
+	RetrieveRetained(*Client, string) []byte
 }
 
 // TODO: missing offline subscriptions
 
 type MemoryBackend struct {
-	tree *topic.Tree
+	tree     *topic.Tree
+	retained map[string][]byte
+
+	mutex sync.Mutex
 }
 
 func NewMemoryBackend() *MemoryBackend {
@@ -68,22 +64,22 @@ func (m *MemoryBackend) Publish(client *Client, topic string, payload []byte) {
 	}
 }
 
-func (m *MemoryBackend) StoreRetained(conn *Client, pkt *packet.PublishPacket) {
+func (m *MemoryBackend) StoreRetained(client *Client, topic string, payload []byte) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 
+	m.retained[topic] = payload
 }
 
-func (m *MemoryBackend) RetrieveRetained(conn *Client, topic string) []*packet.PublishPacket {
+func (m *MemoryBackend) RetrieveRetained(client *Client, topic string) []byte {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	payload, ok := m.retained[topic]
+
+	if ok {
+		return payload
+	}
+
 	return nil
-}
-
-func (m *MemoryBackend) StoreWill(conn *Client, pkt *packet.PublishPacket) {
-
-}
-
-func (m *MemoryBackend) RetrieveWill(conn *Client) *packet.PublishPacket {
-	return nil
-}
-
-func (m *MemoryBackend) ClearWill(conn *Client) {
-
 }

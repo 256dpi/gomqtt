@@ -214,7 +214,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 	for _, subscription := range pkt.Subscriptions {
 		// TODO: properly granted qos
-		c.broker.QueueBackend.Subscribe(c, string(subscription.Topic))
+		c.broker.Backend.Subscribe(c, string(subscription.Topic))
 		suback.ReturnCodes = append(suback.ReturnCodes, subscription.QOS)
 	}
 
@@ -232,7 +232,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	unsuback.PacketID = pkt.PacketID
 
 	for _, topic := range pkt.Topics {
-		c.broker.QueueBackend.Unsubscribe(c, string(topic))
+		c.broker.Backend.Unsubscribe(c, string(topic))
 	}
 
 	err := c.send(unsuback)
@@ -275,7 +275,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 	if publish.QOS <= 1 {
 		// publish packet to others
-		c.broker.QueueBackend.Publish(c, string(publish.Topic), publish.Payload)
+		c.broker.Backend.Publish(c, string(publish.Topic), publish.Payload)
 	}
 
 	return nil
@@ -340,7 +340,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// publish packet to others
-	c.broker.QueueBackend.Publish(c, string(publish.Topic), publish.Payload)
+	c.broker.Backend.Publish(c, string(publish.Topic), publish.Payload)
 
 	return nil
 }
@@ -358,7 +358,7 @@ func (c *Client) processDisconnect() error {
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error, close bool) error {
 	// remove client from the queue
-	c.broker.QueueBackend.Remove(c)
+	c.broker.Backend.Remove(c)
 
 	// ensure that the connection gets closed
 	if close {
