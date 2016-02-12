@@ -55,13 +55,7 @@ func (p *testPort) protectedURL(user, password string) string {
 	return fmt.Sprintf("tcp://%s:%s@localhost:%d/", user, password, int(*p))
 }
 
-func startBroker(t *testing.T, broker *Broker, num int, log bool) (*testPort, chan struct{}) {
-	if log {
-		broker.Logger = func(msg string) {
-			fmt.Println(msg)
-		}
-	}
-
+func startBroker(t *testing.T, broker *Broker, num int) (*testPort, chan struct{}) {
 	tp := newTestPort()
 
 	server, err := transport.Launch(tp.url())

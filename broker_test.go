@@ -22,7 +22,7 @@ import (
 )
 
 func TestPublishSubscribeQOS0(t *testing.T) {
-	tp, done := startBroker(t, New(), 1, true)
+	tp, done := startBroker(t, New(), 1)
 
 	client := client.New()
 
