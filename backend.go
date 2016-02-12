@@ -21,14 +21,14 @@ import (
 )
 
 type Backend interface {
-	Subscribe(*Client, string)
-	Unsubscribe(*Client, string)
-	Remove(*Client)
-	Publish(*Client, string, []byte)
+	Subscribe(*Client, string) error
+	Unsubscribe(*Client, string) error
+	Remove(*Client) error
+	Publish(*Client, string, []byte) error
 
-	StoreRetained(*Client, string, []byte)
+	StoreRetained(*Client, string, []byte) error
 	// TODO: support streaming of retained messages
-	RetrieveRetained(*Client, string) []byte
+	RetrieveRetained(*Client, string) ([]byte, error)
 }
 
 // TODO: missing offline subscriptions
@@ -46,40 +46,50 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-func (m *MemoryBackend) Subscribe(client *Client, filter string) {
+func (m *MemoryBackend) Subscribe(client *Client, filter string) error {
 	m.tree.Add(filter, client)
+
+	return nil
 }
 
-func (m *MemoryBackend) Unsubscribe(client *Client, filter string) {
+func (m *MemoryBackend) Unsubscribe(client *Client, filter string) error {
 	m.tree.Remove(filter, client)
+
+	return nil
 }
 
-func (m *MemoryBackend) Remove(client *Client) {
+func (m *MemoryBackend) Remove(client *Client) error {
 	m.tree.Clear(client)
+
+	return nil
 }
 
-func (m *MemoryBackend) Publish(client *Client, topic string, payload []byte) {
+func (m *MemoryBackend) Publish(client *Client, topic string, payload []byte) error {
 	for _, v := range m.tree.Match(topic) {
 		v.(*Client).Publish(topic, payload)
 	}
+
+	return nil
 }
 
-func (m *MemoryBackend) StoreRetained(client *Client, topic string, payload []byte) {
+func (m *MemoryBackend) StoreRetained(client *Client, topic string, payload []byte) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	m.retained[topic] = payload
+
+	return nil
 }
 
-func (m *MemoryBackend) RetrieveRetained(client *Client, topic string) []byte {
+func (m *MemoryBackend) RetrieveRetained(client *Client, topic string) ([]byte, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	payload, ok := m.retained[topic]
 
 	if ok {
-		return payload
+		return payload, nil
 	}
 
-	return nil
+	return nil, nil
 }
