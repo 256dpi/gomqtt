@@ -686,7 +686,7 @@ func (c *Client) pinger() error {
 
 /* helpers */
 
-// sends message and updates lastSend
+// sends packet and updates lastSend
 func (c *Client) send(pkt packet.Packet) error {
 	c.tracker.reset()
 
