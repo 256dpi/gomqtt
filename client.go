@@ -293,7 +293,7 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 	c.futureStore.put(subscribe.PacketID, future)
 
 	// send packet
-	err := c.send(subscribe, true)
+	err := c.send(subscribe, false)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -338,7 +338,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	c.futureStore.put(unsubscribe.PacketID, future)
 
 	// send packet
-	err := c.send(unsubscribe, true)
+	err := c.send(unsubscribe, false)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
