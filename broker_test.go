@@ -60,6 +60,84 @@ func TestPublishSubscribeQOS0(t *testing.T) {
 	assert.True(t, received)
 }
 
+func TestPublishSubscribeQOS1(t *testing.T) {
+	tp, done := startBroker(t, New(), 1)
+
+	client := client.New()
+
+	received := false
+	wait := make(chan struct{})
+
+	client.Callback = func(topic string, payload []byte, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", topic)
+		assert.Equal(t, []byte("test"), payload)
+
+		received = true
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+
+	subscribeFuture, err := client.Subscribe("test", 1)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	publishFuture, err := client.Publish("test", []byte("test"), 1, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+
+	assert.True(t, received)
+}
+
+func TestPublishSubscribeQOS2(t *testing.T) {
+	tp, done := startBroker(t, New(), 1)
+
+	client := client.New()
+
+	received := false
+	wait := make(chan struct{})
+
+	client.Callback = func(topic string, payload []byte, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", topic)
+		assert.Equal(t, []byte("test"), payload)
+
+		received = true
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+
+	subscribeFuture, err := client.Subscribe("test", 2)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	publishFuture, err := client.Publish("test", []byte("test"), 2, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+
+	assert.True(t, received)
+}
+
 // -- authentication
 // authenticate successfully a client with username and password
 // authenticate unsuccessfully a client with username and password

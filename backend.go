@@ -14,13 +14,13 @@
 
 package broker
 
-import (
-	"sync"
-
-	"github.com/gomqtt/topic"
-)
+import "github.com/gomqtt/session"
 
 type Backend interface {
+	// GetSession returns the already stored session for the supplied id or creates
+	// and returns a new one.
+	GetSession(string) (session.Session, error)
+
 	Subscribe(*Client, string) error
 	Unsubscribe(*Client, string) error
 	Remove(*Client) error
@@ -32,66 +32,3 @@ type Backend interface {
 }
 
 // TODO: missing offline subscriptions
-
-type MemoryBackend struct {
-	tree     *topic.Tree
-	retained map[string][]byte
-
-	mutex sync.Mutex
-}
-
-func NewMemoryBackend() *MemoryBackend {
-	return &MemoryBackend{
-		tree: topic.NewTree(),
-	}
-}
-
-func (m *MemoryBackend) Subscribe(client *Client, filter string) error {
-	m.tree.Add(filter, client)
-
-	return nil
-}
-
-func (m *MemoryBackend) Unsubscribe(client *Client, filter string) error {
-	m.tree.Remove(filter, client)
-
-	return nil
-}
-
-func (m *MemoryBackend) Remove(client *Client) error {
-	m.tree.Clear(client)
-
-	return nil
-}
-
-func (m *MemoryBackend) Publish(client *Client, topic string, payload []byte) error {
-	for _, v := range m.tree.Match(topic) {
-		// we do not care about errors here as it is not the publishing clients
-		// responsibility
-		v.(*Client).Publish(topic, payload)
-	}
-
-	return nil
-}
-
-func (m *MemoryBackend) StoreRetained(client *Client, topic string, payload []byte) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	m.retained[topic] = payload
-
-	return nil
-}
-
-func (m *MemoryBackend) RetrieveRetained(client *Client, topic string) ([]byte, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	payload, ok := m.retained[topic]
-
-	if ok {
-		return payload, nil
-	}
-
-	return nil, nil
-}

@@ -14,6 +14,27 @@
 
 package broker
 
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
+	session1, err := backend.GetSession("foo")
+	assert.NoError(t, err)
+	assert.NotNil(t, session1)
+
+	session2, err := backend.GetSession("foo")
+	assert.NoError(t, err)
+	assert.True(t, session1 == session2)
+
+	session3, err := backend.GetSession("bar")
+	assert.NoError(t, err)
+	assert.False(t, session3 == session1)
+	assert.False(t, session3 == session2)
+}
+
 // store and look up retained messages
 // look up retained messages with a # pattern
 // look up retained messages with a + pattern

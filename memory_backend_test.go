@@ -14,23 +14,8 @@
 
 package broker
 
-import "github.com/gomqtt/transport"
+import "testing"
 
-type Logger func(msg string)
-
-type Broker struct {
-	Backend Backend
-	Logger  Logger
-}
-
-// New returns a new Broker with a basic MemoryBackend.
-func New() *Broker {
-	return &Broker{
-		Backend: NewMemoryBackend(),
-	}
-}
-
-// Handle handles a transport.Conn.
-func (b *Broker) Handle(conn transport.Conn) {
-	NewClient(b, conn)
+func TestMemoryBackendGetSession(t *testing.T) {
+	abstractBackendGetSessionTest(t, NewMemoryBackend())
 }

@@ -148,6 +148,8 @@ func (c *Client) processor() error {
 
 		// TODO: Handle errors
 
+		// TODO: first packet must be a connect
+
 		switch pkt.Type() {
 		case packet.CONNECT:
 			err = c.processConnect(pkt.(*packet.ConnectPacket))
@@ -188,7 +190,16 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// TODO: retrieve session
 	c.state.set(clientConnected)
 
-	err := c.send(connack)
+	// retrieve session
+	sess, err := c.broker.Backend.GetSession(string(pkt.ClientID))
+	if err != nil {
+		return c.die(err, true)
+	}
+
+	// assign session
+	c.Session = sess
+
+	err = c.send(connack)
 	if err != nil {
 		return c.die(err, false)
 	}
