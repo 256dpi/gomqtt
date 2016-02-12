@@ -68,7 +68,7 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 }
 
 // Publish will send a PublishPacket to the client and initiate QOS flows.
-func (c *Client) Publish(pkt *packet.PublishPacket) error {
+func (c *Client) Publish(topic string, payload []byte) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -77,16 +77,22 @@ func (c *Client) Publish(pkt *packet.PublishPacket) error {
 		return ErrClientNotConnected
 	}
 
+	// TODO: read QOS from cached subscriptions
+
+	publish := packet.NewPublishPacket()
+	publish.Topic = []byte(topic)
+	publish.Payload = payload
+
 	// store packet if at least qos 1
-	if pkt.QOS > 0 {
-		err := c.Session.SavePacket(session.Outgoing, pkt)
+	if publish.QOS > 0 {
+		err := c.Session.SavePacket(session.Outgoing, publish)
 		if err != nil {
 			return c.cleanup(err, true)
 		}
 	}
 
 	// send packet
-	err := c.send(pkt)
+	err := c.send(publish)
 	if err != nil {
 		return c.cleanup(err, false)
 	}
@@ -269,7 +275,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 	if publish.QOS <= 1 {
 		// publish packet to others
-		c.broker.QueueBackend.Publish(publish)
+		c.broker.QueueBackend.Publish(c, string(publish.Topic), publish.Payload)
 	}
 
 	return nil
@@ -334,7 +340,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// publish packet to others
-	c.broker.QueueBackend.Publish(publish)
+	c.broker.QueueBackend.Publish(c, string(publish.Topic), publish.Payload)
 
 	return nil
 }

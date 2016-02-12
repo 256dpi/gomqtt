@@ -23,11 +23,12 @@ type QueueBackend interface {
 	Subscribe(*Client, string)
 	Unsubscribe(*Client, string)
 	Remove(*Client)
-	Publish(*packet.PublishPacket)
+	Publish(*Client, string, []byte)
 }
 
 type RetainedBackend interface {
 	StoreRetained(*Client, *packet.PublishPacket)
+	// TODO: support streaming of retained messages
 	RetrieveRetained(*Client, string) []*packet.PublishPacket
 }
 
@@ -49,21 +50,21 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-func (m *MemoryBackend) Subscribe(conn *Client, filter string) {
-	m.tree.Add(filter, conn)
+func (m *MemoryBackend) Subscribe(client *Client, filter string) {
+	m.tree.Add(filter, client)
 }
 
-func (m *MemoryBackend) Unsubscribe(conn *Client, filter string) {
-	m.tree.Remove(filter, conn)
+func (m *MemoryBackend) Unsubscribe(client *Client, filter string) {
+	m.tree.Remove(filter, client)
 }
 
-func (m *MemoryBackend) Remove(conn *Client) {
-	m.tree.Clear(conn)
+func (m *MemoryBackend) Remove(client *Client) {
+	m.tree.Clear(client)
 }
 
-func (m *MemoryBackend) Publish(pkt *packet.PublishPacket) {
-	for _, v := range m.tree.Match(string(pkt.Topic)) {
-		v.(*Client).Publish(pkt)
+func (m *MemoryBackend) Publish(client *Client, topic string, payload []byte) {
+	for _, v := range m.tree.Match(topic) {
+		v.(*Client).Publish(topic, payload)
 	}
 }
 
