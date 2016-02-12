@@ -66,6 +66,8 @@ func (m *MemoryBackend) Remove(client *Client) error {
 
 func (m *MemoryBackend) Publish(client *Client, topic string, payload []byte) error {
 	for _, v := range m.tree.Match(topic) {
+		// we do not care about errors here as it is not the publishing clients
+		// responsibility
 		v.(*Client).Publish(topic, payload)
 	}
 
