@@ -93,6 +93,7 @@ func TestPublishSubscribeQOS0(t *testing.T) {
 // subscribe a client programmatically multiple topics
 // subscribe a client programmatically with full packet
 // handle multiple subscriptions with the same filter
+// respect the max wos set by a subscription
 
 // -- keepalive
 // supports pingreq/pingresp
