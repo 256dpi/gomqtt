@@ -18,10 +18,14 @@ import (
 	"github.com/gomqtt/transport"
 )
 
+type Logger func(msg string)
+
 type Broker struct {
-	queueBackend QueueBackend
-	retainedBackend RetainedBackend
-	willBackend WillBackend
+	QueueBackend    QueueBackend
+	RetainedBackend RetainedBackend
+	WillBackend     WillBackend
+
+	Logger Logger
 }
 
 // New returns a new Broker with a basic MemoryBackend.
@@ -29,9 +33,9 @@ func New() *Broker {
 	backend := NewMemoryBackend()
 
 	return &Broker{
-		queueBackend: backend,
-		retainedBackend: backend,
-		willBackend: backend,
+		QueueBackend: backend,
+		RetainedBackend: backend,
+		WillBackend: backend,
 	}
 }
 
