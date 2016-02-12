@@ -58,8 +58,7 @@ func main() {
 
 	fmt.Println("launched server!")
 
-	memoryBackend := broker.NewMemoryBackend()
-	broker := broker.New(memoryBackend, nil, nil)
+	broker := broker.New()
 
 	go func(){
 		for {

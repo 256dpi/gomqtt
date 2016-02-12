@@ -14,6 +14,52 @@
 
 package broker
 
+import (
+	"testing"
+
+	"github.com/gomqtt/client"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestPublishSubscribeQOS0(t *testing.T) {
+	tp, done := startBroker(t, New(), 1)
+
+	client := client.New()
+
+	received := false
+	wait := make(chan struct{})
+
+	client.Callback = func(topic string, payload []byte, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", topic)
+		assert.Equal(t, []byte("test"), payload)
+
+		received = true
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+
+	subscribeFuture, err := client.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	publishFuture, err := client.Publish("test", []byte("test"), 0, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+
+	assert.True(t, received)
+}
+
 // -- authentication
 // authenticate successfully a client with username and password
 // authenticate unsuccessfully a client with username and password
@@ -26,8 +72,6 @@ package broker
 
 // -- basic
 // connect and connack (minimal)
-// publish QoS 0
-// subscribe QoS 0
 // does not die badly on connection error
 // unsubscribe
 // unsubscribe on disconnect

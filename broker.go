@@ -24,12 +24,14 @@ type Broker struct {
 	willBackend WillBackend
 }
 
-// New returns a new Broker.
-func New(qb QueueBackend, rb RetainedBackend, wb WillBackend) *Broker {
+// New returns a new Broker with a basic MemoryBackend.
+func New() *Broker {
+	backend := NewMemoryBackend()
+
 	return &Broker{
-		queueBackend: qb,
-		retainedBackend: rb,
-		willBackend: wb,
+		queueBackend: backend,
+		retainedBackend: backend,
+		willBackend: backend,
 	}
 }
 

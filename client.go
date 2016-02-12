@@ -27,6 +27,7 @@ type Client struct {
 	broker *Broker
 	conn transport.Conn
 	uuid string
+	info interface{}
 
 	tomb tomb.Tomb
 }
@@ -43,65 +44,74 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 	return c
 }
 
-func (c *Client) close() {
-	c.tomb.Kill(nil)
-	c.tomb.Wait()
+func (c *Client) publish(pkt *packet.PublishPacket) {
+	c.send(pkt) // TODO: handle errors
 }
 
-func (c *Client) publish(pkt *packet.PublishPacket) {
-	c.conn.Send(pkt)
+func (c *Client) send(pkt packet.Packet) error {
+	fmt.Printf("%s - Sent: %s\n", c.uuid, pkt.String())
+	return c.conn.Send(pkt)
 }
 
 func (c *Client) process() error {
-	fmt.Println("new connection: " + c.uuid)
+	fmt.Printf("%s - New Connection\n", c.uuid)
 
 	for {
 		pkt, err := c.conn.Receive()
 		if err != nil {
 			c.broker.queueBackend.Remove(c)
 
-			fmt.Println(err)
+			fmt.Printf("%s - Error: %s\n", c.uuid, err)
 			return err
 		}
 
+		fmt.Printf("%s - Received: %s\n", c.uuid, pkt.String())
+
+		// TODO: Handle errors
+
 		switch pkt.Type() {
 		case packet.CONNECT:
-			fmt.Println("received connect")
-			_, ok := pkt.(*packet.ConnectPacket)
-
-			if ok {
-				connack := packet.NewConnackPacket()
-				connack.ReturnCode = packet.ConnectionAccepted
-				connack.SessionPresent = false
-				c.conn.Send(connack)
-			}
+			c.handleConnect(pkt.(*packet.ConnectPacket))
 		case packet.PINGREQ:
-			_, ok := pkt.(*packet.PingrespPacket)
-
-			if ok {
-				c.conn.Send(packet.NewPingrespPacket())
-			}
+			c.handlePingreq(pkt.(*packet.PingreqPacket))
 		case packet.PUBLISH:
-			publish, ok := pkt.(*packet.PublishPacket)
-
-			if ok {
-				c.broker.queueBackend.Publish(publish)
-			}
+			c.handlePublish(pkt.(*packet.PublishPacket))
 		case packet.SUBSCRIBE:
-			subscribe, ok := pkt.(*packet.SubscribePacket)
-
-			if ok {
-				suback := packet.NewSubackPacket()
-				suback.ReturnCodes = make([]byte, 0)
-				suback.PacketID = subscribe.PacketID
-
-				for _, subscription := range subscribe.Subscriptions {
-					c.broker.queueBackend.Subscribe(c, string(subscription.Topic))
-					suback.ReturnCodes = append(suback.ReturnCodes, subscription.QOS)
-				}
-
-				c.conn.Send(suback)
-			}
+			c.handleSubscribe(pkt.(*packet.SubscribePacket))
 		}
 	}
+}
+
+func (c *Client) handleConnect(pkt *packet.ConnectPacket) error {
+	connack := packet.NewConnackPacket()
+	connack.ReturnCode = packet.ConnectionAccepted
+	connack.SessionPresent = false
+	return c.send(connack)
+}
+
+func (c *Client) handlePingreq(pkt *packet.PingreqPacket) error {
+	return c.send(packet.NewPingrespPacket())
+}
+
+func (c *Client) handlePublish(pkt *packet.PublishPacket) error {
+	c.broker.queueBackend.Publish(pkt)
+	return nil
+}
+
+func (c *Client) handleSubscribe(pkt *packet.SubscribePacket) error {
+	suback := packet.NewSubackPacket()
+	suback.ReturnCodes = make([]byte, 0)
+	suback.PacketID = pkt.PacketID
+
+	for _, subscription := range pkt.Subscriptions {
+		c.broker.queueBackend.Subscribe(c, string(subscription.Topic))
+		suback.ReturnCodes = append(suback.ReturnCodes, subscription.QOS)
+	}
+
+	return c.send(suback)
+}
+
+func (c *Client) close() {
+	c.tomb.Kill(nil)
+	c.tomb.Wait()
 }

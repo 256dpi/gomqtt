@@ -67,3 +67,22 @@ func (m *MemoryBackend) Publish(pkt *packet.PublishPacket) {
 	}
 }
 
+func (m *MemoryBackend) StoreRetained(conn *Client, pkt *packet.PublishPacket) {
+
+}
+
+func (m *MemoryBackend) RetrieveRetained(conn *Client, topic string) []*packet.PublishPacket {
+	return nil
+}
+
+func (m *MemoryBackend) StoreWill(conn *Client, pkt *packet.PublishPacket) {
+
+}
+
+func (m *MemoryBackend) RetrieveWill(conn *Client) *packet.PublishPacket {
+	return nil
+}
+
+func (m *MemoryBackend) ClearWill(conn *Client) {
+
+}
