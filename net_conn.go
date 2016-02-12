@@ -20,6 +20,7 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/gomqtt/packet"
 )
@@ -35,6 +36,7 @@ type NetConn struct {
 	writeCounter int64
 	readCounter  int64
 	readLimit    int64
+	readTimeout  time.Duration
 }
 
 // NewNetConn returns a new NetConn.
@@ -102,6 +104,10 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 			// only if Peek returned no bytes the close is expected
 			c.conn.Close()
 			return nil, newTransportError(ConnectionClose, err)
+		} else if opError, ok := err.(*net.OpError); ok && opError.Timeout() {
+			// the read timed out
+			c.conn.Close()
+			return nil, newTransportError(NetworkError, ErrReadTimeout)
 		} else if err != nil {
 			c.conn.Close()
 			return nil, newTransportError(NetworkError, err)
@@ -135,7 +141,11 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 
 		// read whole packet
 		bytesRead, err := io.ReadFull(c.reader, buf)
-		if err != nil {
+		if opError, ok := err.(*net.OpError); ok && opError.Timeout() {
+			// the read timed out
+			c.conn.Close()
+			return nil, newTransportError(NetworkError, ErrReadTimeout)
+		} else if err != nil {
 			c.conn.Close()
 
 			// even if EOF is returned we consider it an network error
@@ -151,6 +161,9 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 
 		// increment counter
 		atomic.AddInt64(&c.readCounter, int64(bytesRead))
+
+		// reset timeout
+		c.resetTimeout()
 
 		return pkt, nil
 	}
@@ -185,4 +198,18 @@ func (c *NetConn) BytesRead() int64 {
 // return an Error if receiving the next packet will exceed the limit.
 func (c *NetConn) SetReadLimit(limit int64) {
 	c.readLimit = limit
+}
+
+// SetReadTimeout sets the maximum time that can pass between reads.
+// If no data is received in the set duration the connection will be closed
+// and Read returns an error.
+func (c *NetConn) SetReadTimeout(timeout time.Duration) {
+	c.readTimeout = timeout
+	c.resetTimeout()
+}
+
+func (c *NetConn) resetTimeout() {
+	if c.readTimeout > 0 {
+		c.conn.SetReadDeadline(time.Now().Add(c.readTimeout))
+	}
 }

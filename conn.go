@@ -17,6 +17,8 @@
 package transport
 
 import (
+	"time"
+
 	"github.com/gomqtt/packet"
 )
 
@@ -53,4 +55,9 @@ type Conn interface {
 	// If the limit is greater than zero, Receive will close the connection and
 	// return an Error if receiving the next packet will exceed the limit.
 	SetReadLimit(limit int64)
+
+	// SetReadTimeout sets the maximum time that can pass between reads.
+	// If no data is received in the set duration the connection will be closed
+	// and Read returns an error.
+	SetReadTimeout(timeout time.Duration)
 }

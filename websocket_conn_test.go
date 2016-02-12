@@ -56,6 +56,10 @@ func TestWebSocketConnReadLimit(t *testing.T) {
 	abstractConnReadLimitTest(t, "ws")
 }
 
+func TestWebSocketConnReadTimeout(t *testing.T) {
+	abstractConnReadTimeoutTest(t, "ws")
+}
+
 func TestWebSocketConnCloseAfterClose(t *testing.T) {
 	abstractConnCloseAfterCloseTest(t, "ws")
 }

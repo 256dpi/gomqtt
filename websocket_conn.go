@@ -15,8 +15,10 @@
 package transport
 
 import (
+	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/gomqtt/packet"
 	"github.com/gorilla/websocket"
@@ -31,6 +33,7 @@ type WebSocketConn struct {
 
 	writeCounter int64
 	readCounter  int64
+	readTimeout  time.Duration
 }
 
 // NewWebSocketConn returns a new WebSocketConn.
@@ -97,7 +100,13 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 	// return read limit error instead
 	if err == websocket.ErrReadLimit {
 		c.end(websocket.CloseMessageTooBig)
-		return nil, newTransportError(NetworkError, err)
+		return nil, newTransportError(NetworkError, ErrReadLimitExceeded)
+	}
+
+	// return read timeout err instead
+	if err != nil && strings.Contains(err.Error(), "i/o timeout") {
+		c.end(websocket.CloseAbnormalClosure)
+		return nil, newTransportError(NetworkError, ErrReadTimeout)
 	}
 
 	// return on any other errors
@@ -129,6 +138,9 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 
 	// increment read counter
 	atomic.AddInt64(&c.readCounter, int64(n))
+
+	// reset timeout
+	c.resetTimeout()
 
 	return pkt, nil
 }
@@ -171,4 +183,18 @@ func (c *WebSocketConn) BytesRead() int64 {
 // return an Error if receiving the next packet will exceed the limit.
 func (c *WebSocketConn) SetReadLimit(limit int64) {
 	c.conn.SetReadLimit(limit)
+}
+
+// SetReadTimeout sets the maximum time that can pass between reads.
+// If no data is received in the set duration the connection will be closed
+// and Read returns an error.
+func (c *WebSocketConn) SetReadTimeout(timeout time.Duration) {
+	c.readTimeout = timeout
+	c.resetTimeout()
+}
+
+func (c *WebSocketConn) resetTimeout() {
+	if c.readTimeout > 0 {
+		c.conn.SetReadDeadline(time.Now().Add(c.readTimeout))
+	}
 }

@@ -37,6 +37,10 @@ var ErrDetectionOverflow = errors.New("detection length overflow (>5)")
 // Note: this error is wrapped in an Error with a NetworkError code.
 var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
+// ErrReadTimeout can be returned by Receive if the connection did not Read
+// data in the by SetReadTimeout specified duration.
+var ErrReadTimeout = errors.New("read timeout")
+
 // ErrAcceptAfterClose can be returned by a WebSocketServer during Accept()
 // if the server has been already closed and the internal goroutine is dying.
 //

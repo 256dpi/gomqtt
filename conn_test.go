@@ -16,6 +16,7 @@ package transport
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gomqtt/packet"
 	"github.com/gorilla/websocket"
@@ -195,10 +196,28 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
 		assert.Equal(t, NetworkError, toError(err).Code())
+		assert.Equal(t, ErrReadLimitExceeded, toError(err).Err())
 	})
 
 	err := conn2.Send(packet.NewConnectPacket())
 	assert.NoError(t, err)
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, ConnectionClose, toError(err).Code())
+
+	<-done
+}
+
+func abstractConnReadTimeoutTest(t *testing.T, protocol string) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
+		conn1.SetReadTimeout(10 * time.Millisecond)
+
+		pkt, err := conn1.Receive()
+		assert.Nil(t, pkt)
+		assert.Equal(t, NetworkError, toError(err).Code())
+		assert.Equal(t, ErrReadTimeout, toError(err).Err())
+	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)

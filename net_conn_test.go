@@ -16,6 +16,7 @@ package transport
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
@@ -55,6 +56,10 @@ func TestNetConnCounters(t *testing.T) {
 
 func TestNetConnReadLimit(t *testing.T) {
 	abstractConnReadLimitTest(t, "tcp")
+}
+
+func TestNetConnReadTimeout(t *testing.T) {
+	abstractConnReadTimeoutTest(t, "tcp")
 }
 
 func TestNetConnCloseAfterClose(t *testing.T) {
@@ -101,6 +106,28 @@ func TestNetConnCloseWhileDetectError(t *testing.T) {
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
 	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}
+
+func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
+	conn2, done := connectionPair("tcp", func(conn1 Conn) {
+		pkt := packet.NewPublishPacket()
+		pkt.Topic = []byte("foo/bar/baz")
+		buf := make([]byte, pkt.Len())
+		pkt.Encode(buf)
+
+		netConn := conn1.(*NetConn)
+		_, err := netConn.conn.Write(buf[0 : len(buf)-1]) // <- not all of the bytes
+		assert.NoError(t, err)
+	})
+
+	conn2.SetReadTimeout(10 * time.Millisecond)
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, ErrReadTimeout, toError(err).Err())
 
 	<-done
 }
