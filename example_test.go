@@ -7,8 +7,8 @@ func Example() {
 
 	// Create new packet.
 	pkt1 := NewConnectPacket()
-	pkt1.Username = []byte("gomqtt")
-	pkt1.Password = []byte("amazing!")
+	pkt1.Username = "gomqtt"
+	pkt1.Password = "amazing!"
 
 	// Allocate buffer.
 	buf := make([]byte, pkt1.Len())

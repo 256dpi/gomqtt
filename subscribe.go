@@ -23,10 +23,10 @@ import (
 // A Subscription is a single subscription in a SubscribePacket.
 type Subscription struct {
 	// The topic to subscribe.
-	Topic []byte
+	Topic string
 
 	// The requested QOS level.
-	QOS byte
+	QOS uint8
 }
 
 func (s *Subscription) String() string {
@@ -110,7 +110,7 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 
 	for sl > 0 {
 		// read topic
-		t, n, err := readLPBytes(src[total:])
+		t, n, err := readLPString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -161,7 +161,7 @@ func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
 
 	for _, t := range sp.Subscriptions {
 		// write topic
-		n, err := writeLPBytes(dst[total:], t.Topic)
+		n, err := writeLPString(dst[total:], t.Topic)
 		total += n
 		if err != nil {
 			return total, err

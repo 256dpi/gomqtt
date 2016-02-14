@@ -91,7 +91,7 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 	n := 0
 
 	// read topic
-	pp.Message.Topic, n, err = readLPBytes(src[total:])
+	pp.Message.Topic, n, err = readLPString(src[total:])
 	total += n
 	if err != nil {
 		return total, err
@@ -173,7 +173,7 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write topic
-	n, err = writeLPBytes(dst[total:], pp.Message.Topic)
+	n, err = writeLPString(dst[total:], pp.Message.Topic)
 	total += n
 	if err != nil {
 		return total, err

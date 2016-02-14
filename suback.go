@@ -24,7 +24,7 @@ import (
 // codes, that specify the maximum QOS levels that have been granted.
 type SubackPacket struct {
 	// The granted QOS levels for the requested subscriptions.
-	ReturnCodes []byte
+	ReturnCodes []uint8
 
 	// The packet identifier.
 	PacketID uint16

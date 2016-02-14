@@ -19,7 +19,7 @@ import "fmt"
 // Message bundles data that is published between brokers and clients.
 type Message struct {
 	// The Topic of the message.
-	Topic []byte
+	Topic string
 
 	// The Payload of the message.
 	Payload []byte

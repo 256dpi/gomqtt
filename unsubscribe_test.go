@@ -22,7 +22,7 @@ import (
 
 func TestUnsubscribeInterface(t *testing.T) {
 	pkt := NewUnsubscribePacket()
-	pkt.Topics = [][]byte{[]byte("hello")}
+	pkt.Topics = []string{"hello"}
 
 	assert.Equal(t, pkt.Type(), UNSUBSCRIBE)
 	assert.Equal(t, "<UnsubscribePacket Topics=[\"hello\"]>", pkt.String())
@@ -51,9 +51,9 @@ func TestUnsubscribePacketDecode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, 3, len(pkt.Topics))
-	assert.Equal(t, []byte("surgemq"), pkt.Topics[0])
-	assert.Equal(t, []byte("/a/b/#/c"), pkt.Topics[1])
-	assert.Equal(t, []byte("/a/b/#/cdd"), pkt.Topics[2])
+	assert.Equal(t, "surgemq", pkt.Topics[0])
+	assert.Equal(t, "/a/b/#/c", pkt.Topics[1])
+	assert.Equal(t, "/a/b/#/cdd", pkt.Topics[2])
 }
 
 func TestUnsubscribePacketDecodeError1(t *testing.T) {
@@ -151,10 +151,10 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 
 	pkt := NewUnsubscribePacket()
 	pkt.PacketID = 7
-	pkt.Topics = [][]byte{
-		[]byte("surgemq"),
-		[]byte("/a/b/#/c"),
-		[]byte("/a/b/#/cdd"),
+	pkt.Topics = []string{
+		"surgemq",
+		"/a/b/#/c",
+		"/a/b/#/cdd",
 	}
 
 	dst := make([]byte, 100)
@@ -168,9 +168,7 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 func TestUnsubscribePacketEncodeError1(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	pkt.PacketID = 7
-	pkt.Topics = [][]byte{
-		[]byte("surgemq"),
-	}
+	pkt.Topics = []string{"surgemq"}
 
 	dst := make([]byte, 1) // <- too small
 	n, err := pkt.Encode(dst)
@@ -182,9 +180,7 @@ func TestUnsubscribePacketEncodeError1(t *testing.T) {
 func TestUnsubscribePacketEncodeError2(t *testing.T) {
 	pkt := NewUnsubscribePacket()
 	pkt.PacketID = 7
-	pkt.Topics = [][]byte{
-		make([]byte, 65536),
-	}
+	pkt.Topics = []string{string(make([]byte, 65536))}
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -245,9 +241,7 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 func BenchmarkUnsubscribeEncode(b *testing.B) {
 	pkt := NewUnsubscribePacket()
 	pkt.PacketID = 1
-	pkt.Topics = [][]byte{
-		[]byte("t"),
-	}
+	pkt.Topics = []string{"t"}
 
 	buf := make([]byte, pkt.Len())
 

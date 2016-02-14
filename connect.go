@@ -29,16 +29,16 @@ var (
 // connection has been established.
 type ConnectPacket struct {
 	// The clients client id.
-	ClientID []byte
+	ClientID string
 
 	// The keep alive value.
 	KeepAlive uint16
 
 	// The authentication username.
-	Username []byte
+	Username string
 
 	// The authentication password.
-	Password []byte
+	Password string
 
 	// The clean session flag.
 	CleanSession bool
@@ -176,7 +176,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	total += 2
 
 	// read client id
-	cp.ClientID, n, err = readLPBytes(src[total:])
+	cp.ClientID, n, err = readLPString(src[total:])
 	total += n
 	if err != nil {
 		return total, err
@@ -189,7 +189,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// read will topic and payload
 	if cp.Will != nil {
-		cp.Will.Topic, n, err = readLPBytes(src[total:])
+		cp.Will.Topic, n, err = readLPString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -204,7 +204,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// read username
 	if usernameFlag {
-		cp.Username, n, err = readLPBytes(src[total:])
+		cp.Username, n, err = readLPString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -213,7 +213,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// read password
 	if passwordFlag {
-		cp.Password, n, err = readLPBytes(src[total:])
+		cp.Password, n, err = readLPString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -304,7 +304,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	total += 2
 
 	// write client id
-	n, err = writeLPBytes(dst[total:], cp.ClientID)
+	n, err = writeLPString(dst[total:], cp.ClientID)
 	total += n
 	if err != nil {
 		return total, err
@@ -312,7 +312,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 
 	// write will topic and payload
 	if cp.Will != nil {
-		n, err = writeLPBytes(dst[total:], cp.Will.Topic)
+		n, err = writeLPString(dst[total:], cp.Will.Topic)
 		total += n
 		if err != nil {
 			return total, err
@@ -331,7 +331,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 
 	// write username
 	if len(cp.Username) > 0 {
-		n, err = writeLPBytes(dst[total:], cp.Username)
+		n, err = writeLPString(dst[total:], cp.Username)
 		total += n
 		if err != nil {
 			return total, err
@@ -340,7 +340,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 
 	// write password
 	if len(cp.Password) > 0 {
-		n, err = writeLPBytes(dst[total:], cp.Password)
+		n, err = writeLPString(dst[total:], cp.Password)
 		total += n
 		if err != nil {
 			return total, err
