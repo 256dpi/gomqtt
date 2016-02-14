@@ -23,11 +23,12 @@ import (
 func TestSubscribeInterface(t *testing.T) {
 	pkt := NewSubscribePacket()
 	pkt.Subscriptions = []Subscription{
-		{Topic: "hello", QOS: QOSAtMostOnce},
+		{Topic: "foo", QOS: QOSAtMostOnce},
+		{Topic: "bar", QOS: QOSAtLeastOnce},
 	}
 
 	assert.Equal(t, pkt.Type(), SUBSCRIBE)
-	assert.Equal(t, "<SubscribePacket PacketID=0 Subscriptions=[\"hello\"/0]>", pkt.String())
+	assert.Equal(t, "<SubscribePacket PacketID=0 Subscriptions=[\"foo\"=>0, \"bar\"=>1]>", pkt.String())
 }
 
 func TestSubscribePacketDecode(t *testing.T) {

@@ -17,6 +17,7 @@ package packet
 import (
 	"encoding/binary"
 	"fmt"
+	"strings"
 )
 
 // A SubackPacket is sent by the server to the client to confirm receipt and
@@ -44,7 +45,14 @@ func (sp *SubackPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (sp *SubackPacket) String() string {
-	return fmt.Sprintf("<SubackPacket PacketID=%d ReturnCodes=%v>", sp.PacketID, sp.ReturnCodes)
+	var codes []string
+
+	for _, c := range sp.ReturnCodes {
+		codes = append(codes, fmt.Sprintf("%d", c))
+	}
+
+	return fmt.Sprintf("<SubackPacket PacketID=%d ReturnCodes=[%s]>",
+		sp.PacketID, strings.Join(codes, ", "))
 }
 
 // Len returns the byte length of the encoded packet.

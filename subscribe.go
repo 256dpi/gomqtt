@@ -25,12 +25,12 @@ type Subscription struct {
 	// The topic to subscribe.
 	Topic string
 
-	// The requested QOS level.
+	// The requested maximum QOS level.
 	QOS uint8
 }
 
 func (s *Subscription) String() string {
-	return fmt.Sprintf("%q/%d", s.Topic, s.QOS)
+	return fmt.Sprintf("%q=>%d", s.Topic, s.QOS)
 }
 
 // A SubscribePacket is sent from the client to the server to create one or

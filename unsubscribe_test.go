@@ -22,10 +22,10 @@ import (
 
 func TestUnsubscribeInterface(t *testing.T) {
 	pkt := NewUnsubscribePacket()
-	pkt.Topics = []string{"hello"}
+	pkt.Topics = []string{"foo", "bar"}
 
 	assert.Equal(t, pkt.Type(), UNSUBSCRIBE)
-	assert.Equal(t, "<UnsubscribePacket Topics=[\"hello\"]>", pkt.String())
+	assert.Equal(t, "<UnsubscribePacket Topics=[\"foo\", \"bar\"]>", pkt.String())
 }
 
 func TestUnsubscribePacketDecode(t *testing.T) {
