@@ -46,12 +46,12 @@ type Packet interface {
 	// bytes decoded, and whether there have been any errors during the process.
 	// The byte slice must not be modified during the duration of this packet
 	// being available since the byte slice never gets copied.
-	Decode([]byte) (int, error)
+	Decode(src []byte) (int, error)
 
 	// Encode writes the packet bytes into the byte slice from the argument. It
 	// returns the number of bytes encoded and whether there's any errors along
 	// the way. If there is an error, the byte slice should be considered invalid.
-	Encode([]byte) (int, error)
+	Encode(dst []byte) (int, error)
 
 	// String returns a string representation of the packet.
 	String() string
