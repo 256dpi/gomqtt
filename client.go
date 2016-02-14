@@ -154,26 +154,26 @@ func (c *Client) processor() error {
 
 		// TODO: first packet must be a connect
 
-		switch pkt.Type() {
-		case packet.CONNECT:
-			err = c.processConnect(pkt.(*packet.ConnectPacket))
-		case packet.SUBSCRIBE:
-			err = c.processSubscribe(pkt.(*packet.SubscribePacket))
-		case packet.UNSUBSCRIBE:
-			err = c.processUnsubscribe(pkt.(*packet.UnsubscribePacket))
-		case packet.PUBLISH:
-			err = c.processPublish(pkt.(*packet.PublishPacket))
-		case packet.PUBACK:
-			err = c.processPubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
-		case packet.PUBCOMP:
-			err = c.processPubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
-		case packet.PUBREC:
-			err = c.processPubrec(pkt.(*packet.PubrecPacket).PacketID)
-		case packet.PUBREL:
-			err = c.processPubrel(pkt.(*packet.PubrelPacket).PacketID)
-		case packet.PINGREQ:
+		switch _pkt := pkt.(type) {
+		case *packet.ConnectPacket:
+			err = c.processConnect(_pkt)
+		case *packet.SubscribePacket:
+			err = c.processSubscribe(_pkt)
+		case *packet.UnsubscribePacket:
+			err = c.processUnsubscribe(_pkt)
+		case *packet.PublishPacket:
+			err = c.processPublish(_pkt)
+		case *packet.PubackPacket:
+			err = c.processPubackAndPubcomp(_pkt.PacketID)
+		case *packet.PubcompPacket:
+			err = c.processPubackAndPubcomp(_pkt.PacketID)
+		case *packet.PubrecPacket:
+			err = c.processPubrec(_pkt.PacketID)
+		case *packet.PubrelPacket:
+			err = c.processPubrel(_pkt.PacketID)
+		case *packet.PingreqPacket:
 			err = c.processPingreq()
-		case packet.DISCONNECT:
+		case *packet.DisconnectPacket:
 			err = c.processDisconnect()
 		}
 
