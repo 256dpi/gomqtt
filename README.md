@@ -8,14 +8,6 @@
 
 **Package packet implements functionality for encoding and decoding [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.**
 
-## Features
-
-- Built around plain byte slices.
-- Zero allocation encoding and decoding.
-- Builtin packet detection.
-- No overflows thanks to input fuzzing.
-- Full test coverage.
-
 ## Installation
 
 Get it using go's standard toolset:
