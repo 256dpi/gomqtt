@@ -69,7 +69,7 @@ func TestNetConnCloseAfterClose(t *testing.T) {
 func TestNetConnCloseWhileReadError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublishPacket()
-		pkt.Message.Topic = []byte("foo/bar/baz")
+		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
 		pkt.Encode(buf)
 
@@ -91,7 +91,7 @@ func TestNetConnCloseWhileReadError(t *testing.T) {
 func TestNetConnCloseWhileDetectError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublishPacket()
-		pkt.Message.Topic = []byte("foo/bar/baz")
+		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
 		pkt.Encode(buf)
 
@@ -113,7 +113,7 @@ func TestNetConnCloseWhileDetectError(t *testing.T) {
 func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublishPacket()
-		pkt.Message.Topic = []byte("foo/bar/baz")
+		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
 		pkt.Encode(buf)
 
