@@ -8,14 +8,6 @@
 
 **Package transport implements functionality for handling [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) connections.**
 
-## Features
-
-- Support for `net.Conn` based connections.
-- Support for `websocket.Conn` based connections through <https://github.com/gorilla/websocket>.
-- Shorthand `Dial` function for initiating connections.
-- Shorthand `Launch` function for launching servers.
-- Rich `Error` interface for enhanced error handling.
-
 ## Installation
 
 Get it using go's standard toolset:
