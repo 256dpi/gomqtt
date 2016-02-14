@@ -33,7 +33,7 @@ func TestIdentifiedPacketDecode(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
-	assert.Equal(t, 7, int(pid))
+	assert.Equal(t, uint16(7), pid)
 }
 
 func TestIdentifiedPacketDecodeError1(t *testing.T) {
@@ -48,7 +48,7 @@ func TestIdentifiedPacketDecodeError1(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 2, n)
-	assert.Equal(t, 0, int(pid))
+	assert.Equal(t, uint16(0), pid)
 }
 
 func TestIdentifiedPacketDecodeError2(t *testing.T) {
@@ -63,7 +63,7 @@ func TestIdentifiedPacketDecodeError2(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 2, n)
-	assert.Equal(t, 0, int(pid))
+	assert.Equal(t, uint16(0), pid)
 }
 
 func TestIdentifiedPacketDecodeError3(t *testing.T) {
@@ -78,7 +78,7 @@ func TestIdentifiedPacketDecodeError3(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 4, n)
-	assert.Equal(t, 0, int(pid))
+	assert.Equal(t, uint16(0), pid)
 }
 
 func TestIdentifiedPacketEncode(t *testing.T) {
@@ -138,7 +138,7 @@ func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n3)
-	assert.Equal(t, 7, int(pid))
+	assert.Equal(t, uint16(7), pid)
 }
 
 func BenchmarkIdentifiedPacketEncode(b *testing.B) {

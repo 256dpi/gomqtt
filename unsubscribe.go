@@ -23,7 +23,7 @@ import (
 // An UnsubscribePacket is sent by the client to the server.
 type UnsubscribePacket struct {
 	// The topics to unsubscribe from.
-	Topics [][]byte
+	Topics []string
 
 	// The packet identifier.
 	PacketID uint16
@@ -95,7 +95,7 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 
 	for tl > 0 {
 		// read topic
-		t, n, err := readLPBytes(src[total:])
+		t, n, err := readLPString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -140,7 +140,7 @@ func (up *UnsubscribePacket) Encode(dst []byte) (int, error) {
 
 	for _, t := range up.Topics {
 		// write topic
-		n, err := writeLPBytes(dst[total:], t)
+		n, err := writeLPString(dst[total:], t)
 		total += n
 		if err != nil {
 			return total, err

@@ -17,7 +17,7 @@ package packet
 import "fmt"
 
 // The ConnackCode represents the return code in a ConnackPacket.
-type ConnackCode byte
+type ConnackCode uint8
 
 // All available ConnackCodes.
 const (
