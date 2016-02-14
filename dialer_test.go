@@ -26,9 +26,13 @@ func TestGlobalDial(t *testing.T) {
 	server, err := testLauncher.Launch(tp.url("tcp"))
 	assert.NoError(t, err)
 
+	wait := make(chan struct{})
+
 	go func() {
 		conn, err := server.Accept()
 		assert.NoError(t, err)
+
+		<-wait
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
@@ -40,6 +44,8 @@ func TestGlobalDial(t *testing.T) {
 
 	err = conn.Close()
 	assert.NoError(t, err)
+
+	close(wait)
 
 	err = server.Close()
 	assert.NoError(t, err)
