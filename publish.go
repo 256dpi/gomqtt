@@ -22,20 +22,8 @@ import (
 // A PublishPacket is sent from a client to a server or from server to a client
 // to transport an application message.
 type PublishPacket struct {
-	// The Topic of the message.
-	Topic []byte
-
-	// The Payload of the message.
-	Payload []byte
-
-	// The QOS indicates the level of assurance for delivery.
-	QOS byte
-
-	// If the Retain flag is set to true, in a PublishPacket sent by a client
-	// to a server, the server must store the application message and its QOS,
-	// so that it can be delivered to future subscribers whose subscriptions
-	// match its topic name.
-	Retain bool
+	// The message to publish.
+	Message Message
 
 	// If the Dup flag is set to false, it indicates that this is the first
 	// occasion that the client or server has attempted to send this
@@ -61,8 +49,8 @@ func (pp PublishPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (pp PublishPacket) String() string {
-	return fmt.Sprintf("PUBLISH: Topic=%q PacketID=%d QOS=%d Retained=%t Dup=%t Payload=%v",
-		pp.Topic, pp.PacketID, pp.QOS, pp.Retain, pp.Dup, pp.Payload)
+	return fmt.Sprintf("PUBLISH: PacketID=%d Message=%s Dup=%t",
+		pp.PacketID, pp.Message.String(), pp.Dup)
 }
 
 // Len returns the byte length of the encoded packet.
@@ -87,12 +75,12 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 
 	// read flags
 	pp.Dup = ((flags >> 3) & 0x1) == 1
-	pp.Retain = (flags & 0x1) == 1
-	pp.QOS = (flags >> 1) & 0x3
+	pp.Message.Retain = (flags & 0x1) == 1
+	pp.Message.QOS = (flags >> 1) & 0x3
 
 	// check qos
-	if !validQOS(pp.QOS) {
-		return total, fmt.Errorf("Invalid QOS level (%d)", pp.QOS)
+	if !validQOS(pp.Message.QOS) {
+		return total, fmt.Errorf("Invalid QOS level (%d)", pp.Message.QOS)
 	}
 
 	// check buffer length
@@ -103,13 +91,13 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 	n := 0
 
 	// read topic
-	pp.Topic, n, err = readLPBytes(src[total:])
+	pp.Message.Topic, n, err = readLPBytes(src[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	if pp.QOS != 0 {
+	if pp.Message.QOS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
 			return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
@@ -130,8 +118,8 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 
 	// read payload
 	if l > 0 {
-		pp.Payload = src[total : total+l]
-		total += len(pp.Payload)
+		pp.Message.Payload = src[total : total+l]
+		total += len(pp.Message.Payload)
 	}
 
 	return total, nil
@@ -144,7 +132,7 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check topic length
-	if len(pp.Topic) == 0 {
+	if len(pp.Message.Topic) == 0 {
 		return total, fmt.Errorf("Topic name is empty")
 	}
 
@@ -158,24 +146,24 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// set retain flag
-	if pp.Retain {
+	if pp.Message.Retain {
 		flags |= 0x1 // 00000001
 	} else {
 		flags &= 254 // 11111110
 	}
 
 	// check qos
-	if !validQOS(pp.QOS) {
-		return 0, fmt.Errorf("Invalid QOS level %d", pp.QOS)
+	if !validQOS(pp.Message.QOS) {
+		return 0, fmt.Errorf("Invalid QOS level %d", pp.Message.QOS)
 	}
 
 	// check packet id
-	if pp.QOS > 0 && pp.PacketID == 0 {
+	if pp.Message.QOS > 0 && pp.PacketID == 0 {
 		return total, fmt.Errorf("Packet id must be grater than zero")
 	}
 
 	// set qos
-	flags = (flags & 249) | (pp.QOS << 1) // 249 = 11111001
+	flags = (flags & 249) | (pp.Message.QOS << 1) // 249 = 11111001
 
 	// encode header
 	n, err := headerEncode(dst[total:], flags, pp.len(), pp.Len(), PUBLISH)
@@ -185,29 +173,29 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write topic
-	n, err = writeLPBytes(dst[total:], pp.Topic)
+	n, err = writeLPBytes(dst[total:], pp.Message.Topic)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write packet id
-	if pp.QOS != 0 {
+	if pp.Message.QOS != 0 {
 		binary.BigEndian.PutUint16(dst[total:], pp.PacketID)
 		total += 2
 	}
 
 	// write payload
-	copy(dst[total:], pp.Payload)
-	total += len(pp.Payload)
+	copy(dst[total:], pp.Message.Payload)
+	total += len(pp.Message.Payload)
 
 	return total, nil
 }
 
 // Returns the payload length.
 func (pp *PublishPacket) len() int {
-	total := 2 + len(pp.Topic) + len(pp.Payload)
-	if pp.QOS != 0 {
+	total := 2 + len(pp.Message.Topic) + len(pp.Message.Payload)
+	if pp.Message.QOS != 0 {
 		total += 2
 	}
 

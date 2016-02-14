@@ -43,17 +43,8 @@ type ConnectPacket struct {
 	// The clean session flag.
 	CleanSession bool
 
-	// The topic of the will message.
-	WillTopic []byte
-
-	// The payload of the will message.
-	WillPayload []byte
-
-	// The QOS of the will message.
-	WillQOS byte
-
-	// The retain flag of the will message.
-	WillRetain bool
+	// The will message.
+	Will Message
 }
 
 var _ Packet = (*ConnectPacket)(nil)
@@ -71,17 +62,13 @@ func (cp ConnectPacket) Type() Type {
 // String returns a string representation of the packet.
 func (cp ConnectPacket) String() string {
 	return fmt.Sprintf("CONNECT: ClientID=%q KeepAlive=%d Username=%q "+
-		"Password=%q CleanSession=%t WillTopic=%q WillPayload=%q WillQOS=%d "+
-		"WillRetain=%t",
+		"Password=%q CleanSession=%t Will=%s",
 		cp.ClientID,
 		cp.KeepAlive,
 		cp.Username,
 		cp.Password,
 		cp.CleanSession,
-		cp.WillTopic,
-		cp.WillPayload,
-		cp.WillQOS,
-		cp.WillRetain,
+		cp.Will.String(),
 	)
 }
 
@@ -146,8 +133,8 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	willFlag := ((connectFlags >> 2) & 0x1) == 1
 
 	// read other flags
-	cp.WillRetain = ((connectFlags >> 5) & 0x1) == 1
-	cp.WillQOS = (connectFlags >> 3) & 0x3
+	cp.Will.Retain = ((connectFlags >> 5) & 0x1) == 1
+	cp.Will.QOS = (connectFlags >> 3) & 0x3
 	cp.CleanSession = ((connectFlags >> 1) & 0x1) == 1
 
 	// check reserved bit
@@ -156,13 +143,13 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	}
 
 	// check will qos
-	if !validQOS(cp.WillQOS) {
-		return total, fmt.Errorf("Invalid QOS level (%d) for will message", cp.WillQOS)
+	if !validQOS(cp.Will.QOS) {
+		return total, fmt.Errorf("Invalid QOS level (%d) for will message", cp.Will.QOS)
 	}
 
 	// check will flags
-	if !willFlag && (cp.WillRetain || cp.WillQOS != 0) {
-		return total, fmt.Errorf("Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cp.WillQOS, cp.WillRetain)
+	if !willFlag && (cp.Will.Retain || cp.Will.QOS != 0) {
+		return total, fmt.Errorf("Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cp.Will.QOS, cp.Will.Retain)
 	}
 
 	// check auth flags
@@ -193,13 +180,13 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// read will topic and payload
 	if willFlag {
-		cp.WillTopic, n, err = readLPBytes(src[total:])
+		cp.Will.Topic, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		cp.WillPayload, n, err = readLPBytes(src[total:])
+		cp.Will.Payload, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -265,18 +252,18 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// set will flag
-	if len(cp.WillTopic) > 0 {
+	if len(cp.Will.Topic) > 0 {
 		connectFlags |= 0x4 // 00000100
 
-		if !validQOS(cp.WillQOS) {
-			return total, fmt.Errorf("Invalid Will QOS level %d", cp.WillQOS)
+		if !validQOS(cp.Will.QOS) {
+			return total, fmt.Errorf("Invalid Will QOS level %d", cp.Will.QOS)
 		}
 
 		// set will qos flag
-		connectFlags = (connectFlags & 231) | (cp.WillQOS << 3) // 231 = 11100111
+		connectFlags = (connectFlags & 231) | (cp.Will.QOS << 3) // 231 = 11100111
 
 		// set will retain flag
-		if cp.WillRetain {
+		if cp.Will.Retain {
 			connectFlags |= 32 // 00100000
 		} else {
 			connectFlags &= 223 // 11011111
@@ -309,14 +296,14 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write will topic and payload
-	if len(cp.WillTopic) > 0 {
-		n, err = writeLPBytes(dst[total:], cp.WillTopic)
+	if len(cp.Will.Topic) > 0 {
+		n, err = writeLPBytes(dst[total:], cp.Will.Topic)
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		n, err = writeLPBytes(dst[total:], cp.WillPayload)
+		n, err = writeLPBytes(dst[total:], cp.Will.Payload)
 		total += n
 		if err != nil {
 			return total, err
@@ -363,8 +350,8 @@ func (cp *ConnectPacket) len() int {
 	total += 2 + len(cp.ClientID)
 
 	// add the will topic and will message length
-	if len(cp.WillTopic) > 0 {
-		total += 2 + len(cp.WillTopic) + 2 + len(cp.WillPayload)
+	if len(cp.Will.Topic) > 0 {
+		total += 2 + len(cp.Will.Topic) + 2 + len(cp.Will.Payload)
 	}
 
 	// add the username length

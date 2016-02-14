@@ -45,10 +45,10 @@ func TestPublishPacketDecode1(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, 7, int(pkt.PacketID))
-	assert.Equal(t, []byte("surgemq"), pkt.Topic)
-	assert.Equal(t, []byte("send me home"), pkt.Payload)
-	assert.Equal(t, 1, int(pkt.QOS))
-	assert.Equal(t, true, pkt.Retain)
+	assert.Equal(t, []byte("surgemq"), pkt.Message.Topic)
+	assert.Equal(t, []byte("send me home"), pkt.Message.Payload)
+	assert.Equal(t, 1, int(pkt.Message.QOS))
+	assert.Equal(t, true, pkt.Message.Retain)
 	assert.Equal(t, true, pkt.Dup)
 }
 
@@ -68,10 +68,10 @@ func TestPublishPacketDecode2(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, 0, int(pkt.PacketID))
-	assert.Equal(t, []byte("surgemq"), pkt.Topic)
-	assert.Equal(t, []byte("send me home"), pkt.Payload)
-	assert.Equal(t, 0, int(pkt.QOS))
-	assert.Equal(t, false, pkt.Retain)
+	assert.Equal(t, []byte("surgemq"), pkt.Message.Topic)
+	assert.Equal(t, []byte("send me home"), pkt.Message.Payload)
+	assert.Equal(t, 0, int(pkt.Message.QOS))
+	assert.Equal(t, false, pkt.Message.Retain)
 	assert.Equal(t, false, pkt.Dup)
 }
 
@@ -173,12 +173,12 @@ func TestPublishPacketEncode1(t *testing.T) {
 	}
 
 	pkt := NewPublishPacket()
-	pkt.Topic = []byte("surgemq")
-	pkt.QOS = QOSAtLeastOnce
-	pkt.Retain = true
+	pkt.Message.Topic = []byte("surgemq")
+	pkt.Message.QOS = QOSAtLeastOnce
+	pkt.Message.Retain = true
 	pkt.Dup = true
 	pkt.PacketID = 7
-	pkt.Payload = []byte("send me home")
+	pkt.Message.Payload = []byte("send me home")
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -199,8 +199,8 @@ func TestPublishPacketEncode2(t *testing.T) {
 	}
 
 	pkt := NewPublishPacket()
-	pkt.Topic = []byte("surgemq")
-	pkt.Payload = []byte("send me home")
+	pkt.Message.Topic = []byte("surgemq")
+	pkt.Message.Payload = []byte("send me home")
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -212,7 +212,7 @@ func TestPublishPacketEncode2(t *testing.T) {
 
 func TestPublishPacketEncodeError1(t *testing.T) {
 	pkt := NewPublishPacket()
-	pkt.Topic = []byte("") // <- empty topic
+	pkt.Message.Topic = []byte("") // <- empty topic
 
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)
@@ -222,8 +222,8 @@ func TestPublishPacketEncodeError1(t *testing.T) {
 
 func TestPublishPacketEncodeError2(t *testing.T) {
 	pkt := NewPublishPacket()
-	pkt.Topic = []byte("t")
-	pkt.QOS = 3 // <- wrong qos
+	pkt.Message.Topic = []byte("t")
+	pkt.Message.QOS = 3 // <- wrong qos
 
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)
@@ -233,7 +233,7 @@ func TestPublishPacketEncodeError2(t *testing.T) {
 
 func TestPublishPacketEncodeError3(t *testing.T) {
 	pkt := NewPublishPacket()
-	pkt.Topic = []byte("t")
+	pkt.Message.Topic = []byte("t")
 
 	dst := make([]byte, 1) // <- too small
 	_, err := pkt.Encode(dst)
@@ -243,7 +243,7 @@ func TestPublishPacketEncodeError3(t *testing.T) {
 
 func TestPublishPacketEncodeError4(t *testing.T) {
 	pkt := NewPublishPacket()
-	pkt.Topic = make([]byte, 65536) // <- too big
+	pkt.Message.Topic = make([]byte, 65536) // <- too big
 
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)
@@ -253,8 +253,8 @@ func TestPublishPacketEncodeError4(t *testing.T) {
 
 func TestPublishPacketEncodeError5(t *testing.T) {
 	pkt := NewPublishPacket()
-	pkt.Topic = []byte("test")
-	pkt.QOS = 1
+	pkt.Message.Topic = []byte("test")
+	pkt.Message.QOS = 1
 	pkt.PacketID = 0 // <- zero packet id
 
 	dst := make([]byte, pkt.Len())
@@ -296,10 +296,10 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkPublishEncode(b *testing.B) {
 	pkt := NewPublishPacket()
-	pkt.Topic = []byte("t")
-	pkt.QOS = QOSAtLeastOnce
+	pkt.Message.Topic = []byte("t")
+	pkt.Message.QOS = QOSAtLeastOnce
 	pkt.PacketID = 1
-	pkt.Payload = []byte("p")
+	pkt.Message.Payload = []byte("p")
 
 	buf := make([]byte, pkt.Len())
 
