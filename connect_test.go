@@ -22,6 +22,11 @@ import (
 
 func TestConnectInterface(t *testing.T) {
 	pkt := NewConnectPacket()
+	pkt.Will = &Message{
+		Topic: []byte("w"),
+		Payload: []byte("m"),
+		QOS: QOSAtLeastOnce,
+	}
 
 	assert.Equal(t, pkt.Type(), CONNECT)
 	assert.NotNil(t, pkt.String())
@@ -418,12 +423,15 @@ func TestConnectPacketEncode1(t *testing.T) {
 	}
 
 	pkt := NewConnectPacket()
-	pkt.Will.QOS = QOSAtLeastOnce
+	pkt.Will = &Message{
+		QOS: QOSAtLeastOnce,
+		Topic: []byte("will"),
+		Payload: []byte("send me home"),
+
+	}
 	pkt.CleanSession = false
 	pkt.ClientID = []byte("surgemq")
 	pkt.KeepAlive = 10
-	pkt.Will.Topic = []byte("will")
-	pkt.Will.Payload = []byte("send me home")
 	pkt.Username = []byte("surgemq")
 	pkt.Password = []byte("verysecret")
 
@@ -474,8 +482,10 @@ func TestConnectPacketEncodeError1(t *testing.T) {
 
 func TestConnectPacketEncodeError2(t *testing.T) {
 	pkt := NewConnectPacket()
-	pkt.Will.Topic = []byte("t")
-	pkt.Will.QOS = 3 // <- wrong qos
+	pkt.Will = &Message{
+		Topic: []byte("t"),
+		QOS: 3, // <- wrong qos
+	}
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -497,7 +507,9 @@ func TestConnectPacketEncodeError3(t *testing.T) {
 
 func TestConnectPacketEncodeError4(t *testing.T) {
 	pkt := NewConnectPacket()
-	pkt.Will.Topic = make([]byte, 65536) // <- too big
+	pkt.Will = &Message{
+		Topic: make([]byte, 65536), // <- too big
+	}
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -508,8 +520,10 @@ func TestConnectPacketEncodeError4(t *testing.T) {
 
 func TestConnectPacketEncodeError5(t *testing.T) {
 	pkt := NewConnectPacket()
-	pkt.Will.Topic = []byte("t")
-	pkt.Will.Payload = make([]byte, 65536) // <- too big
+	pkt.Will = &Message{
+		Topic: []byte("t"),
+		Payload: make([]byte, 65536), // <- too big
+	}
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -601,12 +615,14 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkConnectEncode(b *testing.B) {
 	pkt := NewConnectPacket()
+	pkt.Will = &Message{
+		Topic: []byte("w"),
+		Payload: []byte("m"),
+		QOS: QOSAtLeastOnce,
+	}
 	pkt.CleanSession = true
 	pkt.ClientID = []byte("i")
 	pkt.KeepAlive = 10
-	pkt.Will.Topic = []byte("w")
-	pkt.Will.Payload = []byte("m")
-	pkt.Will.QOS = QOSAtLeastOnce
 	pkt.Username = []byte("u")
 	pkt.Password = []byte("p")
 

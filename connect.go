@@ -44,7 +44,7 @@ type ConnectPacket struct {
 	CleanSession bool
 
 	// The will message.
-	Will Message
+	Will *Message
 }
 
 var _ Packet = (*ConnectPacket)(nil)
@@ -61,6 +61,12 @@ func (cp *ConnectPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (cp *ConnectPacket) String() string {
+	will := "nil"
+
+	if cp.Will != nil {
+		will = cp.Will.String()
+	}
+
 	return fmt.Sprintf("CONNECT: ClientID=%q KeepAlive=%d Username=%q "+
 		"Password=%q CleanSession=%t Will=%s",
 		cp.ClientID,
@@ -68,7 +74,7 @@ func (cp *ConnectPacket) String() string {
 		cp.Username,
 		cp.Password,
 		cp.CleanSession,
-		cp.Will.String(),
+		will,
 	)
 }
 
@@ -127,14 +133,12 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	connectFlags := src[total]
 	total++
 
-	// read existence flags
+	// read flags
 	usernameFlag := ((connectFlags >> 7) & 0x1) == 1
 	passwordFlag := ((connectFlags >> 6) & 0x1) == 1
 	willFlag := ((connectFlags >> 2) & 0x1) == 1
-
-	// read other flags
-	cp.Will.Retain = ((connectFlags >> 5) & 0x1) == 1
-	cp.Will.QOS = (connectFlags >> 3) & 0x3
+	willRetain := ((connectFlags >> 5) & 0x1) == 1
+	willQOS := (connectFlags >> 3) & 0x3
 	cp.CleanSession = ((connectFlags >> 1) & 0x1) == 1
 
 	// check reserved bit
@@ -143,13 +147,18 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	}
 
 	// check will qos
-	if !validQOS(cp.Will.QOS) {
-		return total, fmt.Errorf("Invalid QOS level (%d) for will message", cp.Will.QOS)
+	if !validQOS(willQOS) {
+		return total, fmt.Errorf("Invalid QOS level (%d) for will message", willQOS)
 	}
 
 	// check will flags
-	if !willFlag && (cp.Will.Retain || cp.Will.QOS != 0) {
-		return total, fmt.Errorf("Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, cp.Will.QOS, cp.Will.Retain)
+	if !willFlag && (willRetain || willQOS != 0) {
+		return total, fmt.Errorf("Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, willQOS, willRetain)
+	}
+
+	// create will if present
+	if willFlag {
+		cp.Will = &Message{ QOS: willQOS, Retain: willRetain }
 	}
 
 	// check auth flags
@@ -179,7 +188,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	}
 
 	// read will topic and payload
-	if willFlag {
+	if cp.Will != nil {
 		cp.Will.Topic, n, err = readLPBytes(src[total:])
 		total += n
 		if err != nil {
@@ -252,7 +261,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// set will flag
-	if len(cp.Will.Topic) > 0 {
+	if cp.Will != nil {
 		connectFlags |= 0x4 // 00000100
 
 		if !validQOS(cp.Will.QOS) {
@@ -296,7 +305,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write will topic and payload
-	if len(cp.Will.Topic) > 0 {
+	if cp.Will != nil {
 		n, err = writeLPBytes(dst[total:], cp.Will.Topic)
 		total += n
 		if err != nil {
@@ -350,7 +359,7 @@ func (cp *ConnectPacket) len() int {
 	total += 2 + len(cp.ClientID)
 
 	// add the will topic and will message length
-	if len(cp.Will.Topic) > 0 {
+	if cp.Will != nil {
 		total += 2 + len(cp.Will.Topic) + 2 + len(cp.Will.Payload)
 	}
 
