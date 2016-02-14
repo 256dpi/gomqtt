@@ -68,7 +68,7 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 }
 
 // Publish will send a PublishPacket to the client and initiate QOS flows.
-func (c *Client) Publish(topic string, payload []byte) error {
+func (c *Client) Publish(msg *packet.Message) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -77,14 +77,18 @@ func (c *Client) Publish(topic string, payload []byte) error {
 		return ErrClientNotConnected
 	}
 
-	// TODO: read QOS from cached subscriptions
+	// TODO: read QOS from cached subscriptions and adjust QOS
 
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte(topic)
-	publish.Payload = payload
+	publish.Message = *msg
+
+	// set packet id
+	if msg.QOS > 0 {
+		publish.PacketID = c.Session.PacketID()
+	}
 
 	// store packet if at least qos 1
-	if publish.QOS > 0 {
+	if msg.QOS > 0 {
 		err := c.Session.SavePacket(session.Outgoing, publish)
 		if err != nil {
 			return c.cleanup(err, true)
@@ -265,7 +269,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 
 // handle an incoming PublishPacket
 func (c *Client) processPublish(publish *packet.PublishPacket) error {
-	if publish.QOS == 1 {
+	if publish.Message.QOS == 1 {
 		puback := packet.NewPubackPacket()
 		puback.PacketID = publish.PacketID
 
@@ -276,7 +280,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 	}
 
-	if publish.QOS == 2 {
+	if publish.Message.QOS == 2 {
 		// store packet
 		err := c.Session.SavePacket(session.Incoming, publish)
 		if err != nil {
@@ -293,9 +297,9 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 	}
 
-	if publish.QOS <= 1 {
+	if publish.Message.QOS <= 1 {
 		// publish packet to others
-		err := c.broker.Backend.Publish(c, string(publish.Topic), publish.Payload)
+		err := c.broker.Backend.Publish(c, &publish.Message)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -363,7 +367,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// publish packet to others
-	err = c.broker.Backend.Publish(c, string(publish.Topic), publish.Payload)
+	err = c.broker.Backend.Publish(c, &publish.Message)
 	if err != nil {
 		return c.die(err, true)
 	}

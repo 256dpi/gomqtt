@@ -14,21 +14,22 @@
 
 package broker
 
-import "github.com/gomqtt/session"
+import (
+	"github.com/gomqtt/session"
+	"github.com/gomqtt/packet"
+)
 
 type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one.
 	GetSession(string) (session.Session, error)
 
-	Subscribe(*Client, string) error
-	Unsubscribe(*Client, string) error
-	Remove(*Client) error
-	Publish(*Client, string, []byte) error
-
-	StoreRetained(*Client, string, []byte) error
-	// TODO: support streaming of retained messages
-	RetrieveRetained(*Client, string) ([]byte, error)
+	Subscribe(client *Client, topic string) error
+	Unsubscribe(client *Client, topic string) error
+	Remove(client *Client) error
+	Publish(client *Client, msg *packet.Message) error
+	//StoreRetained(*Client, string, []byte) error
+	//RetrieveRetained(*Client, string) ([]byte, error)
 }
 
 // TODO: missing offline subscriptions

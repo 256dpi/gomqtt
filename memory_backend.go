@@ -19,6 +19,7 @@ import (
 
 	"github.com/gomqtt/session"
 	"github.com/gomqtt/topic"
+	"github.com/gomqtt/packet"
 )
 
 type MemoryBackend struct {
@@ -69,11 +70,13 @@ func (m *MemoryBackend) Remove(client *Client) error {
 	return nil
 }
 
-func (m *MemoryBackend) Publish(client *Client, topic string, payload []byte) error {
-	for _, v := range m.tree.Match(topic) {
+func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
+	for _, v := range m.tree.Match(string(msg.Topic)) {
 		// we do not care about errors here as it is not the publishing clients
 		// responsibility
-		v.(*Client).Publish(topic, payload)
+
+		// TODO: log error
+		v.(*Client).Publish(msg)
 	}
 
 	return nil

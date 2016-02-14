@@ -119,8 +119,8 @@ func bomber(id string) {
 	conn := connection("bomber/" + id)
 
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte(id)
-	publish.Payload = []byte("foo")
+	publish.Message.Topic = []byte(id)
+	publish.Message.Payload = []byte("foo")
 
 	counter := 0
 
