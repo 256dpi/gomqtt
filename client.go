@@ -230,7 +230,6 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 	// allocate packet
 	publish := packet.NewPublishPacket()
 	publish.Message = *msg
-	publish.Dup = false
 
 	// set packet id
 	if msg.QOS > 0 {
