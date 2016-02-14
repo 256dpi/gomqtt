@@ -17,6 +17,8 @@ package client
 import (
 	"fmt"
 	"time"
+
+	"github.com/gomqtt/packet"
 )
 
 func ExampleClient() {
@@ -24,12 +26,12 @@ func ExampleClient() {
 
 	c := New()
 
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Printf("%s: %s\n", topic, payload)
+		fmt.Printf("%s: %s\n", msg.Topic, msg.Payload)
 		close(done)
 	}
 
@@ -96,8 +98,8 @@ func ExampleService() {
 		close(done)
 	}
 
-	s.Message = func(topic string, payload []byte) {
-		fmt.Printf("message: %s - %s\n", topic, payload)
+	s.Message = func(msg *packet.Message) {
+		fmt.Printf("message: %s - %s\n", msg.Topic, msg.Payload)
 		close(wait)
 	}
 

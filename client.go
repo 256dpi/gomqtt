@@ -53,7 +53,7 @@ var ErrClientUnexpectedClose = errors.New("client unexpected close")
 
 // Callback is a function called by the client upon received messages or
 // internal errors.
-type Callback func(topic string, payload []byte, err error)
+type Callback func(msg *packet.Message, err error)
 
 // Logger is a function called by the client to log activity.
 type Logger func(msg string)
@@ -205,6 +205,20 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*PublishFuture, error) {
+	msg := &packet.Message{
+		Topic: []byte(topic),
+		Payload: payload,
+		QOS: qos,
+		Retain: retain,
+	}
+
+	return c.PublishMessage(msg)
+}
+
+// PublishMessage will send a PublishPacket containing the passed message. It will
+// return a PublishFuture that gets completed once the quality of service flow
+// has been completed.
+func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -215,14 +229,11 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 
 	// allocate packet
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte(topic)
-	publish.Message.Payload = payload
-	publish.Message.QOS = qos
-	publish.Message.Retain = retain
+	publish.Message = *msg
 	publish.Dup = false
 
 	// set packet id
-	if qos > 0 {
+	if msg.QOS > 0 {
 		publish.PacketID = c.Session.PacketID()
 	}
 
@@ -234,7 +245,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	c.futureStore.put(publish.PacketID, future)
 
 	// store packet if at least qos 1
-	if qos > 0 {
+	if msg.QOS > 0 {
 		err := c.Session.SavePacket(session.Outgoing, publish)
 		if err != nil {
 			return nil, c.cleanup(err, true)
@@ -248,7 +259,7 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 	}
 
 	// complete and remove qos 1 future
-	if qos == 0 {
+	if msg.QOS == 0 {
 		future.complete()
 		c.futureStore.del(publish.PacketID)
 	}
@@ -701,7 +712,7 @@ func (c *Client) send(pkt packet.Packet) error {
 // calls the callback with a new message
 func (c *Client) forward(packet *packet.PublishPacket) {
 	if c.Callback != nil {
-		c.Callback(string(packet.Message.Topic), packet.Message.Payload, nil)
+		c.Callback(&packet.Message, nil)
 	}
 }
 
@@ -750,7 +761,7 @@ func (c *Client) die(err error, close bool) error {
 		err = c.cleanup(err, close)
 
 		if c.Callback != nil {
-			c.Callback("", nil, err)
+			c.Callback(nil, err)
 		}
 	})
 

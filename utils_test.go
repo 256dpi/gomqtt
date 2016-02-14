@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func errorCallback(t *testing.T) func(string, []byte, error) {
-	return func(topic string, payload []byte, err error) {
+func errorCallback(t *testing.T) func(*packet.Message, error) {
+	return func(msg *packet.Message, err error) {
 		if err != nil {
 			println(err.Error())
 		}

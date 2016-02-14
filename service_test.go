@@ -82,9 +82,9 @@ func TestServicePublishSubscribe(t *testing.T) {
 		close(offline)
 	}
 
-	s.Message = func(topic string, payload []byte) {
-		assert.Equal(t, "test", topic)
-		assert.Equal(t, []byte("test"), payload)
+	s.Message = func(msg *packet.Message) {
+		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
 		close(message)
 	}
 

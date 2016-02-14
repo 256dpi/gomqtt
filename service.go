@@ -78,7 +78,7 @@ type unsubscribe struct {
 type Online func(resumed bool)
 
 // Message is a function that is called when a message is received.
-type Message func(topic string, payload []byte)
+type Message func(msg *packet.Message)
 
 // Offline is a function that is called when the service is disconnected.
 type Offline func()
@@ -340,7 +340,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 	client.Logger = s.Logger
 	client.futureStore = s.futureStore
 
-	client.Callback = func(topic string, payload []byte, err error) {
+	client.Callback = func(msg *packet.Message, err error) {
 		if err != nil {
 			s.log("Error: %v", err)
 			close(fail)
@@ -349,7 +349,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 		// call the handler
 		if s.Message != nil {
-			s.Message(topic, payload)
+			s.Message(msg)
 		}
 	}
 

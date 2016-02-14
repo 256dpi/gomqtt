@@ -185,10 +185,9 @@ func TestClientConnectionDenied(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
+		assert.Nil(t, msg)
 		assert.Equal(t, ErrClientConnectionDenied, err)
-		assert.Empty(t, topic)
-		assert.Nil(t, payload)
 		close(wait)
 	}
 
@@ -272,9 +271,8 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
-		assert.Empty(t, topic)
-		assert.Nil(t, payload)
+	c.Callback = func(msg *packet.Message, err error) {
+		assert.Nil(t, msg)
 		assert.Equal(t, ErrClientMissingPong, err)
 		close(wait)
 	}
@@ -322,10 +320,10 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", topic)
-		assert.Equal(t, []byte("test"), payload)
+		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
 		close(wait)
 	}
 
@@ -397,10 +395,10 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", topic)
-		assert.Equal(t, []byte("test"), payload)
+		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
 		close(wait)
 	}
 
@@ -482,10 +480,10 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", topic)
-		assert.Equal(t, []byte("test"), payload)
+		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
 		close(wait)
 	}
 
@@ -767,10 +765,9 @@ func TestClientUnexpectedClose(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
+		assert.Nil(t, msg)
 		assert.Equal(t, ErrClientUnexpectedClose, err)
-		assert.Empty(t, topic)
-		assert.Nil(t, payload)
 		close(wait)
 	}
 
@@ -794,10 +791,9 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
+		assert.Nil(t, msg)
 		assert.Equal(t, ErrClientUnexpectedClose, err)
-		assert.Empty(t, topic)
-		assert.Nil(t, payload)
 		close(wait)
 	}
 
@@ -825,10 +821,9 @@ func TestClientFutureCancellation(t *testing.T) {
 	done, tp := fakeBroker(t, broker)
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
+		assert.Nil(t, msg)
 		assert.Equal(t, ErrClientUnexpectedClose, err)
-		assert.Empty(t, topic)
-		assert.Nil(t, payload)
 	}
 
 	connectFuture, err := c.Connect(tp.url(), nil)
@@ -874,7 +869,7 @@ func TestClientLogger(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(topic string, payload []byte, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
 		close(wait)
 	}
 
