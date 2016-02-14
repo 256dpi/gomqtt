@@ -40,6 +40,18 @@ func readLPBytes(buf []byte) ([]byte, int, error) {
 	return buf[2:total], total, nil
 }
 
+
+// read length prefixed string
+func readLPString(buf []byte) (string, int, error) {
+	bytes, n, err := readLPBytes(buf)
+
+	if bytes != nil {
+		return string(bytes), n, err
+	}
+
+	return "", n, err
+}
+
 // write length prefixed bytes
 func writeLPBytes(buf []byte, b []byte) (int, error) {
 	total, n := 0, len(b)
@@ -59,6 +71,11 @@ func writeLPBytes(buf []byte, b []byte) (int, error) {
 	total += n
 
 	return total, nil
+}
+
+// write length prefixed string
+func writeLPString(buf []byte, str string) (int, error) {
+	return writeLPBytes(buf, []byte(str))
 }
 
 // checks the QOS value to see if it's valid
