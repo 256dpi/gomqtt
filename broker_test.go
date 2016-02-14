@@ -32,7 +32,7 @@ func TestPublishSubscribeQOS0(t *testing.T) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 
 		received = true
@@ -71,7 +71,7 @@ func TestPublishSubscribeQOS1(t *testing.T) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 
 		received = true
@@ -110,7 +110,7 @@ func TestPublishSubscribeQOS2(t *testing.T) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 
 		received = true

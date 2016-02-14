@@ -56,7 +56,7 @@ func connection(id string) transport.Conn {
 	}
 
 	connect := packet.NewConnectPacket()
-	connect.ClientID = []byte("gomqtt-benchmark/" + id)
+	connect.ClientID = "gomqtt-benchmark/" + id
 
 	err = conn.Send(connect)
 	if err != nil {
@@ -85,10 +85,7 @@ func counter(id string) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1
 	subscribe.Subscriptions = []packet.Subscription{
-		{
-			Topic: []byte(id),
-			QOS:   0,
-		},
+		{ Topic: id, QOS: 0 },
 	}
 
 	err := conn.Send(subscribe)
@@ -119,7 +116,7 @@ func bomber(id string) {
 	conn := connection("bomber/" + id)
 
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte(id)
+	publish.Message.Topic = id
 	publish.Message.Payload = []byte("foo")
 
 	counter := 0
