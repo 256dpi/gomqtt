@@ -63,9 +63,9 @@ type publish struct {
 }
 
 type subscribe struct {
-	filters map[string]byte
-	future  *SubscribeFuture
-	requeue bool
+	subscriptions map[string]byte
+	future        *SubscribeFuture
+	requeue       bool
 }
 
 type unsubscribe struct {
@@ -208,7 +208,7 @@ func (s *Service) Subscribe(topic string, qos byte, requeue bool) *SubscribeFutu
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. If requeue is set to true the packet will be retried on an error.
-func (s *Service) SubscribeMultiple(filters map[string]byte, requeue bool) *SubscribeFuture {
+func (s *Service) SubscribeMultiple(subscriptions map[string]byte, requeue bool) *SubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -218,7 +218,7 @@ func (s *Service) SubscribeMultiple(filters map[string]byte, requeue bool) *Subs
 
 	// queue subscribe
 	s.subscribeQueue <- &subscribe{
-		filters: filters,
+		subscriptions: subscriptions,
 		future:  future,
 		requeue: requeue,
 	}
@@ -388,7 +388,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 	for {
 		select {
 		case sub := <-s.subscribeQueue:
-			future, err := client.SubscribeMultiple(sub.filters)
+			future, err := client.SubscribeMultiple(sub.subscriptions)
 			if err != nil {
 				s.log("Subscribe Error: %v", err)
 

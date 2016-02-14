@@ -279,7 +279,7 @@ func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. It will return a SubscribeFuture that gets completed once a
 // SubackPacket has been received.
-func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, error) {
+func (c *Client) SubscribeMultiple(subscriptions map[string]byte) (*SubscribeFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -290,11 +290,11 @@ func (c *Client) SubscribeMultiple(filters map[string]byte) (*SubscribeFuture, e
 
 	// allocate packet
 	subscribe := packet.NewSubscribePacket()
-	subscribe.Subscriptions = make([]packet.Subscription, 0, len(filters))
+	subscribe.Subscriptions = make([]packet.Subscription, 0, len(subscriptions))
 	subscribe.PacketID = c.Session.PacketID()
 
-	// append filters
-	for topic, qos := range filters {
+	// append subscriptions
+	for topic, qos := range subscriptions {
 		subscribe.Subscriptions = append(subscribe.Subscriptions, packet.Subscription{
 			Topic: []byte(topic),
 			QOS:   qos,
@@ -450,7 +450,7 @@ func (c *Client) processor() error {
 		case *packet.PubrelPacket:
 			err = c.processPubrel(_pkt.PacketID)
 		}
-		
+
 		// return eventual error
 		if err != nil {
 			return err // error has already been cleaned
