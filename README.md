@@ -96,5 +96,5 @@ if err != nil {
 }
 
 // Output:
-// CONNACK: SessionPresent=false ReturnCode="Connection accepted"
+// <ConnackPacket SessionPresent=false ReturnCode=0>
 ```
