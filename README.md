@@ -23,8 +23,8 @@ $ go get github.com/gomqtt/packet
 
 // Create new packet.
 pkt1 := NewConnectPacket()
-pkt1.Username = []byte("gomqtt")
-pkt1.Password = []byte("amazing!")
+pkt1.Username = "gomqtt"
+pkt1.Password = "amazing!"
 
 // Allocate buffer.
 buf := make([]byte, pkt1.Len())
@@ -59,8 +59,8 @@ if err != nil {
 switch pkt2.Type() {
 case CONNECT:
     c := pkt2.(*ConnectPacket)
-    fmt.Println(string(c.Username))
-    fmt.Println(string(c.Password))
+    fmt.Println(c.Username)
+    fmt.Println(c.Password)
 }
 
 // Output:

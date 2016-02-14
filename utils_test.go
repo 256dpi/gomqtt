@@ -44,7 +44,7 @@ func TestReadLPBytes(t *testing.T) {
 		b, n, err := readLPBytes(testBytes[total:])
 
 		assert.NoError(t, err)
-		assert.Equal(t, str, string(b))
+		assert.Equal(t, []byte(str), b)
 		assert.Equal(t, len(str)+2, n)
 
 		total += n

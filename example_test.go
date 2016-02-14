@@ -43,8 +43,8 @@ func Example() {
 	switch pkt2.Type() {
 	case CONNECT:
 		c := pkt2.(*ConnectPacket)
-		fmt.Println(string(c.Username))
-		fmt.Println(string(c.Password))
+		fmt.Println(c.Username)
+		fmt.Println(c.Password)
 	}
 
 	// Output:

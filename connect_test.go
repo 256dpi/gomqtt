@@ -66,11 +66,11 @@ func TestConnectPacketDecode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, uint16(10), pkt.KeepAlive)
-	assert.Equal(t, "surgemq", string(pkt.ClientID))
-	assert.Equal(t, "will", string(pkt.Will.Topic))
-	assert.Equal(t, "send me home", string(pkt.Will.Payload))
-	assert.Equal(t, "surgemq", string(pkt.Username))
-	assert.Equal(t, "verysecret", string(pkt.Password))
+	assert.Equal(t, "surgemq", pkt.ClientID)
+	assert.Equal(t, "will", pkt.Will.Topic)
+	assert.Equal(t, []byte("send me home"), pkt.Will.Payload)
+	assert.Equal(t, "surgemq", pkt.Username)
+	assert.Equal(t, "verysecret", pkt.Password)
 }
 
 func TestConnectPacketDecodeError1(t *testing.T) {
