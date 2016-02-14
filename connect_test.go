@@ -566,6 +566,19 @@ func TestConnectPacketEncodeError8(t *testing.T) {
 	assert.Equal(t, 19, n)
 }
 
+func TestConnectPacketEncodeError9(t *testing.T) {
+	pkt := NewConnectPacket()
+	pkt.Will = &Message{
+		// <- missing topic
+	}
+
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
+
+	assert.Error(t, err)
+	assert.Equal(t, 9, n)
+}
+
 func TestConnectEqualDecodeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),

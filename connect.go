@@ -264,6 +264,12 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	if cp.Will != nil {
 		connectFlags |= 0x4 // 00000100
 
+		// check will topic length
+		if len(cp.Will.Topic) == 0 {
+			return total, fmt.Errorf("Will Topic is empty")
+		}
+
+		// check will qos
 		if !validQOS(cp.Will.QOS) {
 			return total, fmt.Errorf("Invalid Will QOS level %d", cp.Will.QOS)
 		}
