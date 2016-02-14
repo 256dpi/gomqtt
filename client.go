@@ -166,15 +166,14 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 
 	// allocate packet
 	connect := packet.NewConnectPacket()
-	connect.ClientID = []byte(opts.ClientID)
+	connect.ClientID = opts.ClientID
 	connect.KeepAlive = uint16(keepAlive.Seconds())
 	connect.CleanSession = opts.CleanSession
 
 	// check for credentials
 	if urlParts.User != nil {
-		connect.Username = []byte(urlParts.User.Username())
-		p, _ := urlParts.User.Password()
-		connect.Password = []byte(p)
+		connect.Username = urlParts.User.Username()
+		connect.Password, _ = urlParts.User.Password()
 	}
 
 	// set will
@@ -204,9 +203,9 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 // Publish will send a PublishPacket containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
-func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*PublishFuture, error) {
+func (c *Client) Publish(topic string, payload []byte, qos uint8, retain bool) (*PublishFuture, error) {
 	msg := &packet.Message{
-		Topic: []byte(topic),
+		Topic: topic,
 		Payload: payload,
 		QOS: qos,
 		Retain: retain,
@@ -269,8 +268,8 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 // Subscribe will send a SubscribePacket containing one topic to subscribe. It
 // will return a SubscribeFuture that gets completed once a SubackPacket has
 // been received.
-func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
-	return c.SubscribeMultiple(map[string]byte{
+func (c *Client) Subscribe(topic string, qos uint8) (*SubscribeFuture, error) {
+	return c.SubscribeMultiple(map[string]uint8{
 		topic: qos,
 	})
 }
@@ -278,7 +277,7 @@ func (c *Client) Subscribe(topic string, qos byte) (*SubscribeFuture, error) {
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. It will return a SubscribeFuture that gets completed once a
 // SubackPacket has been received.
-func (c *Client) SubscribeMultiple(subscriptions map[string]byte) (*SubscribeFuture, error) {
+func (c *Client) SubscribeMultiple(subscriptions map[string]uint8) (*SubscribeFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -289,13 +288,12 @@ func (c *Client) SubscribeMultiple(subscriptions map[string]byte) (*SubscribeFut
 
 	// allocate packet
 	subscribe := packet.NewSubscribePacket()
-	subscribe.Subscriptions = make([]packet.Subscription, 0, len(subscriptions))
 	subscribe.PacketID = c.Session.PacketID()
 
 	// append subscriptions
 	for topic, qos := range subscriptions {
 		subscribe.Subscriptions = append(subscribe.Subscriptions, packet.Subscription{
-			Topic: []byte(topic),
+			Topic: topic,
 			QOS:   qos,
 		})
 	}
@@ -337,13 +335,8 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 
 	// allocate packet
 	unsubscribe := packet.NewUnsubscribePacket()
-	unsubscribe.Topics = make([][]byte, 0, len(topics))
+	unsubscribe.Topics = topics
 	unsubscribe.PacketID = c.Session.PacketID()
-
-	// append topics
-	for _, t := range topics {
-		unsubscribe.Topics = append(unsubscribe.Topics, []byte(t))
-	}
 
 	// create future
 	future := &UnsubscribeFuture{}

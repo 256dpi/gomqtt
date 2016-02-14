@@ -25,7 +25,7 @@ import (
 
 func TestClearSession(t *testing.T) {
 	connect := connectPacket()
-	connect.ClientID = []byte("test")
+	connect.ClientID = "test"
 
 	broker := flow.New().
 		Receive(connect).
@@ -43,16 +43,16 @@ func TestClearSession(t *testing.T) {
 func TestServicePublishSubscribe(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{
-		{Topic: []byte("test")},
+		{Topic: "test"},
 	}
 	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
-	suback.ReturnCodes = []byte{0}
+	suback.ReturnCodes = []uint8{0}
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte("test")
+	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
 	broker := flow.New().
@@ -83,9 +83,9 @@ func TestServicePublishSubscribe(t *testing.T) {
 	}
 
 	s.Message = func(msg *packet.Message) {
-		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, byte(0), msg.QOS)
+		assert.Equal(t, uint8(0), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(message)
 	}
@@ -142,7 +142,7 @@ func TestStartStopVariations(t *testing.T) {
 
 func TestServiceUnsubscribe(t *testing.T) {
 	unsubscribe := packet.NewUnsubscribePacket()
-	unsubscribe.Topics = [][]byte{[]byte("test")}
+	unsubscribe.Topics = []string{"test"}
 	unsubscribe.PacketID = 1
 
 	unsuback := packet.NewUnsubackPacket()
@@ -235,20 +235,20 @@ func TestServiceReconnect(t *testing.T) {
 
 func TestServiceFutureSurvival(t *testing.T) {
 	connect := connectPacket()
-	connect.ClientID = []byte("test")
+	connect.ClientID = "test"
 	connect.CleanSession = false
 
 	connack := connackPacket()
 	connack.SessionPresent = true
 
 	publish1 := packet.NewPublishPacket()
-	publish1.Message.Topic = []byte("test")
+	publish1.Message.Topic = "test"
 	publish1.Message.Payload = []byte("test")
 	publish1.Message.QOS = 1
 	publish1.PacketID = 1
 
 	publish2 := packet.NewPublishPacket()
-	publish2.Message.Topic = []byte("test")
+	publish2.Message.Topic = "test"
 	publish2.Message.Payload = []byte("test")
 	publish2.Message.QOS = 1
 	publish2.Dup = true

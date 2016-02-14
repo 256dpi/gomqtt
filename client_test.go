@@ -122,8 +122,8 @@ func TestClientConnectAfterConnect(t *testing.T) {
 
 func TestClientConnectWithCredentials(t *testing.T) {
 	connect := connectPacket()
-	connect.Username = []byte("test")
-	connect.Password = []byte("test")
+	connect.Username = "test"
+	connect.Password = "test"
 
 	broker := flow.New().
 		Receive(connect).
@@ -293,16 +293,16 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 func TestClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{
-		{Topic: []byte("test")},
+		{Topic: "test"},
 	}
 	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
-	suback.ReturnCodes = []byte{0}
+	suback.ReturnCodes = []uint8{0}
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte("test")
+	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
 	broker := flow.New().
@@ -322,9 +322,9 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	c := New()
 	c.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, byte(0), msg.QOS)
+		assert.Equal(t, uint8(0), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
 	}
@@ -338,7 +338,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	subscribeFuture, err := c.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []byte{0}, subscribeFuture.ReturnCodes)
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish("test", []byte("test"), 0, false)
 	assert.NoError(t, err)
@@ -363,16 +363,16 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 func TestClientPublishSubscribeQOS1(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{
-		{Topic: []byte("test"), QOS: 1},
+		{Topic: "test", QOS: 1},
 	}
 	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
-	suback.ReturnCodes = []byte{1}
+	suback.ReturnCodes = []uint8{1}
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte("test")
+	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
 	publish.PacketID = 2
@@ -399,9 +399,9 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	c := New()
 	c.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, byte(1), msg.QOS)
+		assert.Equal(t, uint8(1), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
 	}
@@ -415,7 +415,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	subscribeFuture, err := c.Subscribe("test", 1)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []byte{1}, subscribeFuture.ReturnCodes)
+	assert.Equal(t, []uint8{1}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
 	assert.NoError(t, err)
@@ -440,16 +440,16 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 func TestClientPublishSubscribeQOS2(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{
-		{Topic: []byte("test"), QOS: 2},
+		{Topic: "test", QOS: 2},
 	}
 	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
-	suback.ReturnCodes = []byte{2}
+	suback.ReturnCodes = []uint8{2}
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte("test")
+	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 2
 	publish.PacketID = 2
@@ -486,9 +486,9 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	c := New()
 	c.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, []byte("test"), msg.Topic)
+		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, byte(2), msg.QOS)
+		assert.Equal(t, uint8(2), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
 	}
@@ -502,7 +502,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	subscribeFuture, err := c.Subscribe("test", 2)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []byte{2}, subscribeFuture.ReturnCodes)
+	assert.Equal(t, []uint8{2}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish("test", []byte("test"), 2, false)
 	assert.NoError(t, err)
@@ -526,7 +526,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 
 func TestClientUnsubscribe(t *testing.T) {
 	unsubscribe := packet.NewUnsubscribePacket()
-	unsubscribe.Topics = [][]byte{[]byte("test")}
+	unsubscribe.Topics = []string{"test"}
 	unsubscribe.PacketID = 1
 
 	unsuback := packet.NewUnsubackPacket()
@@ -563,11 +563,11 @@ func TestClientUnsubscribe(t *testing.T) {
 
 func TestClientHardDisconnect(t *testing.T) {
 	connect := connectPacket()
-	connect.ClientID = []byte("test")
+	connect.ClientID = "test"
 	connect.CleanSession = false
 
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte("test")
+	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
 	publish.PacketID = 1
@@ -612,7 +612,7 @@ func TestClientHardDisconnect(t *testing.T) {
 
 func TestClientDisconnectWithTimeout(t *testing.T) {
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte("test")
+	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
 	publish.PacketID = 1
@@ -711,11 +711,11 @@ func TestClientInvalidPackets(t *testing.T) {
 
 func TestClientSessionResumption(t *testing.T) {
 	connect := connectPacket()
-	connect.ClientID = []byte("test")
+	connect.ClientID = "test"
 	connect.CleanSession = false
 
 	publish1 := packet.NewPublishPacket()
-	publish1.Message.Topic = []byte("test")
+	publish1.Message.Topic = "test"
 	publish1.Message.Payload = []byte("test")
 	publish1.Message.QOS = 1
 	publish1.PacketID = 1
@@ -813,7 +813,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 
 func TestClientFutureCancellation(t *testing.T) {
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte("test")
+	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
 	publish.PacketID = 1
@@ -848,16 +848,16 @@ func TestClientFutureCancellation(t *testing.T) {
 func TestClientLogger(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{
-		{Topic: []byte("test")},
+		{Topic: "test"},
 	}
 	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
-	suback.ReturnCodes = []byte{0}
+	suback.ReturnCodes = []uint8{0}
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Message.Topic = []byte("test")
+	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
 	broker := flow.New().

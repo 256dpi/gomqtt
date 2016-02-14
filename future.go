@@ -113,7 +113,7 @@ type PublishFuture struct {
 type SubscribeFuture struct {
 	abstractFuture
 
-	ReturnCodes []byte
+	ReturnCodes []uint8
 }
 
 func (f *SubscribeFuture) bind(future *SubscribeFuture) {

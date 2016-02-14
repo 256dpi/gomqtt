@@ -57,13 +57,13 @@ func ClearSession(url string, clientID string) error {
 type publish struct {
 	topic   string
 	payload []byte
-	qos     byte
+	qos     uint8
 	retain  bool
 	future  *PublishFuture
 }
 
 type subscribe struct {
-	subscriptions map[string]byte
+	subscriptions map[string]uint8
 	future        *SubscribeFuture
 	requeue       bool
 }
@@ -178,7 +178,7 @@ func (s *Service) Start(url string, opts *Options) {
 // Publish will send a PublishPacket containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed. Returns nil if the service is already stopped.
-func (s *Service) Publish(topic string, payload []byte, qos byte, retain bool) *PublishFuture {
+func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) *PublishFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -200,15 +200,15 @@ func (s *Service) Publish(topic string, payload []byte, qos byte, retain bool) *
 
 // Subscribe will send a SubscribePacket containing one topic to subscribe.
 // If requeue is set to true the packet will be retried on an error.
-func (s *Service) Subscribe(topic string, qos byte, requeue bool) *SubscribeFuture {
-	return s.SubscribeMultiple(map[string]byte{
+func (s *Service) Subscribe(topic string, qos uint8, requeue bool) *SubscribeFuture {
+	return s.SubscribeMultiple(map[string]uint8{
 		topic: qos,
 	}, requeue)
 }
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. If requeue is set to true the packet will be retried on an error.
-func (s *Service) SubscribeMultiple(subscriptions map[string]byte, requeue bool) *SubscribeFuture {
+func (s *Service) SubscribeMultiple(subscriptions map[string]uint8, requeue bool) *SubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
