@@ -43,12 +43,12 @@ func NewPublishPacket() *PublishPacket {
 }
 
 // Type returns the packets type.
-func (pp PublishPacket) Type() Type {
+func (pp *PublishPacket) Type() Type {
 	return PUBLISH
 }
 
 // String returns a string representation of the packet.
-func (pp PublishPacket) String() string {
+func (pp *PublishPacket) String() string {
 	return fmt.Sprintf("PUBLISH: PacketID=%d Message=%s Dup=%t",
 		pp.PacketID, pp.Message.String(), pp.Dup)
 }

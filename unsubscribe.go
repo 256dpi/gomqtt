@@ -36,12 +36,12 @@ func NewUnsubscribePacket() *UnsubscribePacket {
 }
 
 // Type returns the packets type.
-func (up UnsubscribePacket) Type() Type {
+func (up *UnsubscribePacket) Type() Type {
 	return UNSUBSCRIBE
 }
 
 // String returns a string representation of the packet.
-func (up UnsubscribePacket) String() string {
+func (up *UnsubscribePacket) String() string {
 	s := "UNSUBSCRIBE:"
 
 	for i, t := range up.Topics {

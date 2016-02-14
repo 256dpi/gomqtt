@@ -38,12 +38,12 @@ func NewSubackPacket() *SubackPacket {
 }
 
 // Type returns the packets type.
-func (sp SubackPacket) Type() Type {
+func (sp *SubackPacket) Type() Type {
 	return SUBACK
 }
 
 // String returns a string representation of the packet.
-func (sp SubackPacket) String() string {
+func (sp *SubackPacket) String() string {
 	return fmt.Sprintf("SUBACK: PacketID=%d ReturnCodes=%v", sp.PacketID, sp.ReturnCodes)
 }
 

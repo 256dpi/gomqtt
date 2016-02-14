@@ -52,7 +52,7 @@ func NewDisconnectPacket() *DisconnectPacket {
 }
 
 // Type returns the packets type.
-func (dp DisconnectPacket) Type() Type {
+func (dp *DisconnectPacket) Type() Type {
 	return DISCONNECT
 }
 
@@ -77,7 +77,7 @@ func (dp *DisconnectPacket) Encode(dst []byte) (int, error) {
 }
 
 // String returns a string representation of the packet.
-func (dp DisconnectPacket) String() string {
+func (dp *DisconnectPacket) String() string {
 	return DISCONNECT.String()
 }
 
@@ -92,7 +92,7 @@ func NewPingreqPacket() *PingreqPacket {
 }
 
 // Type returns the packets type.
-func (pp PingreqPacket) Type() Type {
+func (pp *PingreqPacket) Type() Type {
 	return PINGREQ
 }
 
@@ -117,7 +117,7 @@ func (pp *PingreqPacket) Encode(dst []byte) (int, error) {
 }
 
 // String returns a string representation of the packet.
-func (pp PingreqPacket) String() string {
+func (pp *PingreqPacket) String() string {
 	return PINGREQ.String()
 }
 
@@ -133,7 +133,7 @@ func NewPingrespPacket() *PingrespPacket {
 }
 
 // Type returns the packets type.
-func (pp PingrespPacket) Type() Type {
+func (pp *PingrespPacket) Type() Type {
 	return PINGRESP
 }
 
@@ -158,6 +158,6 @@ func (pp *PingrespPacket) Encode(dst []byte) (int, error) {
 }
 
 // String returns a string representation of the packet.
-func (pp PingrespPacket) String() string {
+func (pp *PingrespPacket) String() string {
 	return PINGRESP.String()
 }

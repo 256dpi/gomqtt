@@ -55,12 +55,12 @@ func NewConnectPacket() *ConnectPacket {
 }
 
 // Type returns the packets type.
-func (cp ConnectPacket) Type() Type {
+func (cp *ConnectPacket) Type() Type {
 	return CONNECT
 }
 
 // String returns a string representation of the packet.
-func (cp ConnectPacket) String() string {
+func (cp *ConnectPacket) String() string {
 	return fmt.Sprintf("CONNECT: ClientID=%q KeepAlive=%d Username=%q "+
 		"Password=%q CleanSession=%t Will=%s",
 		cp.ClientID,

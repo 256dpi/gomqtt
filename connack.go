@@ -76,12 +76,12 @@ func NewConnackPacket() *ConnackPacket {
 }
 
 // Type returns the packets type.
-func (cp ConnackPacket) Type() Type {
+func (cp *ConnackPacket) Type() Type {
 	return CONNACK
 }
 
 // String returns a string representation of the packet.
-func (cp ConnackPacket) String() string {
+func (cp *ConnackPacket) String() string {
 	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q",
 		cp.SessionPresent, cp.ReturnCode)
 }

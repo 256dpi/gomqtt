@@ -47,12 +47,12 @@ func NewSubscribePacket() *SubscribePacket {
 }
 
 // Type returns the packets type.
-func (sp SubscribePacket) Type() Type {
+func (sp *SubscribePacket) Type() Type {
 	return SUBSCRIBE
 }
 
 // String returns a string representation of the packet.
-func (sp SubscribePacket) String() string {
+func (sp *SubscribePacket) String() string {
 	s := fmt.Sprintf("SUBSCRIBE: PacketID=%d", sp.PacketID)
 
 	for i, t := range sp.Subscriptions {
