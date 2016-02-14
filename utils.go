@@ -21,7 +21,7 @@ import (
 
 const maxLPLength uint16 = 65535
 
-// Read length prefixed bytes.
+// read length prefixed bytes
 func readLPBytes(buf []byte) ([]byte, int, error) {
 	if len(buf) < 2 {
 		return nil, 0, fmt.Errorf("Insufficient buffer size. Expecting 2, got %d", len(buf))
@@ -40,7 +40,7 @@ func readLPBytes(buf []byte) ([]byte, int, error) {
 	return buf[2:total], total, nil
 }
 
-// Write length prefixed bytes.
+// write length prefixed bytes
 func writeLPBytes(buf []byte, b []byte) (int, error) {
 	total, n := 0, len(b)
 
@@ -61,7 +61,7 @@ func writeLPBytes(buf []byte, b []byte) (int, error) {
 	return total, nil
 }
 
-// Checks the QOS value to see if it's valid.
+// checks the QOS value to see if it's valid
 func validQOS(qos byte) bool {
 	return qos == QOSAtMostOnce || qos == QOSAtLeastOnce || qos == QOSExactlyOnce
 }
