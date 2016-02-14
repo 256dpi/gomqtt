@@ -29,7 +29,7 @@ type Conn interface {
 	// underlying connection.
 	//
 	// Note: Only one goroutine can Send at the same time.
-	Send(packet.Packet) error
+	Send(pkt packet.Packet) error
 
 	// Receive will read from the underlying connection and return a fully read
 	// packet. It will return an Error if there was an error while decoding or
