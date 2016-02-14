@@ -85,6 +85,8 @@ func TestServicePublishSubscribe(t *testing.T) {
 	s.Message = func(msg *packet.Message) {
 		assert.Equal(t, []byte("test"), msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, byte(0), msg.QOS)
+		assert.False(t, msg.Retain)
 		close(message)
 	}
 

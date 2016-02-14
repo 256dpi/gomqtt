@@ -324,6 +324,8 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, []byte("test"), msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, byte(0), msg.QOS)
+		assert.False(t, msg.Retain)
 		close(wait)
 	}
 
@@ -399,6 +401,8 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, []byte("test"), msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, byte(1), msg.QOS)
+		assert.False(t, msg.Retain)
 		close(wait)
 	}
 
@@ -484,6 +488,8 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, []byte("test"), msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, byte(2), msg.QOS)
+		assert.False(t, msg.Retain)
 		close(wait)
 	}
 
