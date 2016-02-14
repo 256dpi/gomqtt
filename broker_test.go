@@ -22,7 +22,7 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-func TestPublishSubscribeQOS0(t *testing.T) {
+func abstractPublishSubscribeTest(t *testing.T, sub, pub, exp uint8) {
 	tp, done := startBroker(t, New(), 1)
 
 	client := client.New()
@@ -34,6 +34,8 @@ func TestPublishSubscribeQOS0(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(exp), msg.QOS)
+		assert.False(t, msg.Retain)
 
 		received = true
 		close(wait)
@@ -43,11 +45,11 @@ func TestPublishSubscribeQOS0(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 
-	subscribeFuture, err := client.Subscribe("test", 0)
+	subscribeFuture, err := client.Subscribe("test", sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 
-	publishFuture, err := client.Publish("test", []byte("test"), 0, false)
+	publishFuture, err := client.Publish("test", []byte("test"), pub, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -59,84 +61,18 @@ func TestPublishSubscribeQOS0(t *testing.T) {
 	<-done
 
 	assert.True(t, received)
+}
+
+func TestPublishSubscribeQOS0(t *testing.T) {
+	abstractPublishSubscribeTest(t, 0, 0, 0)
 }
 
 func TestPublishSubscribeQOS1(t *testing.T) {
-	tp, done := startBroker(t, New(), 1)
-
-	client := client.New()
-
-	received := false
-	wait := make(chan struct{})
-
-	client.Callback = func(msg *packet.Message, err error) {
-		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
-		assert.Equal(t, []byte("test"), msg.Payload)
-
-		received = true
-		close(wait)
-	}
-
-	connectFuture, err := client.Connect(tp.url(), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-
-	subscribeFuture, err := client.Subscribe("test", 1)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-
-	publishFuture, err := client.Publish("test", []byte("test"), 1, false)
-	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
-
-	<-wait
-
-	err = client.Disconnect()
-	assert.NoError(t, err)
-
-	<-done
-
-	assert.True(t, received)
+	abstractPublishSubscribeTest(t, 1, 1, 1)
 }
 
 func TestPublishSubscribeQOS2(t *testing.T) {
-	tp, done := startBroker(t, New(), 1)
-
-	client := client.New()
-
-	received := false
-	wait := make(chan struct{})
-
-	client.Callback = func(msg *packet.Message, err error) {
-		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
-		assert.Equal(t, []byte("test"), msg.Payload)
-
-		received = true
-		close(wait)
-	}
-
-	connectFuture, err := client.Connect(tp.url(), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-
-	subscribeFuture, err := client.Subscribe("test", 2)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-
-	publishFuture, err := client.Publish("test", []byte("test"), 2, false)
-	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
-
-	<-wait
-
-	err = client.Disconnect()
-	assert.NoError(t, err)
-
-	<-done
-
-	assert.True(t, received)
+	abstractPublishSubscribeTest(t, 2, 2, 2)
 }
 
 // -- authentication
