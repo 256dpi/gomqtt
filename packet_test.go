@@ -33,20 +33,20 @@ func TestFixedHeaderFlags(t *testing.T) {
 	}
 
 	details := map[Type]detail{
-		CONNECT:     {"CONNECT", 0},
-		CONNACK:     {"CONNACK", 0},
-		PUBLISH:     {"PUBLISH", 0},
-		PUBACK:      {"PUBACK", 0},
-		PUBREC:      {"PUBREC", 0},
-		PUBREL:      {"PUBREL", 2},
-		PUBCOMP:     {"PUBCOMP", 0},
-		SUBSCRIBE:   {"SUBSCRIBE", 2},
-		SUBACK:      {"SUBACK", 0},
-		UNSUBSCRIBE: {"UNSUBSCRIBE", 2},
-		UNSUBACK:    {"UNSUBACK", 0},
-		PINGREQ:     {"PINGREQ", 0},
-		PINGRESP:    {"PINGRESP", 0},
-		DISCONNECT:  {"DISCONNECT", 0},
+		CONNECT:     {"Connect", 0},
+		CONNACK:     {"Connack", 0},
+		PUBLISH:     {"Publish", 0},
+		PUBACK:      {"Puback", 0},
+		PUBREC:      {"Pubrec", 0},
+		PUBREL:      {"Pubrel", 2},
+		PUBCOMP:     {"Pubcomp", 0},
+		SUBSCRIBE:   {"Subscribe", 2},
+		SUBACK:      {"Suback", 0},
+		UNSUBSCRIBE: {"Unsubscribe", 2},
+		UNSUBACK:    {"Unsuback", 0},
+		PINGREQ:     {"Pingreq", 0},
+		PINGRESP:    {"Pingresp", 0},
+		DISCONNECT:  {"Disconnect", 0},
 	}
 
 	for m, d := range details {

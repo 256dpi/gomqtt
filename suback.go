@@ -44,7 +44,7 @@ func (sp *SubackPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (sp *SubackPacket) String() string {
-	return fmt.Sprintf("SUBACK: PacketID=%d ReturnCodes=%v", sp.PacketID, sp.ReturnCodes)
+	return fmt.Sprintf("<SubackPacket PacketID=%d ReturnCodes=%v>", sp.PacketID, sp.ReturnCodes)
 }
 
 // Len returns the byte length of the encoded packet.

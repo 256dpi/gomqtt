@@ -23,13 +23,13 @@ import (
 func TestConnectInterface(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
-		Topic: []byte("w"),
+		Topic:   []byte("w"),
 		Payload: []byte("m"),
-		QOS: QOSAtLeastOnce,
+		QOS:     QOSAtLeastOnce,
 	}
 
 	assert.Equal(t, pkt.Type(), CONNECT)
-	assert.NotNil(t, pkt.String())
+	assert.Equal(t, "<ConnectPacket ClientID=\"\" KeepAlive=0 Username=\"\" Password=\"\" CleanSession=true Will=<Message Topic=\"w\" QOS=1 Retain=false Payload=[109]>>", pkt.String())
 }
 
 func TestConnectPacketDecode(t *testing.T) {
@@ -424,10 +424,9 @@ func TestConnectPacketEncode1(t *testing.T) {
 
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
-		QOS: QOSAtLeastOnce,
-		Topic: []byte("will"),
+		QOS:     QOSAtLeastOnce,
+		Topic:   []byte("will"),
 		Payload: []byte("send me home"),
-
 	}
 	pkt.CleanSession = false
 	pkt.ClientID = []byte("surgemq")
@@ -484,7 +483,7 @@ func TestConnectPacketEncodeError2(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
 		Topic: []byte("t"),
-		QOS: 3, // <- wrong qos
+		QOS:   3, // <- wrong qos
 	}
 
 	dst := make([]byte, pkt.Len())
@@ -521,7 +520,7 @@ func TestConnectPacketEncodeError4(t *testing.T) {
 func TestConnectPacketEncodeError5(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
-		Topic: []byte("t"),
+		Topic:   []byte("t"),
 		Payload: make([]byte, 65536), // <- too big
 	}
 
@@ -569,7 +568,7 @@ func TestConnectPacketEncodeError8(t *testing.T) {
 func TestConnectPacketEncodeError9(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
-		// <- missing topic
+	// <- missing topic
 	}
 
 	dst := make([]byte, pkt.Len())
@@ -629,9 +628,9 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 func BenchmarkConnectEncode(b *testing.B) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
-		Topic: []byte("w"),
+		Topic:   []byte("w"),
 		Payload: []byte("m"),
-		QOS: QOSAtLeastOnce,
+		QOS:     QOSAtLeastOnce,
 	}
 	pkt.CleanSession = true
 	pkt.ClientID = []byte("i")

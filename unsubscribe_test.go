@@ -25,7 +25,7 @@ func TestUnsubscribeInterface(t *testing.T) {
 	pkt.Topics = [][]byte{[]byte("hello")}
 
 	assert.Equal(t, pkt.Type(), UNSUBSCRIBE)
-	assert.NotNil(t, pkt.String())
+	assert.Equal(t, "<UnsubscribePacket Topics=[\"hello\"]>", pkt.String())
 }
 
 func TestUnsubscribePacketDecode(t *testing.T) {

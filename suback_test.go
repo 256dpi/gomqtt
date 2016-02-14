@@ -22,9 +22,10 @@ import (
 
 func TestSubackInterface(t *testing.T) {
 	pkt := NewSubackPacket()
+	pkt.ReturnCodes = []byte{0, 1}
 
 	assert.Equal(t, pkt.Type(), SUBACK)
-	assert.NotNil(t, pkt.String())
+	assert.Equal(t, "<SubackPacket PacketID=0 ReturnCodes=[0 1]>", pkt.String())
 }
 
 func TestSubackPacketDecode(t *testing.T) {

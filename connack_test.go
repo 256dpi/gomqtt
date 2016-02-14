@@ -21,6 +21,7 @@ import (
 )
 
 func TestConnackReturnCodes(t *testing.T) {
+	assert.Equal(t, ConnectionAccepted.Error(), ConnackCode(0).Error())
 	assert.Equal(t, ErrInvalidProtocolVersion.Error(), ConnackCode(1).Error())
 	assert.Equal(t, ErrIdentifierRejected.Error(), ConnackCode(2).Error())
 	assert.Equal(t, ErrServerUnavailable.Error(), ConnackCode(3).Error())
@@ -33,7 +34,7 @@ func TestConnackInterface(t *testing.T) {
 	pkt := NewConnackPacket()
 
 	assert.Equal(t, pkt.Type(), CONNACK)
-	assert.NotNil(t, pkt.String())
+	assert.Equal(t, "<ConnackPacket SessionPresent=false ReturnCode=0>", pkt.String())
 }
 
 func TestConnackPacketDecode(t *testing.T) {

@@ -49,7 +49,7 @@ func (pp *PublishPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (pp *PublishPacket) String() string {
-	return fmt.Sprintf("PUBLISH: PacketID=%d Message=%s Dup=%t",
+	return fmt.Sprintf("<PublishPacket PacketID=%d Message=%s Dup=%t>",
 		pp.PacketID, pp.Message.String(), pp.Dup)
 }
 

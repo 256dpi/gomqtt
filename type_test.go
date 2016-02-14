@@ -40,7 +40,7 @@ func TestTypes(t *testing.T) {
 }
 
 func TestTypeString(t *testing.T) {
-	assert.Equal(t, "UNKNOWN", Type(99).String())
+	assert.Equal(t, "Unknown", Type(99).String())
 }
 
 func TestTypeValid(t *testing.T) {

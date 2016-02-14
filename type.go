@@ -42,36 +42,36 @@ const (
 func (t Type) String() string {
 	switch t {
 	case CONNECT:
-		return "CONNECT"
+		return "Connect"
 	case CONNACK:
-		return "CONNACK"
+		return "Connack"
 	case PUBLISH:
-		return "PUBLISH"
+		return "Publish"
 	case PUBACK:
-		return "PUBACK"
+		return "Puback"
 	case PUBREC:
-		return "PUBREC"
+		return "Pubrec"
 	case PUBREL:
-		return "PUBREL"
+		return "Pubrel"
 	case PUBCOMP:
-		return "PUBCOMP"
+		return "Pubcomp"
 	case SUBSCRIBE:
-		return "SUBSCRIBE"
+		return "Subscribe"
 	case SUBACK:
-		return "SUBACK"
+		return "Suback"
 	case UNSUBSCRIBE:
-		return "UNSUBSCRIBE"
+		return "Unsubscribe"
 	case UNSUBACK:
-		return "UNSUBACK"
+		return "Unsuback"
 	case PINGREQ:
-		return "PINGREQ"
+		return "Pingreq"
 	case PINGRESP:
-		return "PINGRESP"
+		return "Pingresp"
 	case DISCONNECT:
-		return "DISCONNECT"
+		return "Disconnect"
 	}
 
-	return "UNKNOWN"
+	return "Unknown"
 }
 
 // DefaultFlags returns the default flag values for the packet type, as defined

@@ -67,8 +67,8 @@ func (cp *ConnectPacket) String() string {
 		will = cp.Will.String()
 	}
 
-	return fmt.Sprintf("CONNECT: ClientID=%q KeepAlive=%d Username=%q "+
-		"Password=%q CleanSession=%t Will=%s",
+	return fmt.Sprintf("<ConnectPacket ClientID=%q KeepAlive=%d Username=%q "+
+		"Password=%q CleanSession=%t Will=%s>",
 		cp.ClientID,
 		cp.KeepAlive,
 		cp.Username,
@@ -158,7 +158,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// create will if present
 	if willFlag {
-		cp.Will = &Message{ QOS: willQOS, Retain: willRetain }
+		cp.Will = &Message{QOS: willQOS, Retain: willRetain}
 	}
 
 	// check auth flags

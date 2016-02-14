@@ -78,7 +78,7 @@ func (dp *DisconnectPacket) Encode(dst []byte) (int, error) {
 
 // String returns a string representation of the packet.
 func (dp *DisconnectPacket) String() string {
-	return DISCONNECT.String()
+	return "<DisconnectPacket>"
 }
 
 // The PingreqPacket is sent from a client to the server.
@@ -118,7 +118,7 @@ func (pp *PingreqPacket) Encode(dst []byte) (int, error) {
 
 // String returns a string representation of the packet.
 func (pp *PingreqPacket) String() string {
-	return PINGREQ.String()
+	return "<PingreqPacket>"
 }
 
 // A PingrespPacket is sent by the server to the client in response to a
@@ -159,5 +159,5 @@ func (pp *PingrespPacket) Encode(dst []byte) (int, error) {
 
 // String returns a string representation of the packet.
 func (pp *PingrespPacket) String() string {
-	return PINGRESP.String()
+	return "<PingrespPacket>"
 }

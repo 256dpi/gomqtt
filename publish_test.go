@@ -24,7 +24,7 @@ func TestPublishInterface(t *testing.T) {
 	pkt := NewPublishPacket()
 
 	assert.Equal(t, pkt.Type(), PUBLISH)
-	assert.NotNil(t, pkt.String())
+	assert.Equal(t, "<PublishPacket PacketID=0 Message=<Message Topic=\"\" QOS=0 Retain=false Payload=[]> Dup=false>", pkt.String())
 }
 
 func TestPublishPacketDecode1(t *testing.T) {

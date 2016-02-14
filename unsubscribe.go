@@ -17,6 +17,7 @@ package packet
 import (
 	"encoding/binary"
 	"fmt"
+	"strings"
 )
 
 // An UnsubscribePacket is sent by the client to the server.
@@ -42,13 +43,14 @@ func (up *UnsubscribePacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (up *UnsubscribePacket) String() string {
-	s := "UNSUBSCRIBE:"
+	var topics []string
 
-	for i, t := range up.Topics {
-		s = fmt.Sprintf("%s Topic[%d]=%s", s, i, string(t))
+	for _, t := range up.Topics {
+		topics = append(topics, fmt.Sprintf("%q", t))
 	}
 
-	return s
+	return fmt.Sprintf("<UnsubscribePacket Topics=[%s]>",
+		strings.Join(topics, ", "))
 }
 
 // Len returns the byte length of the encoded packet.

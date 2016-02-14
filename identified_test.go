@@ -15,6 +15,7 @@
 package packet
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -173,7 +174,7 @@ func BenchmarkIdentifiedPacketDecode(b *testing.B) {
 }
 
 func testIdentifiedPacketImplementation(t *testing.T, pkt Packet) {
-	assert.NotEmpty(t, pkt.String())
+	assert.Equal(t, fmt.Sprintf("<%sPacket PacketID=1>", pkt.Type().String()), pkt.String())
 
 	buf := make([]byte, pkt.Len())
 	n, err := pkt.Encode(buf)

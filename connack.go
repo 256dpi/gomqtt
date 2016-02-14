@@ -82,7 +82,7 @@ func (cp *ConnackPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (cp *ConnackPacket) String() string {
-	return fmt.Sprintf("CONNACK: SessionPresent=%t ReturnCode=%q",
+	return fmt.Sprintf("<ConnackPacket SessionPresent=%t ReturnCode=%d>",
 		cp.SessionPresent, cp.ReturnCode)
 }
 

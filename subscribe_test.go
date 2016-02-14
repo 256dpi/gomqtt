@@ -27,7 +27,7 @@ func TestSubscribeInterface(t *testing.T) {
 	}
 
 	assert.Equal(t, pkt.Type(), SUBSCRIBE)
-	assert.NotNil(t, pkt.String())
+	assert.Equal(t, "<SubscribePacket PacketID=0 Subscriptions=[\"hello\"/0]>", pkt.String())
 }
 
 func TestSubscribePacketDecode(t *testing.T) {

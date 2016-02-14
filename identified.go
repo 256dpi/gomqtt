@@ -117,7 +117,7 @@ func (pp *PubackPacket) Encode(dst []byte) (int, error) {
 
 // String returns a string representation of the packet.
 func (pp *PubackPacket) String() string {
-	return fmt.Sprintf("PUBACK: PacketID=%d", pp.PacketID)
+	return fmt.Sprintf("<PubackPacket PacketID=%d>", pp.PacketID)
 }
 
 // A PubcompPacket is the response to a PubrelPacket. It is the fourth and
@@ -163,7 +163,7 @@ func (pp *PubcompPacket) Encode(dst []byte) (int, error) {
 
 // String returns a string representation of the packet.
 func (pp *PubcompPacket) String() string {
-	return fmt.Sprintf("PUBCOMP: PacketID=%d", pp.PacketID)
+	return fmt.Sprintf("<PubcompPacket PacketID=%d>", pp.PacketID)
 }
 
 // A PubrecPacket is the response to a PublishPacket with QOS 2. It is the
@@ -209,7 +209,7 @@ func (pp *PubrecPacket) Encode(dst []byte) (int, error) {
 
 // String returns a string representation of the packet.
 func (pp *PubrecPacket) String() string {
-	return fmt.Sprintf("PUBREC: PacketID=%d", pp.PacketID)
+	return fmt.Sprintf("<PubrecPacket PacketID=%d>", pp.PacketID)
 }
 
 // A PubrelPacket is the response to a PubrecPacket. It is the third packet of
@@ -255,7 +255,7 @@ func (pp *PubrelPacket) Encode(dst []byte) (int, error) {
 
 // String returns a string representation of the packet.
 func (pp *PubrelPacket) String() string {
-	return fmt.Sprintf("PUBREL: PacketID=%d", pp.PacketID)
+	return fmt.Sprintf("<PubrelPacket PacketID=%d>", pp.PacketID)
 }
 
 // An UnsubackPacket is sent by the server to the client to confirm receipt of
@@ -301,5 +301,5 @@ func (up *UnsubackPacket) Encode(dst []byte) (int, error) {
 
 // String returns a string representation of the packet.
 func (up *UnsubackPacket) String() string {
-	return fmt.Sprintf("UNSUBACK: PacketID=%d", up.PacketID)
+	return fmt.Sprintf("<UnsubackPacket PacketID=%d>", up.PacketID)
 }

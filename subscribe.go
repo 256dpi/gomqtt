@@ -17,6 +17,7 @@ package packet
 import (
 	"encoding/binary"
 	"fmt"
+	"strings"
 )
 
 // A Subscription is a single subscription in a SubscribePacket.
@@ -26,6 +27,10 @@ type Subscription struct {
 
 	// The requested QOS level.
 	QOS byte
+}
+
+func (s *Subscription) String() string {
+	return fmt.Sprintf("%q/%d", s.Topic, s.QOS)
 }
 
 // A SubscribePacket is sent from the client to the server to create one or
@@ -53,13 +58,14 @@ func (sp *SubscribePacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (sp *SubscribePacket) String() string {
-	s := fmt.Sprintf("SUBSCRIBE: PacketID=%d", sp.PacketID)
+	var subscriptions []string
 
-	for i, t := range sp.Subscriptions {
-		s = fmt.Sprintf("%s Topic[%d]=%q/%d", s, i, string(t.Topic), t.QOS)
+	for _, t := range sp.Subscriptions {
+		subscriptions = append(subscriptions, t.String())
 	}
 
-	return s
+	return fmt.Sprintf("<SubscribePacket PacketID=%d Subscriptions=[%s]>",
+		sp.PacketID, strings.Join(subscriptions, ", "))
 }
 
 // Len returns the byte length of the encoded packet.
