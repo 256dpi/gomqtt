@@ -430,27 +430,27 @@ func (c *Client) processor() error {
 		c.log("Received: %s", pkt.String())
 
 		// call handlers for packet types and ignore other packets
-		switch pkt.Type() {
-		case packet.CONNACK:
-			err = c.processConnack(pkt.(*packet.ConnackPacket))
-		case packet.SUBACK:
-			err = c.processSuback(pkt.(*packet.SubackPacket))
-		case packet.UNSUBACK:
-			err = c.processUnsuback(pkt.(*packet.UnsubackPacket))
-		case packet.PINGRESP:
+		switch _pkt := pkt.(type) {
+		case *packet.ConnackPacket:
+			err = c.processConnack(_pkt)
+		case *packet.SubackPacket:
+			err = c.processSuback(_pkt)
+		case *packet.UnsubackPacket:
+			err = c.processUnsuback(_pkt)
+		case *packet.PingrespPacket:
 			c.tracker.pong()
-		case packet.PUBLISH:
-			err = c.processPublish(pkt.(*packet.PublishPacket))
-		case packet.PUBACK:
-			err = c.processPubackAndPubcomp(pkt.(*packet.PubackPacket).PacketID)
-		case packet.PUBCOMP:
-			err = c.processPubackAndPubcomp(pkt.(*packet.PubcompPacket).PacketID)
-		case packet.PUBREC:
-			err = c.processPubrec(pkt.(*packet.PubrecPacket).PacketID)
-		case packet.PUBREL:
-			err = c.processPubrel(pkt.(*packet.PubrelPacket).PacketID)
+		case *packet.PublishPacket:
+			err = c.processPublish(_pkt)
+		case *packet.PubackPacket:
+			err = c.processPubackAndPubcomp(_pkt.PacketID)
+		case *packet.PubcompPacket:
+			err = c.processPubackAndPubcomp(_pkt.PacketID)
+		case *packet.PubrecPacket:
+			err = c.processPubrec(_pkt.PacketID)
+		case *packet.PubrelPacket:
+			err = c.processPubrel(_pkt.PacketID)
 		}
-
+		
 		// return eventual error
 		if err != nil {
 			return err // error has already been cleaned
