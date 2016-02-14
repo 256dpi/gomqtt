@@ -178,10 +178,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// set will
-	connect.WillTopic = []byte(opts.WillTopic)
-	connect.WillPayload = opts.WillPayload
-	connect.WillQOS = opts.WillQos
-	connect.WillRetain = opts.WillRetained
+	connect.Will = opts.Will
 
 	// create new ConnackFuture
 	c.connectFuture = &ConnectFuture{}
@@ -218,10 +215,10 @@ func (c *Client) Publish(topic string, payload []byte, qos byte, retain bool) (*
 
 	// allocate packet
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte(topic)
-	publish.Payload = payload
-	publish.QOS = qos
-	publish.Retain = retain
+	publish.Message.Topic = []byte(topic)
+	publish.Message.Payload = payload
+	publish.Message.QOS = qos
+	publish.Message.Retain = retain
 	publish.Dup = false
 
 	// set packet id
@@ -541,7 +538,7 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 
 // handle an incoming PublishPacket
 func (c *Client) processPublish(publish *packet.PublishPacket) error {
-	if publish.QOS == 1 {
+	if publish.Message.QOS == 1 {
 		puback := packet.NewPubackPacket()
 		puback.PacketID = publish.PacketID
 
@@ -552,7 +549,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 	}
 
-	if publish.QOS == 2 {
+	if publish.Message.QOS == 2 {
 		// store packet
 		err := c.Session.SavePacket(session.Incoming, publish)
 		if err != nil {
@@ -569,7 +566,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 	}
 
-	if publish.QOS <= 1 {
+	if publish.Message.QOS <= 1 {
 		// call callback
 		c.forward(publish)
 	}
@@ -704,7 +701,7 @@ func (c *Client) send(pkt packet.Packet) error {
 // calls the callback with a new message
 func (c *Client) forward(packet *packet.PublishPacket) {
 	if c.Callback != nil {
-		c.Callback(string(packet.Topic), packet.Payload, nil)
+		c.Callback(string(packet.Message.Topic), packet.Message.Payload, nil)
 	}
 }
 

@@ -304,8 +304,8 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte("test")
-	publish.Payload = []byte("test")
+	publish.Message.Topic = []byte("test")
+	publish.Message.Payload = []byte("test")
 
 	broker := flow.New().
 		Receive(connectPacket()).
@@ -372,9 +372,9 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte("test")
-	publish.Payload = []byte("test")
-	publish.QOS = 1
+	publish.Message.Topic = []byte("test")
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 1
 	publish.PacketID = 2
 
 	puback := packet.NewPubackPacket()
@@ -447,9 +447,9 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte("test")
-	publish.Payload = []byte("test")
-	publish.QOS = 2
+	publish.Message.Topic = []byte("test")
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 2
 	publish.PacketID = 2
 
 	pubrec := packet.NewPubrecPacket()
@@ -563,9 +563,9 @@ func TestClientHardDisconnect(t *testing.T) {
 	connect.CleanSession = false
 
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte("test")
-	publish.Payload = []byte("test")
-	publish.QOS = 1
+	publish.Message.Topic = []byte("test")
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 1
 	publish.PacketID = 1
 
 	broker := flow.New().
@@ -608,9 +608,9 @@ func TestClientHardDisconnect(t *testing.T) {
 
 func TestClientDisconnectWithTimeout(t *testing.T) {
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte("test")
-	publish.Payload = []byte("test")
-	publish.QOS = 1
+	publish.Message.Topic = []byte("test")
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 1
 	publish.PacketID = 1
 
 	puback := packet.NewPubackPacket()
@@ -711,9 +711,9 @@ func TestClientSessionResumption(t *testing.T) {
 	connect.CleanSession = false
 
 	publish1 := packet.NewPublishPacket()
-	publish1.Topic = []byte("test")
-	publish1.Payload = []byte("test")
-	publish1.QOS = 1
+	publish1.Message.Topic = []byte("test")
+	publish1.Message.Payload = []byte("test")
+	publish1.Message.QOS = 1
 	publish1.PacketID = 1
 
 	puback1 := packet.NewPubackPacket()
@@ -811,9 +811,9 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 
 func TestClientFutureCancellation(t *testing.T) {
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte("test")
-	publish.Payload = []byte("test")
-	publish.QOS = 1
+	publish.Message.Topic = []byte("test")
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 1
 	publish.PacketID = 1
 
 	broker := flow.New().
@@ -856,8 +856,8 @@ func TestClientLogger(t *testing.T) {
 	suback.PacketID = 1
 
 	publish := packet.NewPublishPacket()
-	publish.Topic = []byte("test")
-	publish.Payload = []byte("test")
+	publish.Message.Topic = []byte("test")
+	publish.Message.Payload = []byte("test")
 
 	broker := flow.New().
 		Receive(connectPacket()).

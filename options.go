@@ -14,17 +14,14 @@
 
 package client
 
+import "github.com/gomqtt/packet"
+
 // Options are passed to a Client on Connect.
 type Options struct {
 	ClientID     string
 	CleanSession bool
 	KeepAlive    string
-
-	WillEnabled  bool
-	WillTopic    string
-	WillPayload  []byte
-	WillQos      byte
-	WillRetained bool
+	Will         *packet.Message
 }
 
 // NewOptions will initialize and return new Options.
