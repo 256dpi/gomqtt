@@ -23,16 +23,16 @@ import (
 )
 
 type MemoryBackend struct {
-	tree     *topic.Tree
+	queue    *topic.Tree
 	retained *topic.Tree
 	sessions map[string]*session.MemorySession
 
-	mutex sync.Mutex
+	mutex    sync.Mutex
 }
 
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		tree:     topic.NewTree(),
+		queue:    topic.NewTree(),
 		retained: topic.NewTree(),
 		sessions: make(map[string]*session.MemorySession),
 	}
@@ -54,25 +54,25 @@ func (m *MemoryBackend) GetSession(client *Client, id string) (session.Session, 
 }
 
 func (m *MemoryBackend) Subscribe(client *Client, filter string) error {
-	m.tree.Add(filter, client)
+	m.queue.Add(filter, client)
 
 	return nil
 }
 
 func (m *MemoryBackend) Unsubscribe(client *Client, filter string) error {
-	m.tree.Remove(filter, client)
+	m.queue.Remove(filter, client)
 
 	return nil
 }
 
 func (m *MemoryBackend) Remove(client *Client) error {
-	m.tree.Clear(client)
+	m.queue.Clear(client)
 
 	return nil
 }
 
 func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
-	for _, v := range m.tree.Match(msg.Topic) {
+	for _, v := range m.queue.Match(msg.Topic) {
 		// we do not care about errors here as it is not the publishing clients
 		// responsibility
 
