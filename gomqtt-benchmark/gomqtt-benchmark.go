@@ -37,10 +37,10 @@ var received = make(chan int)
 func main() {
 	flag.Parse()
 
-	fmt.Println("start benchmark of '" + *url + "' with " + strconv.Itoa(*workers) + " workers")
+	fmt.Printf("Start benchmark for %s using %d Workers\n", *url, *workers)
 
 	for i := 0; i < *workers; i++ {
-		id := "id-" + strconv.Itoa(i)
+		id := strconv.Itoa(i)
 
 		go counter(id)
 		go bomber(id)
@@ -70,13 +70,13 @@ func connection(id string) transport.Conn {
 
 	if connack, ok := pkt.(*packet.ConnackPacket); ok {
 		if connack.ReturnCode == packet.ConnectionAccepted {
-			fmt.Println(id + ": connected")
+			fmt.Printf("Connected: %s\n", id)
 
 			return conn
 		}
 	}
 
-	panic(id + ": connection failed")
+	panic("connection failed")
 }
 
 func counter(id string) {
@@ -92,8 +92,6 @@ func counter(id string) {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(id + ": subscribed to '" + id + "'")
 
 	counter := 0
 
@@ -158,9 +156,8 @@ func reporter() {
 		sentPerSecond := atomic.LoadInt32(&sentCounter) / update
 		receivedPerSecond := atomic.LoadInt32(&receivedCounter) / update
 
-		fmt.Printf("sent: %d msg/s, ", sentPerSecond)
-		fmt.Printf("received: %d msg/s, ", receivedPerSecond)
-		fmt.Printf("diff: %d\n", sentPerSecond-receivedPerSecond)
+		fmt.Printf("Sent: %d msg/s, ", sentPerSecond)
+		fmt.Printf("Received: %d msg/s\n", receivedPerSecond)
 
 		atomic.StoreInt32(&sentCounter, 0)
 		atomic.StoreInt32(&receivedCounter, 0)
