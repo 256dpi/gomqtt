@@ -22,15 +22,15 @@ import (
 )
 
 func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
-	session1, err := backend.GetSession("foo")
+	session1, err := backend.GetSession(nil, "foo")
 	assert.NoError(t, err)
 	assert.NotNil(t, session1)
 
-	session2, err := backend.GetSession("foo")
+	session2, err := backend.GetSession(nil, "foo")
 	assert.NoError(t, err)
 	assert.True(t, session1 == session2)
 
-	session3, err := backend.GetSession("bar")
+	session3, err := backend.GetSession(nil, "bar")
 	assert.NoError(t, err)
 	assert.False(t, session3 == session1)
 	assert.False(t, session3 == session2)

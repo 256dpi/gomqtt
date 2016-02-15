@@ -195,7 +195,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.state.set(clientConnected)
 
 	// retrieve session
-	sess, err := c.broker.Backend.GetSession(string(pkt.ClientID))
+	sess, err := c.broker.Backend.GetSession(c, string(pkt.ClientID))
 	if err != nil {
 		return c.die(err, true)
 	}

@@ -38,7 +38,7 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-func (m *MemoryBackend) GetSession(id string) (session.Session, error) {
+func (m *MemoryBackend) GetSession(client *Client, id string) (session.Session, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 

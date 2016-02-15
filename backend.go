@@ -22,7 +22,7 @@ import (
 type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one.
-	GetSession(string) (session.Session, error)
+	GetSession(client *Client, id string) (session.Session, error)
 
 	// Subscribe will subscribe the passed client to the specified topic and
 	// begin to forward messages by calling the clients Publish method.
@@ -39,11 +39,11 @@ type Backend interface {
 
 	// StoreRetained retains the passed messages. If the supplied message has a
 	// zero length payload, the backend removes the currently retained message.
-	StoreRetained(*Client, *packet.Message) error
+	StoreRetained(client *Client, msg *packet.Message) error
 
 	// RetrieveRetained will lookup all stored retained messages matching the
 	// supplied topic.
-	RetrieveRetained(*Client, string) ([]*packet.Message, error)
+	RetrieveRetained(client *Client, topic string) ([]*packet.Message, error)
 }
 
 // TODO: missing offline subscriptions
