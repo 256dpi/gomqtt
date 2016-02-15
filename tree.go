@@ -327,6 +327,21 @@ func (t *Tree) clean(values []interface{}) []interface{} {
 	return result
 }
 
+// All will return all stored values in the tree.
+func (t *Tree) All() []interface{} {
+	return t.clean(t.all(make([]interface{}, 0), t.root))
+}
+
+func (t *Tree) all(result []interface{}, node *node) []interface{} {
+	// add children to results
+	for _, child := range node.children {
+		result = t.all(result, child)
+	}
+
+	// add current node to results
+	return append(result, node.values...)
+}
+
 // Reset will completely clear the tree.
 func (t *Tree) Reset() {
 	t.mutex.Lock()
