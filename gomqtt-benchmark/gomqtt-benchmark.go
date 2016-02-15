@@ -25,7 +25,7 @@ import (
 	"github.com/gomqtt/transport"
 )
 
-const interval = 100
+const interval = 1000
 const update = 5
 
 var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
@@ -137,16 +137,21 @@ func bomber(id string) {
 func reporter() {
 	var sentCounter int32 = 0
 	var receivedCounter int32 = 0
+	var balance int32 = 0
 
 	go func() {
 		for {
-			atomic.AddInt32(&sentCounter, int32(<-sent))
+			n := int32(<-sent)
+			atomic.AddInt32(&sentCounter, n)
+			atomic.AddInt32(&balance, n)
 		}
 	}()
 
 	go func() {
 		for {
-			atomic.AddInt32(&receivedCounter, int32(<-received))
+			n := int32(<-received)
+			atomic.AddInt32(&receivedCounter, n)
+			atomic.AddInt32(&balance, -n)
 		}
 	}()
 
@@ -156,8 +161,9 @@ func reporter() {
 		sentPerSecond := atomic.LoadInt32(&sentCounter) / update
 		receivedPerSecond := atomic.LoadInt32(&receivedCounter) / update
 
-		fmt.Printf("Sent: %d msg/s, ", sentPerSecond)
-		fmt.Printf("Received: %d msg/s\n", receivedPerSecond)
+		fmt.Printf("Sent: %d msg/s - ", sentPerSecond)
+		fmt.Printf("Received: %d msg/s ", receivedPerSecond)
+		fmt.Printf("(Missing: %d)\n", atomic.LoadInt32(&balance))
 
 		atomic.StoreInt32(&sentCounter, 0)
 		atomic.StoreInt32(&receivedCounter, 0)
