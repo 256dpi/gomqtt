@@ -220,6 +220,57 @@ func TestWillQOS2(t *testing.T) {
 	abstractWillTest(t, 2, 2)
 }
 
+func TestRetainedWill(t *testing.T) {
+	tp, done := startBroker(t, New(), 2)
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	opts := client.NewOptions()
+	opts.Will = &packet.Message{
+		Topic: "test",
+		Payload: []byte("test"),
+		QOS: 0,
+		Retain: true,
+	}
+
+	connectFuture1, err := client1.Connect(tp.url(), opts)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+
+	err = client1.Close()
+	assert.NoError(t, err)
+
+	client2 := client.New()
+
+	wait := make(chan struct{})
+
+	client2.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(0), msg.QOS)
+		assert.True(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture2, err := client2.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+
+	subscribeFuture, err := client2.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	<-wait
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
 // -- authentication
 // authenticate successfully a client with username and password
 // authenticate unsuccessfully a client with username and password
