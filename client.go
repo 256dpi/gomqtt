@@ -145,6 +145,11 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// assign session
 	c.Session = sess
 
+	// save will if present
+	if pkt.Will != nil {
+		c.Session.SaveWill(pkt.Will)
+	}
+
 	err = c.send(connack)
 	if err != nil {
 		return c.die(err, false)
@@ -345,6 +350,12 @@ func (c *Client) processDisconnect() error {
 	// mark client as cleanly disconnected
 	c.state.set(clientDisconnected)
 
+	// clear will
+	err := c.Session.ClearWill()
+	if err != nil {
+		return c.die(err, true)
+	}
+
 	return nil
 }
 
@@ -405,6 +416,17 @@ func (c *Client) cleanup(err error, close bool) error {
 	_err := c.broker.Backend.Remove(c)
 	if err == nil {
 		err = _err
+	}
+
+	// get will
+	will, _err := c.Session.LookupWill()
+	if err == nil {
+		err = _err
+	}
+
+	// publish will message
+	if will != nil {
+		c.broker.Backend.Publish(c, will)
 	}
 
 	// ensure that the connection gets closed
