@@ -224,6 +224,19 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		return c.die(err, false)
 	}
 
+	for _, subscription := range pkt.Subscriptions {
+		// get retained messages
+		msgs, err := c.broker.Backend.RetrieveRetained(c, subscription.Topic)
+		if err != nil {
+			return c.die(err, true)
+		}
+
+		// send messages
+		for _, msg := range msgs {
+			c.out <- msg
+		}
+	}
+
 	return nil
 }
 
@@ -283,6 +296,14 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		err := c.broker.Backend.Publish(c, &publish.Message)
 		if err != nil {
 			return c.die(err, true)
+		}
+
+		// store retained message
+		if publish.Message.Retain {
+			err := c.broker.Backend.StoreRetained(c, &publish.Message)
+			if err != nil {
+				return c.die(err, true)
+			}
 		}
 	}
 
@@ -351,6 +372,14 @@ func (c *Client) processPubrel(packetID uint16) error {
 	err = c.broker.Backend.Publish(c, &publish.Message)
 	if err != nil {
 		return c.die(err, true)
+	}
+
+	// store retained message
+	if publish.Message.Retain {
+		err := c.broker.Backend.StoreRetained(c, &publish.Message)
+		if err != nil {
+			return c.die(err, true)
+		}
 	}
 
 	return nil

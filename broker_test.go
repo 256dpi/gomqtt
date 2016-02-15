@@ -75,6 +75,67 @@ func TestPublishSubscribeQOS2(t *testing.T) {
 	abstractPublishSubscribeTest(t, 2, 2, 2)
 }
 
+func abstractRetainedMessageTest(t *testing.T, sub, pub, exp uint8) {
+	tp, done := startBroker(t, New(), 2)
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+
+	publishFuture, err := client1.Publish("test", []byte("test"), pub, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	client2 := client.New()
+
+	received := false
+	wait := make(chan struct{})
+
+	client2.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(exp), msg.QOS)
+		assert.True(t, msg.Retain)
+
+		received = true
+		close(wait)
+	}
+
+	connectFuture2, err := client2.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+
+	subscribeFuture, err := client2.Subscribe("test", sub)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	<-wait
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func TestRetainedMessageQOS0(t *testing.T) {
+	abstractRetainedMessageTest(t, 0, 0, 0)
+}
+
+func TestRetainedMessageQOS1(t *testing.T) {
+	abstractRetainedMessageTest(t, 1, 1, 1)
+}
+
+func TestRetainedMessageQOS2(t *testing.T) {
+	abstractRetainedMessageTest(t, 2, 2, 2)
+}
+
 // -- authentication
 // authenticate successfully a client with username and password
 // authenticate unsuccessfully a client with username and password
@@ -141,7 +202,6 @@ func TestPublishSubscribeQOS2(t *testing.T) {
 // publish after disconnection
 
 // -- retained message
-// receive retained message
 // receive retained message with a # pattern
 // receive retained message with a + pattern
 // clear retained message

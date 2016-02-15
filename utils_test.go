@@ -21,7 +21,18 @@ import (
 
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
+	"github.com/gomqtt/packet"
 )
+
+func errorCallback(t *testing.T) func(*packet.Message, error) {
+	return func(msg *packet.Message, err error) {
+		if err != nil {
+			println(err.Error())
+		}
+
+		assert.Fail(t, "callback should not have been called")
+	}
+}
 
 // the testPort
 type testPort int
