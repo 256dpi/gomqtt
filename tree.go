@@ -97,29 +97,29 @@ func (t *Tree) Add(filter string, value interface{}) {
 	t.add(value, 0, strings.Split(filter, t.Separator), t.root)
 }
 
-func (t *Tree) add(value interface{}, i int, segments []string, tree *node) {
+func (t *Tree) add(value interface{}, i int, segments []string, node *node) {
 	// add value to leaf
 	if i == len(segments) {
-		for _, v := range tree.values {
+		for _, v := range node.values {
 			if v == value {
 				return
 			}
 		}
 
-		tree.values = append(tree.values, value)
+		node.values = append(node.values, value)
 		return
 	}
 
 	segment := segments[i]
-	subtree, ok := tree.children[segment]
+	child, ok := node.children[segment]
 
 	// create missing node
 	if !ok {
-		subtree = newNode()
-		tree.children[segment] = subtree
+		child = newNode()
+		node.children[segment] = child
 	}
 
-	t.add(value, i+1, segments, subtree)
+	t.add(value, i+1, segments, child)
 }
 
 // Remove unregisters the value for the supplied filter. This function will
@@ -140,31 +140,31 @@ func (t *Tree) Empty(filter string) {
 	t.remove(nil, 0, strings.Split(filter, t.Separator), t.root)
 }
 
-func (t *Tree) remove(value interface{}, i int, segments []string, tree *node) bool {
+func (t *Tree) remove(value interface{}, i int, segments []string, node *node) bool {
 	// clear or remove value from leaf node
 	if i == len(segments) {
 		if value == nil {
-			tree.clearValues()
+			node.clearValues()
 		} else {
-			tree.removeValue(value)
+			node.removeValue(value)
 		}
 
-		return len(tree.values) == 0 && len(tree.children) == 0
+		return len(node.values) == 0 && len(node.children) == 0
 	}
 
 	segment := segments[i]
-	subtree, ok := tree.children[segment]
+	child, ok := node.children[segment]
 
 	// node not found
 	if !ok {
 		return false
 	}
 
-	if t.remove(value, i+1, segments, subtree) {
-		delete(tree.children, segment)
+	if t.remove(value, i+1, segments, child) {
+		delete(node.children, segment)
 	}
 
-	return len(tree.values) == 0 && len(tree.children) == 0
+	return len(node.values) == 0 && len(node.children) == 0
 }
 
 // Clear will unregister the supplied value from all filters. This function will
@@ -176,17 +176,17 @@ func (t *Tree) Clear(value interface{}) {
 	t.clear(value, t.root)
 }
 
-func (t *Tree) clear(value interface{}, tree *node) bool {
-	tree.removeValue(value)
+func (t *Tree) clear(value interface{}, node *node) bool {
+	node.removeValue(value)
 
 	// remove value from all nodes
-	for segment, subtree := range tree.children {
-		if t.clear(value, subtree) {
-			delete(tree.children, segment)
+	for segment, child := range node.children {
+		if t.clear(value, child) {
+			delete(node.children, segment)
 		}
 	}
 
-	return len(tree.values) == 0 && len(tree.children) == 0
+	return len(node.values) == 0 && len(node.children) == 0
 }
 
 // Match will return a set of values that have filters that match the supplied
@@ -210,28 +210,28 @@ func (t *Tree) Match(topic string) []interface{} {
 	return result
 }
 
-func (t *Tree) match(result []interface{}, i int, segments []string, tree *node) []interface{} {
+func (t *Tree) match(result []interface{}, i int, segments []string, node *node) []interface{} {
 	// add all values to the result set that match multiple levels
-	if subtree, ok := tree.children[t.WildcardSome]; ok {
-		result = append(result, subtree.values...)
+	if child, ok := node.children[t.WildcardSome]; ok {
+		result = append(result, child.values...)
 	}
 
 	// when finished add all values to the result set
 	if i == len(segments) {
-		return append(result, tree.values...)
+		return append(result, node.values...)
 	}
 
 	// advance children that match a single level
-	if subtree, ok := tree.children[t.WildcardOne]; ok {
-		result = t.match(result, i+1, segments, subtree)
+	if child, ok := node.children[t.WildcardOne]; ok {
+		result = t.match(result, i+1, segments, child)
 	}
 
 	segment := segments[i]
 
 	// match segments and get children
 	if segment != t.WildcardOne && segment != t.WildcardSome {
-		if subtree, ok := tree.children[segment]; ok {
-			result = t.match(result, i+1, segments, subtree)
+		if child, ok := node.children[segment]; ok {
+			result = t.match(result, i+1, segments, child)
 		}
 	}
 

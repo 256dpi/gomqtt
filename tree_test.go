@@ -183,6 +183,7 @@ func BenchmarkTreeMatchWildcardOne(b *testing.B) {
 	tree.Add("foo/bar", 1)
 
 	for i := 0; i < b.N; i++ {
+		// TODO: not working
 		tree.Match("foo/+")
 	}
 }
@@ -192,6 +193,7 @@ func BenchmarkTreeMatchWildcardSome(b *testing.B) {
 	tree.Add("foo/bar", 1)
 
 	for i := 0; i < b.N; i++ {
+		// TODO: not working
 		tree.Match("#")
 	}
 }
