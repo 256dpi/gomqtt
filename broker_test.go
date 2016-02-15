@@ -75,6 +75,18 @@ func TestPublishSubscribeQOS2(t *testing.T) {
 	abstractPublishSubscribeTest(t, 2, 2, 2)
 }
 
+func TestPublishSubscribeDowngrade1(t *testing.T) {
+	abstractPublishSubscribeTest(t, 0, 1, 0)
+}
+
+func TestPublishSubscribeDowngrade2(t *testing.T) {
+	abstractPublishSubscribeTest(t, 0, 2, 0)
+}
+
+func TestPublishSubscribeDowngrade3(t *testing.T) {
+	abstractPublishSubscribeTest(t, 1, 2, 1)
+}
+
 func abstractRetainedMessageTest(t *testing.T, sub, pub, exp uint8) {
 	tp, done := startBroker(t, New(), 2)
 
@@ -159,14 +171,8 @@ func TestRetainedMessageQOS2(t *testing.T) {
 // double sub does not double deliver
 
 // -- client pub sub
-// publish direct to a single client QoS 0
-// publish direct to a single client QoS 1
 // offline message support for direct publish
-// subscribe a client programmatically
-// subscribe a client programmatically multiple topics
-// subscribe a client programmatically with full packet
 // handle multiple subscriptions with the same filter
-// respect the max qos set by a subscription
 
 // -- keepalive
 // supports pingreq/pingresp
@@ -175,7 +181,6 @@ func TestRetainedMessageQOS2(t *testing.T) {
 // disconnect if a connect does not arrive in time
 
 // -- qos1
-// subscribe QoS 0, but publish QoS 1
 // restore QoS 1 subscriptions not clean
 // remove stored subscriptions if connected with clean=true
 // resend publish on non-clean reconnect QoS 1
@@ -188,7 +193,6 @@ func TestRetainedMessageQOS2(t *testing.T) {
 // upgrade a QoS 0 subscription to QoS 1
 
 // -- qos2
-// subscribe QoS 0, but publish QoS 2
 // restore QoS 2 subscriptions not clean
 // resend publish on non-clean reconnect QoS 2
 // resend pubrel on non-clean reconnect QoS 2

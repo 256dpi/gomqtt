@@ -214,6 +214,12 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 			return c.die(err, true)
 		}
 
+		// save subscription in session
+		err = c.Session.SaveSubscription(&subscription)
+		if err != nil {
+			return c.die(err, true)
+		}
+
 		// save granted qos
 		suback.ReturnCodes = append(suback.ReturnCodes, subscription.QOS)
 	}
@@ -248,6 +254,12 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	for _, topic := range pkt.Topics {
 		// unsubscribe client from queue
 		err := c.broker.Backend.Unsubscribe(c, topic)
+		if err != nil {
+			return c.die(err, true)
+		}
+
+		// remove subscription from session
+		err = c.Session.DeleteSubscription(topic)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -402,18 +414,31 @@ func (c *Client) sender() error {
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
 		case msg := <-c.out:
-			// TODO: read QOS from cached subscriptions and adjust QOS
-
 			publish := packet.NewPublishPacket()
 			publish.Message = *msg
 
+			// get stored subscription
+			sub, err := c.Session.LookupSubscription(publish.Message.Topic)
+			if err != nil {
+				return c.die(err, true)
+			}
+
+			// check subscription
+			if sub == nil {
+				return c.die(fmt.Errorf("subscription not found in session"), true)
+			}
+
+			if publish.Message.QOS > sub.QOS {
+				publish.Message.QOS = sub.QOS
+			}
+
 			// set packet id
-			if msg.QOS > 0 {
+			if publish.Message.QOS > 0 {
 				publish.PacketID = c.Session.PacketID()
 			}
 
 			// store packet if at least qos 1
-			if msg.QOS > 0 {
+			if publish.Message.QOS > 0 {
 				err := c.Session.SavePacket(session.Outgoing, publish)
 				if err != nil {
 					return c.die(err, true)
@@ -421,7 +446,7 @@ func (c *Client) sender() error {
 			}
 
 			// send packet
-			err := c.send(publish)
+			err = c.send(publish)
 			if err != nil {
 				return c.die(err, false)
 			}
