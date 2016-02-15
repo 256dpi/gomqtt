@@ -140,6 +140,12 @@ func TestPublishSubscribeQOS2(t *testing.T) {
 // resend pubrel on non-clean reconnect QoS 2
 // publish after disconnection
 
+// -- retained message
+// receive retained message
+// receive retained message with a # pattern
+// receive retained message with a + pattern
+// clear retained message
+
 // -- error
 // after an error, outstanding packets are discarded
 

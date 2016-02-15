@@ -102,12 +102,6 @@ func abstractBackendRetainedTest(t *testing.T, backend Backend) {
 	assert.Empty(t, msgs)
 }
 
-// store and look up retained messages
-// look up retained messages with a # pattern
-// look up retained messages with a + pattern
-// remove retained message
-// storing twice a retained message should keep only the last
-
 // store and look up subscriptions by client
 // remove subscriptions by client
 // store and look up subscriptions by topic
