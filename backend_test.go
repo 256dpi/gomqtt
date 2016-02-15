@@ -115,5 +115,3 @@ func abstractBackendRetainedTest(t *testing.T, backend Backend) {
 // remove subscriptions by client
 // store and look up subscriptions by topic
 // QoS 0 subscriptions, restored but not matched
-// clean subscriptions
-// store and count subscriptions

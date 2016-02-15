@@ -509,7 +509,7 @@ func TestKeepAlive(t *testing.T) {
 
 func TestKeepAliveTimeout(t *testing.T) {
 	t.Parallel()
-	
+
 	connect := packet.NewConnectPacket()
 	connect.KeepAlive = 1
 
@@ -558,7 +558,6 @@ func TestKeepAliveTimeout(t *testing.T) {
 // do not resend QoS 1 packets if reconnect is clean
 // do not resend QoS 1 packets at reconnect if puback was received
 // remove stored subscriptions after unsubscribe
-// upgrade a QoS 0 subscription to QoS 1
 
 // -- qos2
 // restore QoS 2 subscriptions not clean
