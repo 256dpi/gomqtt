@@ -17,8 +17,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
 	"strconv"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/gomqtt/packet"
@@ -26,18 +29,27 @@ import (
 )
 
 const interval = 1000
-const update = 5
 
 var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")
 
 var sent = make(chan int)
 var received = make(chan int)
+var quit = make(chan struct{})
 
 func main() {
 	flag.Parse()
 
 	fmt.Printf("Start benchmark for %s using %d Workers\n", *url, *workers)
+
+	go func() {
+		finish := make(chan os.Signal, 1)
+		signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
+
+		<-finish
+		fmt.Println("Closing...")
+		close(quit)
+	}()
 
 	for i := 0; i < *workers; i++ {
 		id := strconv.Itoa(i)
@@ -130,6 +142,12 @@ func bomber(id string) {
 		if counter >= interval {
 			sent <- counter
 			counter = 0
+
+			select {
+			case <-quit:
+				return
+			default:
+			}
 		}
 	}
 }
@@ -156,16 +174,22 @@ func reporter() {
 	}()
 
 	for {
-		<-time.After(update * time.Second)
+		<-time.After(1 * time.Second)
 
-		sentPerSecond := atomic.LoadInt32(&sentCounter) / update
-		receivedPerSecond := atomic.LoadInt32(&receivedCounter) / update
+		sentPerSecond := atomic.LoadInt32(&sentCounter)
+		receivedPerSecond := atomic.LoadInt32(&receivedCounter)
+		currentBalance := atomic.LoadInt32(&balance)
 
-		fmt.Printf("Sent: %d msg/s - ", sentPerSecond)
-		fmt.Printf("Received: %d msg/s ", receivedPerSecond)
-		fmt.Printf("(Missing: %d)\n", atomic.LoadInt32(&balance))
+		fmt.Printf("Sent: %d msgs - ", sentPerSecond)
+		fmt.Printf("Received: %d msgs ", receivedPerSecond)
+		fmt.Printf("(Buffered: %d msgs)\n", currentBalance)
 
 		atomic.StoreInt32(&sentCounter, 0)
 		atomic.StoreInt32(&receivedCounter, 0)
+
+		if currentBalance <= (int32(*workers) * interval) {
+			fmt.Println("Done!")
+			os.Exit(0)
+		}
 	}
 }
