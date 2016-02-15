@@ -33,12 +33,10 @@ var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memProfile = flag.String("memprofile", "", "write memory profile to this file")
 
 func main() {
-	fmt.Println("starting...")
-
 	flag.Parse()
 
 	if *cpuProfile != "" {
-		fmt.Println("start cpuprofile!")
+		fmt.Println("Start cpuprofile!")
 		f, err := os.Create(*cpuProfile)
 		if err != nil {
 			log.Fatal(err)
@@ -49,14 +47,14 @@ func main() {
 
 	// start
 
-	fmt.Println("starting broker on url '" + *url + "' ...")
+	fmt.Printf("Starting broker on url %s... ", *url)
 
 	server, err := transport.Launch(*url)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("launched server!")
+	fmt.Println("Done!")
 
 	broker := broker.New()
 
@@ -71,8 +69,6 @@ func main() {
 		}
 	}()
 
-	fmt.Println("started broker!")
-
 	// finish
 
 	finish := make(chan os.Signal, 1)
@@ -81,7 +77,7 @@ func main() {
 	<-finish
 
 	if *memProfile != "" {
-		fmt.Println("write memprofile!")
+		fmt.Println("Write memprofile!")
 		f, err := os.Create(*memProfile)
 		if err != nil {
 			log.Fatal(err)
@@ -91,5 +87,5 @@ func main() {
 		return
 	}
 
-	fmt.Println("exiting...")
+	fmt.Println("Exiting...")
 }
