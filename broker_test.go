@@ -16,10 +16,11 @@ package broker
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gomqtt/client"
-	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/packet"
+	"github.com/stretchr/testify/assert"
 )
 
 func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) {
@@ -158,6 +159,73 @@ func TestRetainedMessageWildcardSome(t *testing.T) {
 	abstractRetainedMessageTest(t, "foo/bar", "#", 0, 0)
 }
 
+func TestClearRetainedMessage(t *testing.T) {
+	tp, done := startBroker(t, New(), 3)
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+
+	publishFuture1, err := client1.Publish("test", []byte("test1"), 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture1.Wait())
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	client2 := client.New()
+
+	wait := make(chan struct{})
+
+	client2.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test1"), msg.Payload)
+		assert.Equal(t, uint8(0), msg.QOS)
+		assert.True(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture2, err := client2.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+
+	subscribeFuture1, err := client2.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture1.Wait())
+
+	<-wait
+
+	publishFuture2, err := client2.Publish("test", nil, 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture2.Wait())
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	client3 := client.New()
+	client3.Callback = errorCallback(t)
+
+	connectFuture3, err := client3.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture3.Wait())
+
+	subscribeFuture2, err := client3.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture2.Wait())
+
+	time.Sleep(50 * time.Millisecond)
+
+	err = client3.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
 func abstractWillTest(t *testing.T, sub, pub uint8) {
 	tp, done := startBroker(t, New(), 2)
 
@@ -166,9 +234,9 @@ func abstractWillTest(t *testing.T, sub, pub uint8) {
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
-		Topic: "test",
+		Topic:   "test",
 		Payload: []byte("test"),
-		QOS: pub,
+		QOS:     pub,
 	}
 
 	connectFuture1, err := client1.Connect(tp.url(), opts)
@@ -228,10 +296,10 @@ func TestRetainedWill(t *testing.T) {
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
-		Topic: "test",
+		Topic:   "test",
 		Payload: []byte("test"),
-		QOS: 0,
-		Retain: true,
+		QOS:     0,
+		Retain:  true,
 	}
 
 	connectFuture1, err := client1.Connect(tp.url(), opts)
@@ -320,12 +388,6 @@ func TestRetainedWill(t *testing.T) {
 // resend publish on non-clean reconnect QoS 2
 // resend pubrel on non-clean reconnect QoS 2
 // publish after disconnection
-
-// -- retained message
-// clear retained message
-
-// -- error
-// after an error, outstanding packets are discarded
 
 // -- will
 // delivers old will in case of a crash
