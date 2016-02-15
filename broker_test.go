@@ -147,17 +147,14 @@ func TestRetainedMessageQOS2(t *testing.T) {
 // failed authentication does not disconnect other client with same clientId
 
 // -- basic
-// connect and connack (minimal)
 // does not die badly on connection error
 // unsubscribe
 // unsubscribe on disconnect
 // disconnect
-// retain messages
 // closes
 // connect without a clientId for MQTT 3.1.1
 // disconnect another client with the same clientId
 // disconnect if another broker connects the same client
-// publish to $SYS/broker/new/clients
 // restore QoS 0 subscriptions not clean
 // double sub does not double deliver
 
@@ -169,7 +166,7 @@ func TestRetainedMessageQOS2(t *testing.T) {
 // subscribe a client programmatically multiple topics
 // subscribe a client programmatically with full packet
 // handle multiple subscriptions with the same filter
-// respect the max wos set by a subscription
+// respect the max qos set by a subscription
 
 // -- keepalive
 // supports pingreq/pingresp
@@ -178,8 +175,6 @@ func TestRetainedMessageQOS2(t *testing.T) {
 // disconnect if a connect does not arrive in time
 
 // -- qos1
-// publish QoS 1
-// subscribe QoS 1
 // subscribe QoS 0, but publish QoS 1
 // restore QoS 1 subscriptions not clean
 // remove stored subscriptions if connected with clean=true
@@ -193,8 +188,6 @@ func TestRetainedMessageQOS2(t *testing.T) {
 // upgrade a QoS 0 subscription to QoS 1
 
 // -- qos2
-// publish QoS 2
-// subscribe QoS 2
 // subscribe QoS 0, but publish QoS 2
 // restore QoS 2 subscriptions not clean
 // resend publish on non-clean reconnect QoS 2
