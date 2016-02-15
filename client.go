@@ -40,6 +40,7 @@ const (
 type Client struct {
 	broker *Broker
 	conn   transport.Conn
+	out    chan *packet.Message
 
 	Session session.Session // TODO: How do we get that session?
 	UUID    string
@@ -58,11 +59,13 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 	c := &Client{
 		broker: broker,
 		conn:   conn,
+		out:    make(chan *packet.Message),
 		UUID:   uuid.NewV1().String(),
 		state:  newState(clientConnecting),
 	}
 
 	c.tomb.Go(c.processor)
+	c.tomb.Go(c.sender)
 
 	return c
 }
@@ -77,29 +80,7 @@ func (c *Client) Publish(msg *packet.Message) error {
 		return ErrClientNotConnected
 	}
 
-	// TODO: read QOS from cached subscriptions and adjust QOS
-
-	publish := packet.NewPublishPacket()
-	publish.Message = *msg
-
-	// set packet id
-	if msg.QOS > 0 {
-		publish.PacketID = c.Session.PacketID()
-	}
-
-	// store packet if at least qos 1
-	if msg.QOS > 0 {
-		err := c.Session.SavePacket(session.Outgoing, publish)
-		if err != nil {
-			return c.cleanup(err, true)
-		}
-	}
-
-	// send packet
-	err := c.send(publish)
-	if err != nil {
-		return c.cleanup(err, false)
-	}
+	c.out <- msg
 
 	return nil
 }
@@ -191,7 +172,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	connack.SessionPresent = false
 
 	// TODO: authenticate client
-	// TODO: retrieve session
 	c.state.set(clientConnected)
 
 	// retrieve session
@@ -238,6 +218,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		suback.ReturnCodes = append(suback.ReturnCodes, subscription.QOS)
 	}
 
+	// send suback
 	err := c.send(suback)
 	if err != nil {
 		return c.die(err, false)
@@ -381,6 +362,42 @@ func (c *Client) processDisconnect() error {
 	c.state.set(clientDisconnected)
 
 	return nil
+}
+
+/* sender goroutine */
+
+// sends outgoing messages
+func (c *Client) sender() error {
+	for {
+		select {
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
+		case msg := <-c.out:
+			// TODO: read QOS from cached subscriptions and adjust QOS
+
+			publish := packet.NewPublishPacket()
+			publish.Message = *msg
+
+			// set packet id
+			if msg.QOS > 0 {
+				publish.PacketID = c.Session.PacketID()
+			}
+
+			// store packet if at least qos 1
+			if msg.QOS > 0 {
+				err := c.Session.SavePacket(session.Outgoing, publish)
+				if err != nil {
+					return c.die(err, true)
+				}
+			}
+
+			// send packet
+			err := c.send(publish)
+			if err != nil {
+				return c.die(err, false)
+			}
+		}
+	}
 }
 
 /* helpers */
