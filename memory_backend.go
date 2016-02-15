@@ -17,9 +17,9 @@ package broker
 import (
 	"sync"
 
+	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
 	"github.com/gomqtt/topic"
-	"github.com/gomqtt/packet"
 )
 
 type MemoryBackend struct {
@@ -27,7 +27,7 @@ type MemoryBackend struct {
 	retained *topic.Tree
 	sessions map[string]*session.MemorySession
 
-	mutex    sync.Mutex
+	mutex sync.Mutex
 }
 
 func NewMemoryBackend() *MemoryBackend {

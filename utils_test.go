@@ -19,9 +19,9 @@ import (
 	"net"
 	"testing"
 
+	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
-	"github.com/gomqtt/packet"
 )
 
 func errorCallback(t *testing.T) func(*packet.Message, error) {

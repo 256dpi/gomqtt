@@ -85,7 +85,7 @@ func counter(id string) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1
 	subscribe.Subscriptions = []packet.Subscription{
-		{ Topic: id, QOS: 0 },
+		{Topic: id, QOS: 0},
 	}
 
 	err := conn.Send(subscribe)

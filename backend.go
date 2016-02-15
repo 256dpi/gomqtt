@@ -15,8 +15,8 @@
 package broker
 
 import (
-	"github.com/gomqtt/session"
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/session"
 )
 
 type Backend interface {

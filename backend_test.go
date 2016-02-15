@@ -17,8 +17,8 @@ package broker
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/packet"
+	"github.com/stretchr/testify/assert"
 )
 
 func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
@@ -38,29 +38,29 @@ func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
 
 func abstractBackendRetainedTest(t *testing.T, backend Backend) {
 	msg1 := &packet.Message{
-		Topic: "foo",
+		Topic:   "foo",
 		Payload: []byte("bar"),
-		QOS: 1,
-		Retain: true,
+		QOS:     1,
+		Retain:  true,
 	}
 
 	msg2 := &packet.Message{
-		Topic: "foo/bar",
+		Topic:   "foo/bar",
 		Payload: []byte("bar"),
-		QOS: 1,
-		Retain: true,
+		QOS:     1,
+		Retain:  true,
 	}
 
 	msg3 := &packet.Message{
-		Topic: "foo",
+		Topic:   "foo",
 		Payload: []byte("bar"),
-		QOS: 2,
-		Retain: true,
+		QOS:     2,
+		Retain:  true,
 	}
 
 	msg4 := &packet.Message{
-		Topic: "foo",
-		QOS: 1,
+		Topic:  "foo",
+		QOS:    1,
 		Retain: true,
 	}
 
