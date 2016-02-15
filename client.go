@@ -168,9 +168,13 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// save will if present
 	if pkt.Will != nil {
-		c.Session.SaveWill(pkt.Will)
+		err = c.Session.SaveWill(pkt.Will)
+		if err != nil {
+			return c.die(err, true)
+		}
 	}
 
+	// send connack
 	err = c.send(connack)
 	if err != nil {
 		return c.die(err, false)
