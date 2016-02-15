@@ -34,6 +34,15 @@ func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
 	assert.NoError(t, err)
 	assert.False(t, session3 == session1)
 	assert.False(t, session3 == session2)
+
+	session4, err := backend.GetSession(nil, "")
+	assert.NoError(t, err)
+	assert.NotNil(t, session4)
+
+	session5, err := backend.GetSession(nil, "")
+	assert.NoError(t, err)
+	assert.NotNil(t, session5)
+	assert.True(t, session4 != session5)
 }
 
 func abstractBackendRetainedTest(t *testing.T, backend Backend) {

@@ -56,7 +56,6 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 		conn:    conn,
 		out:     make(chan *packet.Message),
 		UUID:    uuid.NewV1().String(),
-		Session: session.NewMemorySession(),
 		state:   newState(clientConnecting),
 	}
 
@@ -150,23 +149,21 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// set clean flag
 	c.clean = pkt.CleanSession
 
-	if len(pkt.ClientID) > 0 {
-		// retrieve session
-		sess, err := c.broker.Backend.GetSession(c, pkt.ClientID)
+	// retrieve session
+	sess, err := c.broker.Backend.GetSession(c, pkt.ClientID)
+	if err != nil {
+		return c.die(err, true)
+	}
+
+	// assign session
+	c.Session = sess
+
+	// reset session on clean
+	if c.clean {
+		err = c.Session.Reset()
 		if err != nil {
 			return c.die(err, true)
 		}
-
-		// reset session on clean
-		if c.clean {
-			err = sess.Reset()
-			if err != nil {
-				return c.die(err, true)
-			}
-		}
-
-		// assign session
-		c.Session = sess
 	}
 
 	// save will if present
@@ -174,7 +171,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		c.Session.SaveWill(pkt.Will)
 	}
 
-	err := c.send(connack)
+	err = c.send(connack)
 	if err != nil {
 		return c.die(err, false)
 	}

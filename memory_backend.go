@@ -42,15 +42,19 @@ func (m *MemoryBackend) GetSession(client *Client, id string) (session.Session, 
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	sess, ok := m.sessions[id]
-	if ok {
+	if len(id) > 0 {
+		sess, ok := m.sessions[id]
+		if ok {
+			return sess, nil
+		}
+
+		sess = session.NewMemorySession()
+		m.sessions[id] = sess
+
 		return sess, nil
 	}
 
-	sess = session.NewMemorySession()
-	m.sessions[id] = sess
-
-	return sess, nil
+	return session.NewMemorySession(), nil
 }
 
 func (m *MemoryBackend) Subscribe(client *Client, topic string) ([]*packet.Message, error) {

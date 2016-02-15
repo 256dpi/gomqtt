@@ -21,7 +21,8 @@ import (
 
 type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
-	// and returns a new one.
+	// and returns a new one. If the supplied id has a zero length, a new
+	// session is returned that is only valid once.
 	GetSession(client *Client, id string) (session.Session, error)
 
 	// Subscribe will subscribe the passed client to the specified topic and
