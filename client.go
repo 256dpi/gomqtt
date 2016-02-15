@@ -52,11 +52,12 @@ type Client struct {
 // NewClient takes over responsibility over a connection and returns a Client.
 func NewClient(broker *Broker, conn transport.Conn) *Client {
 	c := &Client{
-		broker: broker,
-		conn:   conn,
-		out:    make(chan *packet.Message),
-		UUID:   uuid.NewV1().String(),
-		state:  newState(clientConnecting),
+		broker:  broker,
+		conn:    conn,
+		out:     make(chan *packet.Message),
+		UUID:    uuid.NewV1().String(),
+		Session: session.NewMemorySession(),
+		state:   newState(clientConnecting),
 	}
 
 	c.tomb.Go(c.processor)
@@ -146,24 +147,34 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// TODO: authenticate client
 	c.state.set(clientConnected)
 
-	// TODO: get session only if client id is set
-	// TODO: clear session when clean session = true
+	// set clean flag
+	c.clean = pkt.CleanSession
 
-	// retrieve session
-	sess, err := c.broker.Backend.GetSession(c, pkt.ClientID)
-	if err != nil {
-		return c.die(err, true)
+	if len(pkt.ClientID) > 0 {
+		// retrieve session
+		sess, err := c.broker.Backend.GetSession(c, pkt.ClientID)
+		if err != nil {
+			return c.die(err, true)
+		}
+
+		// reset session on clean
+		if c.clean {
+			err = sess.Reset()
+			if err != nil {
+				return c.die(err, true)
+			}
+		}
+
+		// assign session
+		c.Session = sess
 	}
-
-	// assign session
-	c.Session = sess
 
 	// save will if present
 	if pkt.Will != nil {
 		c.Session.SaveWill(pkt.Will)
 	}
 
-	err = c.send(connack)
+	err := c.send(connack)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -446,6 +457,14 @@ func (c *Client) cleanup(err error, close bool) error {
 	// ensure that the connection gets closed
 	if close {
 		_err := c.conn.Close()
+		if err == nil {
+			err = _err
+		}
+	}
+
+	// reset session
+	if c.clean {
+		_err := c.Session.Reset()
 		if err == nil {
 			err = _err
 		}
