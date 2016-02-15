@@ -201,6 +201,31 @@ func TestClientConnectionDenied(t *testing.T) {
 	<-wait
 }
 
+func TestClientExpectedConnack(t *testing.T) {
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(packet.NewPingrespPacket()).
+		End()
+
+	done, tp := fakeBroker(t, broker)
+
+	wait := make(chan struct{})
+
+	c := New()
+	c.Callback = func(msg *packet.Message, err error) {
+		assert.Nil(t, msg)
+		assert.Equal(t, ErrClientExpectedConnack, err)
+		close(wait)
+	}
+
+	future, err := c.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.Equal(t, ErrFutureCanceled, future.Wait())
+
+	<-done
+	<-wait
+}
+
 func TestClientKeepAlive(t *testing.T) {
 	connect := connectPacket()
 	connect.KeepAlive = 0

@@ -51,6 +51,10 @@ var ErrClientMissingPong = errors.New("client missing pong")
 // connection without receiving a DisconnectPacket from the client.
 var ErrClientUnexpectedClose = errors.New("client unexpected close")
 
+// ErrClientExpectedConnack is returned when the first receied packt is not a
+// ConnackPacket.
+var ErrClientExpectedConnack = errors.New("client expected connack")
+
 // Callback is a function called by the client upon received messages or
 // internal errors.
 type Callback func(msg *packet.Message, err error)
@@ -399,6 +403,8 @@ func (c *Client) Close() error {
 
 // processes incoming packets
 func (c *Client) processor() error {
+	first := true
+
 	for {
 		// get next packet from connection
 		pkt, err := c.conn.Receive()
@@ -421,10 +427,20 @@ func (c *Client) processor() error {
 
 		c.log("Received: %s", pkt.String())
 
+		if first {
+			// get connack
+			connack, ok := pkt.(*packet.ConnackPacket)
+			if !ok {
+				return c.die(ErrClientExpectedConnack, true)
+			}
+
+			// process connack
+			err = c.processConnack(connack)
+			first = false
+		}
+
 		// call handlers for packet types and ignore other packets
 		switch _pkt := pkt.(type) {
-		case *packet.ConnackPacket:
-			err = c.processConnack(_pkt)
 		case *packet.SubackPacket:
 			err = c.processSuback(_pkt)
 		case *packet.UnsubackPacket:
