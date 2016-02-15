@@ -377,8 +377,6 @@ func TestRetainedWill(t *testing.T) {
 // do not resend QoS 1 packets at each reconnect
 // do not resend QoS 1 packets if reconnect is clean
 // do not resend QoS 1 packets at reconnect if puback was received
-// deliver QoS 1 retained messages
-// deliver QoS 0 retained message with QoS 1 subscription
 // remove stored subscriptions after unsubscribe
 // upgrade a QoS 0 subscription to QoS 1
 
