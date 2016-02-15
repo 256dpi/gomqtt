@@ -72,7 +72,7 @@ func (m *MemoryBackend) Remove(client *Client) error {
 }
 
 func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
-	for _, v := range m.tree.Match(string(msg.Topic)) {
+	for _, v := range m.tree.Match(msg.Topic) {
 		// we do not care about errors here as it is not the publishing clients
 		// responsibility
 

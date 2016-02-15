@@ -195,7 +195,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.state.set(clientConnected)
 
 	// retrieve session
-	sess, err := c.broker.Backend.GetSession(c, string(pkt.ClientID))
+	sess, err := c.broker.Backend.GetSession(c, pkt.ClientID)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -229,7 +229,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 	for _, subscription := range pkt.Subscriptions {
 		// subscribe client to queue
-		err := c.broker.Backend.Subscribe(c, string(subscription.Topic))
+		err := c.broker.Backend.Subscribe(c, subscription.Topic)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -253,7 +253,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 
 	for _, topic := range pkt.Topics {
 		// unsubscribe client from queue
-		err := c.broker.Backend.Unsubscribe(c, string(topic))
+		err := c.broker.Backend.Unsubscribe(c, topic)
 		if err != nil {
 			return c.die(err, true)
 		}
