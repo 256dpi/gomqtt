@@ -52,11 +52,11 @@ type Client struct {
 // NewClient takes over responsibility over a connection and returns a Client.
 func NewClient(broker *Broker, conn transport.Conn) *Client {
 	c := &Client{
-		broker:  broker,
-		conn:    conn,
-		out:     make(chan *packet.Message),
-		UUID:    uuid.NewV1().String(),
-		state:   newState(clientConnecting),
+		broker: broker,
+		conn:   conn,
+		out:    make(chan *packet.Message),
+		UUID:   uuid.NewV1().String(),
+		state:  newState(clientConnecting),
 	}
 
 	c.tomb.Go(c.processor)
@@ -485,7 +485,6 @@ func (c *Client) die(err error, close bool) error {
 
 		// report error
 		if err != nil {
-			// TODO: what happens with an internal error?
 			c.log("%s - Internal Error: %s", c.UUID, err)
 		}
 	})
