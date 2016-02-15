@@ -373,6 +373,87 @@ func TestUnsubscribe(t *testing.T) {
 	<-done
 }
 
+func TestSubscriptionUpgrade(t *testing.T) {
+	tp, done := startBroker(t, New(), 1)
+
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(1), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+
+	subscribeFuture1, err := client.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture1.Wait())
+
+	subscribeFuture2, err := client.Subscribe("test", 1)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture2.Wait())
+
+	publishFuture, err := client.Publish("test", []byte("test"), 2, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func TestMultipleSubscriptions(t *testing.T) {
+	tp, done := startBroker(t, New(), 1)
+
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(2), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+
+	subs := make(map[string]uint8)
+	subs["test"] = 0
+	subs["test"] = 1
+	subs["test"] = 2
+
+	subscribeFuture, err := client.SubscribeMultiple(subs)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	publishFuture, err := client.Publish("test", []byte("test"), 2, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
 func TestConnectTimeout(t *testing.T) {
 	broker := New()
 	broker.ConnectTimeout = 10 * time.Millisecond
@@ -461,11 +542,9 @@ func TestKeepAliveTimeout(t *testing.T) {
 // disconnect another client with the same clientId
 // disconnect if another broker connects the same client
 // restore QoS 0 subscriptions not clean
-// double sub does not double deliver
 
 // -- client pub sub
 // offline message support for direct publish
-// handle multiple subscriptions with the same filter
 
 // -- qos1
 // restore QoS 1 subscriptions not clean
