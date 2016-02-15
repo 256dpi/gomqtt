@@ -177,6 +177,12 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	var retainedMessages []*packet.Message
 
 	for _, subscription := range pkt.Subscriptions {
+		// save subscription in session
+		err := c.Session.SaveSubscription(&subscription)
+		if err != nil {
+			return c.die(err, true)
+		}
+
 		// subscribe client to queue
 		msgs, err := c.broker.Backend.Subscribe(c, subscription.Topic)
 		if err != nil {
@@ -185,12 +191,6 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 		// cache retained messages
 		retainedMessages = append(retainedMessages, msgs...)
-
-		// save subscription in session
-		err = c.Session.SaveSubscription(&subscription)
-		if err != nil {
-			return c.die(err, true)
-		}
 
 		// save granted qos
 		suback.ReturnCodes = append(suback.ReturnCodes, subscription.QOS)
@@ -382,6 +382,7 @@ func (c *Client) sender() error {
 				return c.die(fmt.Errorf("subscription not found in session"), true)
 			}
 
+			// respect maximum qos
 			if publish.Message.QOS > sub.QOS {
 				publish.Message.QOS = sub.QOS
 			}

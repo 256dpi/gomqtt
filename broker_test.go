@@ -22,7 +22,7 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-func abstractPublishSubscribeTest(t *testing.T, sub, pub, exp uint8) {
+func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) {
 	tp, done := startBroker(t, New(), 1)
 
 	client := client.New()
@@ -32,9 +32,9 @@ func abstractPublishSubscribeTest(t *testing.T, sub, pub, exp uint8) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, out, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(exp), msg.QOS)
+		assert.Equal(t, uint8(sub), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		received = true
@@ -45,11 +45,11 @@ func abstractPublishSubscribeTest(t *testing.T, sub, pub, exp uint8) {
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 
-	subscribeFuture, err := client.Subscribe("test", sub)
+	subscribeFuture, err := client.Subscribe(in, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 
-	publishFuture, err := client.Publish("test", []byte("test"), pub, false)
+	publishFuture, err := client.Publish(out, []byte("test"), pub, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -64,30 +64,38 @@ func abstractPublishSubscribeTest(t *testing.T, sub, pub, exp uint8) {
 }
 
 func TestPublishSubscribeQOS0(t *testing.T) {
-	abstractPublishSubscribeTest(t, 0, 0, 0)
+	abstractPublishSubscribeTest(t, "test", "test", 0, 0)
 }
 
 func TestPublishSubscribeQOS1(t *testing.T) {
-	abstractPublishSubscribeTest(t, 1, 1, 1)
+	abstractPublishSubscribeTest(t, "test", "test", 1, 1)
 }
 
 func TestPublishSubscribeQOS2(t *testing.T) {
-	abstractPublishSubscribeTest(t, 2, 2, 2)
+	abstractPublishSubscribeTest(t, "test", "test", 2, 2)
+}
+
+func TestPublishSubscribeWildcardOne(t *testing.T) {
+	abstractPublishSubscribeTest(t, "foo/bar", "foo/+", 0, 0)
+}
+
+func TestPublishSubscribeWildcardSome(t *testing.T) {
+	abstractPublishSubscribeTest(t, "foo/bar", "#", 0, 0)
 }
 
 func TestPublishSubscribeDowngrade1(t *testing.T) {
-	abstractPublishSubscribeTest(t, 0, 1, 0)
+	abstractPublishSubscribeTest(t, "test", "test", 0, 1)
 }
 
 func TestPublishSubscribeDowngrade2(t *testing.T) {
-	abstractPublishSubscribeTest(t, 0, 2, 0)
+	abstractPublishSubscribeTest(t, "test", "test", 0, 2)
 }
 
 func TestPublishSubscribeDowngrade3(t *testing.T) {
-	abstractPublishSubscribeTest(t, 1, 2, 1)
+	abstractPublishSubscribeTest(t, "test", "test", 1, 2)
 }
 
-func abstractRetainedMessageTest(t *testing.T, sub, pub, exp uint8) {
+func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
 	tp, done := startBroker(t, New(), 2)
 
 	client1 := client.New()
@@ -97,7 +105,7 @@ func abstractRetainedMessageTest(t *testing.T, sub, pub, exp uint8) {
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 
-	publishFuture, err := client1.Publish("test", []byte("test"), pub, true)
+	publishFuture, err := client1.Publish(out, []byte("test"), pub, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -111,9 +119,9 @@ func abstractRetainedMessageTest(t *testing.T, sub, pub, exp uint8) {
 
 	client2.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, out, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(exp), msg.QOS)
+		assert.Equal(t, uint8(sub), msg.QOS)
 		assert.True(t, msg.Retain)
 
 		received = true
@@ -124,7 +132,7 @@ func abstractRetainedMessageTest(t *testing.T, sub, pub, exp uint8) {
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 
-	subscribeFuture, err := client2.Subscribe("test", sub)
+	subscribeFuture, err := client2.Subscribe(in, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 
@@ -137,15 +145,23 @@ func abstractRetainedMessageTest(t *testing.T, sub, pub, exp uint8) {
 }
 
 func TestRetainedMessageQOS0(t *testing.T) {
-	abstractRetainedMessageTest(t, 0, 0, 0)
+	abstractRetainedMessageTest(t, "test", "test", 0, 0)
 }
 
 func TestRetainedMessageQOS1(t *testing.T) {
-	abstractRetainedMessageTest(t, 1, 1, 1)
+	abstractRetainedMessageTest(t, "test", "test", 1, 1)
 }
 
 func TestRetainedMessageQOS2(t *testing.T) {
-	abstractRetainedMessageTest(t, 2, 2, 2)
+	abstractRetainedMessageTest(t, "test", "test", 2, 2)
+}
+
+func TestRetainedMessageWildcardOne(t *testing.T) {
+	abstractRetainedMessageTest(t, "foo/bar", "foo/+", 0, 0)
+}
+
+func TestRetainedMessageWildcardSome(t *testing.T) {
+	abstractRetainedMessageTest(t, "foo/bar", "#", 0, 0)
 }
 
 // -- authentication
@@ -199,8 +215,6 @@ func TestRetainedMessageQOS2(t *testing.T) {
 // publish after disconnection
 
 // -- retained message
-// receive retained message with a # pattern
-// receive retained message with a + pattern
 // clear retained message
 
 // -- error
