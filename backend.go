@@ -24,12 +24,25 @@ type Backend interface {
 	// and returns a new one.
 	GetSession(string) (session.Session, error)
 
+	// Subscribe will subscribe the passed client to the specified topic and
+	// begin to forward messages by calling the clients Publish method.
 	Subscribe(client *Client, topic string) error
+
+	// Unsubscribe will unsubscribe the passed client from the specified topic.
 	Unsubscribe(client *Client, topic string) error
+
+	// Remove will unsubscribe the passed client from previously subscribe topics.
 	Remove(client *Client) error
+
+	// Publish will forward the passed message to all other subscribed clients.
 	Publish(client *Client, msg *packet.Message) error
-	//StoreRetained(*Client, string, []byte) error
-	//RetrieveRetained(*Client, string) ([]byte, error)
+
+	// StoreRetained retains the passed messages.
+	StoreRetained(*Client, *packet.Message) error
+
+	// RetrieveRetained will lookup all stored retained messages matching the
+	// supplied topic.
+	RetrieveRetained(*Client, string) ([]*packet.Message, error)
 }
 
 // TODO: missing offline subscriptions
