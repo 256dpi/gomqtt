@@ -73,10 +73,6 @@ func (m *MemoryBackend) Remove(client *Client) error {
 
 func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	for _, v := range m.queue.Match(msg.Topic) {
-		// we do not care about errors here as it is not the publishing clients
-		// responsibility
-
-		// TODO: log error
 		v.(*Client).Publish(msg)
 	}
 

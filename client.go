@@ -15,7 +15,6 @@
 package broker
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 
@@ -25,10 +24,6 @@ import (
 	"github.com/satori/go.uuid"
 	"gopkg.in/tomb.v2"
 )
-
-// ErrClientNotConnected may be returned by Publish and Close when the clients
-// is not yet fully connected or has been already closed.
-var ErrClientNotConnected = errors.New("client not connected")
 
 const (
 	clientConnecting byte = iota
@@ -42,7 +37,7 @@ type Client struct {
 	conn   transport.Conn
 	out    chan *packet.Message
 
-	Session session.Session // TODO: How do we get that session?
+	Session session.Session
 	UUID    string
 	Info    interface{}
 
@@ -70,43 +65,14 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 	return c
 }
 
-// Publish will send a PublishPacket to the client and initiate QOS flows.
-func (c *Client) Publish(msg *packet.Message) error {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	// check state
-	if c.state.get() != clientConnected {
-		return ErrClientNotConnected
+// Publish will send a Message to the client and initiate QOS flows.
+func (c *Client) Publish(msg *packet.Message) bool {
+	select {
+	case c.out <- msg:
+		return true
+	case <-c.tomb.Dying():
+		return false
 	}
-
-	c.out <- msg
-
-	return nil
-}
-
-// Close will cleanly close the connected client.
-func (c *Client) Close() error {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	// check if connected
-	if c.state.get() < clientConnecting {
-		return ErrClientNotConnected
-	}
-
-	// close connection
-	err := c.cleanup(nil, true)
-
-	// shutdown goroutines
-	c.tomb.Kill(nil)
-
-	// wait for all goroutines to exit
-	// goroutines will send eventual errors through the callback
-	c.tomb.Wait()
-
-	// do cleanup
-	return err
 }
 
 /* processor goroutine */
