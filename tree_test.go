@@ -136,6 +136,66 @@ func TestTreeMatchNoDuplicates(t *testing.T) {
 	assert.Equal(t, 1, len(tree.Match("foo/bar")))
 }
 
+func TestTreeSearchExact(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+
+	assert.Equal(t, 1, tree.Search("foo/bar")[0])
+}
+
+func TestTreeSearchWildcard1(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+
+	assert.Equal(t, 1, tree.Search("foo/+")[0])
+}
+
+func TestTreeSearchWildcard2(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+
+	assert.Equal(t, 1, tree.Search("foo/#")[0])
+}
+
+func TestTreeSearchWildcard3(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar/baz", 1)
+
+	assert.Equal(t, 1, tree.Search("foo/#")[0])
+}
+
+func TestTreeSearchWildcard4(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+
+	assert.Equal(t, 1, tree.Search("foo/bar/#")[0])
+}
+
+func TestTreeSearchMultiple(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo", 1)
+	tree.Add("foo/bar", 2)
+	tree.Add("foo/bar/baz", 3)
+
+	assert.Equal(t, 3, len(tree.Search("foo/#")))
+}
+
+func TestTreeSearchNoDuplicates(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo", 1)
+	tree.Add("foo/bar", 1)
+	tree.Add("foo/bar/baz", 1)
+
+	assert.Equal(t, 1, len(tree.Search("foo/#")))
+}
+
 func TestTreeReset(t *testing.T) {
 	tree := NewTree()
 
@@ -180,20 +240,45 @@ func BenchmarkTreeMatchExact(b *testing.B) {
 
 func BenchmarkTreeMatchWildcardOne(b *testing.B) {
 	tree := NewTree()
-	tree.Add("foo/bar", 1)
+	tree.Add("foo/+", 1)
 
 	for i := 0; i < b.N; i++ {
-		// TODO: not working
-		tree.Match("foo/+")
+		tree.Match("foo/bar")
 	}
 }
 
 func BenchmarkTreeMatchWildcardSome(b *testing.B) {
 	tree := NewTree()
+	tree.Add("#", 1)
+
+	for i := 0; i < b.N; i++ {
+		tree.Match("foo/bar")
+	}
+}
+
+func BenchmarkTreeSearchExact(b *testing.B) {
+	tree := NewTree()
 	tree.Add("foo/bar", 1)
 
 	for i := 0; i < b.N; i++ {
-		// TODO: not working
+		tree.Search("foo/bar")
+	}
+}
+
+func BenchmarkTreeSearchWildcardOne(b *testing.B) {
+	tree := NewTree()
+	tree.Add("foo/bar", 1)
+
+	for i := 0; i < b.N; i++ {
+		tree.Search("foo/+")
+	}
+}
+
+func BenchmarkTreeSearchWildcardSome(b *testing.B) {
+	tree := NewTree()
+	tree.Add("foo/bar", 1)
+
+	for i := 0; i < b.N; i++ {
 		tree.Match("#")
 	}
 }

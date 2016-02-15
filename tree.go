@@ -192,6 +192,9 @@ func (t *Tree) clear(value interface{}, node *node) bool {
 // Match will return a set of values that have filters that match the supplied
 // topic. The result set will be cleared from duplicate values. The function is
 // thread-safe.
+//
+// Note: In contrast to Search, Match does not respect wildcards in the query but
+// in the stored tree.
 func (t *Tree) Match(topic string) []interface{} {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
@@ -224,6 +227,59 @@ func (t *Tree) match(result []interface{}, i int, segments []string, node *node)
 	if segment != t.WildcardOne && segment != t.WildcardSome {
 		if child, ok := node.children[segment]; ok {
 			result = t.match(result, i+1, segments, child)
+		}
+	}
+
+	return result
+}
+
+// Match will return a set of values that have topics that match the supplied
+// filter. The result set will be cleared from duplicate values. The function is
+// thread-safe.
+//
+// Note: In contrast to Match, Search respects wildcards in the query but not in
+// the stored tree.
+func (t *Tree) Search(filter string) []interface{} {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
+	segments := strings.Split(filter, t.Separator)
+	values := t.search(make([]interface{}, 0), 0, segments, t.root)
+
+	return t.clean(values)
+}
+
+func (t *Tree) search(result []interface{}, i int, segments []string, node *node) []interface{} {
+	// when finished add all values to the result set
+	if i == len(segments) {
+		return append(result, node.values...)
+	}
+
+	// get segment
+	segment := segments[i]
+
+	// add all current and further values
+	if segment == t.WildcardSome {
+		result = append(result, node.values...)
+
+		for _, child := range node.children {
+			result = t.search(result, i, segments, child)
+		}
+	}
+
+	// add all current values and continue
+	if segment == t.WildcardOne {
+		result = append(result,node.values...)
+
+		for _, child := range node.children {
+			result = t.search(result, i+1, segments, child)
+		}
+	}
+
+	// match segments and get children
+	if segment != t.WildcardOne && segment != t.WildcardSome {
+		if child, ok := node.children[segment]; ok {
+			result = t.search(result, i+1, segments, child)
 		}
 	}
 
