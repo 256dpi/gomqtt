@@ -79,6 +79,8 @@ func (c *Client) Publish(msg *packet.Message) bool {
 
 // processes incoming packets
 func (c *Client) processor() error {
+	first := true
+
 	c.log("%s - New Connection", c.UUID)
 
 	for {
@@ -95,11 +97,19 @@ func (c *Client) processor() error {
 
 		c.log("%s - Received: %s", c.UUID, pkt.String())
 
-		// TODO: first packet must be a connect
+		if first {
+			// get connect
+			connect, ok := pkt.(*packet.ConnectPacket)
+			if !ok {
+				return c.die(fmt.Errorf("expected connect"), true)
+			}
+
+			// process connect
+			err = c.processConnect(connect)
+			first = false
+		}
 
 		switch _pkt := pkt.(type) {
-		case *packet.ConnectPacket:
-			err = c.processConnect(_pkt)
 		case *packet.SubscribePacket:
 			err = c.processSubscribe(_pkt)
 		case *packet.UnsubscribePacket:
@@ -135,6 +145,9 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// TODO: authenticate client
 	c.state.set(clientConnected)
+
+	// TODO: get session only if client id is set
+	// TODO: clear session when clean session = true
 
 	// retrieve session
 	sess, err := c.broker.Backend.GetSession(c, pkt.ClientID)

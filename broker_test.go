@@ -350,7 +350,6 @@ func TestRetainedWill(t *testing.T) {
 // failed authentication does not disconnect other client with same clientId
 
 // -- basic
-// does not die badly on connection error
 // unsubscribe
 // unsubscribe on disconnect
 // disconnect
