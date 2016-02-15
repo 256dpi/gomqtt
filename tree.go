@@ -196,18 +196,10 @@ func (t *Tree) Match(topic string) []interface{} {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	values := t.match(make([]interface{}, 0), 0, strings.Split(topic, t.Separator), t.root)
+	segments := strings.Split(topic, t.Separator)
+	values := t.match(make([]interface{}, 0), 0, segments, t.root)
 
-	// remove duplicates
-	result := make([]interface{}, 0, len(values))
-	seen := make(map[interface{}]bool, len(values))
-	for _, v := range values {
-		if _, ok := seen[v]; !ok {
-			result = append(result, v)
-			seen[v] = true
-		}
-	}
-	return result
+	return t.clean(values)
 }
 
 func (t *Tree) match(result []interface{}, i int, segments []string, node *node) []interface{} {
@@ -232,6 +224,21 @@ func (t *Tree) match(result []interface{}, i int, segments []string, node *node)
 	if segment != t.WildcardOne && segment != t.WildcardSome {
 		if child, ok := node.children[segment]; ok {
 			result = t.match(result, i+1, segments, child)
+		}
+	}
+
+	return result
+}
+
+// clean will remove remove duplicates
+func (t *Tree) clean(values []interface{}) []interface{} {
+	result := make([]interface{}, 0, len(values))
+	seen := make(map[interface{}]bool, len(values))
+
+	for _, v := range values {
+		if _, ok := seen[v]; !ok {
+			result = append(result, v)
+			seen[v] = true
 		}
 	}
 
