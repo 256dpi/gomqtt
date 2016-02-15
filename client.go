@@ -83,6 +83,9 @@ func (c *Client) processor() error {
 
 	c.log("%s - New Connection", c.UUID)
 
+	// set initial read timeout
+	c.conn.SetReadTimeout(c.broker.ConnectTimeout)
+
 	for {
 		// get next packet from connection
 		pkt, err := c.conn.Receive()
@@ -444,15 +447,20 @@ func (c *Client) cleanup(err error, close bool) error {
 		err = _err
 	}
 
-	// get will
-	will, _err := c.Session.LookupWill()
-	if err == nil {
-		err = _err
-	}
+	if c.Session != nil {
+		// get will
+		will, _err := c.Session.LookupWill()
+		if err == nil {
+			err = _err
+		}
 
-	// publish will message
-	if will != nil {
-		c.broker.Backend.Publish(c, will)
+		// publish will message
+		if will != nil {
+			_err = c.broker.Backend.Publish(c, will)
+			if err == nil {
+				err = _err
+			}
+		}
 	}
 
 	// ensure that the connection gets closed

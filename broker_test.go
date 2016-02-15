@@ -21,6 +21,7 @@ import (
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
+	"github.com/gomqtt/transport"
 )
 
 func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) {
@@ -369,6 +370,22 @@ func TestUnsubscribe(t *testing.T) {
 	<-done
 }
 
+func TestConnectTimeout(t *testing.T) {
+	broker := New()
+	broker.ConnectTimeout = 10 * time.Millisecond
+
+	tp, done := startBroker(t, broker, 1)
+
+	conn, err := transport.Dial(tp.url())
+	assert.NoError(t, err)
+
+	pkt, err := conn.Receive()
+	assert.Nil(t, pkt)
+	assert.Error(t, err)
+
+	<-done
+}
+
 // -- authentication
 // authenticate successfully a client with username and password
 // authenticate unsuccessfully a client with username and password
@@ -394,7 +411,6 @@ func TestUnsubscribe(t *testing.T) {
 // supports pingreq/pingresp
 // supports keep alive disconnections
 // supports keep alive disconnections after a pingreq
-// disconnect if a connect does not arrive in time
 
 // -- qos1
 // restore QoS 1 subscriptions not clean

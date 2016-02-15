@@ -14,19 +14,26 @@
 
 package broker
 
-import "github.com/gomqtt/transport"
+import (
+	"time"
+
+	"github.com/gomqtt/transport"
+)
 
 type Logger func(msg string)
 
 type Broker struct {
 	Backend Backend
 	Logger  Logger
+
+	ConnectTimeout time.Duration
 }
 
 // New returns a new Broker with a basic MemoryBackend.
 func New() *Broker {
 	return &Broker{
-		Backend: NewMemoryBackend(),
+		Backend:        NewMemoryBackend(),
+		ConnectTimeout: 10 *time.Second,
 	}
 }
 
