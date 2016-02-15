@@ -339,6 +339,36 @@ func TestRetainedWill(t *testing.T) {
 	<-done
 }
 
+func TestUnsubscribe(t *testing.T) {
+	tp, done := startBroker(t, New(), 1)
+
+	client := client.New()
+	client.Callback = errorCallback(t)
+
+	connectFuture, err := client.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+
+	subscribeFuture, err := client.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	unsubscribeFuture, err := client.Unsubscribe("test")
+	assert.NoError(t, err)
+	assert.NoError(t, unsubscribeFuture.Wait())
+
+	publishFuture, err := client.Publish("test", []byte("test"), 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	time.Sleep(50 * time.Millisecond)
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
 // -- authentication
 // authenticate successfully a client with username and password
 // authenticate unsuccessfully a client with username and password
@@ -350,10 +380,6 @@ func TestRetainedWill(t *testing.T) {
 // failed authentication does not disconnect other client with same clientId
 
 // -- basic
-// unsubscribe
-// unsubscribe on disconnect
-// disconnect
-// closes
 // connect without a clientId for MQTT 3.1.1
 // disconnect another client with the same clientId
 // disconnect if another broker connects the same client
