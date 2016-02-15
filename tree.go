@@ -122,6 +122,34 @@ func (t *Tree) add(value interface{}, i int, segments []string, node *node) {
 	t.add(value, i+1, segments, child)
 }
 
+// Set sets the supplied value as the only value for the supplied filter. This
+// function will automatically grow the tree and is thread-safe.
+func (t *Tree) Set(filter string, value interface{}) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	t.set(value, 0, strings.Split(filter, t.Separator), t.root)
+}
+
+func (t *Tree) set(value interface{}, i int, segments []string, node *node) {
+	// set value on leaf
+	if i == len(segments) {
+		node.values = []interface{}{value}
+		return
+	}
+
+	segment := segments[i]
+	child, ok := node.children[segment]
+
+	// create missing node
+	if !ok {
+		child = newNode()
+		node.children[segment] = child
+	}
+
+	t.set(value, i+1, segments, child)
+}
+
 // Remove unregisters the value for the supplied filter. This function will
 // automatically shrink the tree and is thread-safe.
 func (t *Tree) Remove(filter string, value interface{}) {

@@ -38,6 +38,23 @@ func TestTreeAddDuplicate(t *testing.T) {
 	assert.Equal(t, 1, len(tree.root.children["foo"].children["bar"].values))
 }
 
+func TestTreeSet(t *testing.T) {
+	tree := NewTree()
+
+	tree.Set("foo/bar", 1)
+
+	assert.Equal(t, 1, tree.root.children["foo"].children["bar"].values[0])
+}
+
+func TestTreeSetReplace(t *testing.T) {
+	tree := NewTree()
+
+	tree.Set("foo/bar", 1)
+	tree.Set("foo/bar", 2)
+
+	assert.Equal(t, 2, tree.root.children["foo"].children["bar"].values[0])
+}
+
 func TestTreeRemove(t *testing.T) {
 	tree := NewTree()
 
@@ -221,11 +238,28 @@ func BenchmarkTreeAddSame(b *testing.B) {
 	}
 }
 
-func BenchmarkTreeAdd2Unique(b *testing.B) {
+func BenchmarkTreeAddUnique(b *testing.B) {
 	tree := NewTree()
 
 	for i := 0; i < b.N; i++ {
-		tree.Add(fmt.Sprintf("foo/bar/%d", i), 1)
+		tree.Add(fmt.Sprintf("foo/%d", i), 1)
+	}
+}
+
+
+func BenchmarkTreeSetSame(b *testing.B) {
+	tree := NewTree()
+
+	for i := 0; i < b.N; i++ {
+		tree.Set("foo/bar", 1)
+	}
+}
+
+func BenchmarkTreeSetUnique(b *testing.B) {
+	tree := NewTree()
+
+	for i := 0; i < b.N; i++ {
+		tree.Set(fmt.Sprintf("foo/%d", i), 1)
 	}
 }
 
