@@ -24,7 +24,7 @@ import (
 
 type MemoryBackend struct {
 	tree     *topic.Tree
-	retained map[string][]byte
+	retained *topic.Tree
 	sessions map[string]*session.MemorySession
 
 	mutex sync.Mutex
@@ -33,6 +33,7 @@ type MemoryBackend struct {
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
 		tree:     topic.NewTree(),
+		retained: topic.NewTree(),
 		sessions: make(map[string]*session.MemorySession),
 	}
 }
@@ -82,24 +83,32 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	return nil
 }
 
-func (m *MemoryBackend) StoreRetained(client *Client, topic string, payload []byte) error {
+func (m *MemoryBackend) StoreRetained(client *Client, msg *packet.Message) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	m.retained[topic] = payload
+	if len(msg.Payload) > 0 {
+		m.retained.Set(msg.Topic, msg)
+	} else {
+		m.retained.Empty(msg.Topic)
+	}
 
 	return nil
 }
 
-func (m *MemoryBackend) RetrieveRetained(client *Client, topic string) ([]byte, error) {
+func (m *MemoryBackend) RetrieveRetained(client *Client, topic string) ([]*packet.Message, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	payload, ok := m.retained[topic]
+	values := m.retained.Search(topic)
 
-	if ok {
-		return payload, nil
+	var msgs []*packet.Message
+
+	for _, value := range values {
+		if msg, ok := value.(*packet.Message); ok {
+			msgs = append(msgs, msg)
+		}
 	}
 
-	return nil, nil
+	return msgs, nil
 }

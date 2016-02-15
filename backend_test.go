@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/gomqtt/packet"
 )
 
 func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
@@ -33,6 +34,72 @@ func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
 	assert.NoError(t, err)
 	assert.False(t, session3 == session1)
 	assert.False(t, session3 == session2)
+}
+
+func abstractBackendRetainedTest(t *testing.T, backend Backend) {
+	msg1 := &packet.Message{
+		Topic: "foo",
+		Payload: []byte("bar"),
+		QOS: 1,
+		Retain: true,
+	}
+
+	msg2 := &packet.Message{
+		Topic: "foo/bar",
+		Payload: []byte("bar"),
+		QOS: 1,
+		Retain: true,
+	}
+
+	msg3 := &packet.Message{
+		Topic: "foo",
+		Payload: []byte("bar"),
+		QOS: 2,
+		Retain: true,
+	}
+
+	msg4 := &packet.Message{
+		Topic: "foo",
+		QOS: 1,
+		Retain: true,
+	}
+
+	// should be empty
+	msgs, err := backend.RetrieveRetained(nil, "foo")
+	assert.NoError(t, err)
+	assert.Empty(t, msgs)
+
+	err = backend.StoreRetained(nil, msg1)
+	assert.NoError(t, err)
+
+	// should have one
+	msgs, err = backend.RetrieveRetained(nil, "foo")
+	assert.NoError(t, err)
+	assert.Equal(t, msg1, msgs[0])
+
+	err = backend.StoreRetained(nil, msg2)
+	assert.NoError(t, err)
+
+	// should have two
+	msgs, err = backend.RetrieveRetained(nil, "#")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(msgs))
+
+	err = backend.StoreRetained(nil, msg3)
+	assert.NoError(t, err)
+
+	// should have another
+	msgs, err = backend.RetrieveRetained(nil, "foo")
+	assert.NoError(t, err)
+	assert.Equal(t, msg3, msgs[0])
+
+	err = backend.StoreRetained(nil, msg4)
+	assert.NoError(t, err)
+
+	// should have none
+	msgs, err = backend.RetrieveRetained(nil, "foo")
+	assert.NoError(t, err)
+	assert.Empty(t, msgs)
 }
 
 // store and look up retained messages

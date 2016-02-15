@@ -19,3 +19,7 @@ import "testing"
 func TestMemoryBackendGetSession(t *testing.T) {
 	abstractBackendGetSessionTest(t, NewMemoryBackend())
 }
+
+func TestMemoryBackendRetained(t *testing.T) {
+	abstractBackendRetainedTest(t, NewMemoryBackend())
+}

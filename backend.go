@@ -37,7 +37,8 @@ type Backend interface {
 	// Publish will forward the passed message to all other subscribed clients.
 	Publish(client *Client, msg *packet.Message) error
 
-	// StoreRetained retains the passed messages.
+	// StoreRetained retains the passed messages. If the supplied message has a
+	// zero length payload, the backend removes the currently retained message.
 	StoreRetained(*Client, *packet.Message) error
 
 	// RetrieveRetained will lookup all stored retained messages matching the
