@@ -61,7 +61,7 @@ func (n *node) string(i int) string {
 	return str
 }
 
-// Tree implements a thread-safe tree for adding, removing and matching topics.
+// Tree implements a thread-safe topic tree.
 type Tree struct {
 	// The separator character. Default: "/"
 	Separator string
@@ -88,8 +88,8 @@ func NewTree() *Tree {
 }
 
 // Add registers the value for the supplied topic. This function will
-// automatically grow the tree and is thread-safe.
-// If value already exists for the given topic it will not be added again.
+// automatically grow the tree. If value already exists for the given topic it
+// will not be added again.
 func (t *Tree) Add(topic string, value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -123,7 +123,7 @@ func (t *Tree) add(value interface{}, i int, segments []string, node *node) {
 }
 
 // Set sets the supplied value as the only value for the supplied topic. This
-// function will automatically grow the tree and is thread-safe.
+// function will automatically grow the tree.
 func (t *Tree) Set(topic string, value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -150,8 +150,8 @@ func (t *Tree) set(value interface{}, i int, segments []string, node *node) {
 	t.set(value, i+1, segments, child)
 }
 
-// Remove unregisters the value for the supplied topic. This function will
-// automatically shrink the tree and is thread-safe.
+// Remove unregisters the value from the supplied topic. This function will
+// automatically shrink the tree.
 func (t *Tree) Remove(topic string, value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -159,8 +159,8 @@ func (t *Tree) Remove(topic string, value interface{}) {
 	t.remove(value, 0, strings.Split(topic, t.Separator), t.root)
 }
 
-// Empty will unregister all values for the supplied topic. This function will
-// automatically shrink the tree and is thread-safe.
+// Empty will unregister all values from the supplied topic. This function will
+// automatically shrink the tree.
 func (t *Tree) Empty(topic string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -196,7 +196,7 @@ func (t *Tree) remove(value interface{}, i int, segments []string, node *node) b
 }
 
 // Clear will unregister the supplied value from all topics. This function will
-// automatically shrink the tree and is thread-safe.
+// automatically shrink the tree.
 func (t *Tree) Clear(value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -217,9 +217,8 @@ func (t *Tree) clear(value interface{}, node *node) bool {
 	return len(node.values) == 0 && len(node.children) == 0
 }
 
-// Match will return a set of values that have topics that match the supplied
-// topic. The result set will be cleared from duplicate values. The function is
-// thread-safe.
+// Match will return a set of values from topics that match the supplied topic.
+// The result set will be cleared from duplicate values.
 //
 // Note: In contrast to Search, Match does not respect wildcards in the query but
 // in the stored tree.
@@ -261,9 +260,8 @@ func (t *Tree) match(result []interface{}, i int, segments []string, node *node)
 	return result
 }
 
-// Match will return a set of values that have topics that match the supplied
-// topic. The result set will be cleared from duplicate values. The function is
-// thread-safe.
+// Search will return a set of values from topics that match the supplied topic.
+// The result set will be cleared from duplicate values.
 //
 // Note: In contrast to Match, Search respects wildcards in the query but not in
 // the stored tree.
@@ -329,7 +327,7 @@ func (t *Tree) clean(values []interface{}) []interface{} {
 	return result
 }
 
-// Reset will completely clear the tree. The function is thread-safe.
+// Reset will completely clear the tree.
 func (t *Tree) Reset() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -337,8 +335,7 @@ func (t *Tree) Reset() {
 	t.root = newNode()
 }
 
-// String will return a string representation of the tree. The function is
-// thread-safe.
+// String will return a string representation of the tree.
 func (t *Tree) String() string {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
