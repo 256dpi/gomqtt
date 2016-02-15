@@ -33,7 +33,7 @@ type Broker struct {
 func New() *Broker {
 	return &Broker{
 		Backend:        NewMemoryBackend(),
-		ConnectTimeout: 10 *time.Second,
+		ConnectTimeout: 10 * time.Second,
 	}
 }
 

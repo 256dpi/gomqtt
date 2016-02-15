@@ -15,13 +15,16 @@
 package broker
 
 import (
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/gomqtt/client"
+	"github.com/gomqtt/flow"
 	"github.com/gomqtt/packet"
-	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/transport"
+	"github.com/stretchr/testify/assert"
 )
 
 func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) {
@@ -386,6 +389,63 @@ func TestConnectTimeout(t *testing.T) {
 	<-done
 }
 
+func TestKeepAlive(t *testing.T) {
+	tp, done := startBroker(t, New(), 1)
+
+	opts := client.NewOptions()
+	opts.KeepAlive = "1s"
+
+	client := client.New()
+	client.Callback = errorCallback(t)
+
+	var reqCounter int32
+	var respCounter int32
+
+	client.Logger = func(message string) {
+		if strings.Contains(message, "Pingreq") {
+			atomic.AddInt32(&reqCounter, 1)
+		} else if strings.Contains(message, "Pingresp") {
+			atomic.AddInt32(&respCounter, 1)
+		}
+	}
+
+	connectFuture, err := client.Connect(tp.url(), opts)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+
+	time.Sleep(2500 * time.Millisecond)
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+
+	assert.Equal(t, int32(2), atomic.LoadInt32(&reqCounter))
+	assert.Equal(t, int32(2), atomic.LoadInt32(&respCounter))
+}
+
+func TestKeepAliveTimeout(t *testing.T) {
+	connect := packet.NewConnectPacket()
+	connect.KeepAlive = 1
+
+	connack := packet.NewConnackPacket()
+
+	client := flow.New().
+		Send(connect).
+		Receive(connack).
+		End()
+
+	tp, done := startBroker(t, New(), 1)
+
+	conn, err := transport.Dial(tp.url())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn)
+
+	client.Test(t, conn)
+
+	<-done
+}
+
 // -- authentication
 // authenticate successfully a client with username and password
 // authenticate unsuccessfully a client with username and password
@@ -406,11 +466,6 @@ func TestConnectTimeout(t *testing.T) {
 // -- client pub sub
 // offline message support for direct publish
 // handle multiple subscriptions with the same filter
-
-// -- keepalive
-// supports pingreq/pingresp
-// supports keep alive disconnections
-// supports keep alive disconnections after a pingreq
 
 // -- qos1
 // restore QoS 1 subscriptions not clean

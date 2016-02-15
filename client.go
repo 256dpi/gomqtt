@@ -17,6 +17,7 @@ package broker
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
@@ -151,6 +152,13 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// set clean flag
 	c.clean = pkt.CleanSession
+
+	// set keep alive
+	if pkt.KeepAlive > 0 {
+		c.conn.SetReadTimeout(time.Duration(pkt.KeepAlive) * 1500 * time.Millisecond)
+	} else {
+		c.conn.SetReadTimeout(0)
+	}
 
 	// retrieve session
 	sess, err := c.broker.Backend.GetSession(c, pkt.ClientID)
