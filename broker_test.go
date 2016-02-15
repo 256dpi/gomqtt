@@ -27,7 +27,6 @@ func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) 
 
 	client := client.New()
 
-	received := false
 	wait := make(chan struct{})
 
 	client.Callback = func(msg *packet.Message, err error) {
@@ -37,7 +36,6 @@ func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) 
 		assert.Equal(t, uint8(sub), msg.QOS)
 		assert.False(t, msg.Retain)
 
-		received = true
 		close(wait)
 	}
 
@@ -59,8 +57,6 @@ func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) 
 	assert.NoError(t, err)
 
 	<-done
-
-	assert.True(t, received)
 }
 
 func TestPublishSubscribeQOS0(t *testing.T) {
@@ -114,7 +110,6 @@ func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
 
 	client2 := client.New()
 
-	received := false
 	wait := make(chan struct{})
 
 	client2.Callback = func(msg *packet.Message, err error) {
@@ -124,7 +119,6 @@ func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
 		assert.Equal(t, uint8(sub), msg.QOS)
 		assert.True(t, msg.Retain)
 
-		received = true
 		close(wait)
 	}
 
@@ -162,6 +156,68 @@ func TestRetainedMessageWildcardOne(t *testing.T) {
 
 func TestRetainedMessageWildcardSome(t *testing.T) {
 	abstractRetainedMessageTest(t, "foo/bar", "#", 0, 0)
+}
+
+func abstractWillTest(t *testing.T, sub, pub uint8) {
+	tp, done := startBroker(t, New(), 2)
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	opts := client.NewOptions()
+	opts.Will = &packet.Message{
+		Topic: "test",
+		Payload: []byte("test"),
+		QOS: pub,
+	}
+
+	connectFuture1, err := client1.Connect(tp.url(), opts)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+
+	client2 := client.New()
+
+	wait := make(chan struct{})
+
+	client2.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(sub), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture2, err := client2.Connect(tp.url(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+
+	subscribeFuture, err := client2.Subscribe("test", sub)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	err = client1.Close()
+	assert.NoError(t, err)
+
+	<-wait
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func TestWillQOS0(t *testing.T) {
+	abstractWillTest(t, 0, 0)
+}
+
+func TestWillQOS1(t *testing.T) {
+	abstractWillTest(t, 1, 1)
+}
+
+func TestWillQOS2(t *testing.T) {
+	abstractWillTest(t, 2, 2)
 }
 
 // -- authentication
@@ -221,6 +277,4 @@ func TestRetainedMessageWildcardSome(t *testing.T) {
 // after an error, outstanding packets are discarded
 
 // -- will
-// delivers a will
 // delivers old will in case of a crash
-// store the will in the persistence
