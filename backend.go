@@ -26,7 +26,9 @@ type Backend interface {
 
 	// Subscribe will subscribe the passed client to the specified topic and
 	// begin to forward messages by calling the clients Publish method.
-	Subscribe(client *Client, topic string) error
+	// It will also return the stored retained messages matching the supplied
+	// topic.
+	Subscribe(client *Client, topic string) ([]*packet.Message, error)
 
 	// Unsubscribe will unsubscribe the passed client from the specified topic.
 	Unsubscribe(client *Client, topic string) error
@@ -35,15 +37,10 @@ type Backend interface {
 	Remove(client *Client) error
 
 	// Publish will forward the passed message to all other subscribed clients.
+	// It will also store the message if Retain is set to true. If the supplied
+	//message has additionally a zero length payload, the backend removes the
+	// currently retained message.
 	Publish(client *Client, msg *packet.Message) error
-
-	// StoreRetained retains the passed messages. If the supplied message has a
-	// zero length payload, the backend removes the currently retained message.
-	StoreRetained(client *Client, msg *packet.Message) error
-
-	// RetrieveRetained will lookup all stored retained messages matching the
-	// supplied topic.
-	RetrieveRetained(client *Client, topic string) ([]*packet.Message, error)
 }
 
 // TODO: missing offline subscriptions

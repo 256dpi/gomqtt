@@ -53,48 +53,8 @@ func (m *MemoryBackend) GetSession(client *Client, id string) (session.Session, 
 	return sess, nil
 }
 
-func (m *MemoryBackend) Subscribe(client *Client, filter string) error {
-	m.queue.Add(filter, client)
-
-	return nil
-}
-
-func (m *MemoryBackend) Unsubscribe(client *Client, filter string) error {
-	m.queue.Remove(filter, client)
-
-	return nil
-}
-
-func (m *MemoryBackend) Remove(client *Client) error {
-	m.queue.Clear(client)
-
-	return nil
-}
-
-func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
-	for _, v := range m.queue.Match(msg.Topic) {
-		v.(*Client).Publish(msg)
-	}
-
-	return nil
-}
-
-func (m *MemoryBackend) StoreRetained(client *Client, msg *packet.Message) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	if len(msg.Payload) > 0 {
-		m.retained.Set(msg.Topic, msg)
-	} else {
-		m.retained.Empty(msg.Topic)
-	}
-
-	return nil
-}
-
-func (m *MemoryBackend) RetrieveRetained(client *Client, topic string) ([]*packet.Message, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+func (m *MemoryBackend) Subscribe(client *Client, topic string) ([]*packet.Message, error) {
+	m.queue.Add(topic, client)
 
 	values := m.retained.Search(topic)
 
@@ -107,4 +67,34 @@ func (m *MemoryBackend) RetrieveRetained(client *Client, topic string) ([]*packe
 	}
 
 	return msgs, nil
+}
+
+func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
+	m.queue.Remove(topic, client)
+
+	return nil
+}
+
+func (m *MemoryBackend) Remove(client *Client) error {
+	m.queue.Clear(client)
+
+	return nil
+}
+
+func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
+	if msg.Retain {
+		if len(msg.Payload) > 0 {
+			m.retained.Set(msg.Topic, msg)
+		} else {
+			m.retained.Empty(msg.Topic)
+		}
+	}
+
+	for _, v := range m.queue.Match(msg.Topic) {
+		if client, ok := v.(*Client); ok && client != nil {
+			client.Publish(msg)
+		}
+	}
+
+	return nil
 }

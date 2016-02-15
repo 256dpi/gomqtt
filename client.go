@@ -35,12 +35,12 @@ const (
 type Client struct {
 	broker *Broker
 	conn   transport.Conn
-	out    chan *packet.Message
 
 	Session session.Session
 	UUID    string
 	Info    interface{}
 
+	out   chan *packet.Message
 	state *state
 	clean bool
 
@@ -89,15 +89,11 @@ func (c *Client) processor() error {
 				return c.die(nil, false)
 			}
 
-			// TODO: If the connection has been dropped send the will message.
-
 			// die on any other error
 			return c.die(err, false)
 		}
 
 		c.log("%s - Received: %s", c.UUID, pkt.String())
-
-		// TODO: Handle errors
 
 		// TODO: first packet must be a connect
 
@@ -173,12 +169,17 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	suback.ReturnCodes = make([]byte, 0)
 	suback.PacketID = pkt.PacketID
 
+	var retainedMessages []*packet.Message
+
 	for _, subscription := range pkt.Subscriptions {
 		// subscribe client to queue
-		err := c.broker.Backend.Subscribe(c, subscription.Topic)
+		msgs, err := c.broker.Backend.Subscribe(c, subscription.Topic)
 		if err != nil {
 			return c.die(err, true)
 		}
+
+		// cache retained messages
+		retainedMessages = append(retainedMessages, msgs...)
 
 		// save subscription in session
 		err = c.Session.SaveSubscription(&subscription)
@@ -196,17 +197,9 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		return c.die(err, false)
 	}
 
-	for _, subscription := range pkt.Subscriptions {
-		// get retained messages
-		msgs, err := c.broker.Backend.RetrieveRetained(c, subscription.Topic)
-		if err != nil {
-			return c.die(err, true)
-		}
-
-		// send messages
-		for _, msg := range msgs {
-			c.out <- msg
-		}
+	// send messages
+	for _, msg := range retainedMessages {
+		c.out <- msg
 	}
 
 	return nil
@@ -275,14 +268,6 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		if err != nil {
 			return c.die(err, true)
 		}
-
-		// store retained message
-		if publish.Message.Retain {
-			err := c.broker.Backend.StoreRetained(c, &publish.Message)
-			if err != nil {
-				return c.die(err, true)
-			}
-		}
 	}
 
 	return nil
@@ -350,14 +335,6 @@ func (c *Client) processPubrel(packetID uint16) error {
 	err = c.broker.Backend.Publish(c, &publish.Message)
 	if err != nil {
 		return c.die(err, true)
-	}
-
-	// store retained message
-	if publish.Message.Retain {
-		err := c.broker.Backend.StoreRetained(c, &publish.Message)
-		if err != nil {
-			return c.die(err, true)
-		}
 	}
 
 	return nil

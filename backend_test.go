@@ -65,39 +65,39 @@ func abstractBackendRetainedTest(t *testing.T, backend Backend) {
 	}
 
 	// should be empty
-	msgs, err := backend.RetrieveRetained(nil, "foo")
+	msgs, err := backend.Subscribe(nil, "foo")
 	assert.NoError(t, err)
 	assert.Empty(t, msgs)
 
-	err = backend.StoreRetained(nil, msg1)
+	err = backend.Publish(nil, msg1)
 	assert.NoError(t, err)
 
 	// should have one
-	msgs, err = backend.RetrieveRetained(nil, "foo")
+	msgs, err = backend.Subscribe(nil, "foo")
 	assert.NoError(t, err)
 	assert.Equal(t, msg1, msgs[0])
 
-	err = backend.StoreRetained(nil, msg2)
+	err = backend.Publish(nil, msg2)
 	assert.NoError(t, err)
 
 	// should have two
-	msgs, err = backend.RetrieveRetained(nil, "#")
+	msgs, err = backend.Subscribe(nil, "#")
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(msgs))
 
-	err = backend.StoreRetained(nil, msg3)
+	err = backend.Publish(nil, msg3)
 	assert.NoError(t, err)
 
 	// should have another
-	msgs, err = backend.RetrieveRetained(nil, "foo")
+	msgs, err = backend.Subscribe(nil, "foo")
 	assert.NoError(t, err)
 	assert.Equal(t, msg3, msgs[0])
 
-	err = backend.StoreRetained(nil, msg4)
+	err = backend.Publish(nil, msg4)
 	assert.NoError(t, err)
 
 	// should have none
-	msgs, err = backend.RetrieveRetained(nil, "foo")
+	msgs, err = backend.Subscribe(nil, "foo")
 	assert.NoError(t, err)
 	assert.Empty(t, msgs)
 }
