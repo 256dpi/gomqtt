@@ -87,14 +87,14 @@ func NewTree() *Tree {
 	}
 }
 
-// Add registers the value for the supplied filter. This function will
+// Add registers the value for the supplied topic. This function will
 // automatically grow the tree and is thread-safe.
-// If value already exists for the given filter it will not be added again.
-func (t *Tree) Add(filter string, value interface{}) {
+// If value already exists for the given topic it will not be added again.
+func (t *Tree) Add(topic string, value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.add(value, 0, strings.Split(filter, t.Separator), t.root)
+	t.add(value, 0, strings.Split(topic, t.Separator), t.root)
 }
 
 func (t *Tree) add(value interface{}, i int, segments []string, node *node) {
@@ -122,13 +122,13 @@ func (t *Tree) add(value interface{}, i int, segments []string, node *node) {
 	t.add(value, i+1, segments, child)
 }
 
-// Set sets the supplied value as the only value for the supplied filter. This
+// Set sets the supplied value as the only value for the supplied topic. This
 // function will automatically grow the tree and is thread-safe.
-func (t *Tree) Set(filter string, value interface{}) {
+func (t *Tree) Set(topic string, value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.set(value, 0, strings.Split(filter, t.Separator), t.root)
+	t.set(value, 0, strings.Split(topic, t.Separator), t.root)
 }
 
 func (t *Tree) set(value interface{}, i int, segments []string, node *node) {
@@ -150,22 +150,22 @@ func (t *Tree) set(value interface{}, i int, segments []string, node *node) {
 	t.set(value, i+1, segments, child)
 }
 
-// Remove unregisters the value for the supplied filter. This function will
+// Remove unregisters the value for the supplied topic. This function will
 // automatically shrink the tree and is thread-safe.
-func (t *Tree) Remove(filter string, value interface{}) {
+func (t *Tree) Remove(topic string, value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.remove(value, 0, strings.Split(filter, t.Separator), t.root)
+	t.remove(value, 0, strings.Split(topic, t.Separator), t.root)
 }
 
-// Empty will unregister all values for the supplied filter. This function will
+// Empty will unregister all values for the supplied topic. This function will
 // automatically shrink the tree and is thread-safe.
-func (t *Tree) Empty(filter string) {
+func (t *Tree) Empty(topic string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.remove(nil, 0, strings.Split(filter, t.Separator), t.root)
+	t.remove(nil, 0, strings.Split(topic, t.Separator), t.root)
 }
 
 func (t *Tree) remove(value interface{}, i int, segments []string, node *node) bool {
@@ -195,7 +195,7 @@ func (t *Tree) remove(value interface{}, i int, segments []string, node *node) b
 	return len(node.values) == 0 && len(node.children) == 0
 }
 
-// Clear will unregister the supplied value from all filters. This function will
+// Clear will unregister the supplied value from all topics. This function will
 // automatically shrink the tree and is thread-safe.
 func (t *Tree) Clear(value interface{}) {
 	t.mutex.Lock()
@@ -217,7 +217,7 @@ func (t *Tree) clear(value interface{}, node *node) bool {
 	return len(node.values) == 0 && len(node.children) == 0
 }
 
-// Match will return a set of values that have filters that match the supplied
+// Match will return a set of values that have topics that match the supplied
 // topic. The result set will be cleared from duplicate values. The function is
 // thread-safe.
 //
@@ -262,16 +262,16 @@ func (t *Tree) match(result []interface{}, i int, segments []string, node *node)
 }
 
 // Match will return a set of values that have topics that match the supplied
-// filter. The result set will be cleared from duplicate values. The function is
+// topic. The result set will be cleared from duplicate values. The function is
 // thread-safe.
 //
 // Note: In contrast to Match, Search respects wildcards in the query but not in
 // the stored tree.
-func (t *Tree) Search(filter string) []interface{} {
+func (t *Tree) Search(topic string) []interface{} {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	segments := strings.Split(filter, t.Separator)
+	segments := strings.Split(topic, t.Separator)
 	values := t.search(make([]interface{}, 0), 0, segments, t.root)
 
 	return t.clean(values)
