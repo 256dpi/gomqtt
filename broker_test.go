@@ -471,6 +471,8 @@ func TestConnectTimeout(t *testing.T) {
 }
 
 func TestKeepAlive(t *testing.T) {
+	t.Parallel()
+
 	tp, done := startBroker(t, New(), 1)
 
 	opts := client.NewOptions()
@@ -506,6 +508,8 @@ func TestKeepAlive(t *testing.T) {
 }
 
 func TestKeepAliveTimeout(t *testing.T) {
+	t.Parallel()
+	
 	connect := packet.NewConnectPacket()
 	connect.KeepAlive = 1
 
