@@ -295,7 +295,7 @@ func (t *Tree) search(result []interface{}, i int, segments []string, node *node
 
 	// add all current values and continue
 	if segment == t.WildcardOne {
-		result = append(result,node.values...)
+		result = append(result, node.values...)
 
 		for _, child := range node.children {
 			result = t.search(result, i+1, segments, child)

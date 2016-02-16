@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testing
+package tools
 
 // Adapted from: https://github.com/phayes/freeport/blob/master/freeport.go.
 
 import (
-	"net"
 	"fmt"
+	"net"
 	"strconv"
 )
 
@@ -48,7 +48,7 @@ func NewPort() *Port {
 }
 
 // URL will return the corresponding URL.
-func (p *Port) URL(protocol... string) string {
+func (p *Port) URL(protocol ...string) string {
 	proto := "tcp"
 
 	if len(protocol) > 0 {

@@ -266,7 +266,6 @@ func BenchmarkTreeAddUnique(b *testing.B) {
 	}
 }
 
-
 func BenchmarkTreeSetSame(b *testing.B) {
 	tree := NewTree()
 
