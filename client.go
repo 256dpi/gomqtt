@@ -27,8 +27,8 @@ import (
 )
 
 const(
-	Outgoing = "out"
-	Incoming = "in"
+	outgoing = "out"
+	incoming = "in"
 )
 
 // Session is used to persist incoming and outgoing packets.
@@ -275,7 +275,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 
 	// store packet if at least qos 1
 	if msg.QOS > 0 {
-		err := c.Session.SavePacket(Outgoing, publish)
+		err := c.Session.SavePacket(outgoing, publish)
 		if err != nil {
 			return nil, c.cleanup(err, true)
 		}
@@ -519,7 +519,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	c.connectFuture.complete()
 
 	// retrieve stored packets
-	packets, err := c.Session.AllPackets(Outgoing)
+	packets, err := c.Session.AllPackets(outgoing)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -544,7 +544,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 // handle an incoming SubackPacket
 func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
-	c.Session.DeletePacket(Outgoing, suback.PacketID)
+	c.Session.DeletePacket(outgoing, suback.PacketID)
 
 	// get future
 	subscribeFuture, ok := c.futureStore.get(suback.PacketID).(*SubscribeFuture)
@@ -565,7 +565,7 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 // handle an incoming UnsubackPacket
 func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
-	c.Session.DeletePacket(Outgoing, unsuback.PacketID)
+	c.Session.DeletePacket(outgoing, unsuback.PacketID)
 
 	// get future
 	unsubscribeFuture, ok := c.futureStore.get(unsuback.PacketID).(*UnsubscribeFuture)
@@ -597,7 +597,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 	if publish.Message.QOS == 2 {
 		// store packet
-		err := c.Session.SavePacket(Incoming, publish)
+		err := c.Session.SavePacket(incoming, publish)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -623,7 +623,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
-	c.Session.DeletePacket(Outgoing, packetID)
+	c.Session.DeletePacket(outgoing, packetID)
 
 	// get future
 	publishFuture, ok := c.futureStore.get(packetID).(*PublishFuture)
@@ -647,7 +647,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 	pubrel.PacketID = packetID
 
 	// overwrite stored PublishPacket with PubrelPacket
-	err := c.Session.SavePacket(Outgoing, pubrel)
+	err := c.Session.SavePacket(outgoing, pubrel)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -664,7 +664,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
-	pkt, err := c.Session.LookupPacket(Incoming, packetID)
+	pkt, err := c.Session.LookupPacket(incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -685,7 +685,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// remove packet from store
-	err = c.Session.DeletePacket(Incoming, packetID)
+	err = c.Session.DeletePacket(incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
 	}

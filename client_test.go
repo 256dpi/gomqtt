@@ -376,11 +376,11 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 
 	<-done
 
-	in, err := c.Session.AllPackets(Incoming)
+	in, err := c.Session.AllPackets(incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(in))
 
-	out, err := c.Session.AllPackets(Outgoing)
+	out, err := c.Session.AllPackets(outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(out))
 }
@@ -453,11 +453,11 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 
 	<-done
 
-	in, err := c.Session.AllPackets(Incoming)
+	in, err := c.Session.AllPackets(incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(in))
 
-	out, err := c.Session.AllPackets(Outgoing)
+	out, err := c.Session.AllPackets(outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(out))
 }
@@ -540,11 +540,11 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 
 	<-done
 
-	in, err := c.Session.AllPackets(Incoming)
+	in, err := c.Session.AllPackets(incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(in))
 
-	out, err := c.Session.AllPackets(Outgoing)
+	out, err := c.Session.AllPackets(outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(out))
 }
@@ -630,7 +630,7 @@ func TestClientHardDisconnect(t *testing.T) {
 
 	<-done
 
-	pkts, err := c.Session.AllPackets(Outgoing)
+	pkts, err := c.Session.AllPackets(outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(pkts))
 }
@@ -680,7 +680,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 
 	assert.NoError(t, publishFuture.Wait())
 
-	pkts, err := c.Session.AllPackets(Outgoing)
+	pkts, err := c.Session.AllPackets(outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
 }
@@ -759,7 +759,7 @@ func TestClientSessionResumption(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	c := New()
-	c.Session.SavePacket(Outgoing, publish1)
+	c.Session.SavePacket(outgoing, publish1)
 	c.Session.PacketID()
 	c.Callback = errorCallback(t)
 
@@ -780,7 +780,7 @@ func TestClientSessionResumption(t *testing.T) {
 
 	<-done
 
-	pkts, err := c.Session.AllPackets(Outgoing)
+	pkts, err := c.Session.AllPackets(outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
 }
