@@ -48,19 +48,22 @@ func (s *state) get() byte {
 	return s.current
 }
 
-/* context */
+/* Context */
 
+// A context is a store for custom data.
 type Context struct {
 	store map[string]interface{}
 	mutex sync.Mutex
 }
 
+// NewContext returns a new Context.
 func NewContext() *Context {
 	return &Context{
 		store: make(map[string]interface{}),
 	}
 }
 
+// Set sets the passed value for the key in the context.
 func (c *Context) Set(key string, value interface{}) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -68,6 +71,7 @@ func (c *Context) Set(key string, value interface{}) {
 	c.store[key] = value
 }
 
+// Get returns the stored valued for the passed key.
 func (c *Context) Get(key string) interface{} {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
