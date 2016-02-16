@@ -23,30 +23,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//
+type BackendClient interface {
+	Publish(msg *packet.Message) bool
+	Context() *Context
+}
+
 // A Backend provides effective queuing functionality to a Broker and its Clients.
 type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one. If the supplied id has a zero length, a new
 	// session is returned that is only valid once.
-	GetSession(client *Client, id string) (Session, error)
+	GetSession(client BackendClient, id string) (Session, error)
 
 	// Subscribe will subscribe the passed client to the specified topic and
 	// begin to forward messages by calling the clients Publish method.
 	// It will also return the stored retained messages matching the supplied
 	// topic.
-	Subscribe(client *Client, topic string) ([]*packet.Message, error)
+	Subscribe(client BackendClient, topic string) ([]*packet.Message, error)
 
 	// Unsubscribe will unsubscribe the passed client from the specified topic.
-	Unsubscribe(client *Client, topic string) error
+	Unsubscribe(client BackendClient, topic string) error
 
 	// Remove will unsubscribe the passed client from previously subscribe topics.
-	Remove(client *Client) error
+	Remove(client BackendClient) error
 
 	// Publish will forward the passed message to all other subscribed clients.
 	// It will also store the message if Retain is set to true. If the supplied
 	//message has additionally a zero length payload, the backend removes the
 	// currently retained message.
-	Publish(client *Client, msg *packet.Message) error
+	Publish(client BackendClient, msg *packet.Message) error
 }
 
 // TODO: missing offline subscriptions
@@ -164,7 +170,7 @@ func NewMemoryBackend() *MemoryBackend {
 // GetSession returns the already stored session for the supplied id or creates
 // and returns a new one. If the supplied id has a zero length, a new
 // session is returned that is only valid once.
-func (m *MemoryBackend) GetSession(client *Client, id string) (Session, error) {
+func (m *MemoryBackend) GetSession(client BackendClient, id string) (Session, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
@@ -187,7 +193,7 @@ func (m *MemoryBackend) GetSession(client *Client, id string) (Session, error) {
 // begin to forward messages by calling the clients Publish method.
 // It will also return the stored retained messages matching the supplied
 // topic.
-func (m *MemoryBackend) Subscribe(client *Client, topic string) ([]*packet.Message, error) {
+func (m *MemoryBackend) Subscribe(client BackendClient, topic string) ([]*packet.Message, error) {
 	m.queue.Add(topic, client)
 
 	values := m.retained.Search(topic)
@@ -204,13 +210,13 @@ func (m *MemoryBackend) Subscribe(client *Client, topic string) ([]*packet.Messa
 }
 
 // Unsubscribe will unsubscribe the passed client from the specified topic.
-func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
+func (m *MemoryBackend) Unsubscribe(client BackendClient, topic string) error {
 	m.queue.Remove(topic, client)
 	return nil
 }
 
 // Remove will unsubscribe the passed client from previously subscribe topics.
-func (m *MemoryBackend) Remove(client *Client) error {
+func (m *MemoryBackend) Remove(client BackendClient) error {
 	m.queue.Clear(client)
 	return nil
 }
@@ -219,7 +225,7 @@ func (m *MemoryBackend) Remove(client *Client) error {
 // It will also store the message if Retain is set to true. If the supplied
 //message has additionally a zero length payload, the backend removes the
 // currently retained message.
-func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
+func (m *MemoryBackend) Publish(client BackendClient, msg *packet.Message) error {
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
 			m.retained.Set(msg.Topic, msg)
@@ -229,7 +235,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	}
 
 	for _, v := range m.queue.Match(msg.Topic) {
-		if client, ok := v.(*Client); ok && client != nil {
+		if client, ok := v.(BackendClient); ok && client != nil {
 			client.Publish(msg)
 		}
 	}

@@ -47,3 +47,30 @@ func (s *state) get() byte {
 
 	return s.current
 }
+
+/* context */
+
+type Context struct {
+	store map[string]interface{}
+	mutex sync.Mutex
+}
+
+func NewContext() *Context {
+	return &Context{
+		store: make(map[string]interface{}),
+	}
+}
+
+func (c *Context) Set(key string, value interface{}) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.store[key] = value
+}
+
+func (c *Context) Get(key string) interface{} {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return c.store[key]
+}

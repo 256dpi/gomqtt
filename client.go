@@ -33,35 +33,42 @@ const (
 
 // A Client is a single client connected to the broker.
 type Client struct {
-	broker  *Broker
-	conn    transport.Conn
+	broker *Broker
+	conn   transport.Conn
 
 	session Session
-	uuid    string
-	info    map[string]interface{}
-	out     chan *packet.Message
-	state   *state
-	clean   bool
+	context *Context
 
-	tomb    tomb.Tomb
-	mutex   sync.Mutex
-	finish  sync.Once
+	uuid  string
+	out   chan *packet.Message
+	state *state
+	clean bool
+
+	tomb   tomb.Tomb
+	mutex  sync.Mutex
+	finish sync.Once
 }
 
 // NewClient takes over responsibility over a connection and returns a Client.
 func NewClient(broker *Broker, conn transport.Conn) *Client {
 	c := &Client{
-		broker: broker,
-		conn:   conn,
-		out:    make(chan *packet.Message),
-		uuid:   uuid.NewV1().String(),
-		state:  newState(clientConnecting),
+		broker:  broker,
+		conn:    conn,
+		context: NewContext(),
+		uuid:    uuid.NewV1().String(),
+		out:     make(chan *packet.Message),
+		state:   newState(clientConnecting),
 	}
 
 	c.tomb.Go(c.processor)
 	c.tomb.Go(c.sender)
 
 	return c
+}
+
+// Context returns the clients context.
+func (c *Client) Context() *Context {
+	return c.context
 }
 
 // Publish will send a Message to the client and initiate QOS flows.
