@@ -28,7 +28,7 @@ const (
 	incoming = "in"
 )
 
-// Session is used to persist incoming and outgoing packets.
+// A Session is used to persist incoming and outgoing packets.
 type Session interface {
 	// PacketID will return the next id for outgoing packets.
 	PacketID() uint16
@@ -116,7 +116,7 @@ func AbstractSessionPacketStoreTest(t *testing.T, session Session) {
 	assert.Equal(t, 0, len(pkts))
 }
 
-// MemorySession stores packets in memory.
+// A MemorySession stores packets in memory.
 type MemorySession struct {
 	counter *tools.Counter
 	store   *tools.Store

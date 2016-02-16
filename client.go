@@ -50,15 +50,15 @@ var ErrClientMissingPong = errors.New("client missing pong")
 // connection without receiving a DisconnectPacket from the client.
 var ErrClientUnexpectedClose = errors.New("client unexpected close")
 
-// ErrClientExpectedConnack is returned when the first receied packt is not a
+// ErrClientExpectedConnack is returned when the first received packet is not a
 // ConnackPacket.
 var ErrClientExpectedConnack = errors.New("client expected connack")
 
-// Callback is a function called by the client upon received messages or
+// A Callback is a function called by the client upon received messages or
 // internal errors.
 type Callback func(msg *packet.Message, err error)
 
-// Logger is a function called by the client to log activity.
+// A Logger is a function called by the client to log activity.
 type Logger func(msg string)
 
 const (
@@ -70,7 +70,7 @@ const (
 	clientDisconnected
 )
 
-// Client connects to a broker and handles the transmission of packets. It will
+// A Client connects to a broker and handles the transmission of packets. It will
 // automatically send PingreqPackets to keep the connection alive. Outgoing
 // publish related packets will be stored in session and resend when the
 // connection gets closed abruptly. All methods return Futures that get completed

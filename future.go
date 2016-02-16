@@ -27,7 +27,7 @@ var ErrFutureTimeout = errors.New("future timeout")
 // ErrFutureCanceled is returned by Wait if the future gets canceled while waiting.
 var ErrFutureCanceled = errors.New("future canceled")
 
-// Future represents information that might become available in the future.
+// A Future represents information that might become available in the future.
 type Future interface {
 	// Wait will block until the future is completed or canceled. It will return
 	// ErrCanceled  if the future gets canceled. If a timeout is specified it
@@ -96,7 +96,7 @@ func (f *abstractFuture) bind(future Future) {
 	})
 }
 
-// ConnectFuture is returned by the Client on Connect.
+// The ConnectFuture is returned by the Client on Connect.
 type ConnectFuture struct {
 	abstractFuture
 
@@ -104,12 +104,12 @@ type ConnectFuture struct {
 	ReturnCode     packet.ConnackCode
 }
 
-// PublishFuture is returned by the Client on Publish.
+// The PublishFuture is returned by the Client on Publish.
 type PublishFuture struct {
 	abstractFuture
 }
 
-// SubscribeFuture is returned by the Client on Subscribe.
+// The SubscribeFuture is returned by the Client on Subscribe.
 type SubscribeFuture struct {
 	abstractFuture
 
