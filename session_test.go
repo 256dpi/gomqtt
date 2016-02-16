@@ -23,3 +23,11 @@ func TestMemorySessionPacketID(t *testing.T) {
 func TestMemorySessionPacketStore(t *testing.T) {
 	AbstractSessionPacketStoreTest(t, NewMemorySession())
 }
+
+func TestMemorySessionSubscriptionStore(t *testing.T) {
+	AbstractSessionSubscriptionStoreTest(t, NewMemorySession())
+}
+
+func TestMemorySessionWillStore(t *testing.T) {
+	AbstractSessionWillStoreTest(t, NewMemorySession())
+}
