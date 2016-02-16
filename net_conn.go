@@ -25,7 +25,7 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// The NetConn wraps a TCP based connection.
+// A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
 	conn   net.Conn
 	reader *bufio.Reader

@@ -47,7 +47,7 @@ var ErrReadTimeout = errors.New("read timeout")
 // Note: this error is wrapped in an Error with NetworkError code.
 var ErrAcceptAfterClose = errors.New("accept after close")
 
-// ErrorCode provides a context location for various errors.
+// The ErrorCode provides a context to various errors.
 type ErrorCode int
 
 const (
@@ -77,7 +77,7 @@ const (
 	NetworkError
 )
 
-// Error wraps standard errors and provides additional context information.
+// An Error a wraps standard errors and provides additional context information.
 type Error interface {
 	error
 

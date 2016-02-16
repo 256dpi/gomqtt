@@ -14,7 +14,7 @@
 
 package transport
 
-// Server defines the interface for all launched servers.
+// A Server is a local port on which incoming connections can be accepted.
 type Server interface {
 	// Accept will return the next available connection or block until a
 	// connection becomes available, otherwise returns an Error.

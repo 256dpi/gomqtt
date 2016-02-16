@@ -19,7 +19,7 @@ import (
 	"net"
 )
 
-// NetServer accepts net.Conn based connections.
+// A NetServer accepts net.Conn based connections.
 type NetServer struct {
 	listener net.Listener
 }

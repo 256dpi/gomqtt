@@ -22,7 +22,8 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// Conn defines the interface for all transport connections.
+// A Conn is a connection between a client and a broker. It abstracts an
+// existing underlying stream connection.
 type Conn interface {
 	// Send will write the packet to the underlying connection. It will return
 	// an Error if there was an error while encoding or writing to the

@@ -27,7 +27,7 @@ import (
 
 var errManualClose = errors.New("manual close")
 
-// WebSocketServer accepts websocket.Conn based connections.
+// The WebSocketServer accepts websocket.Conn based connections.
 type WebSocketServer struct {
 	listener net.Listener
 	upgrader *websocket.Upgrader

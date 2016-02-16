@@ -24,7 +24,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Dialer is a small interface to initiate connections.
+// The Dialer handles connecting to a server and creating a connection.
 type Dialer struct {
 	TLSConfig     *tls.Config
 	RequestHeader http.Header

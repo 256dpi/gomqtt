@@ -19,7 +19,7 @@ import (
 	"net/url"
 )
 
-// Launcher is a small interface for launching servers.
+// The Launcher helps with launching a server and accepting connections.
 type Launcher struct {
 	TLSConfig *tls.Config
 }
