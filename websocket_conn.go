@@ -196,5 +196,7 @@ func (c *WebSocketConn) SetReadTimeout(timeout time.Duration) {
 func (c *WebSocketConn) resetTimeout() {
 	if c.readTimeout > 0 {
 		c.conn.SetReadDeadline(time.Now().Add(c.readTimeout))
+	} else {
+		c.conn.SetReadDeadline(time.Time{})
 	}
 }

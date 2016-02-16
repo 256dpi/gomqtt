@@ -211,5 +211,7 @@ func (c *NetConn) SetReadTimeout(timeout time.Duration) {
 func (c *NetConn) resetTimeout() {
 	if c.readTimeout > 0 {
 		c.conn.SetReadDeadline(time.Now().Add(c.readTimeout))
+	} else {
+		c.conn.SetReadDeadline(time.Time{})
 	}
 }
