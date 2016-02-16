@@ -567,19 +567,75 @@ func TestConnectionDenied(t *testing.T) {
 	<-done
 }
 
-// -- basic
-// connect without a clientId for MQTT 3.1.1
-// disconnect another client with the same clientId
-// disconnect if another broker connects the same client
-// failed authentication does not disconnect other client with same clientId
-// restore QoS 0 subscriptions not clean
+func abstractStoredSubscriptionTest(t *testing.T, qos uint8) {
+	port, done := startBroker(t, New(), 2)
 
-// -- client pub sub
-// offline message support for direct publish
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+
+	subscribeFuture, err := client1.Subscribe("test", qos)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	client2 := client.New()
+
+	wait := make(chan struct{})
+
+	client2.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(qos), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture2, err := client2.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+
+	publishFuture, err := client2.Publish("test", []byte("test"), qos, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func TestStoredSubscriptionsQOS0(t *testing.T) {
+	abstractStoredSubscriptionTest(t, 0)
+}
+
+func TestStoredSubscriptionsQOS1(t *testing.T) {
+	abstractStoredSubscriptionTest(t, 1)
+}
+
+func TestStoredSubscriptionsQOS2(t *testing.T) {
+	abstractStoredSubscriptionTest(t, 2)
+}
+
+// -- basic
+// disconnect another client with the same clientId
+// failed authentication does not disconnect other client with same clientId
+// remove stored subscriptions with clean=true
 
 // -- qos1
-// restore QoS 1 subscriptions not clean
-// remove stored subscriptions if connected with clean=true
 // resend publish on non-clean reconnect QoS 1
 // do not resend QoS 1 packets at each reconnect
 // do not resend QoS 1 packets if reconnect is clean
@@ -587,7 +643,6 @@ func TestConnectionDenied(t *testing.T) {
 // remove stored subscriptions after unsubscribe
 
 // -- qos2
-// restore QoS 2 subscriptions not clean
 // resend publish on non-clean reconnect QoS 2
 // resend pubrel on non-clean reconnect QoS 2
 // publish after disconnection

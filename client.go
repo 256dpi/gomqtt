@@ -220,6 +220,17 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		return c.die(err, false)
 	}
 
+	// get stored subscriptions
+	subs, err := c.session.AllSubscriptions()
+	if err != nil {
+		return c.die(err, true)
+	}
+
+	// restore subscriptions
+	for _, sub := range subs {
+		c.broker.Backend.Subscribe(c, sub.Topic)
+	}
+
 	return nil
 }
 
