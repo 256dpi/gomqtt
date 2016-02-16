@@ -20,8 +20,11 @@ import (
 	"github.com/gomqtt/transport"
 )
 
+// The Logger callback handles incoming log messages.
 type Logger func(msg string)
 
+// The Broker handles all MQTT logic and forwards effective actions to the
+// backend.
 type Broker struct {
 	Backend Backend
 	Logger  Logger

@@ -23,6 +23,7 @@ import (
 	"github.com/gomqtt/tools"
 )
 
+// A Backend provides effective queueing functionality to a Broker and its Clients.
 type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one. If the supplied id has a zero length, a new
@@ -142,6 +143,7 @@ func AbstractBackendRetainedTest(t *testing.T, backend Backend) {
 	assert.Empty(t, msgs)
 }
 
+// MemoryBackend stores everything in memory.
 type MemoryBackend struct {
 	queue    *tools.Tree
 	retained *tools.Tree
@@ -150,6 +152,7 @@ type MemoryBackend struct {
 	sessionsMutex sync.Mutex
 }
 
+// NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
 		queue:    tools.NewTree(),
@@ -158,6 +161,9 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
+// GetSession returns the already stored session for the supplied id or creates
+// and returns a new one. If the supplied id has a zero length, a new
+// session is returned that is only valid once.
 func (m *MemoryBackend) GetSession(client *Client, id string) (Session, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
@@ -177,6 +183,10 @@ func (m *MemoryBackend) GetSession(client *Client, id string) (Session, error) {
 	return NewMemorySession(), nil
 }
 
+// Subscribe will subscribe the passed client to the specified topic and
+// begin to forward messages by calling the clients Publish method.
+// It will also return the stored retained messages matching the supplied
+// topic.
 func (m *MemoryBackend) Subscribe(client *Client, topic string) ([]*packet.Message, error) {
 	m.queue.Add(topic, client)
 
@@ -193,16 +203,22 @@ func (m *MemoryBackend) Subscribe(client *Client, topic string) ([]*packet.Messa
 	return msgs, nil
 }
 
+// Unsubscribe will unsubscribe the passed client from the specified topic.
 func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 	m.queue.Remove(topic, client)
 	return nil
 }
 
+// Remove will unsubscribe the passed client from previously subscribe topics.
 func (m *MemoryBackend) Remove(client *Client) error {
 	m.queue.Clear(client)
 	return nil
 }
 
+// Publish will forward the passed message to all other subscribed clients.
+// It will also store the message if Retain is set to true. If the supplied
+//message has additionally a zero length payload, the backend removes the
+// currently retained message.
 func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
