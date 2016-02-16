@@ -16,6 +16,14 @@ package broker
 
 import "testing"
 
+func TestMemoryBackendAuthentication(t *testing.T) {
+	backend := NewMemoryBackend()
+	backend.Logins = make(map[string]string)
+	backend.Logins["allow"] = "allow"
+
+	AbstractBackendAuthenticationTest(t, backend)
+}
+
 func TestMemoryBackendGetSession(t *testing.T) {
 	AbstractBackendGetSessionTest(t, NewMemoryBackend())
 }

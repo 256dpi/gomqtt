@@ -34,6 +34,9 @@ type Consumer interface {
 
 // A Backend provides effective queuing functionality to a Broker and its Clients.
 type Backend interface {
+	// Authenticate authenticates a consumers credentials.
+	Authenticate(consumer Consumer, user, password string) (bool, error)
+
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one. If the supplied id has a zero length, a new
 	// session is returned that is only valid once. The Backend may also allocate
@@ -61,6 +64,19 @@ type Backend interface {
 }
 
 // TODO: missing offline subscriptions
+
+// AbstractBackendAuthenticationTest tests a backend implementations Authenticate
+// method. The backend should allow the "allow:allow" and deny the "deny:deny"
+// logins.
+func AbstractBackendAuthenticationTest(t *testing.T, backend Backend) {
+	ok, err := backend.Authenticate(nil, "allow", "allow")
+	assert.True(t, ok)
+	assert.NoError(t, err)
+
+	ok, err = backend.Authenticate(nil, "deny", "deny")
+	assert.False(t, ok)
+	assert.NoError(t, err)
+}
 
 // AbstractBackendGetSessionTest tests a backend implementations GetSession method.
 func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
@@ -159,6 +175,8 @@ type MemoryBackend struct {
 	queue    *tools.Tree
 	retained *tools.Tree
 
+	Logins map[string]string
+
 	sessions      map[string]*MemorySession
 	sessionsMutex sync.Mutex
 }
@@ -170,6 +188,21 @@ func NewMemoryBackend() *MemoryBackend {
 		retained: tools.NewTree(),
 		sessions: make(map[string]*MemorySession),
 	}
+}
+
+// Authenticate authenticates a consumers credentials.
+func (m *MemoryBackend) Authenticate(consumer Consumer, user, password string) (bool, error) {
+	// allow all if there are no logins
+	if m.Logins == nil {
+		return true, nil
+	}
+
+	// check login
+	if pw, ok := m.Logins[user]; ok && pw == password {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // GetSession returns the already stored session for the supplied id or creates

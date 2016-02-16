@@ -15,6 +15,7 @@
 package broker
 
 import (
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -531,20 +532,46 @@ func TestKeepAliveTimeout(t *testing.T) {
 	<-done
 }
 
-// -- authentication
-// authenticate successfully a client with username and password
-// authenticate unsuccessfully a client with username and password
-// authenticate errors
-// authorize publish
-// do not authorize publish
-// authorize subscribe
-// negate subscription
-// failed authentication does not disconnect other client with same clientId
+func TestConnectionDenied(t *testing.T) {
+	backend := NewMemoryBackend()
+	backend.Logins = make(map[string]string)
+	backend.Logins["allow"] = "allow"
+
+	broker := New()
+	broker.Backend = backend
+
+	port, done := startBroker(t, broker, 2)
+
+	client1 := client.New()
+	client1.Callback = func(msg *packet.Message, err error) {
+		assert.Equal(t, client.ErrClientConnectionDenied, err)
+	}
+
+	connectFuture1, err := client1.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	url := fmt.Sprintf("tcp://allow:allow@localhost:%s/", port.Port())
+	connectFuture2, err := client2.Connect(url, nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
 
 // -- basic
 // connect without a clientId for MQTT 3.1.1
 // disconnect another client with the same clientId
 // disconnect if another broker connects the same client
+// failed authentication does not disconnect other client with same clientId
 // restore QoS 0 subscriptions not clean
 
 // -- client pub sub

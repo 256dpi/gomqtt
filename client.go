@@ -152,7 +152,31 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	connack.ReturnCode = packet.ConnectionAccepted
 	connack.SessionPresent = false
 
-	// TODO: authenticate client
+	// authenticate
+	ok, err := c.broker.Backend.Authenticate(c, pkt.Username, pkt.Password)
+	if err != nil {
+		c.die(err, true)
+	}
+
+	// check authentication
+	if !ok {
+		// set state
+		c.state.set(clientDisconnected)
+
+		// set return code
+		connack.ReturnCode = packet.ErrNotAuthorized
+
+		// send connack
+		err = c.send(connack)
+		if err != nil {
+			return c.die(err, false)
+		}
+
+		// close client
+		c.die(nil, true)
+	}
+
+	// set state
 	c.state.set(clientConnected)
 
 	// set clean flag
