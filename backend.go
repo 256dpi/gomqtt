@@ -33,7 +33,8 @@ type Consumer interface {
 type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one. If the supplied id has a zero length, a new
-	// session is returned that is only valid once.
+	// session is returned that is only valid once. The Backend may also allocate
+	// other resources and setup the consumer.
 	GetSession(consumer Consumer, id string) (Session, error)
 
 	// Subscribe will subscribe the passed consumer to the specified topic and
@@ -45,14 +46,15 @@ type Backend interface {
 	// Unsubscribe will unsubscribe the passed consumer from the specified topic.
 	Unsubscribe(consumer Consumer, topic string) error
 
-	// Remove will unsubscribe the passed consumer from previously subscribe topics.
-	Remove(consumer Consumer) error
-
 	// Publish will forward the passed message to all other subscribed consumers.
 	// It will also store the message if Retain is set to true. If the supplied
 	//message has additionally a zero length payload, the backend removes the
 	// currently retained message.
 	Publish(consumer Consumer, msg *packet.Message) error
+
+	// Remove will unsubscribe the passed consumer from previously subscribe topics.
+	// The Backend may also cleanup previously allocated resources for that consumer.
+	Remove(consumer Consumer) error
 }
 
 // TODO: missing offline subscriptions
@@ -215,12 +217,6 @@ func (m *MemoryBackend) Unsubscribe(consumer Consumer, topic string) error {
 	return nil
 }
 
-// Remove will unsubscribe the passed consumer from previously subscribe topics.
-func (m *MemoryBackend) Remove(consumer Consumer) error {
-	m.queue.Clear(consumer)
-	return nil
-}
-
 // Publish will forward the passed message to all other subscribed consumers.
 // It will also store the message if Retain is set to true. If the supplied
 //message has additionally a zero length payload, the backend removes the
@@ -240,5 +236,11 @@ func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 		}
 	}
 
+	return nil
+}
+
+// Remove will unsubscribe the passed consumer from previously subscribe topics.
+func (m *MemoryBackend) Remove(consumer Consumer) error {
+	m.queue.Clear(consumer)
 	return nil
 }
