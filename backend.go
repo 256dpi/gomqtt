@@ -15,12 +15,12 @@
 package broker
 
 import (
-	"testing"
 	"sync"
+	"testing"
 
 	"github.com/gomqtt/packet"
-	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/tools"
+	"github.com/stretchr/testify/assert"
 )
 
 // A Backend provides effective queueing functionality to a Broker and its Clients.

@@ -16,12 +16,12 @@ package broker
 
 import (
 	"math"
-	"testing"
 	"sync"
+	"testing"
 
 	"github.com/gomqtt/packet"
-	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/tools"
+	"github.com/stretchr/testify/assert"
 )
 
 const (

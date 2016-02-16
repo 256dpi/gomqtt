@@ -153,9 +153,9 @@ func bomber(id string) {
 }
 
 func reporter() {
-	var sentCounter int32 = 0
-	var receivedCounter int32 = 0
-	var balance int32 = 0
+	var sentCounter int32
+	var receivedCounter int32
+	var balance int32
 
 	go func() {
 		for {
