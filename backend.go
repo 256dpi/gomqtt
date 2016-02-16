@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	Outgoing = "out"
-	Incoming = "in"
+	outgoing = "out"
+	incoming = "in"
 )
 
 // Session is used to persist incoming/outgoing packets, subscriptions and the
