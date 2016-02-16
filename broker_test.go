@@ -21,10 +21,10 @@ import (
 	"time"
 
 	"github.com/gomqtt/client"
-	"github.com/gomqtt/flow"
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
+	"github.com/gomqtt/tools"
 )
 
 func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) {
@@ -515,7 +515,7 @@ func TestKeepAliveTimeout(t *testing.T) {
 
 	connack := packet.NewConnackPacket()
 
-	client := flow.New().
+	client := tools.NewFlow().
 		Send(connect).
 		Receive(connack).
 		End()
