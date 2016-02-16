@@ -16,9 +16,8 @@ package transport
 
 import (
 	"crypto/tls"
-	"fmt"
-	"net"
-	"strconv"
+
+	"github.com/gomqtt/tools"
 )
 
 var serverTLSConfig *tls.Config
@@ -43,38 +42,6 @@ func init() {
 	testLauncher.TLSConfig = serverTLSConfig
 }
 
-// the testPort
-type testPort int
-
-// returns a new testPort
-func newTestPort() *testPort {
-	// taken from: https://github.com/phayes/freeport/blob/master/freeport.go
-
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		panic(err)
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-
-	p := testPort(l.Addr().(*net.TCPAddr).Port)
-	return &p
-}
-
-// generates the url for that testPort
-func (p *testPort) url(protocol string) string {
-	return fmt.Sprintf("%s://localhost:%d/", protocol, int(*p))
-}
-
-// return the port as a number
-func (p *testPort) port() string {
-	return strconv.Itoa(int(*p))
-}
-
 // type cast the error to an Error
 func toError(err error) Error {
 	if terr, ok := err.(Error); ok {
@@ -87,9 +54,9 @@ func toError(err error) Error {
 // returns a client-ish and server-ish pair of connections
 func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 	done := make(chan struct{})
-	tp := newTestPort()
+	port := tools.NewPort()
 
-	server, err := testLauncher.Launch(tp.url(protocol))
+	server, err := testLauncher.Launch(port.URL(protocol))
 	if err != nil {
 		panic(err)
 	}
@@ -106,7 +73,7 @@ func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 		close(done)
 	}()
 
-	conn, err := testDialer.Dial(tp.url(protocol))
+	conn, err := testDialer.Dial(port.URL(protocol))
 	if err != nil {
 		panic(err)
 	}

@@ -17,13 +17,14 @@ package transport
 import (
 	"testing"
 
+	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGlobalLaunch(t *testing.T) {
-	tp := newTestPort()
+	port := tools.NewPort()
 
-	server, err := Launch(tp.url("tcp"))
+	server, err := Launch(port.URL("tcp"))
 	assert.NoError(t, err)
 
 	err = server.Close()

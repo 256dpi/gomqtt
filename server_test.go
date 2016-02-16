@@ -15,20 +15,17 @@
 package transport
 
 import (
-	//"net"
 	"testing"
-	//"net/http"
-	//"net/url"
-	//"time"
 
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 )
 
 func abstractServerTest(t *testing.T, protocol string) {
-	tp := newTestPort()
+	port := tools.NewPort()
 
-	server, err := testLauncher.Launch(tp.url(protocol))
+	server, err := testLauncher.Launch(port.URL(protocol))
 	assert.NoError(t, err)
 
 	go func() {
@@ -47,7 +44,7 @@ func abstractServerTest(t *testing.T, protocol string) {
 		assert.Equal(t, ConnectionClose, toError(err).Code())
 	}()
 
-	conn2, err := testDialer.Dial(tp.url(protocol))
+	conn2, err := testDialer.Dial(port.URL(protocol))
 	assert.NoError(t, err)
 
 	err = conn2.Send(packet.NewConnectPacket())
@@ -65,17 +62,17 @@ func abstractServerTest(t *testing.T, protocol string) {
 }
 
 func abstractServerLaunchErrorTest(t *testing.T, protocol string) {
-	tp := testPort(1) // <- no permissions
+	port := tools.Port(1) // <- no permissions
 
-	server, err := testLauncher.Launch(tp.url(protocol))
+	server, err := testLauncher.Launch(port.URL(protocol))
 	assert.Equal(t, NetworkError, toError(err).Code())
 	assert.Nil(t, server)
 }
 
 func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
-	tp := newTestPort()
+	port := tools.NewPort()
 
-	server, err := testLauncher.Launch(tp.url(protocol))
+	server, err := testLauncher.Launch(port.URL(protocol))
 	assert.NoError(t, err)
 
 	err = server.Close()
@@ -87,9 +84,9 @@ func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
 }
 
 func abstractServerCloseAfterClose(t *testing.T, protocol string) {
-	tp := newTestPort()
+	port := tools.NewPort()
 
-	server, err := testLauncher.Launch(tp.url(protocol))
+	server, err := testLauncher.Launch(port.URL(protocol))
 	assert.NoError(t, err)
 
 	err = server.Close()

@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,12 +49,12 @@ func TestWebSocketServerCloseAfterClose(t *testing.T) {
 }
 
 func TestWebSocketServerInvalidUpgrade(t *testing.T) {
-	tp := newTestPort()
+	port := tools.NewPort()
 
-	server, err := testLauncher.Launch(tp.url("ws"))
+	server, err := testLauncher.Launch(port.URL("ws"))
 	assert.NoError(t, err)
 
-	resp, err := http.PostForm(tp.url("http"), url.Values{"foo": {"bar"}})
+	resp, err := http.PostForm(port.URL("http"), url.Values{"foo": {"bar"}})
 	assert.Equal(t, "405 Method Not Allowed", resp.Status)
 	assert.NoError(t, err)
 
@@ -62,9 +63,9 @@ func TestWebSocketServerInvalidUpgrade(t *testing.T) {
 }
 
 func TestWebSocketServerAcceptAfterError(t *testing.T) {
-	tp := newTestPort()
+	port := tools.NewPort()
 
-	server, err := testLauncher.Launch(tp.url("ws"))
+	server, err := testLauncher.Launch(port.URL("ws"))
 	assert.NoError(t, err)
 
 	webSocketServer := server.(*WebSocketServer)
@@ -78,12 +79,12 @@ func TestWebSocketServerAcceptAfterError(t *testing.T) {
 }
 
 func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
-	tp := newTestPort()
+	port := tools.NewPort()
 
-	server, err := testLauncher.Launch(tp.url("ws"))
+	server, err := testLauncher.Launch(port.URL("ws"))
 	assert.NoError(t, err)
 
-	conn2, err := testDialer.Dial(tp.url("ws"))
+	conn2, err := testDialer.Dial(port.URL("ws"))
 	assert.NoError(t, err)
 
 	err = server.Close()
