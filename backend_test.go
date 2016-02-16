@@ -14,101 +14,14 @@
 
 package broker
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/gomqtt/packet"
-	"github.com/stretchr/testify/assert"
-)
-
-func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
-	session1, err := backend.GetSession(nil, "foo")
-	assert.NoError(t, err)
-	assert.NotNil(t, session1)
-
-	session2, err := backend.GetSession(nil, "foo")
-	assert.NoError(t, err)
-	assert.True(t, session1 == session2)
-
-	session3, err := backend.GetSession(nil, "bar")
-	assert.NoError(t, err)
-	assert.False(t, session3 == session1)
-	assert.False(t, session3 == session2)
-
-	session4, err := backend.GetSession(nil, "")
-	assert.NoError(t, err)
-	assert.NotNil(t, session4)
-
-	session5, err := backend.GetSession(nil, "")
-	assert.NoError(t, err)
-	assert.NotNil(t, session5)
-	assert.True(t, session4 != session5)
+func TestMemoryBackendGetSession(t *testing.T) {
+	AbstractBackendGetSessionTest(t, NewMemoryBackend())
 }
 
-func abstractBackendRetainedTest(t *testing.T, backend Backend) {
-	msg1 := &packet.Message{
-		Topic:   "foo",
-		Payload: []byte("bar"),
-		QOS:     1,
-		Retain:  true,
-	}
-
-	msg2 := &packet.Message{
-		Topic:   "foo/bar",
-		Payload: []byte("bar"),
-		QOS:     1,
-		Retain:  true,
-	}
-
-	msg3 := &packet.Message{
-		Topic:   "foo",
-		Payload: []byte("bar"),
-		QOS:     2,
-		Retain:  true,
-	}
-
-	msg4 := &packet.Message{
-		Topic:  "foo",
-		QOS:    1,
-		Retain: true,
-	}
-
-	// should be empty
-	msgs, err := backend.Subscribe(nil, "foo")
-	assert.NoError(t, err)
-	assert.Empty(t, msgs)
-
-	err = backend.Publish(nil, msg1)
-	assert.NoError(t, err)
-
-	// should have one
-	msgs, err = backend.Subscribe(nil, "foo")
-	assert.NoError(t, err)
-	assert.Equal(t, msg1, msgs[0])
-
-	err = backend.Publish(nil, msg2)
-	assert.NoError(t, err)
-
-	// should have two
-	msgs, err = backend.Subscribe(nil, "#")
-	assert.NoError(t, err)
-	assert.Equal(t, 2, len(msgs))
-
-	err = backend.Publish(nil, msg3)
-	assert.NoError(t, err)
-
-	// should have another
-	msgs, err = backend.Subscribe(nil, "foo")
-	assert.NoError(t, err)
-	assert.Equal(t, msg3, msgs[0])
-
-	err = backend.Publish(nil, msg4)
-	assert.NoError(t, err)
-
-	// should have none
-	msgs, err = backend.Subscribe(nil, "foo")
-	assert.NoError(t, err)
-	assert.Empty(t, msgs)
+func TestMemoryBackendRetained(t *testing.T) {
+	AbstractBackendRetainedTest(t, NewMemoryBackend())
 }
 
 // store and look up subscriptions by client

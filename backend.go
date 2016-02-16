@@ -14,7 +14,14 @@
 
 package broker
 
-import "github.com/gomqtt/packet"
+import (
+	"testing"
+	"sync"
+
+	"github.com/gomqtt/packet"
+	"github.com/stretchr/testify/assert"
+	"github.com/gomqtt/tools"
+)
 
 type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
@@ -42,3 +49,174 @@ type Backend interface {
 }
 
 // TODO: missing offline subscriptions
+
+// AbstractBackendGetSessionTest tests a backend implementations GetSession method.
+func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
+	session1, err := backend.GetSession(nil, "foo")
+	assert.NoError(t, err)
+	assert.NotNil(t, session1)
+
+	session2, err := backend.GetSession(nil, "foo")
+	assert.NoError(t, err)
+	assert.True(t, session1 == session2)
+
+	session3, err := backend.GetSession(nil, "bar")
+	assert.NoError(t, err)
+	assert.False(t, session3 == session1)
+	assert.False(t, session3 == session2)
+
+	session4, err := backend.GetSession(nil, "")
+	assert.NoError(t, err)
+	assert.NotNil(t, session4)
+
+	session5, err := backend.GetSession(nil, "")
+	assert.NoError(t, err)
+	assert.NotNil(t, session5)
+	assert.True(t, session4 != session5)
+}
+
+// AbstractBackendRetainedTest tests a backend implementations message retaining.
+func AbstractBackendRetainedTest(t *testing.T, backend Backend) {
+	msg1 := &packet.Message{
+		Topic:   "foo",
+		Payload: []byte("bar"),
+		QOS:     1,
+		Retain:  true,
+	}
+
+	msg2 := &packet.Message{
+		Topic:   "foo/bar",
+		Payload: []byte("bar"),
+		QOS:     1,
+		Retain:  true,
+	}
+
+	msg3 := &packet.Message{
+		Topic:   "foo",
+		Payload: []byte("bar"),
+		QOS:     2,
+		Retain:  true,
+	}
+
+	msg4 := &packet.Message{
+		Topic:  "foo",
+		QOS:    1,
+		Retain: true,
+	}
+
+	// should be empty
+	msgs, err := backend.Subscribe(nil, "foo")
+	assert.NoError(t, err)
+	assert.Empty(t, msgs)
+
+	err = backend.Publish(nil, msg1)
+	assert.NoError(t, err)
+
+	// should have one
+	msgs, err = backend.Subscribe(nil, "foo")
+	assert.NoError(t, err)
+	assert.Equal(t, msg1, msgs[0])
+
+	err = backend.Publish(nil, msg2)
+	assert.NoError(t, err)
+
+	// should have two
+	msgs, err = backend.Subscribe(nil, "#")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(msgs))
+
+	err = backend.Publish(nil, msg3)
+	assert.NoError(t, err)
+
+	// should have another
+	msgs, err = backend.Subscribe(nil, "foo")
+	assert.NoError(t, err)
+	assert.Equal(t, msg3, msgs[0])
+
+	err = backend.Publish(nil, msg4)
+	assert.NoError(t, err)
+
+	// should have none
+	msgs, err = backend.Subscribe(nil, "foo")
+	assert.NoError(t, err)
+	assert.Empty(t, msgs)
+}
+
+type MemoryBackend struct {
+	queue    *tools.Tree
+	retained *tools.Tree
+
+	sessions      map[string]*MemorySession
+	sessionsMutex sync.Mutex
+}
+
+func NewMemoryBackend() *MemoryBackend {
+	return &MemoryBackend{
+		queue:    tools.NewTree(),
+		retained: tools.NewTree(),
+		sessions: make(map[string]*MemorySession),
+	}
+}
+
+func (m *MemoryBackend) GetSession(client *Client, id string) (Session, error) {
+	m.sessionsMutex.Lock()
+	defer m.sessionsMutex.Unlock()
+
+	if len(id) > 0 {
+		sess, ok := m.sessions[id]
+		if ok {
+			return sess, nil
+		}
+
+		sess = NewMemorySession()
+		m.sessions[id] = sess
+
+		return sess, nil
+	}
+
+	return NewMemorySession(), nil
+}
+
+func (m *MemoryBackend) Subscribe(client *Client, topic string) ([]*packet.Message, error) {
+	m.queue.Add(topic, client)
+
+	values := m.retained.Search(topic)
+
+	var msgs []*packet.Message
+
+	for _, value := range values {
+		if msg, ok := value.(*packet.Message); ok {
+			msgs = append(msgs, msg)
+		}
+	}
+
+	return msgs, nil
+}
+
+func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
+	m.queue.Remove(topic, client)
+	return nil
+}
+
+func (m *MemoryBackend) Remove(client *Client) error {
+	m.queue.Clear(client)
+	return nil
+}
+
+func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
+	if msg.Retain {
+		if len(msg.Payload) > 0 {
+			m.retained.Set(msg.Topic, msg)
+		} else {
+			m.retained.Empty(msg.Topic)
+		}
+	}
+
+	for _, v := range m.queue.Match(msg.Topic) {
+		if client, ok := v.(*Client); ok && client != nil {
+			client.Publish(msg)
+		}
+	}
+
+	return nil
+}
