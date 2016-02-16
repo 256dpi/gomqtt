@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// A Backend provides effective queueing functionality to a Broker and its Clients.
+// A Backend provides effective queuing functionality to a Broker and its Clients.
 type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one. If the supplied id has a zero length, a new
