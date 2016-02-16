@@ -16,10 +16,10 @@ package broker
 
 import "testing"
 
-func TestMemoryBackendGetSession(t *testing.T) {
-	abstractBackendGetSessionTest(t, NewMemoryBackend())
+func TestMemorySessionPacketID(t *testing.T) {
+	AbstractSessionPacketIDTest(t, NewMemorySession())
 }
 
-func TestMemoryBackendRetained(t *testing.T) {
-	abstractBackendRetainedTest(t, NewMemoryBackend())
+func TestMemorySessionPacketStore(t *testing.T) {
+	AbstractSessionPacketStoreTest(t, NewMemorySession())
 }
