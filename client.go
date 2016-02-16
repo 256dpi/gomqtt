@@ -26,34 +26,6 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-const(
-	outgoing = "out"
-	incoming = "in"
-)
-
-// Session is used to persist incoming and outgoing packets.
-type Session interface {
-	// PacketID will return the next id for outgoing packets.
-	PacketID() uint16
-
-	// SavePacket will store a packet in the session. An eventual existing
-	// packet with the same id gets quietly overwritten.
-	SavePacket(direction string, pkt packet.Packet) error
-
-	// LookupPacket will retrieve a packet from the session using a packet id.
-	LookupPacket(direction string, id uint16) (packet.Packet, error)
-
-	// DeletePacket will remove a packet from the session. The method must not
-	// return an error if no packet with the specified id does exists.
-	DeletePacket(direction string, id uint16) error
-
-	// AllPackets will return all packets currently saved in the session.
-	AllPackets(direction string) ([]packet.Packet, error)
-
-	// Reset will completely reset the session.
-	Reset() error
-}
-
 // ErrClientAlreadyConnecting is returned by Connect if there has been already a
 // connection attempt.
 var ErrClientAlreadyConnecting = errors.New("client already connecting")
