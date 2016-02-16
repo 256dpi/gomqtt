@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/gomqtt/packet"
-	"github.com/gomqtt/session"
 	"github.com/jpillora/backoff"
 	"gopkg.in/tomb.v2"
 )
@@ -104,7 +103,7 @@ type Service struct {
 	state   *state
 	backoff *backoff.Backoff
 
-	Session session.Session
+	Session Session
 	Online  Online
 	Message Message
 	Offline Offline
@@ -128,7 +127,7 @@ type Service struct {
 func NewService() *Service {
 	return &Service{
 		state:             newState(serviceInitialized),
-		Session:           session.NewMemorySession(),
+		Session:           NewMemorySession(),
 		MinReconnectDelay: 1 * time.Second,
 		MaxReconnectDelay: 32 * time.Second,
 		ConnectTimeout:    5 * time.Second,

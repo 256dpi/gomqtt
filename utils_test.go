@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/gomqtt/packet"
-	"github.com/gomqtt/session"
 	"github.com/gomqtt/tools"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +35,7 @@ func errorCallback(t *testing.T) func(*packet.Message, error) {
 }
 
 type testSession struct {
-	session.MemorySession
+	MemorySession
 
 	saveError   bool
 	lookupError bool
