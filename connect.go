@@ -47,8 +47,6 @@ type ConnectPacket struct {
 	Will *Message
 }
 
-var _ Packet = (*ConnectPacket)(nil)
-
 // NewConnectPacket creates a new ConnectPacket.
 func NewConnectPacket() *ConnectPacket {
 	return &ConnectPacket{CleanSession: true}

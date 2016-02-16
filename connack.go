@@ -68,8 +68,6 @@ type ConnackPacket struct {
 	ReturnCode ConnackCode
 }
 
-var _ Packet = (*ConnackPacket)(nil)
-
 // NewConnackPacket creates a new ConnackPacket.
 func NewConnackPacket() *ConnackPacket {
 	return &ConnackPacket{}

@@ -44,8 +44,6 @@ type SubscribePacket struct {
 	PacketID uint16
 }
 
-var _ Packet = (*SubscribePacket)(nil)
-
 // NewSubscribePacket creates a new SUBSCRIBE packet.
 func NewSubscribePacket() *SubscribePacket {
 	return &SubscribePacket{}

@@ -44,8 +44,6 @@ func nakedPacketEncode(dst []byte, t Type) (int, error) {
 // It indicates that the client is disconnecting cleanly.
 type DisconnectPacket struct{}
 
-var _ Packet = (*DisconnectPacket)(nil)
-
 // NewDisconnectPacket creates a new DisconnectPacket.
 func NewDisconnectPacket() *DisconnectPacket {
 	return &DisconnectPacket{}
@@ -83,8 +81,6 @@ func (dp *DisconnectPacket) String() string {
 
 // The PingreqPacket is sent from a client to the server.
 type PingreqPacket struct{}
-
-var _ Packet = (*PingreqPacket)(nil)
 
 // NewPingreqPacket creates a new PingreqPacket.
 func NewPingreqPacket() *PingreqPacket {

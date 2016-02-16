@@ -29,8 +29,6 @@ type UnsubscribePacket struct {
 	PacketID uint16
 }
 
-var _ Packet = (*UnsubscribePacket)(nil)
-
 // NewUnsubscribePacket creates a new UnsubscribePacket.
 func NewUnsubscribePacket() *UnsubscribePacket {
 	return &UnsubscribePacket{}

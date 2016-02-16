@@ -31,8 +31,6 @@ type SubackPacket struct {
 	PacketID uint16
 }
 
-var _ Packet = (*SubackPacket)(nil)
-
 // NewSubackPacket creates a new SubackPacket.
 func NewSubackPacket() *SubackPacket {
 	return &SubackPacket{}

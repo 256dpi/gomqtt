@@ -81,8 +81,6 @@ type PubackPacket struct {
 	PacketID uint16
 }
 
-var _ Packet = (*PubackPacket)(nil)
-
 // NewPubackPacket creates a new PubackPacket.
 func NewPubackPacket() *PubackPacket {
 	return &PubackPacket{}
@@ -173,8 +171,6 @@ type PubrecPacket struct {
 	PacketID uint16
 }
 
-var _ Packet = (*PubrecPacket)(nil)
-
 // NewPubrecPacket creates a new PubrecPacket.
 func NewPubrecPacket() *PubrecPacket {
 	return &PubrecPacket{}
@@ -264,8 +260,6 @@ type UnsubackPacket struct {
 	// Shared packet identifier.
 	PacketID uint16
 }
-
-var _ Packet = (*UnsubackPacket)(nil)
 
 // NewUnsubackPacket creates a new UnsubackPacket.
 func NewUnsubackPacket() *UnsubackPacket {

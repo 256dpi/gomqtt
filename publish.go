@@ -35,8 +35,6 @@ type PublishPacket struct {
 	PacketID uint16
 }
 
-var _ Packet = (*PublishPacket)(nil)
-
 // NewPublishPacket creates a new PublishPacket.
 func NewPublishPacket() *PublishPacket {
 	return &PublishPacket{}
