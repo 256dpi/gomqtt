@@ -25,7 +25,10 @@ import (
 
 // A Consumer is a client connected to the broker that interacts with the backend.
 type Consumer interface {
+	// Publish will send a Message to the consumer and initiate QOS flows.
 	Publish(msg *packet.Message) bool
+
+	// Context returns the associated context.
 	Context() *Context
 }
 

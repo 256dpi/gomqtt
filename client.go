@@ -66,7 +66,7 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 	return c
 }
 
-// Context returns the clients context.
+// Context returns the associated context.
 func (c *Client) Context() *Context {
 	return c.context
 }
