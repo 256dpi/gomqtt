@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/gomqtt/packet"
-	"github.com/gomqtt/session"
 	"github.com/gomqtt/transport"
 	"github.com/satori/go.uuid"
 	"gopkg.in/tomb.v2"
@@ -37,7 +36,7 @@ type Client struct {
 	broker *Broker
 	conn   transport.Conn
 
-	Session session.Session
+	Session Session
 	UUID    string
 	Info    interface{}
 
@@ -288,7 +287,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 	if publish.Message.QOS == 2 {
 		// store packet
-		err := c.Session.SavePacket(session.Incoming, publish)
+		err := c.Session.SavePacket(Incoming, publish)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -317,7 +316,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
-	c.Session.DeletePacket(session.Outgoing, packetID)
+	c.Session.DeletePacket(Outgoing, packetID)
 
 	return nil
 }
@@ -329,7 +328,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 	pubrel.PacketID = packetID
 
 	// overwrite stored PublishPacket with PubrelPacket
-	err := c.Session.SavePacket(session.Outgoing, pubrel)
+	err := c.Session.SavePacket(Outgoing, pubrel)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -346,7 +345,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
-	pkt, err := c.Session.LookupPacket(session.Incoming, packetID)
+	pkt, err := c.Session.LookupPacket(Incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -367,7 +366,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// remove packet from store
-	err = c.Session.DeletePacket(session.Incoming, packetID)
+	err = c.Session.DeletePacket(Incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -430,7 +429,7 @@ func (c *Client) sender() error {
 
 			// store packet if at least qos 1
 			if publish.Message.QOS > 0 {
-				err := c.Session.SavePacket(session.Outgoing, publish)
+				err := c.Session.SavePacket(Outgoing, publish)
 				if err != nil {
 					return c.die(err, true)
 				}

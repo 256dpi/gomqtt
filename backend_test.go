@@ -21,6 +21,62 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func abstractSessionSubscriptionTest(t *testing.T, session Session) {
+	subscription := &packet.Subscription{
+		Topic: "+",
+		QOS:   1,
+	}
+
+	subs, err := session.AllSubscriptions()
+	assert.Equal(t, 0, len(subs))
+
+	sub, err := session.LookupSubscription("foo")
+	assert.Nil(t, sub)
+	assert.NoError(t, err)
+
+	err = session.SaveSubscription(subscription)
+	assert.NoError(t, err)
+
+	sub, err = session.LookupSubscription("foo")
+	assert.Equal(t, subscription, sub)
+	assert.NoError(t, err)
+
+	subs, err = session.AllSubscriptions()
+	assert.Equal(t, 1, len(subs))
+
+	err = session.DeleteSubscription("+")
+	assert.NoError(t, err)
+
+	sub, err = session.LookupSubscription("foo")
+	assert.Nil(t, sub)
+	assert.NoError(t, err)
+
+	subs, err = session.AllSubscriptions()
+	assert.Equal(t, 0, len(subs))
+}
+
+func abstractSessionWillTest(t *testing.T, session Session) {
+	theWill := &packet.Message{"test", []byte("test"), 0, false}
+
+	will, err := session.LookupWill()
+	assert.Nil(t, will)
+	assert.NoError(t, err)
+
+	err = session.SaveWill(theWill)
+	assert.NoError(t, err)
+
+	will, err = session.LookupWill()
+	assert.Equal(t, theWill, will)
+	assert.NoError(t, err)
+
+	err = session.ClearWill()
+	assert.NoError(t, err)
+
+	will, err = session.LookupWill()
+	assert.Nil(t, will)
+	assert.NoError(t, err)
+}
+
 func abstractBackendGetSessionTest(t *testing.T, backend Backend) {
 	session1, err := backend.GetSession(nil, "foo")
 	assert.NoError(t, err)

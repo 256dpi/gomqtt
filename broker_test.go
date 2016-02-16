@@ -22,9 +22,9 @@ import (
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/tools"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
-	"github.com/gomqtt/tools"
 )
 
 func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) {

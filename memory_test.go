@@ -16,6 +16,14 @@ package broker
 
 import "testing"
 
+func TestMemorySessionSubscriptions(t *testing.T) {
+	abstractSessionSubscriptionTest(t, NewMemorySession())
+}
+
+func TestMemorySessionWill(t *testing.T) {
+	abstractSessionWillTest(t, NewMemorySession())
+}
+
 func TestMemoryBackendGetSession(t *testing.T) {
 	abstractBackendGetSessionTest(t, NewMemoryBackend())
 }
