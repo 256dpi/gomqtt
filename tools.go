@@ -12,22 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package topic
-
-import "fmt"
-
-func ExampleTopic() {
-	tree := NewTree()
-
-	tree.Add("foo/bar", 1)
-	tree.Add("foo/bar/baz", 2)
-	tree.Add("foo/+", 3)
-	tree.Add("foo/#", 4)
-
-	fmt.Println(tree.Match("foo/bar"))
-	fmt.Println(tree.Match("foo/bar/baz"))
-
-	// Output:
-	// [4 3 1]
-	// [4 2]
-}
+// Package tools implements utilities for building MQTT 3.1.1
+// (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) components.
+package tools
