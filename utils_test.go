@@ -15,11 +15,10 @@
 package broker
 
 import (
-	"fmt"
-	"net"
 	"testing"
 
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/tools"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,42 +33,10 @@ func errorCallback(t *testing.T) func(*packet.Message, error) {
 	}
 }
 
-// the testPort
-type testPort int
+func startBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{}) {
+	port := tools.NewPort()
 
-// returns a new testPort
-func newTestPort() *testPort {
-	// taken from: https://github.com/phayes/freeport/blob/master/freeport.go
-
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		panic(err)
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-
-	p := testPort(l.Addr().(*net.TCPAddr).Port)
-	return &p
-}
-
-// generates the url for that testPort
-func (p *testPort) url() string {
-	return fmt.Sprintf("tcp://localhost:%d/", int(*p))
-}
-
-// generates a protected url for that testPort
-func (p *testPort) protectedURL(user, password string) string {
-	return fmt.Sprintf("tcp://%s:%s@localhost:%d/", user, password, int(*p))
-}
-
-func startBroker(t *testing.T, broker *Broker, num int) (*testPort, chan struct{}) {
-	tp := newTestPort()
-
-	server, err := transport.Launch(tp.url())
+	server, err := transport.Launch(port.URL())
 	assert.NoError(t, err)
 
 	done := make(chan struct{})
@@ -88,5 +55,5 @@ func startBroker(t *testing.T, broker *Broker, num int) (*testPort, chan struct{
 		close(done)
 	}()
 
-	return tp, done
+	return port, done
 }

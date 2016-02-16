@@ -28,7 +28,7 @@ import (
 )
 
 func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) {
-	tp, done := startBroker(t, New(), 1)
+	port, done := startBroker(t, New(), 1)
 
 	client := client.New()
 
@@ -44,7 +44,7 @@ func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) 
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(tp.url(), nil)
+	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 
@@ -97,12 +97,12 @@ func TestPublishSubscribeDowngrade3(t *testing.T) {
 }
 
 func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
-	tp, done := startBroker(t, New(), 2)
+	port, done := startBroker(t, New(), 2)
 
 	client1 := client.New()
 	client1.Callback = errorCallback(t)
 
-	connectFuture1, err := client1.Connect(tp.url(), nil)
+	connectFuture1, err := client1.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 
@@ -127,7 +127,7 @@ func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(tp.url(), nil)
+	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 
@@ -164,12 +164,12 @@ func TestRetainedMessageWildcardSome(t *testing.T) {
 }
 
 func TestClearRetainedMessage(t *testing.T) {
-	tp, done := startBroker(t, New(), 3)
+	port, done := startBroker(t, New(), 3)
 
 	client1 := client.New()
 	client1.Callback = errorCallback(t)
 
-	connectFuture1, err := client1.Connect(tp.url(), nil)
+	connectFuture1, err := client1.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 
@@ -194,7 +194,7 @@ func TestClearRetainedMessage(t *testing.T) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(tp.url(), nil)
+	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 
@@ -214,7 +214,7 @@ func TestClearRetainedMessage(t *testing.T) {
 	client3 := client.New()
 	client3.Callback = errorCallback(t)
 
-	connectFuture3, err := client3.Connect(tp.url(), nil)
+	connectFuture3, err := client3.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
 
@@ -231,7 +231,7 @@ func TestClearRetainedMessage(t *testing.T) {
 }
 
 func abstractWillTest(t *testing.T, sub, pub uint8) {
-	tp, done := startBroker(t, New(), 2)
+	port, done := startBroker(t, New(), 2)
 
 	client1 := client.New()
 	client1.Callback = errorCallback(t)
@@ -243,7 +243,7 @@ func abstractWillTest(t *testing.T, sub, pub uint8) {
 		QOS:     pub,
 	}
 
-	connectFuture1, err := client1.Connect(tp.url(), opts)
+	connectFuture1, err := client1.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 
@@ -261,7 +261,7 @@ func abstractWillTest(t *testing.T, sub, pub uint8) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(tp.url(), nil)
+	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 
@@ -293,7 +293,7 @@ func TestWillQOS2(t *testing.T) {
 }
 
 func TestRetainedWill(t *testing.T) {
-	tp, done := startBroker(t, New(), 2)
+	port, done := startBroker(t, New(), 2)
 
 	client1 := client.New()
 	client1.Callback = errorCallback(t)
@@ -306,7 +306,7 @@ func TestRetainedWill(t *testing.T) {
 		Retain:  true,
 	}
 
-	connectFuture1, err := client1.Connect(tp.url(), opts)
+	connectFuture1, err := client1.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 
@@ -327,7 +327,7 @@ func TestRetainedWill(t *testing.T) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(tp.url(), nil)
+	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 
@@ -344,12 +344,12 @@ func TestRetainedWill(t *testing.T) {
 }
 
 func TestUnsubscribe(t *testing.T) {
-	tp, done := startBroker(t, New(), 1)
+	port, done := startBroker(t, New(), 1)
 
 	client := client.New()
 	client.Callback = errorCallback(t)
 
-	connectFuture, err := client.Connect(tp.url(), nil)
+	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 
@@ -374,7 +374,7 @@ func TestUnsubscribe(t *testing.T) {
 }
 
 func TestSubscriptionUpgrade(t *testing.T) {
-	tp, done := startBroker(t, New(), 1)
+	port, done := startBroker(t, New(), 1)
 
 	client := client.New()
 	wait := make(chan struct{})
@@ -389,7 +389,7 @@ func TestSubscriptionUpgrade(t *testing.T) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(tp.url(), nil)
+	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 
@@ -414,7 +414,7 @@ func TestSubscriptionUpgrade(t *testing.T) {
 }
 
 func TestMultipleSubscriptions(t *testing.T) {
-	tp, done := startBroker(t, New(), 1)
+	port, done := startBroker(t, New(), 1)
 
 	client := client.New()
 	wait := make(chan struct{})
@@ -429,7 +429,7 @@ func TestMultipleSubscriptions(t *testing.T) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(tp.url(), nil)
+	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 
@@ -458,9 +458,9 @@ func TestConnectTimeout(t *testing.T) {
 	broker := New()
 	broker.ConnectTimeout = 10 * time.Millisecond
 
-	tp, done := startBroker(t, broker, 1)
+	port, done := startBroker(t, broker, 1)
 
-	conn, err := transport.Dial(tp.url())
+	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
 
 	pkt, err := conn.Receive()
@@ -473,7 +473,7 @@ func TestConnectTimeout(t *testing.T) {
 func TestKeepAlive(t *testing.T) {
 	t.Parallel()
 
-	tp, done := startBroker(t, New(), 1)
+	port, done := startBroker(t, New(), 1)
 
 	opts := client.NewOptions()
 	opts.KeepAlive = "1s"
@@ -492,7 +492,7 @@ func TestKeepAlive(t *testing.T) {
 		}
 	}
 
-	connectFuture, err := client.Connect(tp.url(), opts)
+	connectFuture, err := client.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 
@@ -520,9 +520,9 @@ func TestKeepAliveTimeout(t *testing.T) {
 		Receive(connack).
 		End()
 
-	tp, done := startBroker(t, New(), 1)
+	port, done := startBroker(t, New(), 1)
 
-	conn, err := transport.Dial(tp.url())
+	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 

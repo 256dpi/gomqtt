@@ -19,12 +19,12 @@ import (
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
-	"github.com/gomqtt/topic"
+	"github.com/gomqtt/tools"
 )
 
 type MemoryBackend struct {
-	queue    *topic.Tree
-	retained *topic.Tree
+	queue    *tools.Tree
+	retained *tools.Tree
 	sessions map[string]*session.MemorySession
 
 	mutex sync.Mutex
@@ -32,8 +32,8 @@ type MemoryBackend struct {
 
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		queue:    topic.NewTree(),
-		retained: topic.NewTree(),
+		queue:    tools.NewTree(),
+		retained: tools.NewTree(),
 		sessions: make(map[string]*session.MemorySession),
 	}
 }
