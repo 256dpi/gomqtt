@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//
-type BackendClient interface {
+// A Consumer is a client connected to the broker that interacts with the backend.
+type Consumer interface {
 	Publish(msg *packet.Message) bool
 	Context() *Context
 }
@@ -34,25 +34,25 @@ type Backend interface {
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one. If the supplied id has a zero length, a new
 	// session is returned that is only valid once.
-	GetSession(client BackendClient, id string) (Session, error)
+	GetSession(consumer Consumer, id string) (Session, error)
 
-	// Subscribe will subscribe the passed client to the specified topic and
-	// begin to forward messages by calling the clients Publish method.
+	// Subscribe will subscribe the passed consumer to the specified topic and
+	// begin to forward messages by calling the consumers Publish method.
 	// It will also return the stored retained messages matching the supplied
 	// topic.
-	Subscribe(client BackendClient, topic string) ([]*packet.Message, error)
+	Subscribe(consumer Consumer, topic string) ([]*packet.Message, error)
 
-	// Unsubscribe will unsubscribe the passed client from the specified topic.
-	Unsubscribe(client BackendClient, topic string) error
+	// Unsubscribe will unsubscribe the passed consumer from the specified topic.
+	Unsubscribe(consumer Consumer, topic string) error
 
-	// Remove will unsubscribe the passed client from previously subscribe topics.
-	Remove(client BackendClient) error
+	// Remove will unsubscribe the passed consumer from previously subscribe topics.
+	Remove(consumer Consumer) error
 
-	// Publish will forward the passed message to all other subscribed clients.
+	// Publish will forward the passed message to all other subscribed consumers.
 	// It will also store the message if Retain is set to true. If the supplied
 	//message has additionally a zero length payload, the backend removes the
 	// currently retained message.
-	Publish(client BackendClient, msg *packet.Message) error
+	Publish(consumer Consumer, msg *packet.Message) error
 }
 
 // TODO: missing offline subscriptions
@@ -170,7 +170,7 @@ func NewMemoryBackend() *MemoryBackend {
 // GetSession returns the already stored session for the supplied id or creates
 // and returns a new one. If the supplied id has a zero length, a new
 // session is returned that is only valid once.
-func (m *MemoryBackend) GetSession(client BackendClient, id string) (Session, error) {
+func (m *MemoryBackend) GetSession(consumer Consumer, id string) (Session, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
@@ -189,12 +189,12 @@ func (m *MemoryBackend) GetSession(client BackendClient, id string) (Session, er
 	return NewMemorySession(), nil
 }
 
-// Subscribe will subscribe the passed client to the specified topic and
-// begin to forward messages by calling the clients Publish method.
+// Subscribe will subscribe the passed consumer to the specified topic and
+// begin to forward messages by calling the consumers Publish method.
 // It will also return the stored retained messages matching the supplied
 // topic.
-func (m *MemoryBackend) Subscribe(client BackendClient, topic string) ([]*packet.Message, error) {
-	m.queue.Add(topic, client)
+func (m *MemoryBackend) Subscribe(consumer Consumer, topic string) ([]*packet.Message, error) {
+	m.queue.Add(topic, consumer)
 
 	values := m.retained.Search(topic)
 
@@ -209,23 +209,23 @@ func (m *MemoryBackend) Subscribe(client BackendClient, topic string) ([]*packet
 	return msgs, nil
 }
 
-// Unsubscribe will unsubscribe the passed client from the specified topic.
-func (m *MemoryBackend) Unsubscribe(client BackendClient, topic string) error {
-	m.queue.Remove(topic, client)
+// Unsubscribe will unsubscribe the passed consumer from the specified topic.
+func (m *MemoryBackend) Unsubscribe(consumer Consumer, topic string) error {
+	m.queue.Remove(topic, consumer)
 	return nil
 }
 
-// Remove will unsubscribe the passed client from previously subscribe topics.
-func (m *MemoryBackend) Remove(client BackendClient) error {
-	m.queue.Clear(client)
+// Remove will unsubscribe the passed consumer from previously subscribe topics.
+func (m *MemoryBackend) Remove(consumer Consumer) error {
+	m.queue.Clear(consumer)
 	return nil
 }
 
-// Publish will forward the passed message to all other subscribed clients.
+// Publish will forward the passed message to all other subscribed consumers.
 // It will also store the message if Retain is set to true. If the supplied
 //message has additionally a zero length payload, the backend removes the
 // currently retained message.
-func (m *MemoryBackend) Publish(client BackendClient, msg *packet.Message) error {
+func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
 			m.retained.Set(msg.Topic, msg)
@@ -235,8 +235,8 @@ func (m *MemoryBackend) Publish(client BackendClient, msg *packet.Message) error
 	}
 
 	for _, v := range m.queue.Match(msg.Topic) {
-		if client, ok := v.(BackendClient); ok && client != nil {
-			client.Publish(msg)
+		if consumer, ok := v.(Consumer); ok && consumer != nil {
+			consumer.Publish(msg)
 		}
 	}
 
