@@ -18,7 +18,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gomqtt/flow"
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
 	"github.com/gomqtt/tools"
@@ -86,7 +85,7 @@ func (s *testSession) Reset() error {
 	return s.MemorySession.Reset()
 }
 
-func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, *tools.Port) {
+func fakeBroker(t *testing.T, testFlows ...*tools.Flow) (chan struct{}, *tools.Port) {
 	port := tools.NewPort()
 	done := make(chan struct{})
 
