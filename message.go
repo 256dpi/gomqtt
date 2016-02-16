@@ -16,7 +16,7 @@ package packet
 
 import "fmt"
 
-// Message bundles data that is published between brokers and clients.
+// A Message bundles data that is published between brokers and clients.
 type Message struct {
 	// The Topic of the message.
 	Topic string

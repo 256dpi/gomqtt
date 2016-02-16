@@ -34,7 +34,8 @@ const (
 	QOSFailure = 0x80
 )
 
-// Packet is an abstract interface for all MQTT packet types.
+// A Packet is an MQTT control packet that can be encoded to a buffer or decoded
+// from a buffer.
 type Packet interface {
 	// Type returns the packets type.
 	Type() Type

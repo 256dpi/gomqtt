@@ -40,7 +40,7 @@ func nakedPacketEncode(dst []byte, t Type) (int, error) {
 	return headerEncode(dst, 0, 0, nakedPacketLen(), t)
 }
 
-// The DisconnectPacket is sent from the client to the server.
+// A DisconnectPacket is sent from the client to the server.
 // It indicates that the client is disconnecting cleanly.
 type DisconnectPacket struct{}
 
@@ -79,7 +79,7 @@ func (dp *DisconnectPacket) String() string {
 	return "<DisconnectPacket>"
 }
 
-// The PingreqPacket is sent from a client to the server.
+// A PingreqPacket is sent from a client to the server.
 type PingreqPacket struct{}
 
 // NewPingreqPacket creates a new PingreqPacket.
