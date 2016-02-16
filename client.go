@@ -33,20 +33,19 @@ const (
 
 // A Client is a single client connected to the broker.
 type Client struct {
-	broker *Broker
-	conn   transport.Conn
+	broker  *Broker
+	conn    transport.Conn
 
-	Session Session
-	UUID    string
-	Info    interface{}
+	session Session
+	uuid    string
+	info    map[string]interface{}
+	out     chan *packet.Message
+	state   *state
+	clean   bool
 
-	out   chan *packet.Message
-	state *state
-	clean bool
-
-	tomb   tomb.Tomb
-	mutex  sync.Mutex
-	finish sync.Once
+	tomb    tomb.Tomb
+	mutex   sync.Mutex
+	finish  sync.Once
 }
 
 // NewClient takes over responsibility over a connection and returns a Client.
@@ -55,7 +54,7 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 		broker: broker,
 		conn:   conn,
 		out:    make(chan *packet.Message),
-		UUID:   uuid.NewV1().String(),
+		uuid:   uuid.NewV1().String(),
 		state:  newState(clientConnecting),
 	}
 
@@ -81,7 +80,7 @@ func (c *Client) Publish(msg *packet.Message) bool {
 func (c *Client) processor() error {
 	first := true
 
-	c.log("%s - New Connection", c.UUID)
+	c.log("%s - New Connection", c.uuid)
 
 	// set initial read timeout
 	c.conn.SetReadTimeout(c.broker.ConnectTimeout)
@@ -98,7 +97,7 @@ func (c *Client) processor() error {
 			return c.die(err, false)
 		}
 
-		c.log("%s - Received: %s", c.UUID, pkt.String())
+		c.log("%s - Received: %s", c.uuid, pkt.String())
 
 		if first {
 			// get connect
@@ -166,11 +165,11 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// assign session
-	c.Session = sess
+	c.session = sess
 
 	// reset session on clean
 	if c.clean {
-		err = c.Session.Reset()
+		err = c.session.Reset()
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -178,7 +177,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// save will if present
 	if pkt.Will != nil {
-		err = c.Session.SaveWill(pkt.Will)
+		err = c.session.SaveWill(pkt.Will)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -213,7 +212,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 	for _, subscription := range pkt.Subscriptions {
 		// save subscription in session
-		err := c.Session.SaveSubscription(&subscription)
+		err := c.session.SaveSubscription(&subscription)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -258,7 +257,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 		}
 
 		// remove subscription from session
-		err = c.Session.DeleteSubscription(topic)
+		err = c.session.DeleteSubscription(topic)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -287,7 +286,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 	if publish.Message.QOS == 2 {
 		// store packet
-		err := c.Session.SavePacket(incoming, publish)
+		err := c.session.SavePacket(incoming, publish)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -316,7 +315,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
-	c.Session.DeletePacket(outgoing, packetID)
+	c.session.DeletePacket(outgoing, packetID)
 
 	return nil
 }
@@ -328,7 +327,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 	pubrel.PacketID = packetID
 
 	// overwrite stored PublishPacket with PubrelPacket
-	err := c.Session.SavePacket(outgoing, pubrel)
+	err := c.session.SavePacket(outgoing, pubrel)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -345,7 +344,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
-	pkt, err := c.Session.LookupPacket(incoming, packetID)
+	pkt, err := c.session.LookupPacket(incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -366,7 +365,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// remove packet from store
-	err = c.Session.DeletePacket(incoming, packetID)
+	err = c.session.DeletePacket(incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -386,7 +385,7 @@ func (c *Client) processDisconnect() error {
 	c.state.set(clientDisconnected)
 
 	// clear will
-	err := c.Session.ClearWill()
+	err := c.session.ClearWill()
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -407,7 +406,7 @@ func (c *Client) sender() error {
 			publish.Message = *msg
 
 			// get stored subscription
-			sub, err := c.Session.LookupSubscription(publish.Message.Topic)
+			sub, err := c.session.LookupSubscription(publish.Message.Topic)
 			if err != nil {
 				return c.die(err, true)
 			}
@@ -424,12 +423,12 @@ func (c *Client) sender() error {
 
 			// set packet id
 			if publish.Message.QOS > 0 {
-				publish.PacketID = c.Session.PacketID()
+				publish.PacketID = c.session.PacketID()
 			}
 
 			// store packet if at least qos 1
 			if publish.Message.QOS > 0 {
-				err := c.Session.SavePacket(outgoing, publish)
+				err := c.session.SavePacket(outgoing, publish)
 				if err != nil {
 					return c.die(err, true)
 				}
@@ -454,9 +453,9 @@ func (c *Client) cleanup(err error, close bool) error {
 		err = _err
 	}
 
-	if c.Session != nil {
+	if c.session != nil {
 		// get will
-		will, _err := c.Session.LookupWill()
+		will, _err := c.session.LookupWill()
 		if err == nil {
 			err = _err
 		}
@@ -480,7 +479,7 @@ func (c *Client) cleanup(err error, close bool) error {
 
 	// reset session
 	if c.clean {
-		_err := c.Session.Reset()
+		_err := c.session.Reset()
 		if err == nil {
 			err = _err
 		}
@@ -488,7 +487,7 @@ func (c *Client) cleanup(err error, close bool) error {
 
 	// reset store
 	if c.clean {
-		_err := c.Session.Reset()
+		_err := c.session.Reset()
 		if err == nil {
 			err = _err
 		}
@@ -504,7 +503,7 @@ func (c *Client) die(err error, close bool) error {
 
 		// report error
 		if err != nil {
-			c.log("%s - Internal Error: %s", c.UUID, err)
+			c.log("%s - Internal Error: %s", c.uuid, err)
 		}
 	})
 
@@ -518,7 +517,7 @@ func (c *Client) send(pkt packet.Packet) error {
 		return err
 	}
 
-	c.log("%s - Sent: %s", c.UUID, pkt.String())
+	c.log("%s - Sent: %s", c.uuid, pkt.String())
 
 	return nil
 }
