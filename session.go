@@ -29,7 +29,7 @@ const (
 	incoming = "in"
 )
 
-// Session is used to persist incoming/outgoing packets, subscriptions and the
+// A Session is used to persist incoming/outgoing packets, subscriptions and the
 // will.
 type Session interface {
 	// PacketID will return the next id for outgoing packets.
@@ -180,8 +180,8 @@ func AbstractSessionSubscriptionStoreTest(t *testing.T, session Session) {
 	assert.Equal(t, 0, len(subs))
 }
 
-// AbstractSessionWillTest tests a session implementations will storing methods.
-func AbstractSessionWillTest(t *testing.T, session Session) {
+// AbstractSessionWillStoreTest tests a session implementations will storing methods.
+func AbstractSessionWillStoreTest(t *testing.T, session Session) {
 	theWill := &packet.Message{"test", []byte("test"), 0, false}
 
 	will, err := session.LookupWill()
@@ -203,7 +203,7 @@ func AbstractSessionWillTest(t *testing.T, session Session) {
 	assert.NoError(t, err)
 }
 
-// MemorySession stores packets, subscriptions and the will in memory.
+// A MemorySession stores packets, subscriptions and the will in memory.
 type MemorySession struct {
 	counter       *tools.Counter
 	store         *tools.Store

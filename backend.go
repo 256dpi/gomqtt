@@ -143,7 +143,7 @@ func AbstractBackendRetainedTest(t *testing.T, backend Backend) {
 	assert.Empty(t, msgs)
 }
 
-// MemoryBackend stores everything in memory.
+// A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
 	queue    *tools.Tree
 	retained *tools.Tree

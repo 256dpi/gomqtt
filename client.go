@@ -31,7 +31,7 @@ const (
 	clientDisconnected
 )
 
-// Client is a single client connected to the broker.
+// A Client is a single client connected to the broker.
 type Client struct {
 	broker *Broker
 	conn   transport.Conn
