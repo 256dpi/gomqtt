@@ -18,7 +18,7 @@ package tools
 
 import "sync"
 
-// Counter continuously counts packet ids.
+// A Counter continuously counts packet ids.
 type Counter struct {
 	current uint16
 	mutex   sync.Mutex

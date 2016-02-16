@@ -23,14 +23,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// FlowConn defines a suitable connection for flow.
+// A FlowConn defines an abstract interface for connections used with a Flow.
 type FlowConn interface {
 	Send(pkt packet.Packet) error
 	Receive() (packet.Packet, error)
 	Close() error
 }
 
-// PipeConn is a FlowConn that pipes packets from Send to Receive.
+// The PipeConn pipes packets from Send to Receive.
 type PipeConn struct {
 	pipe  chan packet.Packet
 	close chan struct{}
@@ -82,7 +82,7 @@ const (
 	actionEnd
 )
 
-// Action is a step in a flow.
+// An Action is a step in a flow.
 type action struct {
 	kind     byte
 	packet   packet.Packet
@@ -91,7 +91,7 @@ type action struct {
 	duration time.Duration
 }
 
-// Flow is a sequence of actions.
+// A Flow is a sequence of actions that can be tested against a connection.
 type Flow struct {
 	actions []*action
 }

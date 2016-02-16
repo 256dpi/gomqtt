@@ -22,7 +22,7 @@ import (
 	"strconv"
 )
 
-// Port is a free TCP port.
+// A Port is a free TCP port.
 type Port int
 
 // NewPort returns a free Port.

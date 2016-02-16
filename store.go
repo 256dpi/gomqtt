@@ -7,7 +7,7 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// Store is a thread-safe packet store.
+// The Store is a thread-safe packet store.
 type Store struct {
 	packets map[string]packet.Packet
 	mutex   sync.Mutex
