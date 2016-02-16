@@ -33,9 +33,9 @@ func TestClearSession(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
-	ClearSession(tp.url(), "test")
+	ClearSession(port.URL(), "test")
 
 	<-done
 }
@@ -65,7 +65,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	online := make(chan struct{})
 	message := make(chan struct{})
@@ -90,7 +90,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 		close(message)
 	}
 
-	s.Start(tp.url(), nil)
+	s.Start(port.URL(), nil)
 
 	<-online
 
@@ -112,7 +112,7 @@ func TestStartStopVariations(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	online := make(chan struct{})
 	offline := make(chan struct{})
@@ -128,8 +128,8 @@ func TestStartStopVariations(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(tp.url(), nil)
-	s.Start(tp.url(), nil) // <- does nothing
+	s.Start(port.URL(), nil)
+	s.Start(port.URL(), nil) // <- does nothing
 
 	<-online
 
@@ -156,7 +156,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	online := make(chan struct{})
 	offline := make(chan struct{})
@@ -172,7 +172,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(tp.url(), nil)
+	s.Start(port.URL(), nil)
 
 	<-online
 
@@ -196,7 +196,7 @@ func TestServiceReconnect(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, delay, delay, delay, noDelay)
+	done, port := fakeBroker(t, delay, delay, delay, noDelay)
 
 	online := make(chan struct{})
 	offline := make(chan struct{})
@@ -221,7 +221,7 @@ func TestServiceReconnect(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(tp.url(), nil)
+	s.Start(port.URL(), nil)
 
 	<-online
 
@@ -271,7 +271,7 @@ func TestServiceFutureSurvival(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker1, broker2)
+	done, port := fakeBroker(t, broker1, broker2)
 
 	options := NewOptions()
 	options.ClientID = "test"
@@ -279,7 +279,7 @@ func TestServiceFutureSurvival(t *testing.T) {
 
 	s := NewService()
 
-	s.Start(tp.url(), options)
+	s.Start(port.URL(), options)
 
 	err := s.Publish("test", []byte("test"), 1, false).Wait()
 	assert.NoError(t, err)

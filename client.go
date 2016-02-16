@@ -209,10 +209,10 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 // has been completed.
 func (c *Client) Publish(topic string, payload []byte, qos uint8, retain bool) (*PublishFuture, error) {
 	msg := &packet.Message{
-		Topic: topic,
+		Topic:   topic,
 		Payload: payload,
-		QOS: qos,
-		Retain: retain,
+		QOS:     qos,
+		Retain:  retain,
 	}
 
 	return c.PublishMessage(msg)

@@ -16,13 +16,12 @@ package client
 
 import (
 	"errors"
-	"fmt"
-	"net"
 	"testing"
 
 	"github.com/gomqtt/flow"
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/session"
+	"github.com/gomqtt/tools"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
@@ -87,43 +86,11 @@ func (s *testSession) Reset() error {
 	return s.MemorySession.Reset()
 }
 
-// the testPort
-type testPort int
-
-// returns a new testPort
-func newTestPort() *testPort {
-	// taken from: https://github.com/phayes/freeport/blob/master/freeport.go
-
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		panic(err)
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-
-	p := testPort(l.Addr().(*net.TCPAddr).Port)
-	return &p
-}
-
-// generates the url for that testPort
-func (p *testPort) url() string {
-	return fmt.Sprintf("tcp://localhost:%d/", int(*p))
-}
-
-// generates a protected url for that testPort
-func (p *testPort) protectedURL(user, password string) string {
-	return fmt.Sprintf("tcp://%s:%s@localhost:%d/", user, password, int(*p))
-}
-
-func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, *testPort) {
-	tp := newTestPort()
+func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, *tools.Port) {
+	port := tools.NewPort()
 	done := make(chan struct{})
 
-	server, err := transport.Launch(tp.url())
+	server, err := transport.Launch(port.URL())
 	assert.NoError(t, err)
 
 	go func() {
@@ -140,7 +107,7 @@ func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, *testPort
 		close(done)
 	}()
 
-	return done, tp
+	return done, port
 }
 
 func connectPacket() *packet.ConnectPacket {

@@ -15,6 +15,7 @@
 package client
 
 import (
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -75,12 +76,12 @@ func TestClientConnect(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -99,18 +100,18 @@ func TestClientConnectAfterConnect(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
-	future, err = c.Connect(tp.url(), nil)
+	future, err = c.Connect(port.URL(), nil)
 	assert.Equal(t, ErrClientAlreadyConnecting, err)
 	assert.Nil(t, future)
 
@@ -131,12 +132,12 @@ func TestClientConnectWithCredentials(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(tp.protectedURL("test", "test"), nil)
+	future, err := c.Connect(fmt.Sprintf("tcp://test:test@localhost:%s/", port.Port()), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -180,7 +181,7 @@ func TestClientConnectionDenied(t *testing.T) {
 		Send(connack).
 		Close()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -191,7 +192,7 @@ func TestClientConnectionDenied(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -207,7 +208,7 @@ func TestClientExpectedConnack(t *testing.T) {
 		Send(packet.NewPingrespPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -218,7 +219,7 @@ func TestClientExpectedConnack(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.Equal(t, ErrFutureCanceled, future.Wait())
 
@@ -243,7 +244,7 @@ func TestClientKeepAlive(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = errorCallback(t)
@@ -262,7 +263,7 @@ func TestClientKeepAlive(t *testing.T) {
 	opts := NewOptions()
 	opts.KeepAlive = "100ms"
 
-	future, err := c.Connect(tp.url(), opts)
+	future, err := c.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -291,7 +292,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 		Receive(pingreq).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -305,7 +306,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	opts := NewOptions()
 	opts.KeepAlive = "5ms"
 
-	future, err := c.Connect(tp.url(), opts)
+	future, err := c.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -340,7 +341,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -354,7 +355,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -417,7 +418,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -431,7 +432,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -504,7 +505,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -518,7 +519,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -565,12 +566,12 @@ func TestClientUnsubscribe(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -604,7 +605,7 @@ func TestClientHardDisconnect(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = errorCallback(t)
@@ -613,7 +614,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	opts.ClientID = "test"
 	opts.CleanSession = false
 
-	connectFuture, err := c.Connect(tp.url(), opts)
+	connectFuture, err := c.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -658,12 +659,12 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = errorCallback(t)
 
-	connectFuture, err := c.Connect(tp.url(), nil)
+	connectFuture, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -691,12 +692,12 @@ func TestClientClose(t *testing.T) {
 		Send(connackPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = errorCallback(t)
 
-	connectFuture, err := c.Connect(tp.url(), nil)
+	connectFuture, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -756,7 +757,7 @@ func TestClientSessionResumption(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Session.SavePacket(session.Outgoing, publish1)
@@ -767,7 +768,7 @@ func TestClientSessionResumption(t *testing.T) {
 	opts.ClientID = "test"
 	opts.CleanSession = false
 
-	connectFuture, err := c.Connect(tp.url(), opts)
+	connectFuture, err := c.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -791,7 +792,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 		Send(connackPacket()).
 		Close()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -802,7 +803,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -817,7 +818,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 		Receive(connectPacket()).
 		Close()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -828,7 +829,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(tp.url(), nil)
+	future, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.Equal(t, ErrFutureCanceled, future.Wait())
 
@@ -849,7 +850,7 @@ func TestClientFutureCancellation(t *testing.T) {
 		Receive(publish).
 		Close()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	c := New()
 	c.Callback = func(msg *packet.Message, err error) {
@@ -857,7 +858,7 @@ func TestClientFutureCancellation(t *testing.T) {
 		assert.Equal(t, ErrClientUnexpectedClose, err)
 	}
 
-	connectFuture, err := c.Connect(tp.url(), nil)
+	connectFuture, err := c.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -895,7 +896,7 @@ func TestClientLogger(t *testing.T) {
 		Receive(disconnectPacket()).
 		End()
 
-	done, tp := fakeBroker(t, broker)
+	done, port := fakeBroker(t, broker)
 
 	wait := make(chan struct{})
 
@@ -909,7 +910,7 @@ func TestClientLogger(t *testing.T) {
 		atomic.AddUint32(&counter, 1)
 	}
 
-	future, _ := c.Connect(tp.url(), nil)
+	future, _ := c.Connect(port.URL(), nil)
 	future.Wait()
 
 	subscribeFuture, _ := c.Subscribe("test", 0)

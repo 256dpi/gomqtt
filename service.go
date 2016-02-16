@@ -219,8 +219,8 @@ func (s *Service) SubscribeMultiple(subscriptions map[string]uint8, requeue bool
 	// queue subscribe
 	s.subscribeQueue <- &subscribe{
 		subscriptions: subscriptions,
-		future:  future,
-		requeue: requeue,
+		future:        future,
+		requeue:       requeue,
 	}
 
 	return future
