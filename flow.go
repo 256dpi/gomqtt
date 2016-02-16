@@ -96,7 +96,7 @@ type Flow struct {
 	actions []*action
 }
 
-// New returns a new flow.
+// NewFlow returns a new flow.
 func NewFlow() *Flow {
 	return &Flow{
 		actions: make([]*action, 0),
@@ -152,6 +152,7 @@ func (f *Flow) Run(fn func()) *Flow {
 	return f
 }
 
+// Delay will suspend the flow using the specified duration.
 func (f *Flow) Delay(d time.Duration) *Flow {
 	f.add(&action{
 		kind:     actionDelay,
