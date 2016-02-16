@@ -3,8 +3,9 @@ dependencies:
     - go get github.com/axw/gocov/gocov
     - go get github.com/mattn/goveralls
     - go get golang.org/x/tools/cmd/cover
+    - go get github.com/pierrre/gotestcover
 test:
   override:
-    - go test -v -cover -race -coverprofile=/home/ubuntu/coverage.out
+    - gotestcover -v -race -coverprofile=/home/ubuntu/coverage.out ./...
   post:
     - /home/ubuntu/.go_workspace/bin/goveralls -coverprofile=/home/ubuntu/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
