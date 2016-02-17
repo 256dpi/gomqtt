@@ -120,6 +120,7 @@ func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
 	assert.True(t, session4 != session5)
 }
 
+// AbstractQueuingTest tests a backend implementations queuing methods.
 func AbstractQueuingTest(t *testing.T, backend Backend) {
 	consumer1 := newFakeConsumer()
 	consumer2 := newFakeConsumer()
@@ -248,7 +249,8 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-// Authenticate authenticates a consumers credentials.
+// Authenticate authenticates a consumers credentials by matching them to the
+// saved Logins map.
 func (m *MemoryBackend) Authenticate(consumer Consumer, user, password string) (bool, error) {
 	// allow all if there are no logins
 	if m.Logins == nil {
@@ -313,7 +315,7 @@ func (m *MemoryBackend) Unsubscribe(consumer Consumer, topic string) error {
 
 // Publish will forward the passed message to all other subscribed consumers.
 // It will also store the message if Retain is set to true. If the supplied
-//message has additionally a zero length payload, the backend removes the
+// message has additionally a zero length payload, the backend removes the
 // currently retained message.
 func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 	if msg.Retain {
@@ -333,7 +335,7 @@ func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 	return nil
 }
 
-// Remove will unsubscribe the passed consumer from previously subscribe topics.
+// Remove will unsubscribe the passed consumer from all previously subscribed topics.
 func (m *MemoryBackend) Remove(consumer Consumer) error {
 	m.queue.Clear(consumer)
 	return nil
