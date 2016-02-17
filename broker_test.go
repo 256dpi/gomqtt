@@ -630,10 +630,50 @@ func TestStoredSubscriptionsQOS2(t *testing.T) {
 	abstractStoredSubscriptionTest(t, 2)
 }
 
+func TestCleanStoredSubscriptions(t *testing.T) {
+	port, done := startBroker(t, New(), 2)
+
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+
+	subscribeFuture, err := client1.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	options.CleanSession = true
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	connectFuture2, err := client2.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+
+	publishFuture2, err := client2.Publish("test", nil, 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture2.Wait())
+
+	time.Sleep(50 * time.Millisecond)
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
 // -- basic
 // disconnect another client with the same clientId
 // failed authentication does not disconnect other client with same clientId
-// remove stored subscriptions with clean=true
 
 // -- qos1
 // resend publish on non-clean reconnect QoS 1
