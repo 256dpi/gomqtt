@@ -64,8 +64,6 @@ type Backend interface {
 	Remove(consumer Consumer) error
 }
 
-// TODO: missing offline subscriptions
-
 // AbstractBackendAuthenticationTest tests a backend implementations Authenticate
 // method. The backend should allow the "allow:allow" and deny the "deny:deny"
 // logins.

@@ -788,3 +788,6 @@ func TestRemoveStoredSubscription(t *testing.T) {
 
 // -- will
 // delivers old will in case of a crash
+
+// -- offline
+// test offline subscriptions
