@@ -32,50 +32,50 @@ const (
 // A Session is used to persist incoming/outgoing packets, subscriptions and the
 // will.
 type Session interface {
-	// PacketID will return the next id for outgoing packets.
+	// PacketID should return the next id for outgoing packets.
 	PacketID() uint16
 
-	// SavePacket will store a packet in the session. An eventual existing
-	// packet with the same id gets quietly overwritten.
+	// SavePacket should store a packet in the session. An eventual existing
+	// packet with the same id should be quietly overwritten.
 	SavePacket(direction string, pkt packet.Packet) error
 
-	// LookupPacket will retrieve a packet from the session using a packet id.
+	// LookupPacket should retrieve a packet from the session using the packet id.
 	LookupPacket(direction string, id uint16) (packet.Packet, error)
 
-	// DeletePacket will remove a packet from the session. The method must not
-	// return an error if no packet with the specified id does exists.
+	// DeletePacket should remove a packet from the session. The method should
+	// not return an error if no packet with the specified id does exists.
 	DeletePacket(direction string, id uint16) error
 
-	// AllPackets will return all packets currently saved in the session.
+	// AllPackets should return all packets currently saved in the session.
 	AllPackets(direction string) ([]packet.Packet, error)
 
-	// SaveSubscription will store the subscription in the session. An eventual
-	// subscription with the same topic gets quietly overwritten.
+	// SaveSubscription should store the subscription in the session. An eventual
+	// subscription with the same topic should be quietly overwritten.
 	SaveSubscription(sub *packet.Subscription) error
 
-	// LookupSubscription will match a topic against the stored subscriptions and
-	// eventually return the first found subscription.
+	// LookupSubscription should match a topic against the stored subscriptions
+	// and eventually return the first found subscription.
 	LookupSubscription(topic string) (*packet.Subscription, error)
 
-	// DeleteSubscription will remove the subscription from the session. The
-	// method must not return an error if no subscription with the specified
+	// DeleteSubscription should remove the subscription from the session. The
+	// method should not return an error if no subscription with the specified
 	// topic does exist.
 	DeleteSubscription(topic string) error
 
-	// AllSubscriptions will return all subscriptions currently saved in the
+	// AllSubscriptions should return all subscriptions currently saved in the
 	// session.
 	AllSubscriptions() ([]*packet.Subscription, error)
 
-	// SaveWill will store the will message.
+	// SaveWill should store the will message.
 	SaveWill(msg *packet.Message) error
 
-	// LookupWill will retrieve the will message.
+	// LookupWill should retrieve the will message.
 	LookupWill() (*packet.Message, error)
 
-	// ClearWill will remove the will message from the store.
+	// ClearWill should remove the will message from the store.
 	ClearWill() error
 
-	// Reset will completely reset the session.
+	// Reset should completely reset the session.
 	Reset() error
 }
 
