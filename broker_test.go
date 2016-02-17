@@ -772,20 +772,148 @@ func TestRemoveStoredSubscription(t *testing.T) {
 	<-done
 }
 
+func TestPublishResendQOS1(t *testing.T) {
+	connect := packet.NewConnectPacket()
+	connect.CleanSession = false
+	connect.ClientID = "test"
+
+	subscribe := packet.NewSubscribePacket()
+	subscribe.PacketID = 1
+	subscribe.Subscriptions = []packet.Subscription{
+		{Topic: "test", QOS: 1},
+	}
+
+	publishOut := packet.NewPublishPacket()
+	publishOut.PacketID = 2
+	publishOut.Message.Topic = "test"
+	publishOut.Message.QOS = 1
+
+	publishIn := packet.NewPublishPacket()
+	publishIn.PacketID = 1
+	publishIn.Message.Topic = "test"
+	publishIn.Message.QOS = 1
+
+	pubackIn := packet.NewPubackPacket()
+	pubackIn.PacketID = 1
+
+	disconnect := packet.NewDisconnectPacket()
+
+	port, done := startBroker(t, New(), 2)
+
+	conn1, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn1)
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Send(subscribe).
+		Skip(). // suback
+		Send(publishOut).
+		Skip(). // puback
+		Receive(publishIn).
+		Close().
+		Test(t, conn1)
+
+	conn2, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn2)
+
+	publishIn.Dup = true
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Receive(publishIn).
+		Send(pubackIn).
+		Send(disconnect).
+		Close().
+		Test(t, conn2)
+
+	<-done
+}
+
+func TestPubrelResendQOS2(t *testing.T) {
+	connect := packet.NewConnectPacket()
+	connect.CleanSession = false
+	connect.ClientID = "test"
+
+	subscribe := packet.NewSubscribePacket()
+	subscribe.PacketID = 1
+	subscribe.Subscriptions = []packet.Subscription{
+		{Topic: "test", QOS: 2},
+	}
+
+	publishOut := packet.NewPublishPacket()
+	publishOut.PacketID = 2
+	publishOut.Message.Topic = "test"
+	publishOut.Message.QOS = 2
+
+	pubrelOut := packet.NewPubrelPacket()
+	pubrelOut.PacketID = 2
+
+	publishIn := packet.NewPublishPacket()
+	publishIn.PacketID = 1
+	publishIn.Message.Topic = "test"
+	publishIn.Message.QOS = 2
+
+	pubrecIn := packet.NewPubrecPacket()
+	pubrecIn.PacketID = 1
+
+	pubrelIn := packet.NewPubrelPacket()
+	pubrelIn.PacketID = 1
+
+	pubcompIn := packet.NewPubcompPacket()
+	pubcompIn.PacketID = 1
+
+	disconnect := packet.NewDisconnectPacket()
+
+	broker := New()
+	broker.Logger = func(msg string){
+		println(msg)
+	}
+
+	port, done := startBroker(t, broker, 2)
+
+	conn1, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn1)
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Send(subscribe).
+		Skip(). // suback
+		Send(publishOut).
+		Skip(). // pubrec
+		Send(pubrelOut).
+		Skip(). // pubcomp
+		Receive(publishIn).
+		Send(pubrecIn).
+		Close().
+		Test(t, conn1)
+
+	conn2, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn2)
+
+	publishIn.Dup = true
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Receive(pubrelIn).
+		Send(pubcompIn).
+		Send(disconnect).
+		Close().
+		Test(t, conn2)
+
+	<-done
+}
+
 // -- basic
 // disconnect another client with the same clientId
 // failed authentication does not disconnect other client with same clientId
-
-// -- qos1
-// resend publish on non-clean reconnect QoS 1
-// do not resend QoS 1 packets at each reconnect
-// do not resend QoS 1 packets if reconnect is clean
-// do not resend QoS 1 packets at reconnect if puback was received
-
-// -- qos2
-// resend publish on non-clean reconnect QoS 2
-// resend pubrel on non-clean reconnect QoS 2
-// publish after disconnection
 
 // -- will
 // delivers old will in case of a crash
