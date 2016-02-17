@@ -68,39 +68,43 @@ type Backend interface {
 // method. The backend should allow the "allow:allow" and deny the "deny:deny"
 // logins.
 func AbstractBackendAuthenticationTest(t *testing.T, backend Backend) {
-	ok, err := backend.Authenticate(nil, "allow", "allow")
+	consumer := newFakeConsumer()
+
+	ok, err := backend.Authenticate(consumer, "allow", "allow")
 	assert.True(t, ok)
 	assert.NoError(t, err)
 
-	ok, err = backend.Authenticate(nil, "deny", "deny")
+	ok, err = backend.Authenticate(consumer, "deny", "deny")
 	assert.False(t, ok)
 	assert.NoError(t, err)
 }
 
 // AbstractBackendGetSessionTest tests a backend implementations GetSession method.
 func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
-	session1, resumed, err := backend.GetSession(nil, "foo")
+	consumer := newFakeConsumer()
+
+	session1, resumed, err := backend.GetSession(consumer, "foo")
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session1)
 
-	session2, resumed, err := backend.GetSession(nil, "foo")
+	session2, resumed, err := backend.GetSession(consumer, "foo")
 	assert.NoError(t, err)
 	assert.True(t, resumed)
 	assert.True(t, session1 == session2)
 
-	session3, resumed, err := backend.GetSession(nil, "bar")
+	session3, resumed, err := backend.GetSession(consumer, "bar")
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.False(t, session3 == session1)
 	assert.False(t, session3 == session2)
 
-	session4, resumed, err := backend.GetSession(nil, "")
+	session4, resumed, err := backend.GetSession(consumer, "")
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session4)
 
-	session5, resumed, err := backend.GetSession(nil, "")
+	session5, resumed, err := backend.GetSession(consumer, "")
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session5)
@@ -109,6 +113,8 @@ func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
 
 // AbstractBackendRetainedTest tests a backend implementations message retaining.
 func AbstractBackendRetainedTest(t *testing.T, backend Backend) {
+	consumer := newFakeConsumer()
+
 	msg1 := &packet.Message{
 		Topic:   "foo",
 		Payload: []byte("bar"),
@@ -137,39 +143,39 @@ func AbstractBackendRetainedTest(t *testing.T, backend Backend) {
 	}
 
 	// should be empty
-	msgs, err := backend.Subscribe(nil, "foo")
+	msgs, err := backend.Subscribe(consumer, "foo")
 	assert.NoError(t, err)
 	assert.Empty(t, msgs)
 
-	err = backend.Publish(nil, msg1)
+	err = backend.Publish(consumer, msg1)
 	assert.NoError(t, err)
 
 	// should have one
-	msgs, err = backend.Subscribe(nil, "foo")
+	msgs, err = backend.Subscribe(consumer, "foo")
 	assert.NoError(t, err)
 	assert.Equal(t, msg1, msgs[0])
 
-	err = backend.Publish(nil, msg2)
+	err = backend.Publish(consumer, msg2)
 	assert.NoError(t, err)
 
 	// should have two
-	msgs, err = backend.Subscribe(nil, "#")
+	msgs, err = backend.Subscribe(consumer, "#")
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(msgs))
 
-	err = backend.Publish(nil, msg3)
+	err = backend.Publish(consumer, msg3)
 	assert.NoError(t, err)
 
 	// should have another
-	msgs, err = backend.Subscribe(nil, "foo")
+	msgs, err = backend.Subscribe(consumer, "foo")
 	assert.NoError(t, err)
 	assert.Equal(t, msg3, msgs[0])
 
-	err = backend.Publish(nil, msg4)
+	err = backend.Publish(consumer, msg4)
 	assert.NoError(t, err)
 
 	// should have none
-	msgs, err = backend.Subscribe(nil, "foo")
+	msgs, err = backend.Subscribe(consumer, "foo")
 	assert.NoError(t, err)
 	assert.Empty(t, msgs)
 }

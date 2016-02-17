@@ -14,7 +14,11 @@
 
 package broker
 
-import "sync"
+import (
+	"sync"
+	
+	"github.com/gomqtt/packet"
+)
 
 /* state */
 
@@ -77,4 +81,26 @@ func (c *Context) Get(key string) interface{} {
 	defer c.mutex.Unlock()
 
 	return c.store[key]
+}
+
+/* fakeConsumer */
+
+type fakeConsumer struct {
+	in  []*packet.Message
+	ctx *Context
+}
+
+func newFakeConsumer() *fakeConsumer {
+	return &fakeConsumer{
+		ctx: NewContext(),
+	}
+}
+
+func (c *fakeConsumer) Publish(msg *packet.Message) bool {
+	c.in = append(c.in, msg)
+	return true
+}
+
+func (c *fakeConsumer) Context() *Context {
+	return c.ctx
 }
