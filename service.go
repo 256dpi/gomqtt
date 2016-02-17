@@ -62,7 +62,7 @@ type publish struct {
 }
 
 type subscribe struct {
-	subscriptions map[string]uint8
+	subscriptions []packet.Subscription
 	future        *SubscribeFuture
 	requeue       bool
 }
@@ -200,14 +200,14 @@ func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) 
 // Subscribe will send a SubscribePacket containing one topic to subscribe.
 // If requeue is set to true the packet will be retried on an error.
 func (s *Service) Subscribe(topic string, qos uint8, requeue bool) *SubscribeFuture {
-	return s.SubscribeMultiple(map[string]uint8{
-		topic: qos,
+	return s.SubscribeMultiple([]packet.Subscription{
+		{Topic: topic, QOS: qos},
 	}, requeue)
 }
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. If requeue is set to true the packet will be retried on an error.
-func (s *Service) SubscribeMultiple(subscriptions map[string]uint8, requeue bool) *SubscribeFuture {
+func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription, requeue bool) *SubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

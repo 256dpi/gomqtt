@@ -272,15 +272,15 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 // will return a SubscribeFuture that gets completed once a SubackPacket has
 // been received.
 func (c *Client) Subscribe(topic string, qos uint8) (*SubscribeFuture, error) {
-	return c.SubscribeMultiple(map[string]uint8{
-		topic: qos,
+	return c.SubscribeMultiple([]packet.Subscription{
+		{Topic: topic, QOS: qos},
 	})
 }
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. It will return a SubscribeFuture that gets completed once a
 // SubackPacket has been received.
-func (c *Client) SubscribeMultiple(subscriptions map[string]uint8) (*SubscribeFuture, error) {
+func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (*SubscribeFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -292,14 +292,7 @@ func (c *Client) SubscribeMultiple(subscriptions map[string]uint8) (*SubscribeFu
 	// allocate packet
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = c.Session.PacketID()
-
-	// append subscriptions
-	for topic, qos := range subscriptions {
-		subscribe.Subscriptions = append(subscribe.Subscriptions, packet.Subscription{
-			Topic: topic,
-			QOS:   qos,
-		})
-	}
+	subscribe.Subscriptions = subscriptions
 
 	// create future
 	future := &SubscribeFuture{}
