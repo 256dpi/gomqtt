@@ -54,6 +54,7 @@ func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) 
 	subscribeFuture, err := client.Subscribe(in, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := client.Publish(out, []byte("test"), pub, false)
 	assert.NoError(t, err)
@@ -141,6 +142,7 @@ func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
 	subscribeFuture, err := client2.Subscribe(in, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
 
 	<-wait
 
@@ -212,6 +214,7 @@ func TestClearRetainedMessage(t *testing.T) {
 	subscribeFuture1, err := client2.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture1.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
 
 	<-wait
 
@@ -234,6 +237,7 @@ func TestClearRetainedMessage(t *testing.T) {
 	subscribeFuture2, err := client3.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture2.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
 
 	time.Sleep(50 * time.Millisecond)
 
@@ -285,6 +289,7 @@ func abstractWillTest(t *testing.T, sub, pub uint8) {
 	subscribeFuture, err := client2.Subscribe("test", sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
 
 	err = client1.Close()
 	assert.NoError(t, err)
@@ -355,6 +360,7 @@ func TestRetainedWill(t *testing.T) {
 	subscribeFuture, err := client2.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	<-wait
 
@@ -379,6 +385,7 @@ func TestUnsubscribe(t *testing.T) {
 	subscribeFuture, err := client.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	unsubscribeFuture, err := client.Unsubscribe("test")
 	assert.NoError(t, err)
@@ -421,10 +428,12 @@ func TestSubscriptionUpgrade(t *testing.T) {
 	subscribeFuture1, err := client.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture1.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
 
 	subscribeFuture2, err := client.Subscribe("test", 1)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture2.Wait())
+	assert.Equal(t, []uint8{1}, subscribeFuture2.ReturnCodes)
 
 	publishFuture, err := client.Publish("test", []byte("test"), 2, false)
 	assert.NoError(t, err)
@@ -446,7 +455,7 @@ func TestMultipleSubscriptions(t *testing.T) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, "test3", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(2), msg.QOS)
 		assert.False(t, msg.Retain)
@@ -461,15 +470,16 @@ func TestMultipleSubscriptions(t *testing.T) {
 	assert.False(t, connectFuture.SessionPresent)
 
 	subs := make(map[string]uint8)
-	subs["test"] = 0
-	subs["test"] = 1
-	subs["test"] = 2
+	subs["test1"] = 0
+	subs["test2"] = 1
+	subs["test3"] = 2
 
 	subscribeFuture, err := client.SubscribeMultiple(subs)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0, 1, 2}, subscribeFuture.ReturnCodes)
 
-	publishFuture, err := client.Publish("test", []byte("test"), 2, false)
+	publishFuture, err := client.Publish("test3", []byte("test"), 2, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -616,6 +626,7 @@ func abstractStoredSubscriptionTest(t *testing.T, qos uint8) {
 	subscribeFuture, err := client1.Subscribe("test", qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
 	err = client1.Disconnect()
 	assert.NoError(t, err)
@@ -683,6 +694,7 @@ func TestCleanStoredSubscriptions(t *testing.T) {
 	subscribeFuture, err := client1.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	err = client1.Disconnect()
 	assert.NoError(t, err)
@@ -729,6 +741,7 @@ func TestRemoveStoredSubscription(t *testing.T) {
 	subscribeFuture, err := client1.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	unsubscribeFuture, err := client1.Unsubscribe("test")
 	assert.NoError(t, err)
