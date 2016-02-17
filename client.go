@@ -223,6 +223,26 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		return c.die(err, false)
 	}
 
+	// retrieve stored packets
+	packets, err := c.session.AllPackets(outgoing)
+	if err != nil {
+		return c.die(err, true)
+	}
+
+	// resend stored packets
+	for _, pkt := range packets {
+		publish, ok := pkt.(*packet.PublishPacket)
+		if ok {
+			// set the dup flag on a publish packet
+			publish.Dup = true
+		}
+
+		err = c.send(pkt)
+		if err != nil {
+			return c.die(err, false)
+		}
+	}
+
 	// get stored subscriptions
 	subs, err := c.session.AllSubscriptions()
 	if err != nil {
