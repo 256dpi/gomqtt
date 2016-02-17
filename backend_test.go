@@ -28,6 +28,10 @@ func TestMemoryBackendGetSession(t *testing.T) {
 	AbstractBackendGetSessionTest(t, NewMemoryBackend())
 }
 
+func TestMemoryBackendQueuing(t *testing.T) {
+	AbstractQueuingTest(t, NewMemoryBackend())
+}
+
 func TestMemoryBackendRetained(t *testing.T) {
 	AbstractBackendRetainedTest(t, NewMemoryBackend())
 }

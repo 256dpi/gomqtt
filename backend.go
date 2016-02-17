@@ -111,6 +111,45 @@ func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
 	assert.True(t, session4 != session5)
 }
 
+func AbstractQueuingTest(t *testing.T, backend Backend) {
+	consumer1 := newFakeConsumer()
+	consumer2 := newFakeConsumer()
+
+	msg := &packet.Message{
+		Topic: "test",
+		Payload: []byte("test"),
+	}
+
+	// subscribe both consumers
+
+	msgs, err := backend.Subscribe(consumer1, "test")
+	assert.Nil(t, msgs)
+	assert.NoError(t, err)
+
+	msgs, err = backend.Subscribe(consumer2, "test")
+	assert.Nil(t, msgs)
+	assert.NoError(t, err)
+
+	// publish message
+
+	err = backend.Publish(consumer1, msg)
+	assert.NoError(t, err)
+	assert.Equal(t, msg, consumer1.in[0])
+	assert.Equal(t, msg, consumer2.in[0])
+
+	// unsubscribe one consumer
+
+	err = backend.Unsubscribe(consumer2, "test")
+	assert.NoError(t, err)
+
+	// publish another message
+
+	err = backend.Publish(consumer1, msg)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(consumer1.in))
+	assert.Equal(t, 1, len(consumer2.in))
+}
+
 // AbstractBackendRetainedTest tests a backend implementations message retaining.
 func AbstractBackendRetainedTest(t *testing.T, backend Backend) {
 	consumer := newFakeConsumer()
