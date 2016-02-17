@@ -469,10 +469,11 @@ func TestMultipleSubscriptions(t *testing.T) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subs := make(map[string]uint8)
-	subs["test1"] = 0
-	subs["test2"] = 1
-	subs["test3"] = 2
+	subs := []packet.Subscription{
+		{ Topic: "test1", QOS: 0},
+		{ Topic: "test2", QOS: 1},
+		{ Topic: "test3", QOS: 2},
+	}
 
 	subscribeFuture, err := client.SubscribeMultiple(subs)
 	assert.NoError(t, err)
