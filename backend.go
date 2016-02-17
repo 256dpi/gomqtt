@@ -32,10 +32,10 @@ type Consumer interface {
 	Context() *Context
 }
 
-// A Backend provides effective queuing functionality to a Broker and its Clients.
+// A Backend provides effective queuing functionality to a Broker and its Consumers.
 type Backend interface {
-	// Authenticate should authenticate the client using the user and password
-	// values and return true if the client is eligible to continue or false
+	// Authenticate should authenticate the consumer using the user and password
+	// values and return true if the consumer is eligible to continue or false
 	// when the broker should terminate the connection.
 	Authenticate(consumer Consumer, user, password string) (bool, error)
 
