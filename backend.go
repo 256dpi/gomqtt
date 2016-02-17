@@ -34,33 +34,42 @@ type Consumer interface {
 
 // A Backend provides effective queuing functionality to a Broker and its Clients.
 type Backend interface {
-	// Authenticate authenticates a consumers credentials.
+	// Authenticate should authenticate the client using the user and password
+	// values and return true if the client is eligible to continue or false
+	// when the broker should terminate the connection.
 	Authenticate(consumer Consumer, user, password string) (bool, error)
 
-	// GetSession returns the already stored session for the supplied id or creates
-	// and returns a new one. If the supplied id has a zero length, a new
-	// session is returned that is only valid once. The second return value is
-	// set to true if a session has been resumed. The Backend may also allocate
-	// other resources and setup the consumer.
+	// GetSession should return the already stored session for the supplied id
+	// or create and returns a new one. If the supplied id has a zero length, a
+	// new session should be returned that is not further stored. The second return
+	// value must be set to true if a session has been resumed.
+	//
+	// Note: In this call the Backend may also allocate other resources and
+	// setup the consumer for further usage as the broker will acknowledge the
+	// connection when the call returns.
 	GetSession(consumer Consumer, id string) (Session, bool, error)
 
-	// Subscribe will subscribe the passed consumer to the specified topic and
-	// begin to forward messages by calling the consumers Publish method.
-	// It will also return the stored retained messages matching the supplied
-	// topic.
+	// Subscribe should subscribe the passed consumer to the specified topic and
+	// call Publish with any incoming messages. It should also return the stored
+	// retained messages that match the specified topic.
 	Subscribe(consumer Consumer, topic string) ([]*packet.Message, error)
 
-	// Unsubscribe will unsubscribe the passed consumer from the specified topic.
+	// Unsubscribe should unsubscribe the passed consumer from the specified topic.
 	Unsubscribe(consumer Consumer, topic string) error
 
-	// Publish will forward the passed message to all other subscribed consumers.
-	// It will also store the message if Retain is set to true. If the supplied
-	//message has additionally a zero length payload, the backend removes the
-	// currently retained message.
+	// Publish should forward the passed message to all other consumers that hold
+	// a subscription that matches the messages topic. It should also store the
+	// message if Retain is set to true and the payload does not have a zero
+	// length. If the payload has a zero length and Retain is set to true the
+	// currently retained message for that topic should be removed.
 	Publish(consumer Consumer, msg *packet.Message) error
 
-	// Remove will unsubscribe the passed consumer from previously subscribe topics.
-	// The Backend may also cleanup previously allocated resources for that consumer.
+	// Remove should unsubscribe the passed consumer from all previously
+	// subscribed topics.
+	//
+	// Note: The Backend may also cleanup previously allocated resources for
+	// that consumer as the broker will terminate the connection when the call
+	// returns.
 	Remove(consumer Consumer) error
 }
 
