@@ -190,10 +190,13 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// retrieve session
-	sess, err := c.broker.Backend.GetSession(c, pkt.ClientID)
+	sess, resumed, err := c.broker.Backend.GetSession(c, pkt.ClientID)
 	if err != nil {
 		return c.die(err, true)
 	}
+
+	// set session present
+	connack.SessionPresent = resumed
 
 	// assign session
 	c.session = sess

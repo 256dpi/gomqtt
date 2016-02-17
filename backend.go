@@ -39,9 +39,10 @@ type Backend interface {
 
 	// GetSession returns the already stored session for the supplied id or creates
 	// and returns a new one. If the supplied id has a zero length, a new
-	// session is returned that is only valid once. The Backend may also allocate
+	// session is returned that is only valid once. The second return value is
+	// set to true if a session has been resumed. The Backend may also allocate
 	// other resources and setup the consumer.
-	GetSession(consumer Consumer, id string) (Session, error)
+	GetSession(consumer Consumer, id string) (Session, bool, error)
 
 	// Subscribe will subscribe the passed consumer to the specified topic and
 	// begin to forward messages by calling the consumers Publish method.
@@ -80,25 +81,30 @@ func AbstractBackendAuthenticationTest(t *testing.T, backend Backend) {
 
 // AbstractBackendGetSessionTest tests a backend implementations GetSession method.
 func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
-	session1, err := backend.GetSession(nil, "foo")
+	session1, resumed, err := backend.GetSession(nil, "foo")
 	assert.NoError(t, err)
+	assert.False(t, resumed)
 	assert.NotNil(t, session1)
 
-	session2, err := backend.GetSession(nil, "foo")
+	session2, resumed, err := backend.GetSession(nil, "foo")
 	assert.NoError(t, err)
+	assert.True(t, resumed)
 	assert.True(t, session1 == session2)
 
-	session3, err := backend.GetSession(nil, "bar")
+	session3, resumed, err := backend.GetSession(nil, "bar")
 	assert.NoError(t, err)
+	assert.False(t, resumed)
 	assert.False(t, session3 == session1)
 	assert.False(t, session3 == session2)
 
-	session4, err := backend.GetSession(nil, "")
+	session4, resumed, err := backend.GetSession(nil, "")
 	assert.NoError(t, err)
+	assert.False(t, resumed)
 	assert.NotNil(t, session4)
 
-	session5, err := backend.GetSession(nil, "")
+	session5, resumed, err := backend.GetSession(nil, "")
 	assert.NoError(t, err)
+	assert.False(t, resumed)
 	assert.NotNil(t, session5)
 	assert.True(t, session4 != session5)
 }
@@ -208,23 +214,23 @@ func (m *MemoryBackend) Authenticate(consumer Consumer, user, password string) (
 // GetSession returns the already stored session for the supplied id or creates
 // and returns a new one. If the supplied id has a zero length, a new
 // session is returned that is only valid once.
-func (m *MemoryBackend) GetSession(consumer Consumer, id string) (Session, error) {
+func (m *MemoryBackend) GetSession(consumer Consumer, id string) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
 	if len(id) > 0 {
 		sess, ok := m.sessions[id]
 		if ok {
-			return sess, nil
+			return sess, true, nil
 		}
 
 		sess = NewMemorySession()
 		m.sessions[id] = sess
 
-		return sess, nil
+		return sess, false, nil
 	}
 
-	return NewMemorySession(), nil
+	return NewMemorySession(), false, nil
 }
 
 // Subscribe will subscribe the passed consumer to the specified topic and

@@ -48,6 +48,8 @@ func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) 
 	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := client.Subscribe(in, sub)
 	assert.NoError(t, err)
@@ -106,6 +108,8 @@ func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
 	connectFuture1, err := client1.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
 	publishFuture, err := client1.Publish(out, []byte("test"), pub, true)
 	assert.NoError(t, err)
@@ -131,6 +135,8 @@ func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
 	subscribeFuture, err := client2.Subscribe(in, sub)
 	assert.NoError(t, err)
@@ -173,6 +179,8 @@ func TestClearRetainedMessage(t *testing.T) {
 	connectFuture1, err := client1.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
 	publishFuture1, err := client1.Publish("test", []byte("test1"), 0, true)
 	assert.NoError(t, err)
@@ -198,6 +206,8 @@ func TestClearRetainedMessage(t *testing.T) {
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
 	subscribeFuture1, err := client2.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -218,6 +228,8 @@ func TestClearRetainedMessage(t *testing.T) {
 	connectFuture3, err := client3.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
+	assert.False(t, connectFuture3.SessionPresent)
 
 	subscribeFuture2, err := client3.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -247,6 +259,8 @@ func abstractWillTest(t *testing.T, sub, pub uint8) {
 	connectFuture1, err := client1.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
 	client2 := client.New()
 
@@ -265,6 +279,8 @@ func abstractWillTest(t *testing.T, sub, pub uint8) {
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
 	subscribeFuture, err := client2.Subscribe("test", sub)
 	assert.NoError(t, err)
@@ -310,6 +326,8 @@ func TestRetainedWill(t *testing.T) {
 	connectFuture1, err := client1.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
 	err = client1.Close()
 	assert.NoError(t, err)
@@ -331,6 +349,8 @@ func TestRetainedWill(t *testing.T) {
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
 	subscribeFuture, err := client2.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -353,6 +373,8 @@ func TestUnsubscribe(t *testing.T) {
 	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := client.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -393,6 +415,8 @@ func TestSubscriptionUpgrade(t *testing.T) {
 	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture1, err := client.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -433,6 +457,8 @@ func TestMultipleSubscriptions(t *testing.T) {
 	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	subs := make(map[string]uint8)
 	subs["test"] = 0
@@ -496,6 +522,8 @@ func TestKeepAlive(t *testing.T) {
 	connectFuture, err := client.Connect(port.URL(), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	time.Sleep(2500 * time.Millisecond)
 
@@ -551,6 +579,7 @@ func TestConnectionDenied(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
 	client2 := client.New()
 	client2.Callback = errorCallback(t)
@@ -560,6 +589,7 @@ func TestConnectionDenied(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
 	err = client2.Disconnect()
 	assert.NoError(t, err)
@@ -580,6 +610,8 @@ func abstractStoredSubscriptionTest(t *testing.T, qos uint8) {
 	connectFuture1, err := client1.Connect(port.URL(), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
 	subscribeFuture, err := client1.Subscribe("test", qos)
 	assert.NoError(t, err)
@@ -605,6 +637,8 @@ func abstractStoredSubscriptionTest(t *testing.T, qos uint8) {
 	connectFuture2, err := client2.Connect(port.URL(), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.True(t, connectFuture2.SessionPresent)
 
 	publishFuture, err := client2.Publish("test", []byte("test"), qos, false)
 	assert.NoError(t, err)
@@ -643,6 +677,8 @@ func TestCleanStoredSubscriptions(t *testing.T) {
 	connectFuture1, err := client1.Connect(port.URL(), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
 	subscribeFuture, err := client1.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -659,6 +695,8 @@ func TestCleanStoredSubscriptions(t *testing.T) {
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
 	publishFuture2, err := client2.Publish("test", nil, 0, true)
 	assert.NoError(t, err)
@@ -685,6 +723,8 @@ func TestRemoveStoredSubscription(t *testing.T) {
 	connectFuture1, err := client1.Connect(port.URL(), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
 	subscribeFuture, err := client1.Subscribe("test", 0)
 	assert.NoError(t, err)
@@ -703,6 +743,8 @@ func TestRemoveStoredSubscription(t *testing.T) {
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
 	publishFuture2, err := client2.Publish("test", nil, 0, true)
 	assert.NoError(t, err)
