@@ -27,7 +27,7 @@ import (
 	"github.com/gomqtt/transport"
 )
 
-var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
+var url = flag.String("url", "tcp://0.0.0.0:1884", "broker url")
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memProfile = flag.String("memprofile", "", "write memory profile to this file")
