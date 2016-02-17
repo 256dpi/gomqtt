@@ -39,7 +39,6 @@ type Client struct {
 	session Session
 	context *Context
 
-	uuid  string
 	out   chan *packet.Message
 	state *state
 	clean bool
@@ -55,10 +54,11 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 		broker:  broker,
 		conn:    conn,
 		context: NewContext(),
-		uuid:    uuid.NewV1().String(),
 		out:     make(chan *packet.Message),
 		state:   newState(clientConnecting),
 	}
+
+	c.Context().Set("uuid", uuid.NewV1().String())
 
 	c.tomb.Go(c.processor)
 	c.tomb.Go(c.sender)
@@ -87,7 +87,7 @@ func (c *Client) Publish(msg *packet.Message) bool {
 func (c *Client) processor() error {
 	first := true
 
-	c.log("%s - New Connection", c.uuid)
+	c.log("%s - New Connection", c.Context().Get("uuid"))
 
 	// set initial read timeout
 	c.conn.SetReadTimeout(c.broker.ConnectTimeout)
@@ -104,7 +104,7 @@ func (c *Client) processor() error {
 			return c.die(err, false)
 		}
 
-		c.log("%s - Received: %s", c.uuid, pkt.String())
+		c.log("%s - Received: %s", c.Context().Get("uuid"), pkt.String())
 
 		if first {
 			// get connect
@@ -568,7 +568,7 @@ func (c *Client) die(err error, close bool) error {
 
 		// report error
 		if err != nil {
-			c.log("%s - Internal Error: %s", c.uuid, err)
+			c.log("%s - Internal Error: %s", c.Context().Get("uuid"), err)
 		}
 	})
 
@@ -582,7 +582,7 @@ func (c *Client) send(pkt packet.Packet) error {
 		return err
 	}
 
-	c.log("%s - Sent: %s", c.uuid, pkt.String())
+	c.log("%s - Sent: %s", c.Context().Get("uuid"), pkt.String())
 
 	return nil
 }
