@@ -251,6 +251,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// restore subscriptions
 	for _, sub := range subs {
+		// TODO: Handle incoming retained messages.
 		c.broker.Backend.Subscribe(c, sub.Topic)
 	}
 
