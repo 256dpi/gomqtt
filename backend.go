@@ -51,7 +51,9 @@ type Backend interface {
 
 	// Subscribe should subscribe the passed consumer to the specified topic and
 	// call Publish with any incoming messages. It should also return the stored
-	// retained messages that match the specified topic.
+	// retained messages that match the specified topic. Additionally, the Backend
+	// may start another goroutine in the background that publishes missed QOS 1
+	// and QOS 2 messages to the consumer.
 	Subscribe(consumer Consumer, topic string) ([]*packet.Message, error)
 
 	// Unsubscribe should unsubscribe the passed consumer from the specified topic.
