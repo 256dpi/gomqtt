@@ -250,12 +250,12 @@ func (c *Client) processPingreq() error {
 // handle an incoming SubscribePacket
 func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	suback := packet.NewSubackPacket()
-	suback.ReturnCodes = make([]byte, 0)
+	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
 	suback.PacketID = pkt.PacketID
 
 	var retainedMessages []*packet.Message
 
-	for _, subscription := range pkt.Subscriptions {
+	for i, subscription := range pkt.Subscriptions {
 		// save subscription in session
 		err := c.session.SaveSubscription(&subscription)
 		if err != nil {
@@ -272,7 +272,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		retainedMessages = append(retainedMessages, msgs...)
 
 		// save granted qos
-		suback.ReturnCodes = append(suback.ReturnCodes, subscription.QOS)
+		suback.ReturnCodes[i] = subscription.QOS
 	}
 
 	// send suback
