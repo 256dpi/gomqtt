@@ -116,7 +116,7 @@ func AbstractQueuingTest(t *testing.T, backend Backend) {
 	consumer2 := newFakeConsumer()
 
 	msg := &packet.Message{
-		Topic: "test",
+		Topic:   "test",
 		Payload: []byte("test"),
 	}
 

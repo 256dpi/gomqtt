@@ -791,3 +791,6 @@ func TestRemoveStoredSubscription(t *testing.T) {
 
 // -- offline
 // test offline subscriptions
+// store and look up subscriptions by client
+// remove subscriptions by client
+// store and look up subscriptions by topic

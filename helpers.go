@@ -16,7 +16,7 @@ package broker
 
 import (
 	"sync"
-	
+
 	"github.com/gomqtt/packet"
 )
 

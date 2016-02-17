@@ -35,8 +35,3 @@ func TestMemoryBackendQueuing(t *testing.T) {
 func TestMemoryBackendRetained(t *testing.T) {
 	AbstractBackendRetainedTest(t, NewMemoryBackend())
 }
-
-// store and look up subscriptions by client
-// remove subscriptions by client
-// store and look up subscriptions by topic
-// QoS 0 subscriptions, restored but not matched
