@@ -652,6 +652,51 @@ func TestCleanStoredSubscriptions(t *testing.T) {
 	assert.NoError(t, err)
 
 	options.CleanSession = true
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	connectFuture2, err := client2.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+
+	publishFuture2, err := client2.Publish("test", nil, 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture2.Wait())
+
+	time.Sleep(50 * time.Millisecond)
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func TestRemoveStoredSubscription(t *testing.T) {
+	port, done := startBroker(t, New(), 2)
+
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+
+	subscribeFuture, err := client1.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+
+	unsubscribeFuture, err := client1.Unsubscribe("test")
+	assert.NoError(t, err)
+	assert.NoError(t, unsubscribeFuture.Wait())
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
 	client2 := client.New()
 	client2.Callback = errorCallback(t)
 
@@ -680,7 +725,6 @@ func TestCleanStoredSubscriptions(t *testing.T) {
 // do not resend QoS 1 packets at each reconnect
 // do not resend QoS 1 packets if reconnect is clean
 // do not resend QoS 1 packets at reconnect if puback was received
-// remove stored subscriptions after unsubscribe
 
 // -- qos2
 // resend publish on non-clean reconnect QoS 2
