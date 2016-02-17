@@ -868,12 +868,7 @@ func TestPubrelResendQOS2(t *testing.T) {
 
 	disconnect := packet.NewDisconnectPacket()
 
-	broker := New()
-	broker.Logger = func(msg string){
-		println(msg)
-	}
-
-	port, done := startBroker(t, broker, 2)
+	port, done := startBroker(t, New(), 2)
 
 	conn1, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
