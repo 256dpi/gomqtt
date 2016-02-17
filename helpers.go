@@ -54,7 +54,7 @@ func (s *state) get() byte {
 
 /* Context */
 
-// A context is a store for custom data.
+// A Context is a store for custom data.
 type Context struct {
 	store map[string]interface{}
 	mutex sync.Mutex
