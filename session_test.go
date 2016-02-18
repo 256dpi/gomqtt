@@ -17,7 +17,7 @@ package broker
 import "testing"
 
 func TestMemorySession(t *testing.T) {
-	SessionTest(t, func()(Session){
+	SessionTest(t, func() Session {
 		return NewMemorySession()
 	})
 }

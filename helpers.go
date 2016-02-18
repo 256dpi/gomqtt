@@ -88,8 +88,8 @@ func (c *Context) Get(key string) interface{} {
 
 // a fake consumer for testing backend implementations
 type fakeConsumer struct {
-	in   []*packet.Message
-	ctx  *Context
+	in  []*packet.Message
+	ctx *Context
 }
 
 // returns a new fake consumer

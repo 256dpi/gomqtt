@@ -15,11 +15,11 @@
 package broker
 
 import (
-	"testing"
 	"math"
+	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/packet"
+	"github.com/stretchr/testify/assert"
 )
 
 // BackendTest will test a Backend implementation. The test will test
@@ -27,7 +27,7 @@ import (
 // return a fresh instances of the Backend.
 //
 // Authentication: Its expected that the Backend allows the login "allow:allow".
-func BackendTest(t *testing.T, builder func()(Backend)) {
+func BackendTest(t *testing.T, builder func() Backend) {
 	t.Log("Running Backend Authentication Test")
 	backendAuthenticationTest(t, builder())
 
@@ -225,7 +225,7 @@ func backendRetainedMessagesTest(t *testing.T, backend Backend) {
 
 // SessionTest will test a Session implementation. The passed builder callback
 // should always return a fresh instances of the Session.
-func SessionTest(t *testing.T, builder func()(Session)) {
+func SessionTest(t *testing.T, builder func() Session) {
 	t.Log("Running Session Packet ID Test")
 	sessionPacketIDTest(t, builder())
 

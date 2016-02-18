@@ -137,7 +137,7 @@ func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session
 			m.offlineQueue.Clear(sess)
 
 			// send all missed messages in another goroutine
-			go func(){
+			go func() {
 				for _, msg := range sess.missed() {
 					consumer.Publish(msg)
 				}
