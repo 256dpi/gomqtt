@@ -16,10 +16,8 @@ package client
 
 import "testing"
 
-func TestMemorySessionPacketID(t *testing.T) {
-	AbstractSessionPacketIDTest(t, NewMemorySession())
-}
-
-func TestMemorySessionPacketStore(t *testing.T) {
-	AbstractSessionPacketStoreTest(t, NewMemorySession())
+func TestMemorySession(t *testing.T) {
+	SessionTest(t, func() Session {
+		return NewMemorySession()
+	})
 }
