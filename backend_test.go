@@ -18,8 +18,9 @@ import "testing"
 
 func TestMemoryBackendAuthentication(t *testing.T) {
 	backend := NewMemoryBackend()
-	backend.Logins = make(map[string]string)
-	backend.Logins["allow"] = "allow"
+	backend.Logins = map[string]string{
+		"allow": "allow",
+	}
 
 	AbstractBackendAuthenticationTest(t, backend)
 }
