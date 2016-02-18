@@ -73,6 +73,7 @@ func (c *Client) Context() *Context {
 
 // Session returns the associated session.
 func (c *Client) Session() Session {
+	// TODO: Synchronized access to session?
 	return c.session
 }
 
