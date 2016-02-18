@@ -85,29 +85,26 @@ func (c *Context) Get(key string) interface{} {
 
 /* fakeConsumer */
 
+// a fake consumer for testing backend implementations
 type fakeConsumer struct {
 	in   []*packet.Message
 	ctx  *Context
-	sess Session
 }
 
+// returns a new fake consumer
 func newFakeConsumer() *fakeConsumer {
 	return &fakeConsumer{
 		ctx:  NewContext(),
-		sess: NewMemorySession(),
 	}
 }
 
+// publish will append the message to the in slice
 func (c *fakeConsumer) Publish(msg *packet.Message) bool {
 	c.in = append(c.in, msg)
 	return true
 }
 
+// returns the context
 func (c *fakeConsumer) Context() *Context {
 	return c.ctx
-}
-
-// Session returns the associated session.
-func (c *fakeConsumer) Session() Session {
-	return c.sess
 }
