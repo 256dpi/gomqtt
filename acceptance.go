@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// The AcceptanceTest will fully test a Broker with its Backend and Session
-// implementation. The passed builder callback should always return a fresh
-// instances of the Broker.
-func AcceptanceTest(t *testing.T, builder func() *Broker) {
+// The MandatoryAcceptanceTest will fully test a Broker with its Backend and
+// Session implementation to support all mandatory features. The passed builder
+// callback should always return a fresh instances of the Broker.
+func MandatoryAcceptanceTest(t *testing.T, builder func() *Broker) {
 	t.Log("Running Broker Publish Subscribe Test (QOS 0)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 0)
 
@@ -38,6 +38,21 @@ func AcceptanceTest(t *testing.T, builder func() *Broker) {
 
 	t.Log("Running Broker Publish Subscribe Test (QOS Downgrade 2->1)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 1, 2)
+
+	t.Log("Running Broker Unsubscribe Test (QOS 0)")
+	brokerUnsubscribeTest(t, builder(), 0)
+
+	t.Log("Running Broker Unsubscribe Test (QOS 1)")
+	brokerUnsubscribeTest(t, builder(), 1)
+
+	t.Log("Running Broker Unsubscribe Test (QOS 2)")
+	brokerUnsubscribeTest(t, builder(), 2)
+
+	t.Log("Running Broker Subscription Upgrade Test (QOS 0->1)")
+	brokerSubscriptionUpgradeTest(t, builder(), 0, 1)
+
+	t.Log("Running Broker Subscription Upgrade Test (QOS 1->2)")
+	brokerSubscriptionUpgradeTest(t, builder(), 1, 2)
 
 	t.Log("Running Broker Retained Message Test (QOS 0)")
 	brokerRetainedMessageTest(t, builder(), "test", "test", 0, 0)
@@ -69,7 +84,7 @@ func AcceptanceTest(t *testing.T, builder func() *Broker) {
 	// TODO: Test Clean Disconnect without forwarding the will.
 
 	t.Log("Running Broker Retained Will Test)")
-	brokerRetainedWill(t, builder())
+	brokerRetainedWillTest(t, builder())
 }
 
 func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{}) {
@@ -341,7 +356,7 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 	<-done
 }
 
-func brokerRetainedWill(t *testing.T, broker *Broker) {
+func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 	port, done := runBroker(t, broker, 2)
 
 	// client1 connects with a retained will and dies
@@ -395,6 +410,83 @@ func brokerRetainedWill(t *testing.T, broker *Broker) {
 	<-wait
 
 	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
+	port, done := runBroker(t, broker, 1)
+
+	client := client.New()
+	client.Callback = errorCallback(t)
+
+	connectFuture, err := client.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subscribeFuture, err := client.Subscribe("test", qos)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
+
+	unsubscribeFuture, err := client.Unsubscribe("test")
+	assert.NoError(t, err)
+	assert.NoError(t, unsubscribeFuture.Wait())
+
+	publishFuture, err := client.Publish("test", []byte("test"), qos, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	time.Sleep(50 * time.Millisecond)
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8) {
+	port, done := runBroker(t, broker, 1)
+
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(to), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subscribeFuture1, err := client.Subscribe("test", from)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture1.Wait())
+	assert.Equal(t, []uint8{from}, subscribeFuture1.ReturnCodes)
+
+	subscribeFuture2, err := client.Subscribe("test", to)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture2.Wait())
+	assert.Equal(t, []uint8{to}, subscribeFuture2.ReturnCodes)
+
+	publishFuture, err := client.Publish("test", []byte("test"), to, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
 	assert.NoError(t, err)
 
 	<-done

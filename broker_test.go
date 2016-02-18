@@ -29,86 +29,9 @@ import (
 )
 
 func TestBroker(t *testing.T) {
-	AcceptanceTest(t, func() *Broker {
+	MandatoryAcceptanceTest(t, func() *Broker {
 		return New()
 	})
-}
-
-func TestUnsubscribe(t *testing.T) {
-	port, done := runBroker(t, New(), 1)
-
-	client := client.New()
-	client.Callback = errorCallback(t)
-
-	connectFuture, err := client.Connect(port.URL(), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
-
-	subscribeFuture, err := client.Subscribe("test", 0)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
-
-	unsubscribeFuture, err := client.Unsubscribe("test")
-	assert.NoError(t, err)
-	assert.NoError(t, unsubscribeFuture.Wait())
-
-	publishFuture, err := client.Publish("test", []byte("test"), 0, true)
-	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
-
-	time.Sleep(50 * time.Millisecond)
-
-	err = client.Disconnect()
-	assert.NoError(t, err)
-
-	<-done
-}
-
-func TestSubscriptionUpgrade(t *testing.T) {
-	port, done := runBroker(t, New(), 1)
-
-	client := client.New()
-	wait := make(chan struct{})
-
-	client.Callback = func(msg *packet.Message, err error) {
-		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
-		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(1), msg.QOS)
-		assert.False(t, msg.Retain)
-
-		close(wait)
-	}
-
-	connectFuture, err := client.Connect(port.URL(), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
-
-	subscribeFuture1, err := client.Subscribe("test", 0)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture1.Wait())
-	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
-
-	subscribeFuture2, err := client.Subscribe("test", 1)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture2.Wait())
-	assert.Equal(t, []uint8{1}, subscribeFuture2.ReturnCodes)
-
-	publishFuture, err := client.Publish("test", []byte("test"), 2, false)
-	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
-
-	<-wait
-
-	err = client.Disconnect()
-	assert.NoError(t, err)
-
-	<-done
 }
 
 func TestMultipleSubscriptions(t *testing.T) {
