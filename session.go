@@ -15,13 +15,10 @@
 package broker
 
 import (
-	"math"
 	"sync"
-	"testing"
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/tools"
-	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -79,130 +76,6 @@ type Session interface {
 	Reset() error
 }
 
-// AbstractSessionPacketIDTest tests a session implementations PacketID method.
-func AbstractSessionPacketIDTest(t *testing.T, session Session) {
-	assert.Equal(t, uint16(1), session.PacketID())
-	assert.Equal(t, uint16(2), session.PacketID())
-
-	for i := 0; i < math.MaxUint16-3; i++ {
-		session.PacketID()
-	}
-
-	assert.Equal(t, uint16(math.MaxUint16), session.PacketID())
-	assert.Equal(t, uint16(1), session.PacketID())
-
-	err := session.Reset()
-	assert.NoError(t, err)
-
-	assert.Equal(t, uint16(1), session.PacketID())
-}
-
-// AbstractSessionPacketStoreTest tests a session implementations packet storing
-// methods.
-func AbstractSessionPacketStoreTest(t *testing.T, session Session) {
-	publish := packet.NewPublishPacket()
-	publish.PacketID = 1
-
-	pkt, err := session.LookupPacket(incoming, 1)
-	assert.NoError(t, err)
-	assert.Nil(t, pkt)
-
-	err = session.SavePacket(incoming, publish)
-	assert.NoError(t, err)
-
-	pkt, err = session.LookupPacket(incoming, 1)
-	assert.NoError(t, err)
-	assert.Equal(t, publish, pkt)
-
-	pkts, err := session.AllPackets(incoming)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, len(pkts))
-
-	err = session.DeletePacket(incoming, 1)
-	assert.NoError(t, err)
-
-	pkt, err = session.LookupPacket(incoming, 1)
-	assert.NoError(t, err)
-	assert.Nil(t, pkt)
-
-	pkts, err = session.AllPackets(incoming)
-	assert.NoError(t, err)
-	assert.Equal(t, 0, len(pkts))
-
-	err = session.SavePacket(outgoing, publish)
-	assert.NoError(t, err)
-
-	pkts, err = session.AllPackets(outgoing)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, len(pkts))
-
-	err = session.Reset()
-	assert.NoError(t, err)
-
-	pkts, err = session.AllPackets(outgoing)
-	assert.NoError(t, err)
-	assert.Equal(t, 0, len(pkts))
-}
-
-// AbstractSessionSubscriptionStoreTest tests a session implementations
-// subscription storing methods.
-func AbstractSessionSubscriptionStoreTest(t *testing.T, session Session) {
-	subscription := &packet.Subscription{
-		Topic: "+",
-		QOS:   1,
-	}
-
-	subs, err := session.AllSubscriptions()
-	assert.Equal(t, 0, len(subs))
-
-	sub, err := session.LookupSubscription("foo")
-	assert.Nil(t, sub)
-	assert.NoError(t, err)
-
-	err = session.SaveSubscription(subscription)
-	assert.NoError(t, err)
-
-	sub, err = session.LookupSubscription("foo")
-	assert.Equal(t, subscription, sub)
-	assert.NoError(t, err)
-
-	subs, err = session.AllSubscriptions()
-	assert.Equal(t, 1, len(subs))
-
-	err = session.DeleteSubscription("+")
-	assert.NoError(t, err)
-
-	sub, err = session.LookupSubscription("foo")
-	assert.Nil(t, sub)
-	assert.NoError(t, err)
-
-	subs, err = session.AllSubscriptions()
-	assert.Equal(t, 0, len(subs))
-}
-
-// AbstractSessionWillStoreTest tests a session implementations will storing methods.
-func AbstractSessionWillStoreTest(t *testing.T, session Session) {
-	theWill := &packet.Message{"test", []byte("test"), 0, false}
-
-	will, err := session.LookupWill()
-	assert.Nil(t, will)
-	assert.NoError(t, err)
-
-	err = session.SaveWill(theWill)
-	assert.NoError(t, err)
-
-	will, err = session.LookupWill()
-	assert.Equal(t, theWill, will)
-	assert.NoError(t, err)
-
-	err = session.ClearWill()
-	assert.NoError(t, err)
-
-	will, err = session.LookupWill()
-	assert.Nil(t, will)
-	assert.NoError(t, err)
-}
-
 // A MemorySession stores packets, subscriptions and the will in memory.
 type MemorySession struct {
 	counter       *tools.Counter
@@ -241,8 +114,8 @@ func (s *MemorySession) LookupPacket(direction string, id uint16) (packet.Packet
 	return s.store.Lookup(direction, id), nil
 }
 
-// DeletePacket will remove a packet from the session. The method must not
-// return an error if no packet with the specified id does exists.
+// DeletePacket will remove a packet from the session. The method will not
+// return an error if no packet with the specified id exists.
 func (s *MemorySession) DeletePacket(direction string, id uint16) error {
 	s.store.Delete(direction, id)
 	return nil
@@ -275,7 +148,7 @@ func (s *MemorySession) LookupSubscription(topic string) (*packet.Subscription, 
 }
 
 // DeleteSubscription will remove the subscription from the session. The
-// method must not return an error if no subscription with the specified
+// method will not return an error if no subscription with the specified
 // topic does exist.
 func (s *MemorySession) DeleteSubscription(topic string) error {
 	s.subscriptions.Empty(topic)
@@ -333,10 +206,12 @@ func (s *MemorySession) Reset() error {
 	return nil
 }
 
+// called by the backend to queue an offline message
 func (s *MemorySession) queue(msg *packet.Message) {
 	s.offlineStore.Push(msg)
 }
 
+// called by the backend to retrieve all offline messsges
 func (s *MemorySession) missed() []*packet.Message {
 	return s.offlineStore.All()
 }
