@@ -28,152 +28,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func abstractPublishSubscribeTest(t *testing.T, out, in string, sub, pub uint8) {
-	port, done := startBroker(t, New(), 1)
-
-	client := client.New()
-
-	wait := make(chan struct{})
-
-	client.Callback = func(msg *packet.Message, err error) {
-		assert.NoError(t, err)
-		assert.Equal(t, out, msg.Topic)
-		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(sub), msg.QOS)
-		assert.False(t, msg.Retain)
-
-		close(wait)
-	}
-
-	connectFuture, err := client.Connect(port.URL(), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
-
-	subscribeFuture, err := client.Subscribe(in, sub)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
-
-	publishFuture, err := client.Publish(out, []byte("test"), pub, false)
-	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
-
-	<-wait
-
-	err = client.Disconnect()
-	assert.NoError(t, err)
-
-	<-done
-}
-
-func TestPublishSubscribeQOS0(t *testing.T) {
-	abstractPublishSubscribeTest(t, "test", "test", 0, 0)
-}
-
-func TestPublishSubscribeQOS1(t *testing.T) {
-	abstractPublishSubscribeTest(t, "test", "test", 1, 1)
-}
-
-func TestPublishSubscribeQOS2(t *testing.T) {
-	abstractPublishSubscribeTest(t, "test", "test", 2, 2)
-}
-
-func TestPublishSubscribeWildcardOne(t *testing.T) {
-	abstractPublishSubscribeTest(t, "foo/bar", "foo/+", 0, 0)
-}
-
-func TestPublishSubscribeWildcardSome(t *testing.T) {
-	abstractPublishSubscribeTest(t, "foo/bar", "#", 0, 0)
-}
-
-func TestPublishSubscribeDowngrade1(t *testing.T) {
-	abstractPublishSubscribeTest(t, "test", "test", 0, 1)
-}
-
-func TestPublishSubscribeDowngrade2(t *testing.T) {
-	abstractPublishSubscribeTest(t, "test", "test", 0, 2)
-}
-
-func TestPublishSubscribeDowngrade3(t *testing.T) {
-	abstractPublishSubscribeTest(t, "test", "test", 1, 2)
-}
-
-func abstractRetainedMessageTest(t *testing.T, out, in string, sub, pub uint8) {
-	port, done := startBroker(t, New(), 2)
-
-	client1 := client.New()
-	client1.Callback = errorCallback(t)
-
-	connectFuture1, err := client1.Connect(port.URL(), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture1.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
-	assert.False(t, connectFuture1.SessionPresent)
-
-	publishFuture, err := client1.Publish(out, []byte("test"), pub, true)
-	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
-
-	err = client1.Disconnect()
-	assert.NoError(t, err)
-
-	client2 := client.New()
-
-	wait := make(chan struct{})
-
-	client2.Callback = func(msg *packet.Message, err error) {
-		assert.NoError(t, err)
-		assert.Equal(t, out, msg.Topic)
-		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(sub), msg.QOS)
-		assert.True(t, msg.Retain)
-
-		close(wait)
-	}
-
-	connectFuture2, err := client2.Connect(port.URL(), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture2.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
-	assert.False(t, connectFuture2.SessionPresent)
-
-	subscribeFuture, err := client2.Subscribe(in, sub)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
-
-	<-wait
-
-	err = client2.Disconnect()
-	assert.NoError(t, err)
-
-	<-done
-}
-
-func TestRetainedMessageQOS0(t *testing.T) {
-	abstractRetainedMessageTest(t, "test", "test", 0, 0)
-}
-
-func TestRetainedMessageQOS1(t *testing.T) {
-	abstractRetainedMessageTest(t, "test", "test", 1, 1)
-}
-
-func TestRetainedMessageQOS2(t *testing.T) {
-	abstractRetainedMessageTest(t, "test", "test", 2, 2)
-}
-
-func TestRetainedMessageWildcardOne(t *testing.T) {
-	abstractRetainedMessageTest(t, "foo/bar", "foo/+", 0, 0)
-}
-
-func TestRetainedMessageWildcardSome(t *testing.T) {
-	abstractRetainedMessageTest(t, "foo/bar", "#", 0, 0)
+func TestBroker(t *testing.T) {
+	AcceptanceTest(t, func()(*Broker){
+		return New()
+	})
 }
 
 func TestClearRetainedMessage(t *testing.T) {
-	port, done := startBroker(t, New(), 3)
+	port, done := runBroker(t, New(), 3)
 
 	client1 := client.New()
 	client1.Callback = errorCallback(t)
@@ -248,7 +110,7 @@ func TestClearRetainedMessage(t *testing.T) {
 }
 
 func abstractWillTest(t *testing.T, sub, pub uint8) {
-	port, done := startBroker(t, New(), 2)
+	port, done := runBroker(t, New(), 2)
 
 	client1 := client.New()
 	client1.Callback = errorCallback(t)
@@ -315,7 +177,7 @@ func TestWillQOS2(t *testing.T) {
 }
 
 func TestRetainedWill(t *testing.T) {
-	port, done := startBroker(t, New(), 2)
+	port, done := runBroker(t, New(), 2)
 
 	client1 := client.New()
 	client1.Callback = errorCallback(t)
@@ -371,7 +233,7 @@ func TestRetainedWill(t *testing.T) {
 }
 
 func TestUnsubscribe(t *testing.T) {
-	port, done := startBroker(t, New(), 1)
+	port, done := runBroker(t, New(), 1)
 
 	client := client.New()
 	client.Callback = errorCallback(t)
@@ -404,7 +266,7 @@ func TestUnsubscribe(t *testing.T) {
 }
 
 func TestSubscriptionUpgrade(t *testing.T) {
-	port, done := startBroker(t, New(), 1)
+	port, done := runBroker(t, New(), 1)
 
 	client := client.New()
 	wait := make(chan struct{})
@@ -448,7 +310,7 @@ func TestSubscriptionUpgrade(t *testing.T) {
 }
 
 func TestMultipleSubscriptions(t *testing.T) {
-	port, done := startBroker(t, New(), 1)
+	port, done := runBroker(t, New(), 1)
 
 	client := client.New()
 	wait := make(chan struct{})
@@ -496,7 +358,7 @@ func TestConnectTimeout(t *testing.T) {
 	broker := New()
 	broker.ConnectTimeout = 10 * time.Millisecond
 
-	port, done := startBroker(t, broker, 1)
+	port, done := runBroker(t, broker, 1)
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -511,7 +373,7 @@ func TestConnectTimeout(t *testing.T) {
 func TestKeepAlive(t *testing.T) {
 	t.Parallel()
 
-	port, done := startBroker(t, New(), 1)
+	port, done := runBroker(t, New(), 1)
 
 	opts := client.NewOptions()
 	opts.KeepAlive = "1s"
@@ -560,7 +422,7 @@ func TestKeepAliveTimeout(t *testing.T) {
 		Receive(connack).
 		End()
 
-	port, done := startBroker(t, New(), 1)
+	port, done := runBroker(t, New(), 1)
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -579,7 +441,7 @@ func TestConnectionDenied(t *testing.T) {
 	broker := New()
 	broker.Backend = backend
 
-	port, done := startBroker(t, broker, 2)
+	port, done := runBroker(t, broker, 2)
 
 	client1 := client.New()
 	client1.Callback = func(msg *packet.Message, err error) {
@@ -609,7 +471,7 @@ func TestConnectionDenied(t *testing.T) {
 }
 
 func abstractStoredSubscriptionTest(t *testing.T, qos uint8) {
-	port, done := startBroker(t, New(), 2)
+	port, done := runBroker(t, New(), 2)
 
 	options := client.NewOptions()
 	options.CleanSession = false
@@ -677,7 +539,7 @@ func TestStoredSubscriptionsQOS2(t *testing.T) {
 }
 
 func TestCleanStoredSubscriptions(t *testing.T) {
-	port, done := startBroker(t, New(), 2)
+	port, done := runBroker(t, New(), 2)
 
 	options := client.NewOptions()
 	options.CleanSession = false
@@ -724,7 +586,7 @@ func TestCleanStoredSubscriptions(t *testing.T) {
 }
 
 func TestRemoveStoredSubscription(t *testing.T) {
-	port, done := startBroker(t, New(), 2)
+	port, done := runBroker(t, New(), 2)
 
 	options := client.NewOptions()
 	options.CleanSession = false
@@ -798,7 +660,7 @@ func TestPublishResendQOS1(t *testing.T) {
 
 	disconnect := packet.NewDisconnectPacket()
 
-	port, done := startBroker(t, New(), 2)
+	port, done := runBroker(t, New(), 2)
 
 	conn1, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -868,7 +730,7 @@ func TestPubrelResendQOS2(t *testing.T) {
 
 	disconnect := packet.NewDisconnectPacket()
 
-	port, done := startBroker(t, New(), 2)
+	port, done := runBroker(t, New(), 2)
 
 	conn1, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -907,7 +769,7 @@ func TestPubrelResendQOS2(t *testing.T) {
 }
 
 func TestOfflineMessages(t *testing.T) {
-	port, done := startBroker(t, New(), 3)
+	port, done := runBroker(t, New(), 3)
 
 	options := client.NewOptions()
 	options.CleanSession = false
