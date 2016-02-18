@@ -22,7 +22,7 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// BackendTest will test a backend implementation. The test will test
+// BackendTest will test a Backend implementation. The test will test
 // all methods using a fake consumer. The passed builder callback should always
 // return a fresh instances of the Backend.
 //
@@ -223,8 +223,23 @@ func backendRetainedMessagesTest(t *testing.T, backend Backend) {
 	assert.Empty(t, msgs)
 }
 
-// AbstractSessionPacketIDTest tests a session implementations PacketID method.
-func AbstractSessionPacketIDTest(t *testing.T, session Session) {
+// SessionTest will test a Session implementation. The passed builder callback
+// should always return a fresh instances of the Session.
+func SessionTest(t *testing.T, builder func()(Session)) {
+	t.Log("Running Session Packet ID Test")
+	sessionPacketIDTest(t, builder())
+
+	t.Log("Running Packet Store Test")
+	sessionPacketStoreTest(t, builder())
+
+	t.Log("Running Subscription Store Test")
+	sessionSubscriptionStoreTest(t, builder())
+
+	t.Log("Running Will Store Test")
+	sessionWillStoreTest(t, builder())
+}
+
+func sessionPacketIDTest(t *testing.T, session Session) {
 	assert.Equal(t, uint16(1), session.PacketID())
 	assert.Equal(t, uint16(2), session.PacketID())
 
@@ -241,9 +256,7 @@ func AbstractSessionPacketIDTest(t *testing.T, session Session) {
 	assert.Equal(t, uint16(1), session.PacketID())
 }
 
-// AbstractSessionPacketStoreTest tests a session implementations packet storing
-// methods.
-func AbstractSessionPacketStoreTest(t *testing.T, session Session) {
+func sessionPacketStoreTest(t *testing.T, session Session) {
 	publish := packet.NewPublishPacket()
 	publish.PacketID = 1
 
@@ -288,9 +301,7 @@ func AbstractSessionPacketStoreTest(t *testing.T, session Session) {
 	assert.Equal(t, 0, len(pkts))
 }
 
-// AbstractSessionSubscriptionStoreTest tests a session implementations
-// subscription storing methods.
-func AbstractSessionSubscriptionStoreTest(t *testing.T, session Session) {
+func sessionSubscriptionStoreTest(t *testing.T, session Session) {
 	subscription := &packet.Subscription{
 		Topic: "+",
 		QOS:   1,
@@ -322,10 +333,21 @@ func AbstractSessionSubscriptionStoreTest(t *testing.T, session Session) {
 
 	subs, err = session.AllSubscriptions()
 	assert.Equal(t, 0, len(subs))
+
+	err = session.SaveSubscription(subscription)
+	assert.NoError(t, err)
+
+	subs, err = session.AllSubscriptions()
+	assert.Equal(t, 1, len(subs))
+
+	err = session.Reset()
+	assert.NoError(t, err)
+
+	subs, err = session.AllSubscriptions()
+	assert.Equal(t, 0, len(subs))
 }
 
-// AbstractSessionWillStoreTest tests a session implementations will storing methods.
-func AbstractSessionWillStoreTest(t *testing.T, session Session) {
+func sessionWillStoreTest(t *testing.T, session Session) {
 	theWill := &packet.Message{"test", []byte("test"), 0, false}
 
 	will, err := session.LookupWill()
@@ -340,6 +362,20 @@ func AbstractSessionWillStoreTest(t *testing.T, session Session) {
 	assert.NoError(t, err)
 
 	err = session.ClearWill()
+	assert.NoError(t, err)
+
+	will, err = session.LookupWill()
+	assert.Nil(t, will)
+	assert.NoError(t, err)
+
+	err = session.SaveWill(theWill)
+	assert.NoError(t, err)
+
+	will, err = session.LookupWill()
+	assert.Equal(t, theWill, will)
+	assert.NoError(t, err)
+
+	err = session.Reset()
 	assert.NoError(t, err)
 
 	will, err = session.LookupWill()

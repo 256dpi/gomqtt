@@ -16,18 +16,8 @@ package broker
 
 import "testing"
 
-func TestMemorySessionPacketID(t *testing.T) {
-	AbstractSessionPacketIDTest(t, NewMemorySession())
-}
-
-func TestMemorySessionPacketStore(t *testing.T) {
-	AbstractSessionPacketStoreTest(t, NewMemorySession())
-}
-
-func TestMemorySessionSubscriptionStore(t *testing.T) {
-	AbstractSessionSubscriptionStoreTest(t, NewMemorySession())
-}
-
-func TestMemorySessionWillStore(t *testing.T) {
-	AbstractSessionWillStoreTest(t, NewMemorySession())
+func TestMemorySession(t *testing.T) {
+	SessionTest(t, func()(Session){
+		return NewMemorySession()
+	})
 }
