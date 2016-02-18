@@ -59,8 +59,8 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 
 	c.Context().Set("uuid", uuid.NewV1().String())
 
+	// start processor
 	c.tomb.Go(c.processor)
-	c.tomb.Go(c.sender)
 
 	return c
 }
@@ -210,6 +210,9 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	if err != nil {
 		return c.die(err, false)
 	}
+
+	// start sender
+	c.tomb.Go(c.sender)
 
 	// retrieve stored packets
 	packets, err := c.session.AllPackets(outgoing)
