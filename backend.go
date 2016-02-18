@@ -42,15 +42,16 @@ type Backend interface {
 	// when the broker should terminate the connection.
 	Authenticate(consumer Consumer, user, password string) (bool, error)
 
-	// GetSession should return the already stored session for the supplied id
-	// or create and returns a new one. If the supplied id has a zero length, a
-	// new session should be returned that is not further stored. The second return
-	// value must be set to true if a session has been resumed.
+	// Setup is called when a new consumer comes online and is successfully
+	// authenticated. Setup should return a Session and true if that session has
+	// been resumed. If available it should return the already stored session for
+	// the supplied id or create and return a new one. If the supplied id has a
+	// zero length, a new session should be returned that is not further stored.
 	//
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the consumer for further usage as the broker will acknowledge the
 	// connection when the call returns.
-	GetSession(consumer Consumer, id string) (Session, bool, error)
+	Setup(consumer Consumer, id string) (Session, bool, error)
 
 	// Subscribe should subscribe the passed consumer to the specified topic and
 	// call Publish with any incoming messages. It should also return the stored
@@ -69,13 +70,13 @@ type Backend interface {
 	// currently retained message for that topic should be removed.
 	Publish(consumer Consumer, msg *packet.Message) error
 
-	// Remove should unsubscribe the passed consumer from all previously
-	// subscribed topics.
+	// Terminate is called when the consumer goes offline. Terminate should
+	// unsubscribe the passed consumer from all previously subscribed topics.
 	//
 	// Note: The Backend may also cleanup previously allocated resources for
-	// that consumer as the broker will terminate the connection when the call
+	// that consumer as the broker will close the connection when the call
 	// returns.
-	Remove(consumer Consumer) error
+	Terminate(consumer Consumer) error
 }
 
 // AbstractBackendAuthenticationTest tests a backend implementations Authenticate
@@ -97,28 +98,28 @@ func AbstractBackendAuthenticationTest(t *testing.T, backend Backend) {
 func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
 	consumer := newFakeConsumer()
 
-	session1, resumed, err := backend.GetSession(consumer, "foo")
+	session1, resumed, err := backend.Setup(consumer, "foo")
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session1)
 
-	session2, resumed, err := backend.GetSession(consumer, "foo")
+	session2, resumed, err := backend.Setup(consumer, "foo")
 	assert.NoError(t, err)
 	assert.True(t, resumed)
 	assert.True(t, session1 == session2)
 
-	session3, resumed, err := backend.GetSession(consumer, "bar")
+	session3, resumed, err := backend.Setup(consumer, "bar")
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.False(t, session3 == session1)
 	assert.False(t, session3 == session2)
 
-	session4, resumed, err := backend.GetSession(consumer, "")
+	session4, resumed, err := backend.Setup(consumer, "")
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session4)
 
-	session5, resumed, err := backend.GetSession(consumer, "")
+	session5, resumed, err := backend.Setup(consumer, "")
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session5)
@@ -271,10 +272,10 @@ func (m *MemoryBackend) Authenticate(consumer Consumer, user, password string) (
 	return false, nil
 }
 
-// GetSession returns the already stored session for the supplied id or creates
+// Setup returns the already stored session for the supplied id or creates
 // and returns a new one. If the supplied id has a zero length, a new
-// session is returned that is only valid once.
-func (m *MemoryBackend) GetSession(consumer Consumer, id string) (Session, bool, error) {
+// session is returned that is not stored further.
+func (m *MemoryBackend) Setup(consumer Consumer, id string) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
@@ -364,8 +365,8 @@ func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 	return nil
 }
 
-// Remove will unsubscribe the passed consumer from all previously subscribed topics.
-func (m *MemoryBackend) Remove(consumer Consumer) error {
+// Terminate will unsubscribe the passed consumer from all previously subscribed topics.
+func (m *MemoryBackend) Terminate(consumer Consumer) error {
 	m.queue.Clear(consumer)
 
 	// get session
