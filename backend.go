@@ -30,6 +30,9 @@ type Consumer interface {
 
 	// Context returns the associated context.
 	Context() *Context
+
+	// Session returns the associated session.
+	Session() Session
 }
 
 // A Backend provides effective queuing functionality to a Broker and its Consumers.
@@ -233,11 +236,11 @@ func AbstractBackendRetainedTest(t *testing.T, backend Backend) {
 
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
-	queue    *tools.Tree
-	retained *tools.Tree
-
 	Logins map[string]string
 
+	queue         *tools.Tree
+	retained      *tools.Tree
+	offlineQueue  *tools.Tree
 	sessions      map[string]*MemorySession
 	sessionsMutex sync.Mutex
 }
@@ -245,9 +248,10 @@ type MemoryBackend struct {
 // NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		queue:    tools.NewTree(),
-		retained: tools.NewTree(),
-		sessions: make(map[string]*MemorySession),
+		queue:        tools.NewTree(),
+		retained:     tools.NewTree(),
+		offlineQueue: tools.NewTree(),
+		sessions:     make(map[string]*MemorySession),
 	}
 }
 
@@ -275,17 +279,32 @@ func (m *MemoryBackend) GetSession(consumer Consumer, id string) (Session, bool,
 	defer m.sessionsMutex.Unlock()
 
 	if len(id) > 0 {
+		// lookup existing session
 		sess, ok := m.sessions[id]
 		if ok {
+			// remove all offline subscriptions
+			m.offlineQueue.Clear(consumer)
+
+			// send all missed messages in another goroutine
+			go func(){
+				for _, msg := range sess.missed() {
+					consumer.Publish(msg)
+				}
+			}()
+
+			// returned stored session
 			return sess, true, nil
 		}
 
+		// create fresh session and save it
 		sess = NewMemorySession()
 		m.sessions[id] = sess
 
+		// return new stored session
 		return sess, false, nil
 	}
 
+	// return a new temporary session
 	return NewMemorySession(), false, nil
 }
 
@@ -328,9 +347,17 @@ func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 		}
 	}
 
+	// publish directly to consumers
 	for _, v := range m.queue.Match(msg.Topic) {
-		if consumer, ok := v.(Consumer); ok && consumer != nil {
+		if consumer, ok := v.(Consumer); ok {
 			consumer.Publish(msg)
+		}
+	}
+
+	// queue for offline consumers
+	for _, v := range m.offlineQueue.Match(msg.Topic) {
+		if session, ok := v.(*MemorySession); ok {
+			session.queue(msg)
 		}
 	}
 
@@ -340,5 +367,27 @@ func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 // Remove will unsubscribe the passed consumer from all previously subscribed topics.
 func (m *MemoryBackend) Remove(consumer Consumer) error {
 	m.queue.Clear(consumer)
+
+	// get session
+	session := consumer.Session()
+
+	if session != nil {
+		// get stored subscriptions
+		subscriptions, err := session.AllSubscriptions()
+		if err != nil {
+			return err
+		}
+
+		// TODO: No offline subscriptions for not clean session.
+
+		// iterate through stored subscriptions
+		for _, sub := range subscriptions {
+			if sub.QOS >= 1 {
+				// session to offline queue
+				m.offlineQueue.Add(sub.Topic, consumer.Session())
+			}
+		}
+	}
+
 	return nil
 }

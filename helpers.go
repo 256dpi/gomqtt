@@ -86,13 +86,15 @@ func (c *Context) Get(key string) interface{} {
 /* fakeConsumer */
 
 type fakeConsumer struct {
-	in  []*packet.Message
-	ctx *Context
+	in   []*packet.Message
+	ctx  *Context
+	sess Session
 }
 
 func newFakeConsumer() *fakeConsumer {
 	return &fakeConsumer{
-		ctx: NewContext(),
+		ctx:  NewContext(),
+		sess: NewMemorySession(),
 	}
 }
 
@@ -103,4 +105,9 @@ func (c *fakeConsumer) Publish(msg *packet.Message) bool {
 
 func (c *fakeConsumer) Context() *Context {
 	return c.ctx
+}
+
+// Session returns the associated session.
+func (c *fakeConsumer) Session() Session {
+	return c.sess
 }

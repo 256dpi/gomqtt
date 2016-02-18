@@ -71,6 +71,11 @@ func (c *Client) Context() *Context {
 	return c.context
 }
 
+// Session returns the associated session.
+func (c *Client) Session() Session {
+	return c.session
+}
+
 // Publish will send a Message to the client and initiate QOS flows.
 func (c *Client) Publish(msg *packet.Message) bool {
 	select {

@@ -906,15 +906,79 @@ func TestPubrelResendQOS2(t *testing.T) {
 	<-done
 }
 
-// -- basic
+func TestOfflineMessages(t *testing.T) {
+	port, done := startBroker(t, New(), 3)
+
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	/* offline subscriber */
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
+
+	subscribeFuture, err := client1.Subscribe("test", 2)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{2}, subscribeFuture.ReturnCodes)
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	/* publisher */
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	connectFuture2, err := client2.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
+
+	publishFuture, err := client2.Publish("test", []byte("test"), 2, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	/* receiver */
+
+	wait := make(chan struct{})
+
+	client3 := client.New()
+	client3.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(2), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture3, err := client3.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture3.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
+	assert.True(t, connectFuture3.SessionPresent)
+
+	<-wait
+
+	err = client3.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
 // disconnect another client with the same clientId
 // failed authentication does not disconnect other client with same clientId
-
-// -- will
 // delivers old will in case of a crash
-
-// -- offline
-// test offline subscriptions
-// store and look up subscriptions by client
-// remove subscriptions by client
-// store and look up subscriptions by topic

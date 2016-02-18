@@ -208,6 +208,7 @@ type MemorySession struct {
 	counter       *tools.Counter
 	store         *tools.Store
 	subscriptions *tools.Tree
+	offlineStore  *tools.Queue
 
 	will      *packet.Message
 	willMutex sync.Mutex
@@ -219,6 +220,7 @@ func NewMemorySession() *MemorySession {
 		counter:       tools.NewCounter(),
 		store:         tools.NewStore(),
 		subscriptions: tools.NewTree(),
+		offlineStore:  tools.NewQueue(100),
 	}
 }
 
@@ -329,4 +331,12 @@ func (s *MemorySession) Reset() error {
 	s.ClearWill()
 
 	return nil
+}
+
+func (s *MemorySession) queue(msg *packet.Message) {
+	s.offlineStore.Push(msg)
+}
+
+func (s *MemorySession) missed() []*packet.Message {
+	return s.offlineStore.All()
 }
