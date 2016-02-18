@@ -15,7 +15,6 @@
 package broker
 
 import (
-	"fmt"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -29,54 +28,20 @@ import (
 )
 
 func TestBroker(t *testing.T) {
-	MandatoryAcceptanceTest(t, func() *Broker {
-		return New()
+	MandatoryAcceptanceTest(t, func(secure bool) *Broker {
+		backend := NewMemoryBackend()
+
+		broker := New()
+		broker.Backend = backend
+
+		if secure {
+			backend.Logins = map[string]string{
+				"allow": "allow",
+			}
+		}
+
+		return broker
 	})
-}
-
-func TestMultipleSubscriptions(t *testing.T) {
-	port, done := runBroker(t, New(), 1)
-
-	client := client.New()
-	wait := make(chan struct{})
-
-	client.Callback = func(msg *packet.Message, err error) {
-		assert.NoError(t, err)
-		assert.Equal(t, "test3", msg.Topic)
-		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(2), msg.QOS)
-		assert.False(t, msg.Retain)
-
-		close(wait)
-	}
-
-	connectFuture, err := client.Connect(port.URL(), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
-
-	subs := []packet.Subscription{
-		{Topic: "test1", QOS: 0},
-		{Topic: "test2", QOS: 1},
-		{Topic: "test3", QOS: 2},
-	}
-
-	subscribeFuture, err := client.SubscribeMultiple(subs)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{0, 1, 2}, subscribeFuture.ReturnCodes)
-
-	publishFuture, err := client.Publish("test3", []byte("test"), 2, false)
-	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
-
-	<-wait
-
-	err = client.Disconnect()
-	assert.NoError(t, err)
-
-	<-done
 }
 
 func TestConnectTimeout(t *testing.T) {
@@ -158,38 +123,48 @@ func TestKeepAliveTimeout(t *testing.T) {
 	<-done
 }
 
-func TestConnectionDenied(t *testing.T) {
-	backend := NewMemoryBackend()
-	backend.Logins = make(map[string]string)
-	backend.Logins["allow"] = "allow"
+// TODO: Move Following Tests
 
-	broker := New()
-	broker.Backend = backend
+func TestMultipleSubscriptions(t *testing.T) {
+	port, done := runBroker(t, New(), 1)
 
-	port, done := runBroker(t, broker, 2)
+	client := client.New()
+	wait := make(chan struct{})
 
-	client1 := client.New()
-	client1.Callback = func(msg *packet.Message, err error) {
-		assert.Equal(t, client.ErrClientConnectionDenied, err)
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test3", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(2), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
 	}
 
-	connectFuture1, err := client1.Connect(port.URL(), nil)
+	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture1.Wait())
-	assert.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
-	assert.False(t, connectFuture1.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
-	client2 := client.New()
-	client2.Callback = errorCallback(t)
+	subs := []packet.Subscription{
+		{Topic: "test1", QOS: 0},
+		{Topic: "test2", QOS: 1},
+		{Topic: "test3", QOS: 2},
+	}
 
-	url := fmt.Sprintf("tcp://allow:allow@localhost:%s/", port.Port())
-	connectFuture2, err := client2.Connect(url, nil)
+	subscribeFuture, err := client.SubscribeMultiple(subs)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture2.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
-	assert.False(t, connectFuture2.SessionPresent)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0, 1, 2}, subscribeFuture.ReturnCodes)
 
-	err = client2.Disconnect()
+	publishFuture, err := client.Publish("test3", []byte("test"), 2, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
 	assert.NoError(t, err)
 
 	<-done

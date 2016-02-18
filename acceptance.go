@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,83 +14,88 @@ import (
 
 // The MandatoryAcceptanceTest will fully test a Broker with its Backend and
 // Session implementation to support all mandatory features. The passed builder
-// callback should always return a fresh instances of the Broker.
-func MandatoryAcceptanceTest(t *testing.T, builder func() *Broker) {
+// callback should always return a fresh instances of the Broker. If true is
+// passed as the first paramter the build should only allow the "allow:allow"
+// login.
+func MandatoryAcceptanceTest(t *testing.T, builder func(bool) *Broker) {
 	t.Log("Running Broker Publish Subscribe Test (QOS 0)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 0)
+	brokerPublishSubscribeTest(t, builder(false), "test", "test", 0, 0)
 
 	t.Log("Running Broker Publish Subscribe Test (QOS 1)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 1, 1)
+	brokerPublishSubscribeTest(t, builder(false), "test", "test", 1, 1)
 
 	t.Log("Running Broker Publish Subscribe Test (QOS 2)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 2, 2)
+	brokerPublishSubscribeTest(t, builder(false), "test", "test", 2, 2)
 
 	t.Log("Running Broker Publish Subscribe Test (Wildcard One)")
-	brokerPublishSubscribeTest(t, builder(), "foo/bar", "foo/+", 0, 0)
+	brokerPublishSubscribeTest(t, builder(false), "foo/bar", "foo/+", 0, 0)
 
 	t.Log("Running Broker Publish Subscribe Test (Wildcard Some)")
-	brokerPublishSubscribeTest(t, builder(), "foo/bar", "#", 0, 0)
+	brokerPublishSubscribeTest(t, builder(false), "foo/bar", "#", 0, 0)
 
 	t.Log("Running Broker Publish Subscribe Test (QOS Downgrade 1->0)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 1)
+	brokerPublishSubscribeTest(t, builder(false), "test", "test", 0, 1)
 
 	t.Log("Running Broker Publish Subscribe Test (QOS Downgrade 2->0)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 2)
+	brokerPublishSubscribeTest(t, builder(false), "test", "test", 0, 2)
 
 	t.Log("Running Broker Publish Subscribe Test (QOS Downgrade 2->1)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 1, 2)
+	brokerPublishSubscribeTest(t, builder(false), "test", "test", 1, 2)
 
 	t.Log("Running Broker Unsubscribe Test (QOS 0)")
-	brokerUnsubscribeTest(t, builder(), 0)
+	brokerUnsubscribeTest(t, builder(false), 0)
 
 	t.Log("Running Broker Unsubscribe Test (QOS 1)")
-	brokerUnsubscribeTest(t, builder(), 1)
+	brokerUnsubscribeTest(t, builder(false), 1)
 
 	t.Log("Running Broker Unsubscribe Test (QOS 2)")
-	brokerUnsubscribeTest(t, builder(), 2)
+	brokerUnsubscribeTest(t, builder(false), 2)
 
 	t.Log("Running Broker Subscription Upgrade Test (QOS 0->1)")
-	brokerSubscriptionUpgradeTest(t, builder(), 0, 1)
+	brokerSubscriptionUpgradeTest(t, builder(false), 0, 1)
 
 	t.Log("Running Broker Subscription Upgrade Test (QOS 1->2)")
-	brokerSubscriptionUpgradeTest(t, builder(), 1, 2)
+	brokerSubscriptionUpgradeTest(t, builder(false), 1, 2)
 
 	t.Log("Running Broker Retained Message Test (QOS 0)")
-	brokerRetainedMessageTest(t, builder(), "test", "test", 0, 0)
+	brokerRetainedMessageTest(t, builder(false), "test", "test", 0, 0)
 
 	t.Log("Running Broker Retained Message Test (QOS 1)")
-	brokerRetainedMessageTest(t, builder(), "test", "test", 1, 1)
+	brokerRetainedMessageTest(t, builder(false), "test", "test", 1, 1)
 
 	t.Log("Running Broker Retained Message Test (QOS 2)")
-	brokerRetainedMessageTest(t, builder(), "test", "test", 2, 2)
+	brokerRetainedMessageTest(t, builder(false), "test", "test", 2, 2)
 
 	t.Log("Running Broker Retained Message Test (Wildcard One)")
-	brokerRetainedMessageTest(t, builder(), "foo/bar", "foo/+", 0, 0)
+	brokerRetainedMessageTest(t, builder(false), "foo/bar", "foo/+", 0, 0)
 
 	t.Log("Running Broker Retained Message Test (Wildcard Some)")
-	brokerRetainedMessageTest(t, builder(), "foo/bar", "#", 0, 0)
+	brokerRetainedMessageTest(t, builder(false), "foo/bar", "#", 0, 0)
 
 	t.Log("Running Broker Clear Retained Message Test")
-	brokerClearRetainedMessageTest(t, builder())
+	brokerClearRetainedMessageTest(t, builder(false))
 
 	t.Log("Running Broker Will Test (QOS 0)")
-	brokerWillTest(t, builder(), 0, 0)
+	brokerWillTest(t, builder(false), 0, 0)
 
 	t.Log("Running Broker Will Test (QOS 1)")
-	brokerWillTest(t, builder(), 1, 1)
+	brokerWillTest(t, builder(false), 1, 1)
 
 	t.Log("Running Broker Will Test (QOS 2)")
-	brokerWillTest(t, builder(), 2, 2)
+	brokerWillTest(t, builder(false), 2, 2)
 
 	// TODO: Test Clean Disconnect without forwarding the will.
 
 	t.Log("Running Broker Retained Will Test)")
-	brokerRetainedWillTest(t, builder())
+	brokerRetainedWillTest(t, builder(false))
+
+	t.Log("Running Broker Authentication Test")
+	brokerAuthenticationTest(t, builder(true))
 }
 
 // TODO: Disconnect another client with the same id.
 // TODO: Failed Authentication does not disconnect other client with same id.
-// TODO: Delivrs old Wills in case of a crash.
+// TODO: Delivers old Wills in case of a crash.
 
 func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{}) {
 	port := tools.NewPort()
@@ -491,6 +497,37 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 	<-wait
 
 	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+// The OptionalAuthenticationTest will test a B
+func brokerAuthenticationTest(t *testing.T, broker *Broker) {
+	port, done := runBroker(t, broker, 2)
+
+	client1 := client.New()
+	client1.Callback = func(msg *packet.Message, err error) {
+		assert.Equal(t, client.ErrClientConnectionDenied, err)
+	}
+
+	connectFuture1, err := client1.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	url := fmt.Sprintf("tcp://allow:allow@localhost:%s/", port.Port())
+	connectFuture2, err := client2.Connect(url, nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
+
+	err = client2.Disconnect()
 	assert.NoError(t, err)
 
 	<-done
