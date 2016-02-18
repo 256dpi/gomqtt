@@ -502,9 +502,10 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 	<-done
 }
 
-// The OptionalAuthenticationTest will test a B
 func brokerAuthenticationTest(t *testing.T, broker *Broker) {
 	port, done := runBroker(t, broker, 2)
+
+	// client1 should be denied
 
 	client1 := client.New()
 	client1.Callback = func(msg *packet.Message, err error) {
@@ -516,6 +517,8 @@ func brokerAuthenticationTest(t *testing.T, broker *Broker) {
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
+
+	// client2 should be allowed
 
 	client2 := client.New()
 	client2.Callback = errorCallback(t)
