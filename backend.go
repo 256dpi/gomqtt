@@ -51,7 +51,7 @@ type Backend interface {
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the consumer for further usage as the broker will acknowledge the
 	// connection when the call returns.
-	Setup(consumer Consumer, id string) (Session, bool, error)
+	Setup(consumer Consumer, id string, clean bool) (Session, bool, error)
 
 	// Subscribe should subscribe the passed consumer to the specified topic and
 	// call Publish with any incoming messages. It should also return the stored
@@ -98,28 +98,28 @@ func AbstractBackendAuthenticationTest(t *testing.T, backend Backend) {
 func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
 	consumer := newFakeConsumer()
 
-	session1, resumed, err := backend.Setup(consumer, "foo")
+	session1, resumed, err := backend.Setup(consumer, "foo", true)
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session1)
 
-	session2, resumed, err := backend.Setup(consumer, "foo")
+	session2, resumed, err := backend.Setup(consumer, "foo", true)
 	assert.NoError(t, err)
 	assert.True(t, resumed)
 	assert.True(t, session1 == session2)
 
-	session3, resumed, err := backend.Setup(consumer, "bar")
+	session3, resumed, err := backend.Setup(consumer, "bar", true)
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.False(t, session3 == session1)
 	assert.False(t, session3 == session2)
 
-	session4, resumed, err := backend.Setup(consumer, "")
+	session4, resumed, err := backend.Setup(consumer, "", true)
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session4)
 
-	session5, resumed, err := backend.Setup(consumer, "")
+	session5, resumed, err := backend.Setup(consumer, "", true)
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session5)
@@ -275,7 +275,7 @@ func (m *MemoryBackend) Authenticate(consumer Consumer, user, password string) (
 // Setup returns the already stored session for the supplied id or creates
 // and returns a new one. If the supplied id has a zero length, a new
 // session is returned that is not stored further.
-func (m *MemoryBackend) Setup(consumer Consumer, id string) (Session, bool, error) {
+func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
