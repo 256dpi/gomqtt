@@ -16,23 +16,10 @@ package broker
 
 import "testing"
 
-func TestMemoryBackendAuthentication(t *testing.T) {
-	backend := NewMemoryBackend()
-	backend.Logins = map[string]string{
-		"allow": "allow",
-	}
-
-	AbstractBackendAuthenticationTest(t, backend)
-}
-
-func TestMemoryBackendSetup(t *testing.T) {
-	AbstractBackendSetupTest(t, NewMemoryBackend())
-}
-
-func TestMemoryBackendQueuing(t *testing.T) {
-	AbstractQueuingTest(t, NewMemoryBackend())
-}
-
-func TestMemoryBackendRetained(t *testing.T) {
-	AbstractBackendRetainedTest(t, NewMemoryBackend())
+func TestMemoryBackend(t *testing.T) {
+	BackendTest(t, func()(Backend){
+		backend := NewMemoryBackend()
+		backend.Logins = map[string]string{"allow": "allow"}
+		return backend
+	})
 }

@@ -22,10 +22,28 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// AbstractBackendAuthenticationTest tests a backend implementations Authenticate
-// method. The backend should allow the "allow:allow" and deny the "deny:deny"
-// logins.
-func AbstractBackendAuthenticationTest(t *testing.T, backend Backend) {
+// BackendTest will test a backend implementation. The test will test
+// all methods using a fake consumer. The passed builder callback should always
+// return a fresh instances of the Backend.
+//
+// Authentication: Its expected that the Backend allows the login "allow:allow".
+func BackendTest(t *testing.T, builder func()(Backend)) {
+	t.Log("Running Backend Authentication Test")
+	backendAuthenticationTest(t, builder())
+
+	t.Log("Running Backend Setup Test")
+	backendSetupTest(t, builder())
+
+	t.Log("Running Backend Basic Queuing Test")
+	backendBasicQueuingTest(t, builder())
+
+	// TODO: Offline Message Test?
+
+	t.Log("Running Backend Retained Messages Test")
+	backendRetainedMessagesTest(t, builder())
+}
+
+func backendAuthenticationTest(t *testing.T, backend Backend) {
 	consumer := newFakeConsumer()
 
 	ok, err := backend.Authenticate(consumer, "allow", "allow")
@@ -37,8 +55,7 @@ func AbstractBackendAuthenticationTest(t *testing.T, backend Backend) {
 	assert.NoError(t, err)
 }
 
-// AbstractBackendSetupTest tests a backend implementations Setup method.
-func AbstractBackendSetupTest(t *testing.T, backend Backend) {
+func backendSetupTest(t *testing.T, backend Backend) {
 	consumer := newFakeConsumer()
 
 	// has id and clean=false
@@ -83,8 +100,7 @@ func AbstractBackendSetupTest(t *testing.T, backend Backend) {
 	assert.True(t, session5 != session6)
 }
 
-// AbstractQueuingTest tests a backend implementations queuing methods.
-func AbstractQueuingTest(t *testing.T, backend Backend) {
+func backendBasicQueuingTest(t *testing.T, backend Backend) {
 	consumer1 := newFakeConsumer()
 	consumer2 := newFakeConsumer()
 
@@ -92,6 +108,14 @@ func AbstractQueuingTest(t *testing.T, backend Backend) {
 		Topic:   "test",
 		Payload: []byte("test"),
 	}
+
+	// setup both consumers
+
+	_, _, err := backend.Setup(consumer1, "consumer1", true)
+	assert.NoError(t, err)
+
+	_, _, err = backend.Setup(consumer2, "consumer2", true)
+	assert.NoError(t, err)
 
 	// subscribe both consumers
 
@@ -121,10 +145,17 @@ func AbstractQueuingTest(t *testing.T, backend Backend) {
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(consumer1.in))
 	assert.Equal(t, 1, len(consumer2.in))
+
+	// terminate both consumers
+
+	err = backend.Terminate(consumer1)
+	assert.NoError(t, err)
+
+	err = backend.Terminate(consumer2)
+	assert.NoError(t, err)
 }
 
-// AbstractBackendRetainedTest tests a backend implementations message retaining.
-func AbstractBackendRetainedTest(t *testing.T, backend Backend) {
+func backendRetainedMessagesTest(t *testing.T, backend Backend) {
 	consumer := newFakeConsumer()
 
 	msg1 := &packet.Message{
