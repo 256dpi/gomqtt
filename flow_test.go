@@ -56,8 +56,8 @@ func TestFlow(t *testing.T) {
 		Delay(5 * time.Millisecond).
 		End()
 
-	conn := NewPipeConn()
+	pipe := NewPipe()
 
-	go server.Test(t, conn)
-	client.Test(t, conn)
+	go server.Test(t, pipe)
+	client.Test(t, pipe)
 }

@@ -23,29 +23,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// A FlowConn defines an abstract interface for connections used with a Flow.
-type FlowConn interface {
+// A Conn defines an abstract interface for connections used with a Flow.
+type Conn interface {
 	Send(pkt packet.Packet) error
 	Receive() (packet.Packet, error)
 	Close() error
 }
 
-// The PipeConn pipes packets from Send to Receive.
-type PipeConn struct {
+// The Pipe pipes packets from Send to Receive.
+type Pipe struct {
 	pipe  chan packet.Packet
 	close chan struct{}
 }
 
-// NewPipeConn returns a new PipeConn.
-func NewPipeConn() *PipeConn {
-	return &PipeConn{
+// NewPipe returns a new Pipe.
+func NewPipe() *Pipe {
+	return &Pipe{
 		pipe:  make(chan packet.Packet),
 		close: make(chan struct{}),
 	}
 }
 
 // Send returns packet on next Receive call.
-func (conn *PipeConn) Send(pkt packet.Packet) error {
+func (conn *Pipe) Send(pkt packet.Packet) error {
 	select {
 	case conn.pipe <- pkt:
 		return nil
@@ -55,7 +55,7 @@ func (conn *PipeConn) Send(pkt packet.Packet) error {
 }
 
 // Receive returns the packet being sent with Send.
-func (conn *PipeConn) Receive() (packet.Packet, error) {
+func (conn *Pipe) Receive() (packet.Packet, error) {
 	select {
 	case pkt := <-conn.pipe:
 		return pkt, nil
@@ -65,7 +65,7 @@ func (conn *PipeConn) Receive() (packet.Packet, error) {
 }
 
 // Close will close the conn and let Send and Receive return errors.
-func (conn *PipeConn) Close() error {
+func (conn *Pipe) Close() error {
 	close(conn.close)
 	return nil
 }
@@ -181,7 +181,7 @@ func (f *Flow) End() *Flow {
 }
 
 // Test starts the flow on the given Conn and reports to the specified test.
-func (f *Flow) Test(t *testing.T, conn FlowConn) {
+func (f *Flow) Test(t *testing.T, conn Conn) {
 	for _, action := range f.actions {
 		switch action.kind {
 		case actionSend:
