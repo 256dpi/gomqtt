@@ -518,12 +518,6 @@ func (c *Client) sender() error {
 
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error, close bool) error {
-	// remove client from the queue
-	_err := c.broker.Backend.Remove(c)
-	if err == nil {
-		err = _err
-	}
-
 	// check session
 	if c.session != nil && c.state.get() != clientDisconnected {
 		// get will
@@ -539,6 +533,12 @@ func (c *Client) cleanup(err error, close bool) error {
 				err = _err
 			}
 		}
+	}
+
+	// remove client from the queue
+	_err := c.broker.Backend.Terminate(c)
+	if err == nil {
+		err = _err
 	}
 
 	// ensure that the connection gets closed
