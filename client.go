@@ -65,7 +65,8 @@ func NewClient(broker *Broker, conn transport.Conn) *Client {
 	return c
 }
 
-// Context returns the associated context.
+// Context returns the associated context. Every client will already have the
+// "uuid" value set in the context.
 func (c *Client) Context() *Context {
 	return c.context
 }

@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	"github.com/gomqtt/packet"
+	"github.com/satori/go.uuid"
 )
 
 /* state */
@@ -93,8 +94,11 @@ type fakeConsumer struct {
 
 // returns a new fake consumer
 func newFakeConsumer() *fakeConsumer {
+	ctx := NewContext()
+	ctx.Set("uuid", uuid.NewV1().String())
+
 	return &fakeConsumer{
-		ctx:  NewContext(),
+		ctx: ctx,
 	}
 }
 
