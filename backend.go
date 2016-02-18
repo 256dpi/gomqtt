@@ -291,6 +291,9 @@ func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
+	// save clean flag
+	consumer.Context().Set("clean", clean)
+
 	// check id length
 	if len(id) > 0 {
 		sess, ok := m.sessions[id]
@@ -395,13 +398,19 @@ func (m *MemoryBackend) Terminate(consumer Consumer) error {
 	// get session
 	session, ok := consumer.Context().Get("session").(*MemorySession)
 	if ok {
-		// get stored subscriptions
+		// check if the consumer connected with clean=true
+		clean, ok := consumer.Context().Get("clean").(bool)
+		if ok && clean {
+			// reset session
+			session.Reset()
+			return nil
+		}
+
+		// otherwise get stored subscriptions
 		subscriptions, err := session.AllSubscriptions()
 		if err != nil {
 			return err
 		}
-
-		// TODO: No offline subscriptions for not clean session.
 
 		// iterate through stored subscriptions
 		for _, sub := range subscriptions {

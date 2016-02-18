@@ -41,7 +41,6 @@ type Client struct {
 
 	out   chan *packet.Message
 	state *state
-	clean bool
 
 	tomb   tomb.Tomb
 	mutex  sync.Mutex
@@ -178,9 +177,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// set state
 	c.state.set(clientConnected)
-
-	// set clean flag
-	c.clean = pkt.CleanSession
 
 	// set keep alive
 	if pkt.KeepAlive > 0 {
@@ -531,16 +527,6 @@ func (c *Client) cleanup(err error, close bool) error {
 	// ensure that the connection gets closed
 	if close {
 		_err := c.conn.Close()
-		if err == nil {
-			err = _err
-		}
-	}
-
-	// TODO: Request backend to reset the session?
-
-	// reset session
-	if c.clean {
-		_err := c.session.Reset()
 		if err == nil {
 			err = _err
 		}

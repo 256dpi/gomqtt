@@ -75,7 +75,6 @@ type Session interface {
 	// ClearWill should remove the will message from the store.
 	ClearWill() error
 
-	// TODO: Should be completely handled by the Backend?
 	// Reset should completely reset the session.
 	Reset() error
 }
