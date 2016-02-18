@@ -542,6 +542,8 @@ func (c *Client) cleanup(err error, close bool) error {
 		}
 	}
 
+	// TODO: Request backend to reset the session?
+
 	// reset session
 	if c.clean {
 		_err := c.session.Reset()

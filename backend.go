@@ -94,36 +94,50 @@ func AbstractBackendAuthenticationTest(t *testing.T, backend Backend) {
 	assert.NoError(t, err)
 }
 
-// AbstractBackendGetSessionTest tests a backend implementations GetSession method.
-func AbstractBackendGetSessionTest(t *testing.T, backend Backend) {
+// AbstractBackendSetupTest tests a backend implementations Setup method.
+func AbstractBackendSetupTest(t *testing.T, backend Backend) {
 	consumer := newFakeConsumer()
 
-	session1, resumed, err := backend.Setup(consumer, "foo", true)
+	// has id and clean=false
+
+	session1, resumed, err := backend.Setup(consumer, "foo", false)
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session1)
 
-	session2, resumed, err := backend.Setup(consumer, "foo", true)
+	session2, resumed, err := backend.Setup(consumer, "foo", false)
 	assert.NoError(t, err)
 	assert.True(t, resumed)
 	assert.True(t, session1 == session2)
 
-	session3, resumed, err := backend.Setup(consumer, "bar", true)
-	assert.NoError(t, err)
-	assert.False(t, resumed)
-	assert.False(t, session3 == session1)
-	assert.False(t, session3 == session2)
+	// has id and clean=true
 
-	session4, resumed, err := backend.Setup(consumer, "", true)
+	session3, resumed, err := backend.Setup(consumer, "foo", true)
+	assert.NoError(t, err)
+	assert.True(t, resumed)
+	assert.True(t, session1 == session3)
+
+	// has other id and clean=false
+
+	session4, resumed, err := backend.Setup(consumer, "bar", false)
 	assert.NoError(t, err)
 	assert.False(t, resumed)
-	assert.NotNil(t, session4)
+	assert.True(t, session4 != session1)
+	assert.True(t, session4 != session2)
+	assert.True(t, session4 != session3)
+
+	// has no id and clean=true
 
 	session5, resumed, err := backend.Setup(consumer, "", true)
 	assert.NoError(t, err)
 	assert.False(t, resumed)
 	assert.NotNil(t, session5)
-	assert.True(t, session4 != session5)
+
+	session6, resumed, err := backend.Setup(consumer, "", true)
+	assert.NoError(t, err)
+	assert.False(t, resumed)
+	assert.NotNil(t, session5)
+	assert.True(t, session5 != session6)
 }
 
 // AbstractQueuingTest tests a backend implementations queuing methods.

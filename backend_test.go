@@ -24,8 +24,8 @@ func TestMemoryBackendAuthentication(t *testing.T) {
 	AbstractBackendAuthenticationTest(t, backend)
 }
 
-func TestMemoryBackendGetSession(t *testing.T) {
-	AbstractBackendGetSessionTest(t, NewMemoryBackend())
+func TestMemoryBackendSetup(t *testing.T) {
+	AbstractBackendSetupTest(t, NewMemoryBackend())
 }
 
 func TestMemoryBackendQueuing(t *testing.T) {
