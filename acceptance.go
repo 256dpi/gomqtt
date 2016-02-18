@@ -3,6 +3,8 @@ package broker
 import (
 	"testing"
 	"time"
+	"sync/atomic"
+	"strings"
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
@@ -85,11 +87,17 @@ func MandatoryAcceptanceTest(t *testing.T, builder func() *Broker) {
 
 	t.Log("Running Broker Retained Will Test)")
 	brokerRetainedWillTest(t, builder())
+
+	t.Log("Running Broker Keep Alive Test")
+	brokerKeepAliveTest(t, builder())
+
+	t.Log("Running Broker Keep Alive Timeout Test")
+	brokerKeepAliveTimeoutTest(t, builder())
 }
 
 // TODO: Disconnect another client with the same id.
 // TODO: Failed Authentication does not disconnect other client with same id.
-// TODO: Delivrs old Wills in case of a crash.
+// TODO: Delivers old Wills in case of a crash.
 
 func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{}) {
 	port := tools.NewPort()
@@ -492,6 +500,65 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 
 	err = client.Disconnect()
 	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerKeepAliveTest(t *testing.T, broker *Broker) {
+	port, done := runBroker(t, broker, 1)
+
+	opts := client.NewOptions()
+	opts.KeepAlive = "1s"
+
+	client := client.New()
+	client.Callback = errorCallback(t)
+
+	var reqCounter int32
+	var respCounter int32
+
+	client.Logger = func(message string) {
+		if strings.Contains(message, "Pingreq") {
+			atomic.AddInt32(&reqCounter, 1)
+		} else if strings.Contains(message, "Pingresp") {
+			atomic.AddInt32(&respCounter, 1)
+		}
+	}
+
+	connectFuture, err := client.Connect(port.URL(), opts)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	time.Sleep(2500 * time.Millisecond)
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+
+	assert.Equal(t, int32(2), atomic.LoadInt32(&reqCounter))
+	assert.Equal(t, int32(2), atomic.LoadInt32(&respCounter))
+}
+
+func brokerKeepAliveTimeoutTest(t *testing.T, broker *Broker) {
+	connect := packet.NewConnectPacket()
+	connect.KeepAlive = 1
+
+	connack := packet.NewConnackPacket()
+
+	client := tools.NewFlow().
+		Send(connect).
+		Receive(connack).
+		End()
+
+	port, done := runBroker(t, broker, 1)
+
+	conn, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn)
+
+	client.Test(t, conn)
 
 	<-done
 }

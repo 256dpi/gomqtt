@@ -16,8 +16,6 @@ package broker
 
 import (
 	"fmt"
-	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -91,69 +89,6 @@ func TestConnectTimeout(t *testing.T) {
 	pkt, err := conn.Receive()
 	assert.Nil(t, pkt)
 	assert.Error(t, err)
-
-	<-done
-}
-
-func TestKeepAlive(t *testing.T) {
-	t.Parallel()
-
-	port, done := runBroker(t, New(), 1)
-
-	opts := client.NewOptions()
-	opts.KeepAlive = "1s"
-
-	client := client.New()
-	client.Callback = errorCallback(t)
-
-	var reqCounter int32
-	var respCounter int32
-
-	client.Logger = func(message string) {
-		if strings.Contains(message, "Pingreq") {
-			atomic.AddInt32(&reqCounter, 1)
-		} else if strings.Contains(message, "Pingresp") {
-			atomic.AddInt32(&respCounter, 1)
-		}
-	}
-
-	connectFuture, err := client.Connect(port.URL(), opts)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
-
-	time.Sleep(2500 * time.Millisecond)
-
-	err = client.Disconnect()
-	assert.NoError(t, err)
-
-	<-done
-
-	assert.Equal(t, int32(2), atomic.LoadInt32(&reqCounter))
-	assert.Equal(t, int32(2), atomic.LoadInt32(&respCounter))
-}
-
-func TestKeepAliveTimeout(t *testing.T) {
-	t.Parallel()
-
-	connect := packet.NewConnectPacket()
-	connect.KeepAlive = 1
-
-	connack := packet.NewConnackPacket()
-
-	client := tools.NewFlow().
-		Send(connect).
-		Receive(connack).
-		End()
-
-	port, done := runBroker(t, New(), 1)
-
-	conn, err := transport.Dial(port.URL())
-	assert.NoError(t, err)
-	assert.NotNil(t, conn)
-
-	client.Test(t, conn)
 
 	<-done
 }
