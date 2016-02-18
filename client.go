@@ -524,7 +524,8 @@ func (c *Client) cleanup(err error, close bool) error {
 		err = _err
 	}
 
-	if c.session != nil {
+	// check session
+	if c.session != nil && c.state.get() != clientDisconnected {
 		// get will
 		will, _err := c.session.LookupWill()
 		if err == nil {
