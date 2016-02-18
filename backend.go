@@ -43,10 +43,10 @@ type Backend interface {
 	Authenticate(consumer Consumer, user, password string) (bool, error)
 
 	// Setup is called when a new consumer comes online and is successfully
-	// authenticated. Setup should return a Session and true if that session has
-	// been resumed. If available it should return the already stored session for
-	// the supplied id or create and return a new one. If the supplied id has a
-	// zero length, a new session should be returned that is not further stored.
+	// authenticated. Setup should return the already stored session for the
+	// supplied id or create and return a new one. If clean is set to true it
+	// should additionally reset the session. If the supplied id has a zero
+	// length, a new session is returned that is not stored further.
 	//
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the consumer for further usage as the broker will acknowledge the
@@ -273,18 +273,26 @@ func (m *MemoryBackend) Authenticate(consumer Consumer, user, password string) (
 }
 
 // Setup returns the already stored session for the supplied id or creates
-// and returns a new one. If the supplied id has a zero length, a new
-// session is returned that is not stored further.
+// and returns a new one. If clean is set to true it will additionally reset
+// the session. If the supplied id has a zero length, a new session is returned
+// that is not stored further.
 func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
+	// check id length
 	if len(id) > 0 {
-		// lookup existing session
 		sess, ok := m.sessions[id]
+
+		// when found
 		if ok {
-			// remove all offline subscriptions
-			m.offlineQueue.Clear(consumer)
+			// reset session if clean is true
+			if clean {
+				sess.Reset()
+			}
+
+			// remove all session from the offline queue
+			m.offlineQueue.Clear(sess)
 
 			// send all missed messages in another goroutine
 			go func(){

@@ -207,14 +207,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// assign session
 	c.session = sess
 
-	// reset session on clean
-	if c.clean {
-		err = c.session.Reset()
-		if err != nil {
-			return c.die(err, true)
-		}
-	}
-
 	// save will if present
 	if pkt.Will != nil {
 		err = c.session.SaveWill(pkt.Will)
@@ -551,14 +543,6 @@ func (c *Client) cleanup(err error, close bool) error {
 	}
 
 	// reset session
-	if c.clean {
-		_err := c.session.Reset()
-		if err == nil {
-			err = _err
-		}
-	}
-
-	// reset store
 	if c.clean {
 		_err := c.session.Reset()
 		if err == nil {
