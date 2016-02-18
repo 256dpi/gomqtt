@@ -30,9 +30,6 @@ type Consumer interface {
 
 	// Context returns the associated context.
 	Context() *Context
-
-	// Session returns the associated session.
-	Session() Session
 }
 
 // A Backend provides effective queuing functionality to a Broker and its Consumers.
@@ -316,6 +313,7 @@ func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session
 			}()
 
 			// returned stored session
+			consumer.Context().Set("session", sess)
 			return sess, true, nil
 		}
 
@@ -324,11 +322,14 @@ func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session
 		m.sessions[id] = sess
 
 		// return new stored session
+		consumer.Context().Set("session", sess)
 		return sess, false, nil
 	}
 
 	// return a new temporary session
-	return NewMemorySession(), false, nil
+	sess := NewMemorySession()
+	consumer.Context().Set("session", sess)
+	return sess, false, nil
 }
 
 // Subscribe will subscribe the passed consumer to the specified topic and
@@ -392,9 +393,8 @@ func (m *MemoryBackend) Terminate(consumer Consumer) error {
 	m.queue.Clear(consumer)
 
 	// get session
-	session := consumer.Session()
-
-	if session != nil {
+	session, ok := consumer.Context().Get("session").(*MemorySession)
+	if ok {
 		// get stored subscriptions
 		subscriptions, err := session.AllSubscriptions()
 		if err != nil {
@@ -407,7 +407,7 @@ func (m *MemoryBackend) Terminate(consumer Consumer) error {
 		for _, sub := range subscriptions {
 			if sub.QOS >= 1 {
 				// session to offline queue
-				m.offlineQueue.Add(sub.Topic, consumer.Session())
+				m.offlineQueue.Add(sub.Topic, session)
 			}
 		}
 	}
