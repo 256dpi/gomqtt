@@ -565,7 +565,3 @@ func TestOfflineMessages(t *testing.T) {
 
 	<-done
 }
-
-// disconnect another client with the same clientId
-// failed authentication does not disconnect other client with same clientId
-// delivers old will in case of a crash

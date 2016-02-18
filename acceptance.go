@@ -87,6 +87,10 @@ func MandatoryAcceptanceTest(t *testing.T, builder func() *Broker) {
 	brokerRetainedWillTest(t, builder())
 }
 
+// TODO: Disconnect another client with the same id.
+// TODO: Failed Authentication does not disconnect other client with same id.
+// TODO: Delivrs old Wills in case of a crash.
+
 func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{}) {
 	port := tools.NewPort()
 
