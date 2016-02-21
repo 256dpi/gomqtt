@@ -17,7 +17,7 @@ package broker
 import "testing"
 
 func TestMemoryBackend(t *testing.T) {
-	BackendTest(t, func() Backend {
+	BackendSpec(t, func() Backend {
 		backend := NewMemoryBackend()
 		backend.Logins = map[string]string{"allow": "allow"}
 		return backend
