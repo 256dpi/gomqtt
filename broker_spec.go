@@ -135,6 +135,7 @@ func Spec(t *testing.T, builder func(bool) *Broker, offline bool) {
 // TODO: Disconnect another client with the same id.
 // TODO: Failed Authentication does not disconnect other client with same id.
 // TODO: Delivers old Wills in case of a crash.
+// TODO: Add Reboot Persistence Test?
 
 func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{}) {
 	port := tools.NewPort()
