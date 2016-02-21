@@ -105,7 +105,9 @@ func (m *MemoryBackend) Authenticate(client Client, user, password string) (bool
 // Setup returns the already stored session for the supplied id or creates
 // and returns a new one. If clean is set to true it will additionally reset
 // the session. If the supplied id has a zero length, a new session is returned
-// that is not stored further.
+// that is not stored further. If an existing session has been found it will
+// retrieve all stored messages from offline subscriptions and begin with
+// forwarding them in a separate goroutine.
 func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
@@ -183,7 +185,8 @@ func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
 // Publish will forward the passed message to all other subscribed clients.
 // It will also store the message if Retain is set to true. If the supplied
 // message has additionally a zero length payload, the backend removes the
-// currently retained message.
+// currently retained message. Finally, it will also add the message to all
+// sessions that have an offline subscription.
 func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
@@ -210,7 +213,10 @@ func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 	return nil
 }
 
-// Terminate will unsubscribe the passed client from all previously subscribed topics.
+// Terminate will unsubscribe the passed client from all previously subscribed
+// topics. If the client connect with clean=true it will also clean the session.
+// Otherwise it will create offline subscriptions for all QOS 1 and QOS 2
+// subscriptions.
 func (m *MemoryBackend) Terminate(client Client) error {
 	m.queue.Clear(client)
 

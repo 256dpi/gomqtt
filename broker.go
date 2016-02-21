@@ -23,8 +23,7 @@ import (
 // The Logger callback handles incoming log messages.
 type Logger func(msg string)
 
-// The Broker handles all MQTT logic and forwards effective actions to the
-// backend.
+// The Broker handles incoming connections and connects them to the backend.
 type Broker struct {
 	Backend Backend
 	Logger  Logger
@@ -40,7 +39,7 @@ func New() *Broker {
 	}
 }
 
-// Handle handles a transport.Conn.
+// Handle takes over responsibility and handles a transport.Conn.
 func (b *Broker) Handle(conn transport.Conn) {
 	newRemoteClient(b, conn)
 }

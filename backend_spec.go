@@ -9,9 +9,8 @@ import (
 
 // BackendSpec will test a Backend implementation. The test will test all methods
 // using a fake client. The passed builder callback should always return a
-// fresh instances of the Backend.
-//
-// Authentication: Its expected that the Backend allows the login "allow:allow".
+// fresh instances of the Backend. For Authentication tests, it expected that
+// the Backend allows the login "allow:allow".
 func BackendSpec(t *testing.T, builder func() Backend) {
 	t.Log("Running Backend Authentication Test")
 	backendAuthenticationTest(t, builder())
