@@ -3,8 +3,8 @@ package broker
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gomqtt/packet"
+	"github.com/stretchr/testify/assert"
 )
 
 // BackendSpec will test a Backend implementation. The test will test all methods
