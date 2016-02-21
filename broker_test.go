@@ -28,7 +28,7 @@ import (
 )
 
 func TestBroker(t *testing.T) {
-	BrokerSpec(t, func(secure bool) *Broker {
+	Spec(t, func(secure bool) *Broker {
 		backend := NewMemoryBackend()
 
 		broker := New()

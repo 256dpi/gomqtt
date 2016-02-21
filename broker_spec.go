@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// BrokerSpec will fully test a Broker with its Backend and Session
-// implementation to support all mandatory features. The passed builder callback
-// should always return a fresh instances of the Broker. If true is passed as
-// the first parameter the broker should only allow the "allow:allow" login.
-// If offline=true the broker will also be tested for proper support of QOS 1 and
-// QOS 2 offline subscriptions.
-func BrokerSpec(t *testing.T, builder func(bool) *Broker, offline bool) {
+// Spec will fully test a Broker with its Backend and Session implementation to
+// support all mandatory features. The passed builder callback should always
+// return a fresh instances of the Broker. If true is passed as the first
+// parameter the broker should only allow the "allow:allow" login.
+// If offline=true the broker will also be tested for proper support of QOS 1
+// and QOS 2 offline subscriptions.
+func Spec(t *testing.T, builder func(bool) *Broker, offline bool) {
 	t.Log("Running Broker Publish Subscribe Test (QOS 0)")
 	brokerPublishSubscribeTest(t, builder(false), "test", "test", 0, 0)
 
