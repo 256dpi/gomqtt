@@ -12,12 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// The MandatoryAcceptanceTest will fully test a Broker with its Backend and
-// Session implementation to support all mandatory features. The passed builder
-// callback should always return a fresh instances of the Broker. If true is
-// passed as the first parameter the broker should only allow the "allow:allow"
-// login.
-func MandatoryAcceptanceTest(t *testing.T, builder func(bool) *Broker) {
+// BrokerSpec will fully test a Broker with its Backend and Session
+// implementation to support all mandatory features. The passed builder callback
+// should always return a fresh instances of the Broker. If true is passed as
+// the first parameter the broker should only allow the "allow:allow" login.
+// If offline=true the broker will also be tested for proper support of QOS 1 and
+// QOS 2 offline subscriptions.
+func BrokerSpec(t *testing.T, builder func(bool) *Broker, offline bool) {
 	t.Log("Running Broker Publish Subscribe Test (QOS 0)")
 	brokerPublishSubscribeTest(t, builder(false), "test", "test", 0, 0)
 
@@ -112,6 +113,23 @@ func MandatoryAcceptanceTest(t *testing.T, builder func(bool) *Broker) {
 
 	t.Log("Running Broker Remove Stored Subscription Test")
 	brokerRemoveStoredSubscription(t, builder(false))
+
+	t.Log("Running Broker Publish Resend Test (QOS 1)")
+	brokerPublishResendTestQOS1(t, builder(false))
+
+	t.Log("Running Broker Publish Resend Test (QOS 2)")
+	brokerPublishResendTestQOS2(t, builder(false))
+
+	t.Log("Running Broker Pubrel Resend Test (QOS 2)")
+	brokerPubrelResendTestQOS2(t, builder(false))
+
+	if offline {
+		t.Log("Running Optional Broker Offline Subscription Test (QOS 1)")
+		brokerOfflineSubscriptionTest(t, builder(false), 1)
+
+		t.Log("Running Optional Broker Offline Subscription Test (QOS 2)")
+		brokerOfflineSubscriptionTest(t, builder(false), 2)
+	}
 }
 
 // TODO: Disconnect another client with the same id.
@@ -793,6 +811,284 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
 	time.Sleep(50 * time.Millisecond)
 
 	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerPublishResendTestQOS1(t *testing.T, broker *Broker) {
+	connect := packet.NewConnectPacket()
+	connect.CleanSession = false
+	connect.ClientID = "test"
+
+	subscribe := packet.NewSubscribePacket()
+	subscribe.PacketID = 1
+	subscribe.Subscriptions = []packet.Subscription{
+		{Topic: "test", QOS: 1},
+	}
+
+	publishOut := packet.NewPublishPacket()
+	publishOut.PacketID = 2
+	publishOut.Message.Topic = "test"
+	publishOut.Message.QOS = 1
+
+	publishIn := packet.NewPublishPacket()
+	publishIn.PacketID = 1
+	publishIn.Message.Topic = "test"
+	publishIn.Message.QOS = 1
+
+	pubackIn := packet.NewPubackPacket()
+	pubackIn.PacketID = 1
+
+	disconnect := packet.NewDisconnectPacket()
+
+	port, done := runBroker(t, broker, 2)
+
+	conn1, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn1)
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Send(subscribe).
+		Skip(). // suback
+		Send(publishOut).
+		Skip(). // puback
+		Receive(publishIn).
+		Close().
+		Test(t, conn1)
+
+	conn2, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn2)
+
+	publishIn.Dup = true
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Receive(publishIn).
+		Send(pubackIn).
+		Send(disconnect).
+		Close().
+		Test(t, conn2)
+
+	<-done
+}
+
+func brokerPublishResendTestQOS2(t *testing.T, broker *Broker) {
+	connect := packet.NewConnectPacket()
+	connect.CleanSession = false
+	connect.ClientID = "test"
+
+	subscribe := packet.NewSubscribePacket()
+	subscribe.PacketID = 1
+	subscribe.Subscriptions = []packet.Subscription{
+		{Topic: "test", QOS: 2},
+	}
+
+	publishOut := packet.NewPublishPacket()
+	publishOut.PacketID = 2
+	publishOut.Message.Topic = "test"
+	publishOut.Message.QOS = 2
+
+	pubrelOut := packet.NewPubrelPacket()
+	pubrelOut.PacketID = 2
+
+	publishIn := packet.NewPublishPacket()
+	publishIn.PacketID = 1
+	publishIn.Message.Topic = "test"
+	publishIn.Message.QOS = 2
+
+	pubrecIn := packet.NewPubrecPacket()
+	pubrecIn.PacketID = 1
+
+	pubcompIn := packet.NewPubcompPacket()
+	pubcompIn.PacketID = 1
+
+	disconnect := packet.NewDisconnectPacket()
+
+	port, done := runBroker(t, broker, 2)
+
+	conn1, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn1)
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Send(subscribe).
+		Skip(). // suback
+		Send(publishOut).
+		Skip(). // pubrec
+		Send(pubrelOut).
+		Skip(). // pubcomp
+		Receive(publishIn).
+		Close().
+		Test(t, conn1)
+
+	conn2, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn2)
+
+	publishIn.Dup = true
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Receive(publishIn).
+		Send(pubrecIn).
+		Skip(). // pubrel
+		Send(pubcompIn).
+		Send(disconnect).
+		Close().
+		Test(t, conn2)
+
+	<-done
+}
+
+func brokerPubrelResendTestQOS2(t *testing.T, broker *Broker) {
+	connect := packet.NewConnectPacket()
+	connect.CleanSession = false
+	connect.ClientID = "test"
+
+	subscribe := packet.NewSubscribePacket()
+	subscribe.PacketID = 1
+	subscribe.Subscriptions = []packet.Subscription{
+		{Topic: "test", QOS: 2},
+	}
+
+	publishOut := packet.NewPublishPacket()
+	publishOut.PacketID = 2
+	publishOut.Message.Topic = "test"
+	publishOut.Message.QOS = 2
+
+	pubrelOut := packet.NewPubrelPacket()
+	pubrelOut.PacketID = 2
+
+	publishIn := packet.NewPublishPacket()
+	publishIn.PacketID = 1
+	publishIn.Message.Topic = "test"
+	publishIn.Message.QOS = 2
+
+	pubrecIn := packet.NewPubrecPacket()
+	pubrecIn.PacketID = 1
+
+	pubrelIn := packet.NewPubrelPacket()
+	pubrelIn.PacketID = 1
+
+	pubcompIn := packet.NewPubcompPacket()
+	pubcompIn.PacketID = 1
+
+	disconnect := packet.NewDisconnectPacket()
+
+	port, done := runBroker(t, broker, 2)
+
+	conn1, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn1)
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Send(subscribe).
+		Skip(). // suback
+		Send(publishOut).
+		Skip(). // pubrec
+		Send(pubrelOut).
+		Skip(). // pubcomp
+		Receive(publishIn).
+		Send(pubrecIn).
+		Close().
+		Test(t, conn1)
+
+	conn2, err := transport.Dial(port.URL())
+	assert.NoError(t, err)
+	assert.NotNil(t, conn2)
+
+	publishIn.Dup = true
+
+	tools.NewFlow().
+		Send(connect).
+		Skip(). // connack
+		Receive(pubrelIn).
+		Send(pubcompIn).
+		Send(disconnect).
+		Close().
+		Test(t, conn2)
+
+	<-done
+}
+
+func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
+	port, done := runBroker(t, broker, 3)
+
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	/* offline subscriber */
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
+
+	subscribeFuture, err := client1.Subscribe("test", qos)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	/* publisher */
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	connectFuture2, err := client2.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
+
+	publishFuture, err := client2.Publish("test", []byte("test"), qos, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	/* receiver */
+
+	wait := make(chan struct{})
+
+	client3 := client.New()
+	client3.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(qos), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture3, err := client3.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture3.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
+	assert.True(t, connectFuture3.SessionPresent)
+
+	<-wait
+
+	err = client3.Disconnect()
 	assert.NoError(t, err)
 
 	<-done
