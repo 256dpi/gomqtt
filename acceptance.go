@@ -15,7 +15,7 @@ import (
 // The MandatoryAcceptanceTest will fully test a Broker with its Backend and
 // Session implementation to support all mandatory features. The passed builder
 // callback should always return a fresh instances of the Broker. If true is
-// passed as the first paramter the build should only allow the "allow:allow"
+// passed as the first parameter the broker should only allow the "allow:allow"
 // login.
 func MandatoryAcceptanceTest(t *testing.T, builder func(bool) *Broker) {
 	t.Log("Running Broker Publish Subscribe Test (QOS 0)")
@@ -91,6 +91,27 @@ func MandatoryAcceptanceTest(t *testing.T, builder func(bool) *Broker) {
 
 	t.Log("Running Broker Authentication Test")
 	brokerAuthenticationTest(t, builder(true))
+
+	t.Log("Running Broker Multiple Subscription Test")
+	brokerMultipleSubscriptionTest(t, builder(false))
+
+	t.Log("Running Broker Duplicate Subscription Test")
+	brokerDuplicateSubscriptionTest(t, builder(false))
+
+	t.Log("Running Broker Stored Subscriptions Test (QOS 0)")
+	brokerStoredSubscriptionsTest(t, builder(false), 0)
+
+	t.Log("Running Broker Stored Subscriptions Test (QOS 1)")
+	brokerStoredSubscriptionsTest(t, builder(false), 1)
+
+	t.Log("Running Broker Stored Subscriptions Test (QOS 2)")
+	brokerStoredSubscriptionsTest(t, builder(false), 2)
+
+	t.Log("Running Broker Clean Stored Subscriptions Test")
+	brokerCleanStoredSubscriptions(t, builder(false))
+
+	t.Log("Running Broker Remove Stored Subscription Test")
+	brokerRemoveStoredSubscription(t, builder(false))
 }
 
 // TODO: Disconnect another client with the same id.
@@ -529,6 +550,247 @@ func brokerAuthenticationTest(t *testing.T, broker *Broker) {
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerMultipleSubscriptionTest(t *testing.T, broker *Broker) {
+	port, done := runBroker(t, broker, 1)
+
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test3", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(2), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subs := []packet.Subscription{
+		{Topic: "test1", QOS: 0},
+		{Topic: "test2", QOS: 1},
+		{Topic: "test3", QOS: 2},
+	}
+
+	subscribeFuture, err := client.SubscribeMultiple(subs)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0, 1, 2}, subscribeFuture.ReturnCodes)
+
+	publishFuture, err := client.Publish("test3", []byte("test"), 2, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerDuplicateSubscriptionTest(t *testing.T, broker *Broker) {
+	port, done := runBroker(t, broker, 1)
+
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(1), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subs := []packet.Subscription{
+		{Topic: "test", QOS: 0},
+		{Topic: "test", QOS: 1},
+	}
+
+	subscribeFuture, err := client.SubscribeMultiple(subs)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0, 1}, subscribeFuture.ReturnCodes)
+
+	publishFuture, err := client.Publish("test", []byte("test"), 1, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerStoredSubscriptionsTest(t *testing.T, broker *Broker, qos uint8) {
+	port, done := runBroker(t, broker, 2)
+
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
+
+	subscribeFuture, err := client1.Subscribe("test", qos)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	client2 := client.New()
+
+	wait := make(chan struct{})
+
+	client2.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(qos), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture2, err := client2.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.True(t, connectFuture2.SessionPresent)
+
+	publishFuture, err := client2.Publish("test", []byte("test"), qos, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker) {
+	port, done := runBroker(t, broker, 2)
+
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
+
+	subscribeFuture, err := client1.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	options.CleanSession = true
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	connectFuture2, err := client2.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
+
+	publishFuture2, err := client2.Publish("test", nil, 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture2.Wait())
+
+	time.Sleep(50 * time.Millisecond)
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
+	port, done := runBroker(t, broker, 2)
+
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
+
+	subscribeFuture, err := client1.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+
+	unsubscribeFuture, err := client1.Unsubscribe("test")
+	assert.NoError(t, err)
+	assert.NoError(t, unsubscribeFuture.Wait())
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	connectFuture2, err := client2.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
+
+	publishFuture2, err := client2.Publish("test", nil, 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture2.Wait())
+
+	time.Sleep(50 * time.Millisecond)
 
 	err = client2.Disconnect()
 	assert.NoError(t, err)
