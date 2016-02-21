@@ -42,5 +42,5 @@ func New() *Broker {
 
 // Handle handles a transport.Conn.
 func (b *Broker) Handle(conn transport.Conn) {
-	NewClient(b, conn)
+	newRemoteClient(b, conn)
 }

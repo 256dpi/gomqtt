@@ -84,31 +84,31 @@ func (c *Context) Get(key string) interface{} {
 	return c.store[key]
 }
 
-/* fakeConsumer */
+/* fakeClient */
 
-// a fake consumer for testing backend implementations
-type fakeConsumer struct {
+// a fake client for testing backend implementations
+type fakeClient struct {
 	in  []*packet.Message
 	ctx *Context
 }
 
-// returns a new fake consumer
-func newFakeConsumer() *fakeConsumer {
+// returns a new fake client
+func newFakeClient() *fakeClient {
 	ctx := NewContext()
 	ctx.Set("uuid", uuid.NewV1().String())
 
-	return &fakeConsumer{
+	return &fakeClient{
 		ctx: ctx,
 	}
 }
 
 // publish will append the message to the in slice
-func (c *fakeConsumer) Publish(msg *packet.Message) bool {
+func (c *fakeClient) Publish(msg *packet.Message) bool {
 	c.in = append(c.in, msg)
 	return true
 }
 
 // returns the context
-func (c *fakeConsumer) Context() *Context {
+func (c *fakeClient) Context() *Context {
 	return c.ctx
 }

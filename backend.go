@@ -21,57 +21,48 @@ import (
 	"github.com/gomqtt/tools"
 )
 
-// A Consumer is a client connected to the broker that interacts with the backend.
-type Consumer interface {
-	// Publish will send a Message to the consumer and initiate QOS flows.
-	Publish(msg *packet.Message) bool
-
-	// Context returns the associated context.
-	Context() *Context
-}
-
-// A Backend provides effective queuing functionality to a Broker and its Consumers.
+// A Backend provides effective queuing functionality to a Broker and its Clients.
 type Backend interface {
-	// Authenticate should authenticate the consumer using the user and password
-	// values and return true if the consumer is eligible to continue or false
+	// Authenticate should authenticate the client using the user and password
+	// values and return true if the client is eligible to continue or false
 	// when the broker should terminate the connection.
-	Authenticate(consumer Consumer, user, password string) (bool, error)
+	Authenticate(client Client, user, password string) (bool, error)
 
-	// Setup is called when a new consumer comes online and is successfully
+	// Setup is called when a new client comes online and is successfully
 	// authenticated. Setup should return the already stored session for the
 	// supplied id or create and return a new one. If clean is set to true it
 	// should additionally reset the session. If the supplied id has a zero
 	// length, a new session is returned that is not stored further.
 	//
 	// Note: In this call the Backend may also allocate other resources and
-	// setup the consumer for further usage as the broker will acknowledge the
+	// setup the client for further usage as the broker will acknowledge the
 	// connection when the call returns.
-	Setup(consumer Consumer, id string, clean bool) (Session, bool, error)
+	Setup(client Client, id string, clean bool) (Session, bool, error)
 
-	// Subscribe should subscribe the passed consumer to the specified topic and
+	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages. It should also return the stored
 	// retained messages that match the specified topic. Additionally, the Backend
 	// may start another goroutine in the background that publishes missed QOS 1
-	// and QOS 2 messages to the consumer.
-	Subscribe(consumer Consumer, topic string) ([]*packet.Message, error)
+	// and QOS 2 messages to the client.
+	Subscribe(client Client, topic string) ([]*packet.Message, error)
 
-	// Unsubscribe should unsubscribe the passed consumer from the specified topic.
-	Unsubscribe(consumer Consumer, topic string) error
+	// Unsubscribe should unsubscribe the passed client from the specified topic.
+	Unsubscribe(client Client, topic string) error
 
-	// Publish should forward the passed message to all other consumers that hold
+	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also store the
 	// message if Retain is set to true and the payload does not have a zero
 	// length. If the payload has a zero length and Retain is set to true the
 	// currently retained message for that topic should be removed.
-	Publish(consumer Consumer, msg *packet.Message) error
+	Publish(client Client, msg *packet.Message) error
 
-	// Terminate is called when the consumer goes offline. Terminate should
-	// unsubscribe the passed consumer from all previously subscribed topics.
+	// Terminate is called when the client goes offline. Terminate should
+	// unsubscribe the passed client from all previously subscribed topics.
 	//
 	// Note: The Backend may also cleanup previously allocated resources for
-	// that consumer as the broker will close the connection when the call
+	// that client as the broker will close the connection when the call
 	// returns.
-	Terminate(consumer Consumer) error
+	Terminate(client Client) error
 }
 
 // A MemoryBackend stores everything in memory.
@@ -95,9 +86,9 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-// Authenticate authenticates a consumers credentials by matching them to the
+// Authenticate authenticates a clients credentials by matching them to the
 // saved Logins map.
-func (m *MemoryBackend) Authenticate(consumer Consumer, user, password string) (bool, error) {
+func (m *MemoryBackend) Authenticate(client Client, user, password string) (bool, error) {
 	// allow all if there are no logins
 	if m.Logins == nil {
 		return true, nil
@@ -115,12 +106,12 @@ func (m *MemoryBackend) Authenticate(consumer Consumer, user, password string) (
 // and returns a new one. If clean is set to true it will additionally reset
 // the session. If the supplied id has a zero length, a new session is returned
 // that is not stored further.
-func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session, bool, error) {
+func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
 	// save clean flag
-	consumer.Context().Set("clean", clean)
+	client.Context().Set("clean", clean)
 
 	// check id length
 	if len(id) > 0 {
@@ -139,12 +130,12 @@ func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session
 			// send all missed messages in another goroutine
 			go func() {
 				for _, msg := range sess.missed() {
-					consumer.Publish(msg)
+					client.Publish(msg)
 				}
 			}()
 
 			// returned stored session
-			consumer.Context().Set("session", sess)
+			client.Context().Set("session", sess)
 			return sess, true, nil
 		}
 
@@ -153,22 +144,22 @@ func (m *MemoryBackend) Setup(consumer Consumer, id string, clean bool) (Session
 		m.sessions[id] = sess
 
 		// return new stored session
-		consumer.Context().Set("session", sess)
+		client.Context().Set("session", sess)
 		return sess, false, nil
 	}
 
 	// return a new temporary session
 	sess := NewMemorySession()
-	consumer.Context().Set("session", sess)
+	client.Context().Set("session", sess)
 	return sess, false, nil
 }
 
-// Subscribe will subscribe the passed consumer to the specified topic and
-// begin to forward messages by calling the consumers Publish method.
+// Subscribe will subscribe the passed client to the specified topic and
+// begin to forward messages by calling the clients Publish method.
 // It will also return the stored retained messages matching the supplied
 // topic.
-func (m *MemoryBackend) Subscribe(consumer Consumer, topic string) ([]*packet.Message, error) {
-	m.queue.Add(topic, consumer)
+func (m *MemoryBackend) Subscribe(client Client, topic string) ([]*packet.Message, error) {
+	m.queue.Add(topic, client)
 
 	values := m.retained.Search(topic)
 
@@ -183,17 +174,17 @@ func (m *MemoryBackend) Subscribe(consumer Consumer, topic string) ([]*packet.Me
 	return msgs, nil
 }
 
-// Unsubscribe will unsubscribe the passed consumer from the specified topic.
-func (m *MemoryBackend) Unsubscribe(consumer Consumer, topic string) error {
-	m.queue.Remove(topic, consumer)
+// Unsubscribe will unsubscribe the passed client from the specified topic.
+func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
+	m.queue.Remove(topic, client)
 	return nil
 }
 
-// Publish will forward the passed message to all other subscribed consumers.
+// Publish will forward the passed message to all other subscribed clients.
 // It will also store the message if Retain is set to true. If the supplied
 // message has additionally a zero length payload, the backend removes the
 // currently retained message.
-func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
+func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
 			m.retained.Set(msg.Topic, msg)
@@ -202,14 +193,14 @@ func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 		}
 	}
 
-	// publish directly to consumers
+	// publish directly to clients
 	for _, v := range m.queue.Match(msg.Topic) {
-		if consumer, ok := v.(Consumer); ok {
-			consumer.Publish(msg)
+		if client, ok := v.(Client); ok {
+			client.Publish(msg)
 		}
 	}
 
-	// queue for offline consumers
+	// queue for offline clients
 	for _, v := range m.offlineQueue.Match(msg.Topic) {
 		if session, ok := v.(*MemorySession); ok {
 			session.queue(msg)
@@ -219,15 +210,15 @@ func (m *MemoryBackend) Publish(consumer Consumer, msg *packet.Message) error {
 	return nil
 }
 
-// Terminate will unsubscribe the passed consumer from all previously subscribed topics.
-func (m *MemoryBackend) Terminate(consumer Consumer) error {
-	m.queue.Clear(consumer)
+// Terminate will unsubscribe the passed client from all previously subscribed topics.
+func (m *MemoryBackend) Terminate(client Client) error {
+	m.queue.Clear(client)
 
 	// get session
-	session, ok := consumer.Context().Get("session").(*MemorySession)
+	session, ok := client.Context().Get("session").(*MemorySession)
 	if ok {
-		// check if the consumer connected with clean=true
-		clean, ok := consumer.Context().Get("clean").(bool)
+		// check if the client connected with clean=true
+		clean, ok := client.Context().Get("clean").(bool)
 		if ok && clean {
 			// reset session
 			session.Reset()
