@@ -329,6 +329,9 @@ func (t *Tree) clean(values []interface{}) []interface{} {
 
 // All will return all stored values in the tree.
 func (t *Tree) All() []interface{} {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
 	return t.clean(t.all(make([]interface{}, 0), t.root))
 }
 
