@@ -17,8 +17,9 @@ import (
 // return a fresh instances of the Broker. If true is passed as the first
 // parameter the broker should only allow the "allow:allow" login.
 // If offline=true the broker will also be tested for proper support of QOS 1
-// and QOS 2 offline subscriptions.
-func Spec(t *testing.T, builder func(bool) *Broker, offline bool) {
+// and QOS 2 offline subscriptions. If unique=true the broker will also be tested
+// for properly disconnecting previous clients with the same client id.
+func Spec(t *testing.T, builder func(bool) *Broker, offline, unique bool) {
 	t.Log("Running Broker Publish Subscribe Test (QOS 0)")
 	brokerPublishSubscribeTest(t, builder(false), "test", "test", 0, 0)
 
@@ -130,10 +131,13 @@ func Spec(t *testing.T, builder func(bool) *Broker, offline bool) {
 		t.Log("Running Optional Broker Offline Subscription Test (QOS 2)")
 		brokerOfflineSubscriptionTest(t, builder(false), 2)
 	}
+
+	if unique {
+		t.Log("Running Optional Broker Unique Client ID Test")
+		brokerUniqueClientIDTest(t, builder(false))
+	}
 }
 
-// TODO: Disconnect another client with the same id.
-// TODO: Failed Authentication does not disconnect other client with same id.
 // TODO: Delivers old Wills in case of a crash.
 // TODO: Add Reboot Persistence Test?
 
@@ -1090,6 +1094,52 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
 	<-wait
 
 	err = client3.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
+	broker.Logger = func(msg string){
+		println(msg)
+	}
+
+	port, done := runBroker(t, broker, 2)
+
+	options := client.NewOptions()
+	options.ClientID = "test"
+
+	wait := make(chan struct{})
+
+	/* first client */
+
+	client1 := client.New()
+	client1.Callback = func(msg *packet.Message, err error) {
+		println(err.Error())
+		assert.Error(t, err)
+		close(wait)
+	}
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
+
+	/* second client */
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	connectFuture2, err := client2.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
+
+	<-wait
+
+	err = client2.Disconnect()
 	assert.NoError(t, err)
 
 	<-done

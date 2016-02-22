@@ -121,6 +121,14 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 
 		// when found
 		if ok {
+			// check if session already has a client
+			if sess.currentClient != nil {
+				sess.currentClient.Close(true)
+			}
+
+			// set current client
+			sess.currentClient = client
+
 			// reset session if clean is true
 			if clean {
 				sess.Reset()
@@ -141,8 +149,11 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 			return sess, true, nil
 		}
 
-		// create fresh session and save it
+		// create fresh session
 		sess = NewMemorySession()
+		sess.currentClient = client
+
+		// save session
 		m.sessions[id] = sess
 
 		// return new stored session
@@ -218,11 +229,18 @@ func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 // Otherwise it will create offline subscriptions for all QOS 1 and QOS 2
 // subscriptions.
 func (m *MemoryBackend) Terminate(client Client) error {
+	m.sessionsMutex.Lock()
+	defer m.sessionsMutex.Unlock()
+
+	// remove client from queue
 	m.queue.Clear(client)
 
 	// get session
 	session, ok := client.Context().Get("session").(*MemorySession)
 	if ok {
+		// reset stored client
+		session.currentClient = nil
+
 		// check if the client connected with clean=true
 		clean, ok := client.Context().Get("clean").(bool)
 		if ok && clean {

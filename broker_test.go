@@ -41,7 +41,7 @@ func TestBroker(t *testing.T) {
 		}
 
 		return broker
-	}, true)
+	}, true, true)
 }
 
 func TestConnectTimeout(t *testing.T) {

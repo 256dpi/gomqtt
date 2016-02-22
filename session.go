@@ -85,6 +85,8 @@ type MemorySession struct {
 
 	will      *packet.Message
 	willMutex sync.Mutex
+
+	currentClient Client
 }
 
 // NewMemorySession returns a new MemorySession.
