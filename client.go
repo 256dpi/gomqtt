@@ -544,6 +544,8 @@ func (c *remoteClient) cleanup(err error, close bool) error {
 		}
 	}
 
+	c.log("%s - Lost Connection", c.Context().Get("uuid"))
+
 	return err
 }
 
