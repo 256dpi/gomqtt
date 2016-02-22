@@ -72,6 +72,7 @@ type MemoryBackend struct {
 	queue         *tools.Tree
 	retained      *tools.Tree
 	offlineQueue  *tools.Tree
+
 	sessions      map[string]*MemorySession
 	sessionsMutex sync.Mutex
 }
