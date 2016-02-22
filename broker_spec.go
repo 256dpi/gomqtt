@@ -1100,10 +1100,6 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
 }
 
 func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
-	broker.Logger = func(msg string){
-		println(msg)
-	}
-
 	port, done := runBroker(t, broker, 2)
 
 	options := client.NewOptions()
