@@ -30,6 +30,11 @@ type Client interface {
 	// Publish will send a Message to the client and initiate QOS flows.
 	Publish(msg *packet.Message) bool
 
+	// Close will immediately close the connection. When clean=true the client
+	// will be marked as cleanly disconnected, and the will messages will not
+	// get dispatched.
+	Close(clean bool)
+
 	// Context returns the associated context.
 	Context() *Context
 }
@@ -87,6 +92,17 @@ func (c *remoteClient) Publish(msg *packet.Message) bool {
 	case <-c.tomb.Dying():
 		return false
 	}
+}
+
+// Close will immediately close the connection.
+func (c *remoteClient) Close(clean bool) {
+	if clean {
+		// mark client as cleanly disconnected
+		c.state.set(clientDisconnected)
+	}
+
+	// close underlying connection (triggers cleanup)
+	c.conn.Close()
 }
 
 /* processor goroutine */

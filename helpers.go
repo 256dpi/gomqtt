@@ -108,6 +108,9 @@ func (c *fakeClient) Publish(msg *packet.Message) bool {
 	return true
 }
 
+// does nothing atm
+func (c *fakeClient) Close(clean bool) {}
+
 // returns the context
 func (c *fakeClient) Context() *Context {
 	return c.ctx
