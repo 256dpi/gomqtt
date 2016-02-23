@@ -34,6 +34,10 @@ type Backend interface {
 	// should additionally reset the session. If the supplied id has a zero
 	// length, a new session is returned that is not stored further.
 	//
+	// Optional: The backend may close any existing clients that use the same
+	// client id. It may also start a background process that forwards any missed
+	// messages that match the clients offline subscriptions.
+	//
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the client for further usage as the broker will acknowledge the
 	// connection when the call returns.
@@ -41,9 +45,11 @@ type Backend interface {
 
 	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages. It should also return the stored
-	// retained messages that match the specified topic. Additionally, the Backend
-	// may start another goroutine in the background that publishes missed QOS 1
-	// and QOS 2 messages to the client.
+	// retained messages that match the specified topic.
+	//
+	// Optional: Subscribe may also return a concatenated list of retained messages
+	// and missed offline messages, if the later has not been handled already in
+	// the Setup call.
 	Subscribe(client Client, topic string) ([]*packet.Message, error)
 
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
@@ -58,6 +64,10 @@ type Backend interface {
 
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics.
+	//
+	// Optional: The backend may convert a clients subscriptions into offline
+	// subscriptions, which allows missed messages to be forwarded on the next
+	// connect.
 	//
 	// Note: The Backend may also cleanup previously allocated resources for
 	// that client as the broker will close the connection when the call
@@ -108,7 +118,8 @@ func (m *MemoryBackend) Authenticate(client Client, user, password string) (bool
 // the session. If the supplied id has a zero length, a new session is returned
 // that is not stored further. If an existing session has been found it will
 // retrieve all stored messages from offline subscriptions and begin with
-// forwarding them in a separate goroutine.
+// forwarding them in a separate goroutine. Furthermore, it will disconnect
+// any client connected with the same client id.
 func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
@@ -116,54 +127,54 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 	// save clean flag
 	client.Context().Set("clean", clean)
 
-	// check id length
-	if len(id) > 0 {
-		sess, ok := m.sessions[id]
-
-		// when found
-		if ok {
-			// check if session already has a client
-			if sess.currentClient != nil {
-				sess.currentClient.Close(true)
-			}
-
-			// set current client
-			sess.currentClient = client
-
-			// reset session if clean is true
-			if clean {
-				sess.Reset()
-			}
-
-			// remove all session from the offline queue
-			m.offlineQueue.Clear(sess)
-
-			// send all missed messages in another goroutine
-			go func() {
-				for _, msg := range sess.missed() {
-					client.Publish(msg)
-				}
-			}()
-
-			// returned stored session
-			client.Context().Set("session", sess)
-			return sess, true, nil
-		}
-
-		// create fresh session
-		sess = NewMemorySession()
-		sess.currentClient = client
-
-		// save session
-		m.sessions[id] = sess
-
-		// return new stored session
+	// return a new temporary session if id is zero
+	if len(id) == 0 {
+		sess := NewMemorySession()
 		client.Context().Set("session", sess)
 		return sess, false, nil
 	}
 
-	// return a new temporary session
-	sess := NewMemorySession()
+	// retrieve stored session
+	sess, ok := m.sessions[id]
+
+	// when found
+	if ok {
+		// check if session already has a client
+		if sess.currentClient != nil {
+			sess.currentClient.Close(true)
+		}
+
+		// set current client
+		sess.currentClient = client
+
+		// reset session if clean is true
+		if clean {
+			sess.Reset()
+		}
+
+		// remove all session from the offline queue
+		m.offlineQueue.Clear(sess)
+
+		// send all missed messages in another goroutine
+		go func() {
+			for _, msg := range sess.missed() {
+				client.Publish(msg)
+			}
+		}()
+
+		// returned stored session
+		client.Context().Set("session", sess)
+		return sess, true, nil
+	}
+
+	// create fresh session
+	sess = NewMemorySession()
+	sess.currentClient = client
+
+	// save session
+	m.sessions[id] = sess
+
+	// return new stored session
 	client.Context().Set("session", sess)
 	return sess, false, nil
 }
@@ -173,12 +184,14 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 // It will also return the stored retained messages matching the supplied
 // topic.
 func (m *MemoryBackend) Subscribe(client Client, topic string) ([]*packet.Message, error) {
+	// add client to queue
 	m.queue.Add(topic, client)
 
+	// get retained messages
 	values := m.retained.Search(topic)
-
 	var msgs []*packet.Message
 
+	// convert types
 	for _, value := range values {
 		if msg, ok := value.(*packet.Message); ok {
 			msgs = append(msgs, msg)
@@ -190,7 +203,9 @@ func (m *MemoryBackend) Subscribe(client Client, topic string) ([]*packet.Messag
 
 // Unsubscribe will unsubscribe the passed client from the specified topic.
 func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
+	// remove client from queue
 	m.queue.Remove(topic, client)
+
 	return nil
 }
 
@@ -200,6 +215,7 @@ func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
 // currently retained message. Finally, it will also add the message to all
 // sessions that have an offline subscription.
 func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
+	// check retain flag
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
 			m.retained.Set(msg.Topic, msg)
