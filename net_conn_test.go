@@ -66,6 +66,10 @@ func TestNetConnCloseAfterClose(t *testing.T) {
 	abstractConnCloseAfterCloseTest(t, "tcp")
 }
 
+func TestNetConnAddr(t *testing.T) {
+	abstractConnAddrTest(t, "tcp")
+}
+
 func TestNetConnCloseWhileReadError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublishPacket()

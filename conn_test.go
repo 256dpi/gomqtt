@@ -241,3 +241,22 @@ func abstractConnCloseAfterCloseTest(t *testing.T, protocol string) {
 
 	<-done
 }
+
+func abstractConnAddrTest(t *testing.T, protocol string) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
+		assert.NotEmpty(t, conn1.LocalAddr().String())
+		assert.NotEmpty(t, conn1.RemoteAddr().String())
+
+		err := conn1.Close()
+		assert.NoError(t, err)
+	})
+
+	assert.NotEmpty(t, conn2.LocalAddr().String())
+	assert.NotEmpty(t, conn2.RemoteAddr().String())
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, ConnectionClose, toError(err).Code())
+
+	<-done
+}
