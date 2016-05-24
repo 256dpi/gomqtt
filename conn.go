@@ -17,6 +17,7 @@
 package transport
 
 import (
+	"net"
 	"time"
 
 	"github.com/gomqtt/packet"
@@ -61,4 +62,10 @@ type Conn interface {
 	// If no data is received in the set duration the connection will be closed
 	// and Read returns an error.
 	SetReadTimeout(timeout time.Duration)
+
+	//LocalAddr will return the underlying connection's local net address.
+	LocalAddr() net.Addr
+
+	//LocalAddr will return the underlying connection's remote net address.
+	RemoteAddr() net.Addr
 }

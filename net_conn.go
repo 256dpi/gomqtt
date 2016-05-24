@@ -47,6 +47,16 @@ func NewNetConn(conn net.Conn) *NetConn {
 	}
 }
 
+// LocalAddr returns the local network address.
+func (c *NetConn) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+
+// RemoteAddr returns the remote network address.
+func (c *NetConn) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+
 // Send will write the packet to the underlying connection. It will return
 // an Error if there was an error while encoding or writing to the
 // underlying connection.
