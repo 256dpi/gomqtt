@@ -63,9 +63,9 @@ type Conn interface {
 	// and Read returns an error.
 	SetReadTimeout(timeout time.Duration)
 
-	//LocalAddr will return the underlying connection's local net address.
+	// LocalAddr will return the underlying connection's local net address.
 	LocalAddr() net.Addr
 
-	//LocalAddr will return the underlying connection's remote net address.
+	// RemoteAddr will return the underlying connection's remote net address.
 	RemoteAddr() net.Addr
 }
