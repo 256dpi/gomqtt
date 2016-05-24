@@ -116,7 +116,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 
 	// return read timeout err instead
 	if err != nil && strings.Contains(err.Error(), "i/o timeout") {
-		c.end(websocket.CloseAbnormalClosure)
+		c.end(websocket.CloseGoingAway)
 		return nil, newTransportError(NetworkError, ErrReadTimeout)
 	}
 
