@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"net"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -41,6 +42,16 @@ func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 	return &WebSocketConn{
 		conn: conn,
 	}
+}
+
+// LocalAddr returns the local network address.
+func (c *WebSocketConn) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+
+// RemoteAddr returns the remote network address.
+func (c *WebSocketConn) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
 }
 
 // Send will write the packet to the underlying connection. It will return
