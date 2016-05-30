@@ -235,6 +235,7 @@ func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 	}
 
 	// queue for offline clients
+	// TODO: Only qos > 0?
 	for _, v := range m.offlineQueue.Match(msg.Topic) {
 		if session, ok := v.(*MemorySession); ok {
 			session.queue(msg)

@@ -267,6 +267,10 @@ func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
 
 	// restore subscriptions
 	for _, sub := range subs {
+		// TODO: Possibly we do not want to call Subscribe as certain backends
+		// may already have the proper subscriptions when continuing the session.
+		// Also brokers like mosquitto do not forward retained messages on
+		// subscription restoration.
 		retainedMessages, err := c.broker.Backend.Subscribe(c, sub.Topic)
 		if err != nil {
 			return c.die(err, true)
