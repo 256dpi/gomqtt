@@ -38,3 +38,8 @@ func (m *Message) String() string {
 	return fmt.Sprintf("<Message Topic=%q QOS=%d Retain=%t Payload=%v>",
 		m.Topic, m.QOS, m.Retain, m.Payload)
 }
+
+// Copy returns a copy of the message.
+func (m Message) Copy() *Message {
+	return &m
+}
