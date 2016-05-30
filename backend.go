@@ -32,7 +32,7 @@ type Backend interface {
 	// authenticated. Setup should return the already stored session for the
 	// supplied id or create and return a new one. If clean is set to true it
 	// should additionally reset the session. If the supplied id has a zero
-	// length, a new session is returned that is not stored further.
+	// length, a new temporary session should returned that is not stored further.
 	//
 	// Optional: The backend may close any existing clients that use the same
 	// client id. It may also start a background process that forwards any missed
@@ -44,12 +44,8 @@ type Backend interface {
 	Setup(client Client, id string, clean bool) (Session, bool, error)
 
 	// Subscribe should subscribe the passed client to the specified topic and
-	// call Publish with any incoming messages. It should also return the stored
-	// retained messages that match the specified topic.
-	//
-	// Optional: Subscribe may also return a concatenated list of retained messages
-	// and missed offline messages, if the later has not been handled already in
-	// the Setup call.
+	// call Publish with any incoming messages. It should also return a list of
+	// stored retained messages that match the specified topic.
 	Subscribe(client Client, topic string) ([]*packet.Message, error)
 
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
@@ -61,8 +57,9 @@ type Backend interface {
 	// length. If the payload has a zero length and Retain is set to true the
 	// currently retained message for that topic should be removed.
 	//
-	// Note: The Backend should set the Retain flag to false before forwarding
-	// the messages to other clients or storing it for offline subscriptions.
+	// Note: The Backend is expected to set the Retain flag to false before
+	// forwarding the messages to other clients or storing it for offline
+	// subscriptions.
 	Publish(client Client, msg *packet.Message) error
 
 	// Terminate is called when the client goes offline. Terminate should
