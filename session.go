@@ -213,7 +213,7 @@ func (s *MemorySession) queue(msg *packet.Message) {
 	s.offlineStore.Push(msg)
 }
 
-// called by the backend to retrieve all offline messsges
+// called by the backend to retrieve all offline messages
 func (s *MemorySession) missed() []*packet.Message {
 	return s.offlineStore.All()
 }
