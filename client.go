@@ -267,8 +267,15 @@ func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
 
 	// restore subscriptions
 	for _, sub := range subs {
-		// TODO: Handle incoming retained messages.
-		c.broker.Backend.Subscribe(c, sub.Topic)
+		retainedMessages, err := c.broker.Backend.Subscribe(c, sub.Topic)
+		if err != nil {
+			return c.die(err, true)
+		}
+
+		// send messages
+		for _, msg := range retainedMessages {
+			c.out <- msg
+		}
 	}
 
 	return nil

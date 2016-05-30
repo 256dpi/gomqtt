@@ -60,6 +60,9 @@ type Backend interface {
 	// message if Retain is set to true and the payload does not have a zero
 	// length. If the payload has a zero length and Retain is set to true the
 	// currently retained message for that topic should be removed.
+	//
+	// Note: The Backend should set the Retain flag to false before forwarding
+	// the messages to other clients or storing it for offline subscriptions.
 	Publish(client Client, msg *packet.Message) error
 
 	// Terminate is called when the client goes offline. Terminate should
@@ -218,11 +221,14 @@ func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 	// check retain flag
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
-			m.retained.Set(msg.Topic, msg)
+			m.retained.Set(msg.Topic, msg.Copy())
 		} else {
 			m.retained.Empty(msg.Topic)
 		}
 	}
+
+	// reset an existing retain flag
+	msg.Retain = false
 
 	// publish directly to clients
 	for _, v := range m.queue.Match(msg.Topic) {

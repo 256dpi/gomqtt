@@ -77,6 +77,9 @@ func Spec(t *testing.T, builder func(bool) *Broker, offline, unique bool) {
 	t.Log("Running Broker Clear Retained Message Test")
 	brokerClearRetainedMessageTest(t, builder(false))
 
+	t.Log("Running Broker Direct Retained Message Test")
+	brokerDirectRetainedMessageTest(t, builder(false))
+
 	t.Log("Running Broker Will Test (QOS 0)")
 	brokerWillTest(t, builder(false), 0, 0)
 
@@ -130,6 +133,15 @@ func Spec(t *testing.T, builder func(bool) *Broker, offline, unique bool) {
 
 		t.Log("Running Optional Broker Offline Subscription Test (QOS 2)")
 		brokerOfflineSubscriptionTest(t, builder(false), 2)
+
+		t.Log("Running Optional Broker Offline Subscription Test Retained (QOS 0)")
+		brokerOfflineSubscriptionRetainedTest(t, builder(false), 0)
+
+		t.Log("Running Optional Broker Offline Subscription Test Retained (QOS 1)")
+		brokerOfflineSubscriptionRetainedTest(t, builder(false), 1)
+
+		t.Log("Running Optional Broker Offline Subscription Test Retained (QOS 2)")
+		brokerOfflineSubscriptionRetainedTest(t, builder(false), 2)
 	}
 
 	if unique {
@@ -343,6 +355,45 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	time.Sleep(50 * time.Millisecond)
 
 	err = client3.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker) {
+	port, done := runBroker(t, broker, 1)
+
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(0), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subscribeFuture, err := client.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+
+	publishFuture, err := client.Publish("test", []byte("test"), 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
 	assert.NoError(t, err)
 
 	<-done
@@ -1083,6 +1134,93 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
 		assert.False(t, msg.Retain)
 
 		close(wait)
+	}
+
+	connectFuture3, err := client3.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture3.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
+	assert.True(t, connectFuture3.SessionPresent)
+
+	<-wait
+
+	err = client3.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, qos uint8) {
+	port, done := runBroker(t, broker, 3)
+
+	options := client.NewOptions()
+	options.CleanSession = false
+	options.ClientID = "test"
+
+	/* offline subscriber */
+
+	client1 := client.New()
+	client1.Callback = errorCallback(t)
+
+	connectFuture1, err := client1.Connect(port.URL(), options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
+
+	subscribeFuture, err := client1.Subscribe("test", qos)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	/* publisher */
+
+	client2 := client.New()
+	client2.Callback = errorCallback(t)
+
+	connectFuture2, err := client2.Connect(port.URL(), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
+
+	publishFuture, err := client2.Publish("test", []byte("test"), qos, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	err = client2.Disconnect()
+	assert.NoError(t, err)
+
+	/* receiver */
+
+	wait := make(chan struct{})
+
+	i := 0
+
+	client3 := client.New()
+	client3.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(qos), msg.QOS)
+
+		if i == 0 && qos > 0 {
+			// on qos > 0, the first message is the stored offline message
+			assert.False(t, msg.Retain)
+		} else if i == 1 || qos == 0 {
+			// on qos > 0 the second message is the retained message
+			// on qos == 0 the first message is the retained message
+			assert.True(t, msg.Retain)
+		}
+
+		if i == 1 || qos == 0 {
+			close(wait)
+		}
+
+		i++
 	}
 
 	connectFuture3, err := client3.Connect(port.URL(), options)
