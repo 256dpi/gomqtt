@@ -259,15 +259,9 @@ func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
 		}
 	}
 
-	// get stored subscriptions
-	subs, err := c.session.AllSubscriptions()
-	if err != nil {
-		return c.die(err, true)
-	}
-
-	// restore stored subscriptions if not clean
+	// attempt to restore client if not clean
 	if !pkt.CleanSession {
-		err = c.broker.Backend.Restore(c, subs)
+		err = c.broker.Backend.Restore(c)
 		if err != nil {
 			return c.die(err, true)
 		}

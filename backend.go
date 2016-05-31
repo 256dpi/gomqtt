@@ -43,9 +43,10 @@ type Backend interface {
 	Setup(client Client, id string, clean bool) (Session, bool, error)
 
 	// Restore is called after the client has been acknowledged and if clean is
-	// set to false. It should be used to restore a clients subscriptions and
-	// triggering a background process that forwards any missed messages.
-	Restore(client Client, subscriptions []*packet.Subscription) error
+	// set to false. It should be used to restore a clients subscriptions from
+	// the session and triggering a background process that forwards any missed
+	// messages.
+	Restore(client Client) error
 
 	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages. It should also return a list of
@@ -176,16 +177,22 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 	return sess, false, nil
 }
 
-// Restore will resubscribe the client to the passed subscriptions and forward
+// Restore will resubscribe the client to the saved subscriptions and forward
 // all missed messages in another goroutine.
-func (m *MemoryBackend) Restore(client Client, subscriptions []*packet.Subscription) error {
-	// add subscriptions
-	for _, sub := range subscriptions {
-		m.queue.Add(sub.Topic, client)
-	}
-
+func (m *MemoryBackend) Restore(client Client) error {
 	// get client session
 	sess := client.Context().Get("session").(*MemorySession)
+
+	// get stored subscriptions
+	subs, err := sess.AllSubscriptions()
+	if err != nil {
+		return err
+	}
+
+	// add subscriptions
+	for _, sub := range subs {
+		m.queue.Add(sub.Topic, client)
+	}
 
 	// send all missed messages in another goroutine
 	go func() {
