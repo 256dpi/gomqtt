@@ -52,12 +52,18 @@ type Backend interface {
 	// call Publish with any incoming messages.
 	Subscribe(client Client, topic string) error
 
+	// Unsubscribe should unsubscribe the passed client from the specified topic.
+	Unsubscribe(client Client, topic string) error
+
+	// StoreRetained should store the specified message.
+	StoreRetained(client Client, msg *packet.Message) error
+
+	// ClearRetained should remove the stored messages for the given topic.
+	ClearRetained(client Client, topic string) error
+
 	// QueueRetained is called after acknowledging a subscription and should be
 	// used to trigger a background process that forwards all retained messages.
 	QueueRetained(client Client, topic string) error
-
-	// Unsubscribe should unsubscribe the passed client from the specified topic.
-	Unsubscribe(client Client, topic string) error
 
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also store the
@@ -218,6 +224,30 @@ func (m *MemoryBackend) Subscribe(client Client, topic string) error {
 	return nil
 }
 
+// Unsubscribe will unsubscribe the passed client from the specified topic.
+func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
+	// remove subscription
+	m.queue.Remove(topic, client)
+
+	return nil
+}
+
+// StoreRetained should store the specified message.
+func (m *MemoryBackend) StoreRetained(client Client, msg *packet.Message) error {
+	// set retained message
+	m.retained.Set(msg.Topic, msg.Copy())
+
+	return nil
+}
+
+// ClearRetained should remove the stored messages for the given topic.
+func (m *MemoryBackend) ClearRetained(client Client, topic string) error {
+	// clear retained message
+	m.retained.Empty(topic)
+
+	return nil
+}
+
 // QueueRetained will queue all retained messages matching the given topic.
 func (m *MemoryBackend) QueueRetained(client Client, topic string) error {
 	// get retained messages
@@ -231,32 +261,10 @@ func (m *MemoryBackend) QueueRetained(client Client, topic string) error {
 	return nil
 }
 
-// Unsubscribe will unsubscribe the passed client from the specified topic.
-func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
-	// remove subscription
-	m.queue.Remove(topic, client)
-
-	return nil
-}
-
-// Publish will forward the passed message to all other subscribed clients.
-// It will also store the message if Retain is set to true. If the supplied
-// message has additionally a zero length payload, the backend removes the
-// currently retained message. Finally, it will also add the message to all
-// sessions that have a matching offline subscription.
+// Publish will forward the passed message to all other subscribed clients. It
+// will also add the message to all sessions that have a matching offline
+// subscription.
 func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
-	// check retain flag
-	if msg.Retain {
-		if len(msg.Payload) > 0 {
-			m.retained.Set(msg.Topic, msg.Copy())
-		} else {
-			m.retained.Empty(msg.Topic)
-		}
-	}
-
-	// reset an existing retain flag
-	msg.Retain = false
-
 	// publish directly to clients
 	for _, v := range m.queue.Match(msg.Topic) {
 		v.(Client).Publish(msg)

@@ -380,7 +380,7 @@ func (c *remoteClient) processPublish(publish *packet.PublishPacket) error {
 
 	if publish.Message.QOS <= 1 {
 		// publish packet to others
-		err := c.broker.Backend.Publish(c, &publish.Message)
+		err := c.finishPublish(&publish.Message)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -448,7 +448,7 @@ func (c *remoteClient) processPubrel(packetID uint16) error {
 	}
 
 	// publish packet to others
-	err = c.broker.Backend.Publish(c, &publish.Message)
+	err = c.finishPublish(&publish.Message)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -518,6 +518,29 @@ func (c *remoteClient) sender() error {
 
 /* helpers */
 
+func (c *remoteClient) finishPublish(msg *packet.Message) error {
+	// check retain flag
+	if msg.Retain {
+		if len(msg.Payload) > 0 {
+			err := c.broker.Backend.StoreRetained(c, msg)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := c.broker.Backend.ClearRetained(c, msg.Topic)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// reset an existing retain flag
+	msg.Retain = false
+
+	// publish message to others
+	return c.broker.Backend.Publish(c, msg)
+}
+
 // will try to cleanup as many resources as possible
 func (c *remoteClient) cleanup(err error, close bool) error {
 	// check session
@@ -530,7 +553,7 @@ func (c *remoteClient) cleanup(err error, close bool) error {
 
 		// publish will message
 		if will != nil {
-			_err = c.broker.Backend.Publish(c, will)
+			_err = c.finishPublish(will)
 			if err == nil {
 				err = _err
 			}

@@ -161,18 +161,12 @@ func backendRetainedMessagesTest(t *testing.T, backend Backend) {
 		Retain:  true,
 	}
 
-	msg4 := &packet.Message{
-		Topic:  "foo",
-		QOS:    1,
-		Retain: true,
-	}
-
 	// should be empty
 	err := backend.QueueRetained(client, "foo")
 	assert.NoError(t, err)
 	assert.Empty(t, client.in)
 
-	err = backend.Publish(client, msg1)
+	err = backend.StoreRetained(client, msg1)
 	assert.NoError(t, err)
 
 	// should have one
@@ -181,7 +175,7 @@ func backendRetainedMessagesTest(t *testing.T, backend Backend) {
 	assert.Equal(t, 1, len(client.in))
 	client.in = nil
 
-	err = backend.Publish(client, msg2)
+	err = backend.StoreRetained(client, msg2)
 	assert.NoError(t, err)
 
 	// should have two
@@ -190,7 +184,7 @@ func backendRetainedMessagesTest(t *testing.T, backend Backend) {
 	assert.Equal(t, 2, len(client.in))
 	client.in = nil
 
-	err = backend.Publish(client, msg3)
+	err = backend.StoreRetained(client, msg3)
 	assert.NoError(t, err)
 
 	// should have another
@@ -199,7 +193,7 @@ func backendRetainedMessagesTest(t *testing.T, backend Backend) {
 	assert.Equal(t, 1, len(client.in))
 	client.in = nil
 
-	err = backend.Publish(client, msg4)
+	err = backend.ClearRetained(client, "foo")
 	assert.NoError(t, err)
 
 	// should have none
