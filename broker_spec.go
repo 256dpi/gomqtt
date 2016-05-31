@@ -175,16 +175,6 @@ func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{
 	return port, done
 }
 
-func errorCallback(t *testing.T) func(*packet.Message, error) {
-	return func(msg *packet.Message, err error) {
-		if err != nil {
-			t.Log(err)
-		}
-
-		assert.Fail(t, "callback should not have been called")
-	}
-}
-
 func brokerPublishSubscribeTest(t *testing.T, broker *Broker, out, in string, sub, pub uint8) {
 	port, done := runBroker(t, broker, 1)
 
@@ -228,7 +218,6 @@ func brokerRetainedMessageTest(t *testing.T, broker *Broker, out, in string, sub
 	port, done := runBroker(t, broker, 2)
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	connectFuture1, err := client1.Connect(port.URL(), nil)
 	assert.NoError(t, err)
@@ -282,7 +271,6 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	// client1 retains message
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	connectFuture1, err := client1.Connect(port.URL(), nil)
 	assert.NoError(t, err)
@@ -336,7 +324,6 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	// client3 should not receive any message
 
 	client3 := client.New()
-	client3.Callback = errorCallback(t)
 
 	connectFuture3, err := client3.Connect(port.URL(), nil)
 	assert.NoError(t, err)
@@ -399,10 +386,9 @@ func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker) {
 func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 	port, done := runBroker(t, broker, 2)
 
-	// client1 connets with a will
+	// client1 connects with a will
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
@@ -464,7 +450,6 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 	// client1 connects with a retained will and dies
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
@@ -521,7 +506,6 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 	port, done := runBroker(t, broker, 1)
 
 	client := client.New()
-	client.Callback = errorCallback(t)
 
 	connectFuture, err := client.Connect(port.URL(), nil)
 	assert.NoError(t, err)
@@ -613,7 +597,6 @@ func brokerAuthenticationTest(t *testing.T, broker *Broker) {
 	// client2 should be allowed
 
 	client2 := client.New()
-	client2.Callback = errorCallback(t)
 
 	url := fmt.Sprintf("tcp://allow:allow@localhost:%s/", port.Port())
 	connectFuture2, err := client2.Connect(url, nil)
@@ -725,7 +708,6 @@ func brokerStoredSubscriptionsTest(t *testing.T, broker *Broker, qos uint8) {
 	options.ClientID = "test"
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	connectFuture1, err := client1.Connect(port.URL(), options)
 	assert.NoError(t, err)
@@ -781,7 +763,6 @@ func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker) {
 	options.ClientID = "test"
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	connectFuture1, err := client1.Connect(port.URL(), options)
 	assert.NoError(t, err)
@@ -800,7 +781,6 @@ func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker) {
 	options.CleanSession = true
 
 	client2 := client.New()
-	client2.Callback = errorCallback(t)
 
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
@@ -828,7 +808,6 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
 	options.ClientID = "test"
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	connectFuture1, err := client1.Connect(port.URL(), options)
 	assert.NoError(t, err)
@@ -849,7 +828,6 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
 	assert.NoError(t, err)
 
 	client2 := client.New()
-	client2.Callback = errorCallback(t)
 
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
@@ -1084,7 +1062,6 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
 	/* offline subscriber */
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	connectFuture1, err := client1.Connect(port.URL(), options)
 	assert.NoError(t, err)
@@ -1103,7 +1080,6 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
 	/* publisher */
 
 	client2 := client.New()
-	client2.Callback = errorCallback(t)
 
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
@@ -1157,7 +1133,6 @@ func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, qos uin
 	/* offline subscriber */
 
 	client1 := client.New()
-	client1.Callback = errorCallback(t)
 
 	connectFuture1, err := client1.Connect(port.URL(), options)
 	assert.NoError(t, err)
@@ -1176,7 +1151,6 @@ func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, qos uin
 	/* publisher */
 
 	client2 := client.New()
-	client2.Callback = errorCallback(t)
 
 	connectFuture2, err := client2.Connect(port.URL(), nil)
 	assert.NoError(t, err)
@@ -1246,7 +1220,6 @@ func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
 	/* second client */
 
 	client2 := client.New()
-	client2.Callback = errorCallback(t)
 
 	connectFuture2, err := client2.Connect(port.URL(), options)
 	assert.NoError(t, err)

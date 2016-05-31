@@ -69,7 +69,6 @@ func TestKeepAlive(t *testing.T) {
 	opts.KeepAlive = "1s"
 
 	client := client.New()
-	client.Callback = errorCallback(t)
 
 	var reqCounter int32
 	var respCounter int32
