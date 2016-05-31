@@ -35,13 +35,17 @@ type Backend interface {
 	// length, a new temporary session should returned that is not stored further.
 	//
 	// Optional: The backend may close any existing clients that use the same
-	// client id. It may also start a background process that forwards any missed
-	// messages that match the clients offline subscriptions.
+	// client id.
 	//
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the client for further usage as the broker will acknowledge the
 	// connection when the call returns.
 	Setup(client Client, id string, clean bool) (Session, bool, error)
+
+	// Restore is called after the client has been acknowledged and if clean is
+	// set to false. It should be used to restore a clients subscriptions and
+	// triggering a background process that forwards any missed messages.
+	Restore(client Client, subscriptions []*packet.Subscription) error
 
 	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages. It should also return a list of
@@ -152,15 +156,8 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 			sess.Reset()
 		}
 
-		// remove all session from the offline queue
+		// clear offline subscriptions
 		m.offlineQueue.Clear(sess)
-
-		// send all missed messages in another goroutine
-		go func() {
-			for _, msg := range sess.missed() {
-				client.Publish(msg)
-			}
-		}()
 
 		// returned stored session
 		client.Context().Set("session", sess)
@@ -179,12 +176,33 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 	return sess, false, nil
 }
 
+// Restore will resubscribe the client to the passed subscriptions and forward
+// all missed messages in another goroutine.
+func (m *MemoryBackend) Restore(client Client, subscriptions []*packet.Subscription) error {
+	// add subscriptions
+	for _, sub := range subscriptions {
+		m.queue.Add(sub.Topic, client)
+	}
+
+	// get client session
+	sess := client.Context().Get("session").(*MemorySession)
+
+	// send all missed messages in another goroutine
+	go func() {
+		for _, msg := range sess.missed() {
+			client.Publish(msg)
+		}
+	}()
+
+	return nil
+}
+
 // Subscribe will subscribe the passed client to the specified topic and
 // begin to forward messages by calling the clients Publish method.
 // It will also return the stored retained messages matching the supplied
 // topic.
 func (m *MemoryBackend) Subscribe(client Client, topic string) ([]*packet.Message, error) {
-	// add client to queue
+	// add subscription
 	m.queue.Add(topic, client)
 
 	// get retained messages
@@ -203,7 +221,7 @@ func (m *MemoryBackend) Subscribe(client Client, topic string) ([]*packet.Messag
 
 // Unsubscribe will unsubscribe the passed client from the specified topic.
 func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
-	// remove client from queue
+	// remove subscription
 	m.queue.Remove(topic, client)
 
 	return nil
@@ -235,7 +253,6 @@ func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 	}
 
 	// queue for offline clients
-	// TODO: Only qos > 0?
 	for _, v := range m.offlineQueue.Match(msg.Topic) {
 		if session, ok := v.(*MemorySession); ok {
 			session.queue(msg)
@@ -253,7 +270,7 @@ func (m *MemoryBackend) Terminate(client Client) error {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
-	// remove client from queue
+	// clear all subscriptions
 	m.queue.Clear(client)
 
 	// get session

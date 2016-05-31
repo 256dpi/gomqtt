@@ -134,9 +134,6 @@ func Spec(t *testing.T, builder func(bool) *Broker, offline, unique bool) {
 		t.Log("Running Optional Broker Offline Subscription Test (QOS 2)")
 		brokerOfflineSubscriptionTest(t, builder(false), 2)
 
-		t.Log("Running Optional Broker Offline Subscription Test Retained (QOS 0)")
-		brokerOfflineSubscriptionRetainedTest(t, builder(false), 0)
-
 		t.Log("Running Optional Broker Offline Subscription Test Retained (QOS 1)")
 		brokerOfflineSubscriptionRetainedTest(t, builder(false), 1)
 
@@ -1198,29 +1195,15 @@ func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, qos uin
 
 	wait := make(chan struct{})
 
-	i := 0
-
 	client3 := client.New()
 	client3.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(qos), msg.QOS)
+		assert.False(t, msg.Retain)
 
-		if i == 0 && qos > 0 {
-			// on qos > 0, the first message is the stored offline message
-			assert.False(t, msg.Retain)
-		} else if i == 1 || qos == 0 {
-			// on qos > 0 the second message is the retained message
-			// on qos == 0 the first message is the retained message
-			assert.True(t, msg.Retain)
-		}
-
-		if i == 1 || qos == 0 {
-			close(wait)
-		}
-
-		i++
+		close(wait)
 	}
 
 	connectFuture3, err := client3.Connect(port.URL(), options)
