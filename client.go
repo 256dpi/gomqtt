@@ -488,15 +488,11 @@ func (c *remoteClient) sender() error {
 			if err != nil {
 				return c.die(err, true)
 			}
-
-			// check subscription
-			if sub == nil {
-				return c.die(fmt.Errorf("subscription not found in session"), true)
-			}
-
-			// respect maximum qos
-			if publish.Message.QOS > sub.QOS {
-				publish.Message.QOS = sub.QOS
+			if sub != nil {
+				// respect maximum qos
+				if publish.Message.QOS > sub.QOS {
+					publish.Message.QOS = sub.QOS
+				}
 			}
 
 			// set packet id
