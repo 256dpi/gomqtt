@@ -66,14 +66,8 @@ type Backend interface {
 	QueueRetained(client Client, topic string) error
 
 	// Publish should forward the passed message to all other clients that hold
-	// a subscription that matches the messages topic. It should also store the
-	// message if Retain is set to true and the payload does not have a zero
-	// length. If the payload has a zero length and Retain is set to true the
-	// currently retained message for that topic should be removed.
-	//
-	// Note: The Backend is expected to set the Retain flag to false before
-	// forwarding the messages to other clients or storing it for offline
-	// subscriptions.
+	// a subscription that matches the messages topic. It should also add the
+	// message to all sessions that have a matching offline subscription.
 	Publish(client Client, msg *packet.Message) error
 
 	// Terminate is called when the client goes offline. Terminate should
@@ -130,10 +124,8 @@ func (m *MemoryBackend) Authenticate(client Client, user, password string) (bool
 // Setup returns the already stored session for the supplied id or creates
 // and returns a new one. If clean is set to true it will additionally reset
 // the session. If the supplied id has a zero length, a new session is returned
-// that is not stored further. If an existing session has been found it will
-// retrieve all stored messages from offline subscriptions and begin with
-// forwarding them in a separate goroutine. Furthermore, it will disconnect
-// any client connected with the same client id.
+// that is not stored further. Furthermore, it will disconnect any client
+// connected with the same client id.
 func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
@@ -215,8 +207,6 @@ func (m *MemoryBackend) Restore(client Client) error {
 
 // Subscribe will subscribe the passed client to the specified topic and
 // begin to forward messages by calling the clients Publish method.
-// It will also return the stored retained messages matching the supplied
-// topic.
 func (m *MemoryBackend) Subscribe(client Client, topic string) error {
 	// add subscription
 	m.queue.Add(topic, client)
@@ -232,7 +222,7 @@ func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
 	return nil
 }
 
-// StoreRetained should store the specified message.
+// StoreRetained will store the specified message.
 func (m *MemoryBackend) StoreRetained(client Client, msg *packet.Message) error {
 	// set retained message
 	m.retained.Set(msg.Topic, msg.Copy())
@@ -240,7 +230,7 @@ func (m *MemoryBackend) StoreRetained(client Client, msg *packet.Message) error 
 	return nil
 }
 
-// ClearRetained should remove the stored messages for the given topic.
+// ClearRetained will remove the stored messages for the given topic.
 func (m *MemoryBackend) ClearRetained(client Client, topic string) error {
 	// clear retained message
 	m.retained.Empty(topic)
