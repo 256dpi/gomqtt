@@ -286,8 +286,7 @@ func (c *remoteClient) processSubscribe(pkt *packet.SubscribePacket) error {
 	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
 	suback.PacketID = pkt.PacketID
 
-	var retainedMessages []*packet.Message
-
+	// handle contained subscriptions
 	for i, subscription := range pkt.Subscriptions {
 		// save subscription in session
 		err := c.session.SaveSubscription(&subscription)
@@ -296,13 +295,10 @@ func (c *remoteClient) processSubscribe(pkt *packet.SubscribePacket) error {
 		}
 
 		// subscribe client to queue
-		msgs, err := c.broker.Backend.Subscribe(c, subscription.Topic)
+		err = c.broker.Backend.Subscribe(c, subscription.Topic)
 		if err != nil {
 			return c.die(err, true)
 		}
-
-		// cache retained messages
-		retainedMessages = append(retainedMessages, msgs...)
 
 		// save granted qos
 		suback.ReturnCodes[i] = subscription.QOS
@@ -314,9 +310,12 @@ func (c *remoteClient) processSubscribe(pkt *packet.SubscribePacket) error {
 		return c.die(err, false)
 	}
 
-	// send messages
-	for _, msg := range retainedMessages {
-		c.out <- msg
+	// queue retained messages
+	for _, sub := range pkt.Subscriptions {
+		err := c.broker.Backend.QueueRetained(c, sub.Topic)
+		if err != nil {
+			return c.die(err, true)
+		}
 	}
 
 	return nil

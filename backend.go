@@ -44,14 +44,17 @@ type Backend interface {
 
 	// Restore is called after the client has been acknowledged and if clean is
 	// set to false. It should be used to restore a clients subscriptions from
-	// the session and triggering a background process that forwards any missed
+	// the session and triggering a background process that forwards all missed
 	// messages.
 	Restore(client Client) error
 
 	// Subscribe should subscribe the passed client to the specified topic and
-	// call Publish with any incoming messages. It should also return a list of
-	// stored retained messages that match the specified topic.
-	Subscribe(client Client, topic string) ([]*packet.Message, error)
+	// call Publish with any incoming messages.
+	Subscribe(client Client, topic string) error
+
+	// QueueRetained is called after acknowledging a subscription and should be
+	// used to trigger a background process that forwards all retained messages.
+	QueueRetained(client Client, topic string) error
 
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
 	Unsubscribe(client Client, topic string) error
@@ -208,20 +211,24 @@ func (m *MemoryBackend) Restore(client Client) error {
 // begin to forward messages by calling the clients Publish method.
 // It will also return the stored retained messages matching the supplied
 // topic.
-func (m *MemoryBackend) Subscribe(client Client, topic string) ([]*packet.Message, error) {
+func (m *MemoryBackend) Subscribe(client Client, topic string) error {
 	// add subscription
 	m.queue.Add(topic, client)
 
+	return nil
+}
+
+// QueueRetained will queue all retained messages matching the given topic.
+func (m *MemoryBackend) QueueRetained(client Client, topic string) error {
 	// get retained messages
 	values := m.retained.Search(topic)
-	var msgs []*packet.Message
 
-	// convert types
+	// publish messages
 	for _, value := range values {
-		msgs = append(msgs, value.(*packet.Message))
+		client.Publish(value.(*packet.Message))
 	}
 
-	return msgs, nil
+	return nil
 }
 
 // Unsubscribe will unsubscribe the passed client from the specified topic.

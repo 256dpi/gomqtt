@@ -103,12 +103,10 @@ func backendBasicQueuingTest(t *testing.T, backend Backend) {
 
 	// subscribe both clients
 
-	msgs, err := backend.Subscribe(client1, "test")
-	assert.Nil(t, msgs)
+	err = backend.Subscribe(client1, "test")
 	assert.NoError(t, err)
 
-	msgs, err = backend.Subscribe(client2, "test")
-	assert.Nil(t, msgs)
+	err = backend.Subscribe(client2, "test")
 	assert.NoError(t, err)
 
 	// publish message
@@ -170,39 +168,42 @@ func backendRetainedMessagesTest(t *testing.T, backend Backend) {
 	}
 
 	// should be empty
-	msgs, err := backend.Subscribe(client, "foo")
+	err := backend.QueueRetained(client, "foo")
 	assert.NoError(t, err)
-	assert.Empty(t, msgs)
+	assert.Empty(t, client.in)
 
 	err = backend.Publish(client, msg1)
 	assert.NoError(t, err)
 
 	// should have one
-	msgs, err = backend.Subscribe(client, "foo")
+	err = backend.QueueRetained(client, "foo")
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(msgs))
+	assert.Equal(t, 1, len(client.in))
+	client.in = nil
 
 	err = backend.Publish(client, msg2)
 	assert.NoError(t, err)
 
 	// should have two
-	msgs, err = backend.Subscribe(client, "#")
+	err = backend.QueueRetained(client, "#")
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(msgs))
+	assert.Equal(t, 2, len(client.in))
+	client.in = nil
 
 	err = backend.Publish(client, msg3)
 	assert.NoError(t, err)
 
 	// should have another
-	msgs, err = backend.Subscribe(client, "foo")
+	err = backend.QueueRetained(client, "foo")
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(msgs))
+	assert.Equal(t, 1, len(client.in))
+	client.in = nil
 
 	err = backend.Publish(client, msg4)
 	assert.NoError(t, err)
 
 	// should have none
-	msgs, err = backend.Subscribe(client, "foo")
+	err = backend.QueueRetained(client, "foo")
 	assert.NoError(t, err)
-	assert.Empty(t, msgs)
+	assert.Empty(t, client.in)
 }
