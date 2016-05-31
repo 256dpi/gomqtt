@@ -32,10 +32,9 @@ type Backend interface {
 	// authenticated. Setup should return the already stored session for the
 	// supplied id or create and return a new one. If clean is set to true it
 	// should additionally reset the session. If the supplied id has a zero
-	// length, a new temporary session should returned that is not stored further.
-	//
-	// Optional: The backend may close any existing clients that use the same
-	// client id.
+	// length, a new temporary session should returned that is not stored
+	// further. The backend may also close any existing clients that use the
+	// same client id.
 	//
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the client for further usage as the broker will acknowledge the
@@ -71,11 +70,9 @@ type Backend interface {
 	Publish(client Client, msg *packet.Message) error
 
 	// Terminate is called when the client goes offline. Terminate should
-	// unsubscribe the passed client from all previously subscribed topics.
-	//
-	// Optional: The backend may convert a clients subscriptions into offline
-	// subscriptions, which allows missed messages to be forwarded on the next
-	// connect.
+	// unsubscribe the passed client from all previously subscribed topics. The
+	// backend may also convert a clients subscriptions into offline subscriptions,
+	// which allows missed messages to be forwarded on the next connect.
 	//
 	// Note: The Backend may also cleanup previously allocated resources for
 	// that client as the broker will close the connection when the call
