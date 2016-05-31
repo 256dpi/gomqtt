@@ -211,9 +211,7 @@ func (m *MemoryBackend) Subscribe(client Client, topic string) ([]*packet.Messag
 
 	// convert types
 	for _, value := range values {
-		if msg, ok := value.(*packet.Message); ok {
-			msgs = append(msgs, msg)
-		}
+		msgs = append(msgs, value.(*packet.Message))
 	}
 
 	return msgs, nil
@@ -231,7 +229,7 @@ func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
 // It will also store the message if Retain is set to true. If the supplied
 // message has additionally a zero length payload, the backend removes the
 // currently retained message. Finally, it will also add the message to all
-// sessions that have an offline subscription.
+// sessions that have a matching offline subscription.
 func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 	// check retain flag
 	if msg.Retain {
@@ -247,16 +245,12 @@ func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 
 	// publish directly to clients
 	for _, v := range m.queue.Match(msg.Topic) {
-		if client, ok := v.(Client); ok {
-			client.Publish(msg)
-		}
+		v.(Client).Publish(msg)
 	}
 
 	// queue for offline clients
 	for _, v := range m.offlineQueue.Match(msg.Topic) {
-		if session, ok := v.(*MemorySession); ok {
-			session.queue(msg)
-		}
+		v.(*MemorySession).queue(msg)
 	}
 
 	return nil
@@ -279,7 +273,7 @@ func (m *MemoryBackend) Terminate(client Client) error {
 		// reset stored client
 		session.currentClient = nil
 
-		// check if the client connected with clean=true
+		// check if the client has connected with clean=true
 		clean, ok := client.Context().Get("clean").(bool)
 		if ok && clean {
 			// reset session
@@ -296,7 +290,7 @@ func (m *MemoryBackend) Terminate(client Client) error {
 		// iterate through stored subscriptions
 		for _, sub := range subscriptions {
 			if sub.QOS >= 1 {
-				// session to offline queue
+				// add offline subscription
 				m.offlineQueue.Add(sub.Topic, session)
 			}
 		}

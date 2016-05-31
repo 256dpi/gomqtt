@@ -141,9 +141,7 @@ func (s *MemorySession) LookupSubscription(topic string) (*packet.Subscription, 
 	values := s.subscriptions.Match(topic)
 
 	if len(values) > 0 {
-		if sub, ok := values[0].(*packet.Subscription); ok {
-			return sub, nil
-		}
+		return values[0].(*packet.Subscription), nil
 	}
 
 	return nil, nil
@@ -162,9 +160,7 @@ func (s *MemorySession) AllSubscriptions() ([]*packet.Subscription, error) {
 	var all []*packet.Subscription
 
 	for _, value := range s.subscriptions.All() {
-		if sub, ok := value.(*packet.Subscription); ok {
-			all = append(all, sub)
-		}
+		all = append(all, value.(*packet.Subscription))
 	}
 
 	return all, nil
