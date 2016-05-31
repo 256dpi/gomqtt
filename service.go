@@ -176,7 +176,7 @@ func (s *Service) Start(url string, opts *Options) {
 
 // Publish will send a PublishPacket containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
-// has been completed. Returns nil if the service is already stopped.
+// has been completed.
 func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) *PublishFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
