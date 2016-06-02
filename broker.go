@@ -17,11 +17,32 @@ package broker
 import (
 	"time"
 
+	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 )
 
+// LogEvent are received by a Logger.
+type LogEvent int
+
+const (
+	// NewConnectionLogEvent is emitted as soon as a client comes online.
+	NewConnectionLogEvent = iota
+
+	// PacketReceivedLogEvent is emitted when a packet has been received.
+	PacketReceivedLogEvent
+
+	// PacketSentLogEvent is emitted when a packet has been sent.
+	PacketSentLogEvent
+
+	// LostConnectionLogEvent is emitted when the connection has been lost.
+	LostConnectionLogEvent
+
+	// ErrorLogEvent is emitted when an error occurs.
+	ErrorLogEvent
+)
+
 // The Logger callback handles incoming log messages.
-type Logger func(msg string)
+type Logger func(LogEvent, Client, packet.Packet, error)
 
 // The Broker handles incoming connections and connects them to the backend.
 type Broker struct {

@@ -115,7 +115,7 @@ func (c *remoteClient) Close(clean bool) {
 func (c *remoteClient) processor() error {
 	first := true
 
-	c.log("%s - New Connection", c.Context().Get("uuid"))
+	c.log(NewConnectionLogEvent, c, nil, nil)
 
 	// set initial read timeout
 	c.conn.SetReadTimeout(c.broker.ConnectTimeout)
@@ -132,7 +132,7 @@ func (c *remoteClient) processor() error {
 			return c.die(err, false)
 		}
 
-		c.log("%s - Received: %s", c.Context().Get("uuid"), pkt.String())
+		c.log(PacketReceivedLogEvent, c, pkt, nil)
 
 		if first {
 			// get connect
@@ -578,7 +578,7 @@ func (c *remoteClient) cleanup(err error, close bool) error {
 		}
 	}
 
-	c.log("%s - Lost Connection", c.Context().Get("uuid"))
+	c.log(LostConnectionLogEvent, c, nil, nil)
 
 	return err
 }
@@ -590,7 +590,7 @@ func (c *remoteClient) die(err error, close bool) error {
 
 		// report error
 		if err != nil {
-			c.log("%s - Internal Error: %s", c.Context().Get("uuid"), err)
+			c.log(ErrorLogEvent, c, nil, err)
 		}
 	})
 
@@ -604,14 +604,14 @@ func (c *remoteClient) send(pkt packet.Packet) error {
 		return err
 	}
 
-	c.log("%s - Sent: %s", c.Context().Get("uuid"), pkt.String())
+	c.log(PacketSentLogEvent, c, pkt, nil)
 
 	return nil
 }
 
 // log a message
-func (c *remoteClient) log(format string, a ...interface{}) {
+func (c *remoteClient) log(event LogEvent, client Client, pkt packet.Packet, err error) {
 	if c.broker.Logger != nil {
-		c.broker.Logger(fmt.Sprintf(format, a...))
+		c.broker.Logger(event, client, pkt, err)
 	}
 }
