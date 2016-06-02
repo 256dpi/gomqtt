@@ -20,17 +20,18 @@ import (
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func abstractServerTest(t *testing.T, protocol string) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL(protocol))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	go func() {
 		conn1, err := server.Accept()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		pkt, err := conn1.Receive()
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
@@ -45,7 +46,7 @@ func abstractServerTest(t *testing.T, protocol string) {
 	}()
 
 	conn2, err := testDialer.Dial(port.URL(protocol))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = conn2.Send(packet.NewConnectPacket())
 	assert.NoError(t, err)
@@ -73,7 +74,7 @@ func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL(protocol))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = server.Close()
 	assert.NoError(t, err)
@@ -87,7 +88,7 @@ func abstractServerCloseAfterClose(t *testing.T, protocol string) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL(protocol))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = server.Close()
 	assert.NoError(t, err)

@@ -26,13 +26,13 @@ func TestGlobalDial(t *testing.T) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL("tcp"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	wait := make(chan struct{})
 
 	go func() {
 		conn, err := server.Accept()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
@@ -42,7 +42,7 @@ func TestGlobalDial(t *testing.T) {
 	}()
 
 	conn, err := Dial(port.URL("tcp"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = conn.Close()
 	assert.NoError(t, err)
@@ -94,7 +94,7 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL(protocol))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	go func() {
 		conn, err := server.Accept()
@@ -113,7 +113,7 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 	dialer.DefaultWSSPort = port.Port()
 
 	conn, err := dialer.Dial(protocol + "://localhost")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = conn.Close()
 	assert.NoError(t, err)
