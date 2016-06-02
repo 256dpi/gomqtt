@@ -25,16 +25,22 @@ import (
 type LogEvent int
 
 const (
-	// NewConnectionLogEvent is emitted as soon as a client comes online.
-	NewConnectionLogEvent = iota
+	// NewConnectionLogEvent is emitted when a client comes online.
+	NewConnectionLogEvent LogEvent = iota
 
 	// PacketReceivedLogEvent is emitted when a packet has been received.
 	PacketReceivedLogEvent
 
+	// MessagePublishedLogEvent is emitted after a message has been published.
+	MessagePublishedLogEvent
+
+	// MessageForwardedLogEvent is emitted after a message has been forwarded.
+	MessageForwardedLogEvent
+
 	// PacketSentLogEvent is emitted when a packet has been sent.
 	PacketSentLogEvent
 
-	// LostConnectionLogEvent is emitted when the connection has been lost.
+	// LostConnectionLogEvent is emitted when the connection has been terminated.
 	LostConnectionLogEvent
 
 	// ErrorLogEvent is emitted when an error occurs.
@@ -42,7 +48,7 @@ const (
 )
 
 // The Logger callback handles incoming log messages.
-type Logger func(LogEvent, Client, packet.Packet, error)
+type Logger func(LogEvent, Client, packet.Packet, *packet.Message, error)
 
 // The Broker handles incoming connections and connects them to the backend.
 type Broker struct {
