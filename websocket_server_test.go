@@ -52,7 +52,7 @@ func TestWebSocketServerInvalidUpgrade(t *testing.T) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL("ws"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	resp, err := http.PostForm(port.URL("http"), url.Values{"foo": {"bar"}})
 	assert.Equal(t, "405 Method Not Allowed", resp.Status)
@@ -66,7 +66,7 @@ func TestWebSocketServerAcceptAfterError(t *testing.T) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL("ws"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	webSocketServer := server.(*WebSocketServer)
 
@@ -82,10 +82,10 @@ func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL("ws"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	conn2, err := testDialer.Dial(port.URL("ws"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = server.Close()
 	assert.NoError(t, err)

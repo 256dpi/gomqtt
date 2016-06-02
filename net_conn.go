@@ -16,6 +16,7 @@ package transport
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"net"
 	"sync"
@@ -37,6 +38,9 @@ type NetConn struct {
 	readCounter  int64
 	readLimit    int64
 	readTimeout  time.Duration
+
+	receiveBuffer bytes.Buffer
+	sendBuffer    bytes.Buffer
 }
 
 // NewNetConn returns a new NetConn.
@@ -66,8 +70,11 @@ func (c *NetConn) Send(pkt packet.Packet) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
-	// allocate buffer
-	buf := make([]byte, pkt.Len())
+	// reset and eventually grow buffer
+	packetLength := pkt.Len()
+	c.sendBuffer.Reset()
+	c.sendBuffer.Grow(packetLength)
+	buf := c.sendBuffer.Bytes()[0:packetLength]
 
 	// encode packet
 	_, err := pkt.Encode(buf)
@@ -146,8 +153,10 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 			return nil, newTransportError(DetectionError, err)
 		}
 
-		// allocate buffer
-		buf := make([]byte, packetLength)
+		// reset and eventually grow buffer
+		c.receiveBuffer.Reset()
+		c.receiveBuffer.Grow(packetLength)
+		buf := c.receiveBuffer.Bytes()[0:packetLength]
 
 		// read whole packet
 		bytesRead, err := io.ReadFull(c.reader, buf)
