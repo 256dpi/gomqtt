@@ -173,6 +173,9 @@ func reporter() {
 		}
 	}()
 
+	var iterations int32
+	var totalReceived int32
+
 	for {
 		<-time.After(1 * time.Second)
 
@@ -180,9 +183,13 @@ func reporter() {
 		receivedPerSecond := atomic.LoadInt32(&receivedCounter)
 		currentBalance := atomic.LoadInt32(&balance)
 
+		iterations++
+		totalReceived += receivedPerSecond
+
 		fmt.Printf("Sent: %d msgs - ", sentPerSecond)
 		fmt.Printf("Received: %d msgs ", receivedPerSecond)
-		fmt.Printf("(Buffered: %d msgs)\n", currentBalance)
+		fmt.Printf("(Buffered: %d msgs) ", currentBalance)
+		fmt.Printf("(Average Throughput: %d msgs)\n", totalReceived/iterations)
 
 		atomic.StoreInt32(&sentCounter, 0)
 		atomic.StoreInt32(&receivedCounter, 0)
