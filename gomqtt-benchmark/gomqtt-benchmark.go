@@ -54,8 +54,8 @@ func main() {
 	for i := 0; i < *workers; i++ {
 		id := strconv.Itoa(i)
 
-		go counter(id)
-		go bomber(id)
+		go consumer(id)
+		go publisher(id)
 	}
 
 	reporter()
@@ -91,8 +91,8 @@ func connection(id string) transport.Conn {
 	panic("connection failed")
 }
 
-func counter(id string) {
-	conn := connection("counter/" + id)
+func consumer(id string) {
+	conn := connection("consumer/" + id)
 
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1
@@ -122,8 +122,8 @@ func counter(id string) {
 	}
 }
 
-func bomber(id string) {
-	conn := connection("bomber/" + id)
+func publisher(id string) {
+	conn := connection("publisher/" + id)
 
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = id
