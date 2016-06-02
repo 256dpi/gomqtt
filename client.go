@@ -551,7 +551,7 @@ func (c *remoteClient) finishPublish(msg *packet.Message) error {
 
 	c.log(MessagePublishedLogEvent, c, nil, msg, nil)
 
-	return nil;
+	return nil
 }
 
 // will try to cleanup as many resources as possible
