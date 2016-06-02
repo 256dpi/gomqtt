@@ -18,9 +18,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
-	"runtime/pprof"
 	"syscall"
 
 	"github.com/gomqtt/broker"
@@ -29,21 +30,12 @@ import (
 
 var url = flag.String("url", "tcp://0.0.0.0:1884", "broker url")
 
-var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
-var memProfile = flag.String("memprofile", "", "write memory profile to this file")
-
 func main() {
 	flag.Parse()
 
-	if *cpuProfile != "" {
-		fmt.Println("Start cpuprofile!")
-		f, err := os.Create(*cpuProfile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	// start
 
@@ -75,17 +67,6 @@ func main() {
 	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
 
 	<-finish
-
-	if *memProfile != "" {
-		fmt.Println("Write memprofile!")
-		f, err := os.Create(*memProfile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.WriteHeapProfile(f)
-		f.Close()
-		return
-	}
 
 	fmt.Println("Exiting...")
 }
