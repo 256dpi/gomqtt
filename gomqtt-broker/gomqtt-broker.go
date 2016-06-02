@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/gomqtt/broker"
-	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 )
 
@@ -51,12 +50,12 @@ func main() {
 
 	fmt.Println("Done!")
 
-	james := broker.New()
+	engine := broker.New()
 
 	var published int32
 	var forwarded int32
 
-	james.Logger = func(event broker.LogEvent, client broker.Client, pkt packet.Packet, msg *packet.Message, err error) {
+	engine.Logger = func(event broker.LogEvent, client broker.Client, val interface{}) {
 		if event == broker.MessagePublishedLogEvent {
 			atomic.AddInt32(&published, 1)
 		} else if event == broker.MessageForwardedLogEvent {
@@ -71,7 +70,7 @@ func main() {
 				panic(err)
 			}
 
-			james.Handle(conn)
+			engine.Handle(conn)
 		}
 	}()
 

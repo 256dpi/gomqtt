@@ -115,7 +115,7 @@ func (c *remoteClient) Close(clean bool) {
 func (c *remoteClient) processor() error {
 	first := true
 
-	c.log(NewConnectionLogEvent, c, nil, nil, nil)
+	c.log(NewConnectionLogEvent, c, nil)
 
 	// set initial read timeout
 	c.conn.SetReadTimeout(c.broker.ConnectTimeout)
@@ -132,7 +132,7 @@ func (c *remoteClient) processor() error {
 			return c.die(err, false)
 		}
 
-		c.log(PacketReceivedLogEvent, c, pkt, nil, nil)
+		c.log(PacketReceivedLogEvent, c, pkt)
 
 		if first {
 			// get connect
@@ -517,7 +517,7 @@ func (c *remoteClient) sender() error {
 				return c.die(err, false)
 			}
 
-			c.log(MessageForwardedLogEvent, c, nil, msg, nil)
+			c.log(MessageForwardedLogEvent, c, msg)
 		}
 	}
 }
@@ -549,7 +549,7 @@ func (c *remoteClient) finishPublish(msg *packet.Message) error {
 		return err
 	}
 
-	c.log(MessagePublishedLogEvent, c, nil, msg, nil)
+	c.log(MessagePublishedLogEvent, c, msg)
 
 	return nil
 }
@@ -587,7 +587,7 @@ func (c *remoteClient) cleanup(err error, close bool) error {
 		}
 	}
 
-	c.log(LostConnectionLogEvent, c, nil, nil, nil)
+	c.log(LostConnectionLogEvent, c, nil)
 
 	return err
 }
@@ -599,7 +599,7 @@ func (c *remoteClient) die(err error, close bool) error {
 
 		// report error
 		if err != nil {
-			c.log(ErrorLogEvent, c, nil, nil, err)
+			c.log(ErrorLogEvent, c, err)
 		}
 	})
 
@@ -613,14 +613,14 @@ func (c *remoteClient) send(pkt packet.Packet) error {
 		return err
 	}
 
-	c.log(PacketSentLogEvent, c, pkt, nil, nil)
+	c.log(PacketSentLogEvent, c, pkt)
 
 	return nil
 }
 
 // log a message
-func (c *remoteClient) log(event LogEvent, client Client, pkt packet.Packet, msg *packet.Message, err error) {
+func (c *remoteClient) log(event LogEvent, client Client, val interface{}) {
 	if c.broker.Logger != nil {
-		c.broker.Logger(event, client, pkt, msg, err)
+		c.broker.Logger(event, client, val)
 	}
 }
