@@ -189,7 +189,7 @@ func reporter() {
 		fmt.Printf("Sent: %d msgs - ", sentPerSecond)
 		fmt.Printf("Received: %d msgs ", receivedPerSecond)
 		fmt.Printf("(Buffered: %d msgs) ", currentBalance)
-		fmt.Printf("(Average Throughput: %d msgs)\n", totalReceived/iterations)
+		fmt.Printf("(Average Throughput: %d msg/s)\n", totalReceived/iterations)
 
 		atomic.StoreInt32(&sentCounter, 0)
 		atomic.StoreInt32(&receivedCounter, 0)
