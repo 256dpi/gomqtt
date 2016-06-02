@@ -17,6 +17,7 @@ package transport
 import (
 	"testing"
 
+	"github.com/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -86,6 +87,29 @@ func TestWebSocketBadFrameError(t *testing.T) {
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
 	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}
+
+func BenchmarkWebSocketConn(b *testing.B) {
+	pkt := packet.NewPublishPacket()
+	pkt.Message.Topic = "foo/bar/baz"
+
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
+		for i := 0; i < b.N; i++ {
+			err := conn1.Send(pkt)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+
+	for i := 0; i < b.N; i++ {
+		_, err := conn2.Receive()
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	<-done
 }
