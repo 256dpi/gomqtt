@@ -59,6 +59,14 @@ func TestReadLPBytesErrors(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestReadLPStringErrors(t *testing.T) {
+	_, _, err := readLPString([]byte{})
+	assert.Error(t, err)
+
+	_, _, err = readLPString([]byte{0xff, 0xff, 0xff, 0xff})
+	assert.Error(t, err)
+}
+
 func TestWriteLPBytes(t *testing.T) {
 	total := 0
 	buf := make([]byte, 127)
