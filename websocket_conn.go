@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"bytes"
 	"net"
 	"strings"
 	"sync"
@@ -35,6 +36,9 @@ type WebSocketConn struct {
 	writeCounter int64
 	readCounter  int64
 	readTimeout  time.Duration
+
+	receiveBuffer bytes.Buffer
+	sendBuffer    bytes.Buffer
 }
 
 // NewWebSocketConn returns a new WebSocketConn.
@@ -63,8 +67,11 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
-	// allocate buffer
-	buf := make([]byte, pkt.Len())
+	// reset and eventually grow buffer
+	packetLength := pkt.Len()
+	c.sendBuffer.Reset()
+	c.sendBuffer.Grow(packetLength)
+	buf := c.sendBuffer.Bytes()[0:packetLength]
 
 	// encode packet
 	n, err := pkt.Encode(buf)
@@ -86,6 +93,21 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	return nil
 }
 
+// this implementation reuses the buffer in contrast to the official ReadMessage
+// function
+func (c *WebSocketConn) customReadMessage() ([]byte, error) {
+	_, r, err := c.conn.NextReader()
+	if err != nil {
+		return nil, err
+	}
+
+	// reset and eventually grow buffer
+	c.receiveBuffer.Reset()
+	c.receiveBuffer.ReadFrom(r)
+
+	return c.receiveBuffer.Bytes(), err
+}
+
 // Receive will read from the underlying connection and return a fully read
 // packet. It will return an Error if there was an error while decoding or
 // reading from the underlying connection.
@@ -96,7 +118,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 	defer c.rMutex.Unlock()
 
 	// read next message from connection
-	_, buf, err := c.conn.ReadMessage()
+	buf, err := c.customReadMessage()
 
 	// return ErrExpectedClose instead
 	if _, ok := err.(*websocket.CloseError); ok {
