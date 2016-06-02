@@ -41,7 +41,7 @@ func TestReadLPBytes(t *testing.T) {
 	total := 0
 
 	for _, str := range testStrings {
-		b, n, err := readLPBytes(testBytes[total:])
+		b, n, err := readLPBytes(testBytes[total:], true)
 
 		assert.NoError(t, err)
 		assert.Equal(t, []byte(str), b)
@@ -52,10 +52,10 @@ func TestReadLPBytes(t *testing.T) {
 }
 
 func TestReadLPBytesErrors(t *testing.T) {
-	_, _, err := readLPBytes([]byte{})
+	_, _, err := readLPBytes([]byte{}, true)
 	assert.Error(t, err)
 
-	_, _, err = readLPBytes([]byte{0xff, 0xff, 0xff, 0xff})
+	_, _, err = readLPBytes([]byte{0xff, 0xff, 0xff, 0xff}, true)
 	assert.Error(t, err)
 }
 

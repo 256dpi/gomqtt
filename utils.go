@@ -22,7 +22,7 @@ import (
 const maxLPLength uint16 = 65535
 
 // read length prefixed bytes
-func readLPBytes(buf []byte) ([]byte, int, error) {
+func readLPBytes(buf []byte, safe bool) ([]byte, int, error) {
 	if len(buf) < 2 {
 		return nil, 0, fmt.Errorf("Insufficient buffer size. Expecting 2, got %d", len(buf))
 	}
@@ -37,19 +37,33 @@ func readLPBytes(buf []byte) ([]byte, int, error) {
 		return nil, total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total, len(buf))
 	}
 
+	// copy buffer in safe mode
+	if safe {
+		newBuf := make([]byte, total-2)
+		copy(newBuf, buf[2:total])
+		return newBuf, total, nil
+	}
+
 	return buf[2:total], total, nil
 }
 
-
 // read length prefixed string
 func readLPString(buf []byte) (string, int, error) {
-	bytes, n, err := readLPBytes(buf)
-
-	if bytes != nil {
-		return string(bytes), n, err
+	if len(buf) < 2 {
+		return "", 0, fmt.Errorf("Insufficient buffer size. Expecting 2, got %d", len(buf))
 	}
 
-	return "", n, err
+	n, total := 0, 0
+
+	n = int(binary.BigEndian.Uint16(buf))
+	total += 2
+	total += n
+
+	if len(buf) < total {
+		return "", total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total, len(buf))
+	}
+
+	return string(buf[2:total]), total, nil
 }
 
 // write length prefixed bytes

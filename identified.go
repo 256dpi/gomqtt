@@ -98,8 +98,6 @@ func (pp *PubackPacket) Len() int {
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-// The byte slice must not be modified during the duration of this packet being
-// available since the byte slice never gets copied.
 func (pp *PubackPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, PUBACK)
 	pp.PacketID = pid
@@ -144,8 +142,6 @@ func (pp *PubcompPacket) Len() int {
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-// The byte slice must not be modified during the duration of this packet being
-// available since the byte slice never gets copied.
 func (pp *PubcompPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, PUBCOMP)
 	pp.PacketID = pid
@@ -188,8 +184,6 @@ func (pp *PubrecPacket) Len() int {
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-// The byte slice must not be modified during the duration of this packet being
-// available since the byte slice never gets copied.
 func (pp *PubrecPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, PUBREC)
 	pp.PacketID = pid
@@ -234,8 +228,6 @@ func (pp *PubrelPacket) Len() int {
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-// The byte slice must not be modified during the duration of this packet being
-// available since the byte slice never gets copied.
 func (pp *PubrelPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, PUBREL)
 	pp.PacketID = pid
@@ -278,8 +270,6 @@ func (up *UnsubackPacket) Len() int {
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-// The byte slice must not be modified during the duration of this packet being
-// available since the byte slice never gets copied.
 func (up *UnsubackPacket) Decode(src []byte) (int, error) {
 	n, pid, err := identifiedPacketDecode(src, UNSUBACK)
 	up.PacketID = pid

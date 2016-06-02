@@ -91,8 +91,6 @@ func (cp *ConnackPacket) Len() int {
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-// The byte slice must not be modified during the duration of this packet being
-// available since the byte slice never gets copied.
 func (cp *ConnackPacket) Decode(src []byte) (int, error) {
 	total := 0
 

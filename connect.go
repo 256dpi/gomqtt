@@ -84,8 +84,6 @@ func (cp *ConnectPacket) Len() int {
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-// The byte slice must not be modified during the duration of this packet being
-// available since the byte slice never gets copied.
 func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	total := 0
 
@@ -97,7 +95,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	}
 
 	// read protocol string
-	protoName, n, err := readLPBytes(src[total:])
+	protoName, n, err := readLPBytes(src[total:], false)
 	total += n
 	if err != nil {
 		return total, err
@@ -193,7 +191,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 			return total, err
 		}
 
-		cp.Will.Payload, n, err = readLPBytes(src[total:])
+		cp.Will.Payload, n, err = readLPBytes(src[total:], true)
 		total += n
 		if err != nil {
 			return total, err
