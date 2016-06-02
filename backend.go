@@ -84,9 +84,9 @@ type Backend interface {
 type MemoryBackend struct {
 	Logins map[string]string
 
-	queue         *tools.Tree
-	retained      *tools.Tree
-	offlineQueue  *tools.Tree
+	queue        *tools.Tree
+	retained     *tools.Tree
+	offlineQueue *tools.Tree
 
 	sessions      map[string]*MemorySession
 	sessionsMutex sync.Mutex

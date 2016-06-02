@@ -17,9 +17,9 @@ package broker
 import (
 	"fmt"
 
-	"github.com/gomqtt/transport"
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/transport"
 )
 
 func Example() {
@@ -44,7 +44,7 @@ func Example() {
 	client := client.New()
 	wait := make(chan struct{})
 
-	client.Callback = func(msg *packet.Message, err error){
+	client.Callback = func(msg *packet.Message, err error) {
 		if err != nil {
 			panic(err)
 		}
