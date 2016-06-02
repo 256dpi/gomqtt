@@ -19,6 +19,7 @@ import (
 
 	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGlobalDial(t *testing.T) {
@@ -97,7 +98,7 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 
 	go func() {
 		conn, err := server.Accept()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
