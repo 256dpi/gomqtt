@@ -15,7 +15,7 @@
 package broker
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 	"time"
 
@@ -44,6 +44,10 @@ const (
 	clientConnected
 	clientDisconnected
 )
+
+// ErrExpectedConnect is returned when the first received packet is not a
+// ConnectPacket.
+var ErrExpectedConnect = errors.New("expected ConnectPacket")
 
 type remoteClient struct {
 	broker *Broker
@@ -134,7 +138,7 @@ func (c *remoteClient) processor() error {
 			// get connect
 			connect, ok := pkt.(*packet.ConnectPacket)
 			if !ok {
-				return c.die(fmt.Errorf("expected connect"), true)
+				return c.die(ErrExpectedConnect, true)
 			}
 
 			// process connect
