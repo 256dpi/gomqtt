@@ -22,9 +22,12 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
+	"time"
 
 	"github.com/gomqtt/broker"
+	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 )
 
@@ -48,7 +51,18 @@ func main() {
 
 	fmt.Println("Done!")
 
-	broker := broker.New()
+	james := broker.New()
+
+	var published int32
+	var forwarded int32
+
+	james.Logger = func(event broker.LogEvent, client broker.Client, pkt packet.Packet, msg *packet.Message, err error) {
+		if event == broker.MessagePublishedLogEvent {
+			atomic.AddInt32(&published, 1)
+		} else if event == broker.MessageForwardedLogEvent {
+			atomic.AddInt32(&forwarded, 1)
+		}
+	}
 
 	go func() {
 		for {
@@ -57,7 +71,20 @@ func main() {
 				panic(err)
 			}
 
-			broker.Handle(conn)
+			james.Handle(conn)
+		}
+	}()
+
+	go func() {
+		for {
+			<-time.After(1 * time.Second)
+
+			pub := atomic.LoadInt32(&published)
+			fwd := atomic.LoadInt32(&forwarded)
+			fmt.Printf("Publish Rate: %d msg/s, Forward Rate: %d msg/s\n", pub, fwd)
+
+			atomic.StoreInt32(&published, 0)
+			atomic.StoreInt32(&forwarded, 0)
 		}
 	}()
 
