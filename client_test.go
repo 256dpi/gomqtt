@@ -935,3 +935,34 @@ func TestClientLogger(t *testing.T) {
 //	assert.Error(t, err)
 //	assert.Nil(t, connectFuture)
 //}
+
+func BenchmarkClientPublish(b *testing.B) {
+	c := New()
+
+	connectFuture, err := c.Connect("mqtt://0.0.0.0", nil)
+	if err != nil {
+		panic(err)
+	}
+
+	err = connectFuture.Wait()
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		publishFuture, err := c.Publish("test", []byte("test"), 0, false)
+		if err != nil {
+			panic(err)
+		}
+
+		err = publishFuture.Wait()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	err = c.Disconnect()
+	if err != nil {
+		panic(err)
+	}
+}
