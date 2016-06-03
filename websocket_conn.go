@@ -93,6 +93,12 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	return nil
 }
 
+// BufferedSend is currently not supported and falls back to normal Send.
+func (c *WebSocketConn) BufferedSend(pkt packet.Packet) error {
+	// TODO: Implement.
+	return c.Send(pkt)
+}
+
 // this implementation reuses the buffer in contrast to the official ReadMessage
 // function
 func (c *WebSocketConn) customReadMessage() ([]byte, error) {

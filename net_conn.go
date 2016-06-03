@@ -26,10 +26,16 @@ import (
 	"github.com/gomqtt/packet"
 )
 
+var flushTimeout = time.Millisecond
+
 // A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
 	conn   net.Conn
 	reader *bufio.Reader
+	writer *bufio.Writer
+
+	flushTimer *time.Timer
+	flushError error
 
 	sMutex sync.Mutex
 	rMutex sync.Mutex
@@ -48,6 +54,7 @@ func NewNetConn(conn net.Conn) *NetConn {
 	return &NetConn{
 		conn:   conn,
 		reader: bufio.NewReader(conn),
+		writer: bufio.NewWriter(conn),
 	}
 }
 
@@ -70,6 +77,58 @@ func (c *NetConn) Send(pkt packet.Packet) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
+	// write packet
+	err := c.write(pkt)
+	if err != nil {
+		return err
+	}
+
+	// flush buffer
+	return c.flush()
+}
+
+// BufferedSend will write the packet to an internal buffer. It will flush
+// the internal buffer automatically when it gets stale. Encoding errors are
+// directly returned as in Send, but any network errors caught while flushing
+// the buffer at a later time will be returned on the next call.
+//
+// Note: Only one goroutine can call BufferedSend at the same time.
+func (c *NetConn) BufferedSend(pkt packet.Packet) error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
+	// create the timer if missing
+	if c.flushTimer == nil {
+		c.flushTimer = time.AfterFunc(flushTimeout, c.asyncFlush)
+		c.flushTimer.Stop()
+	}
+
+	// return any error from asyncFlush
+	if c.flushError != nil {
+		return c.flushError
+	}
+
+	// flush if buffer is full
+	if c.writer.Available() < pkt.Len() {
+		err := c.flush()
+		if err != nil {
+			return err
+		}
+	}
+
+	// write packet
+	err := c.write(pkt)
+	if err != nil {
+		return err
+	}
+
+	// queue asyncFlush
+	c.flushTimer.Reset(flushTimeout)
+
+	return nil
+}
+
+func (c *NetConn) write(pkt packet.Packet) error {
 	// reset and eventually grow buffer
 	packetLength := pkt.Len()
 	c.sendBuffer.Reset()
@@ -83,8 +142,8 @@ func (c *NetConn) Send(pkt packet.Packet) error {
 		return newTransportError(EncodeError, err)
 	}
 
-	// write buffer to connection
-	bytesWritten, err := c.conn.Write(buf)
+	// write buffer
+	bytesWritten, err := c.writer.Write(buf)
 	if err != nil {
 		c.conn.Close()
 		return newTransportError(NetworkError, err)
@@ -94,6 +153,27 @@ func (c *NetConn) Send(pkt packet.Packet) error {
 	atomic.AddInt64(&c.writeCounter, int64(bytesWritten))
 
 	return nil
+}
+
+func (c *NetConn) flush() error {
+	err := c.writer.Flush()
+	if err != nil {
+		c.conn.Close()
+		return newTransportError(NetworkError, err)
+	}
+
+	return nil
+}
+
+func (c *NetConn) asyncFlush() {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
+	// flush buffer and save an eventual error
+	err := c.flush()
+	if err != nil {
+		c.flushError = err
+	}
 }
 
 // Receive will read from the underlying connection and return a fully read
