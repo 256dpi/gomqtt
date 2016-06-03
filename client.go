@@ -608,7 +608,7 @@ func (c *remoteClient) die(err error, close bool) error {
 
 // sends packet
 func (c *remoteClient) send(pkt packet.Packet) error {
-	err := c.conn.Send(pkt)
+	err := c.conn.BufferedSend(pkt)
 	if err != nil {
 		return err
 	}

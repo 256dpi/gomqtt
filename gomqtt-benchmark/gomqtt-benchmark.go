@@ -69,7 +69,7 @@ func connection(id string) transport.Conn {
 	connect := packet.NewConnectPacket()
 	connect.ClientID = "gomqtt-benchmark/" + id
 
-	err = conn.Send(connect)
+	err = conn.BufferedSend(connect)
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +99,7 @@ func consumer(id string) {
 		{Topic: id, QOS: 0},
 	}
 
-	err := conn.Send(subscribe)
+	err := conn.BufferedSend(subscribe)
 	if err != nil {
 		panic(err)
 	}
@@ -131,7 +131,7 @@ func publisher(id string) {
 	counter := 0
 
 	for {
-		err := conn.Send(publish)
+		err := conn.BufferedSend(publish)
 		if err != nil {
 			panic(err)
 		}
