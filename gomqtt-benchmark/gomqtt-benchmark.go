@@ -35,7 +35,6 @@ var workers = flag.Int("workers", 1, "number of workers")
 
 var sent = make(chan int)
 var received = make(chan int)
-var quit = make(chan struct{})
 
 func main() {
 	flag.Parse()
@@ -48,7 +47,7 @@ func main() {
 
 		<-finish
 		fmt.Println("Closing...")
-		close(quit)
+		os.Exit(0)
 	}()
 
 	for i := 0; i < *workers; i++ {
@@ -142,12 +141,6 @@ func publisher(id string) {
 		if counter >= interval {
 			sent <- counter
 			counter = 0
-
-			select {
-			case <-quit:
-				return
-			default:
-			}
 		}
 	}
 }
@@ -193,10 +186,5 @@ func reporter() {
 
 		atomic.StoreInt32(&sentCounter, 0)
 		atomic.StoreInt32(&receivedCounter, 0)
-
-		if currentBalance <= (int32(*workers) * interval) {
-			fmt.Println("Done!")
-			os.Exit(0)
-		}
 	}
 }
