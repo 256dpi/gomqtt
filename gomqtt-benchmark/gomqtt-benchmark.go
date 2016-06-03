@@ -32,6 +32,7 @@ const interval = 1000
 
 var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")
+var duration = flag.Int("duration", 30, "duration in seconds")
 
 var sent = make(chan int)
 var received = make(chan int)
@@ -39,7 +40,7 @@ var received = make(chan int)
 func main() {
 	flag.Parse()
 
-	fmt.Printf("Start benchmark for %s using %d Workers\n", *url, *workers)
+	fmt.Printf("Start benchmark of %s using %d Workers for %d seconds.\n", *url, *workers, *duration)
 
 	go func() {
 		finish := make(chan os.Signal, 1)
@@ -49,6 +50,13 @@ func main() {
 		fmt.Println("Closing...")
 		os.Exit(0)
 	}()
+
+	if int(*duration) > 0 {
+		time.AfterFunc(time.Duration(*duration) * time.Second, func(){
+			fmt.Println("Finishing...")
+			os.Exit(0)
+		})
+	}
 
 	for i := 0; i < *workers; i++ {
 		id := strconv.Itoa(i)
