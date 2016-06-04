@@ -30,6 +30,9 @@ import (
 type WebSocketConn struct {
 	conn *websocket.Conn
 
+	flushTimer *time.Timer
+	flushError error
+
 	sMutex sync.Mutex
 	rMutex sync.Mutex
 
@@ -67,6 +70,45 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
+	// write packet
+	err := c.write(pkt)
+	if err != nil {
+		return err
+	}
+
+	// flush buffer
+	return c.flush()
+}
+
+// BufferedSend is currently not supported and falls back to normal Send.
+func (c *WebSocketConn) BufferedSend(pkt packet.Packet) error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
+	// create the timer if missing
+	if c.flushTimer == nil {
+		c.flushTimer = time.AfterFunc(flushTimeout, c.asyncFlush)
+		c.flushTimer.Stop()
+	}
+
+	// return any error from asyncFlush
+	if c.flushError != nil {
+		return c.flushError
+	}
+
+	// write packet
+	err := c.write(pkt)
+	if err != nil {
+		return err
+	}
+
+	// queue asyncFlush
+	c.flushTimer.Reset(flushTimeout)
+
+	return nil
+}
+
+func (c *WebSocketConn) write(pkt packet.Packet) error {
 	// reset and eventually grow buffer
 	packetLength := pkt.Len()
 	c.sendBuffer.Reset()
@@ -81,7 +123,7 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	}
 
 	// write packet to connection
-	err = c.conn.WriteMessage(websocket.BinaryMessage, buf)
+	err = c.conn.BufferMessage(websocket.BinaryMessage, buf)
 	if err != nil {
 		c.end(websocket.CloseInternalServerErr)
 		return newTransportError(NetworkError, err)
@@ -93,10 +135,25 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	return nil
 }
 
-// BufferedSend is currently not supported and falls back to normal Send.
-func (c *WebSocketConn) BufferedSend(pkt packet.Packet) error {
-	// TODO: Implement.
-	return c.Send(pkt)
+func (c *WebSocketConn) flush() error {
+	err := c.conn.FlushMessages()
+	if err != nil {
+		c.conn.Close()
+		return newTransportError(NetworkError, err)
+	}
+
+	return nil
+}
+
+func (c *WebSocketConn) asyncFlush() {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
+	// flush buffer and save an eventual error
+	err := c.flush()
+	if err != nil {
+		c.flushError = err
+	}
 }
 
 // this implementation reuses the buffer in contrast to the official ReadMessage
