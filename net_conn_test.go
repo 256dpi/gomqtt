@@ -156,6 +156,8 @@ func BenchmarkNetConn(b *testing.B) {
 		}
 	}
 
+	b.SetBytes(int64(pkt.Len() * 2))
+
 	<-done
 }
 
@@ -178,6 +180,8 @@ func BenchmarkNetConnBuffered(b *testing.B) {
 			panic(err)
 		}
 	}
+
+	b.SetBytes(int64(pkt.Len() * 2))
 
 	<-done
 }

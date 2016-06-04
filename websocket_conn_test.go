@@ -134,5 +134,7 @@ func BenchmarkWebSocketConnBuffered(b *testing.B) {
 		}
 	}
 
+	b.SetBytes(int64(pkt.Len() * 2))
+
 	<-done
 }
