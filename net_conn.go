@@ -108,14 +108,6 @@ func (c *NetConn) BufferedSend(pkt packet.Packet) error {
 		return c.flushError
 	}
 
-	// flush if buffer is full
-	if c.writer.Available() < pkt.Len() {
-		err := c.flush()
-		if err != nil {
-			return err
-		}
-	}
-
 	// write packet
 	err := c.write(pkt)
 	if err != nil {
