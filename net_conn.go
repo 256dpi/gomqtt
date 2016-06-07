@@ -26,8 +26,6 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-var flushTimeout = time.Millisecond
-
 // A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
 	conn   net.Conn
