@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/gomqtt/packet"
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -86,6 +87,76 @@ func TestWebSocketBadFrameError(t *testing.T) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
+	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}
+
+func TestWebSocketChunkedMessage(t *testing.T) {
+	pkt := packet.NewPublishPacket()
+	pkt.Message.Topic = "hello"
+	pkt.Message.Payload = []byte("world")
+
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
+		buf := make([]byte, pkt.Len())
+		pkt.Encode(buf)
+
+		err := conn1.(*WebSocketConn).conn.WriteMessage(websocket.BinaryMessage, buf[:7])
+		assert.NoError(t, err)
+
+		err = conn1.(*WebSocketConn).conn.WriteMessage(websocket.BinaryMessage, buf[7:])
+		assert.NoError(t, err)
+
+		in, err := conn1.Receive()
+		assert.Nil(t, in)
+		assert.Equal(t, ConnectionClose, toError(err).Code())
+	})
+
+	in, err := conn2.Receive()
+	assert.Nil(t, err)
+	assert.Equal(t, pkt.String(), in.String())
+
+	err = conn2.Close()
+	assert.NoError(t, err)
+
+	in, err = conn2.Receive()
+	assert.Nil(t, in)
+	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}
+
+func TestWebSocketCoalescedMessage(t *testing.T) {
+	pkt := packet.NewPublishPacket()
+	pkt.Message.Topic = "hello"
+	pkt.Message.Payload = []byte("world")
+
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
+		buf := make([]byte, pkt.Len()*2)
+		pkt.Encode(buf)
+		pkt.Encode(buf[pkt.Len():])
+
+		err := conn1.(*WebSocketConn).conn.WriteMessage(websocket.BinaryMessage, buf)
+		assert.NoError(t, err)
+
+		in, err := conn1.Receive()
+		assert.Nil(t, in)
+		assert.Equal(t, ConnectionClose, toError(err).Code())
+	})
+
+	in, err := conn2.Receive()
+	assert.Nil(t, err)
+	assert.Equal(t, pkt.String(), in.String())
+
+	in, err = conn2.Receive()
+	assert.Nil(t, err)
+	assert.Equal(t, pkt.String(), in.String())
+
+	err = conn2.Close()
+	assert.NoError(t, err)
+
+	in, err = conn2.Receive()
+	assert.Nil(t, in)
 	assert.Equal(t, NetworkError, toError(err).Code())
 
 	<-done
