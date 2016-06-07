@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/gomqtt/packet"
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,6 +92,76 @@ func TestWebSocketBadFrameError(t *testing.T) {
 	<-done
 }
 
+func TestWebSocketChunkedMessage(t *testing.T) {
+	pkt := packet.NewPublishPacket()
+	pkt.Message.Topic = "hello"
+	pkt.Message.Payload = []byte("world")
+
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
+		buf := make([]byte, pkt.Len())
+		pkt.Encode(buf)
+
+		err := conn1.(*WebSocketConn).conn.WriteMessage(websocket.BinaryMessage, buf[:7])
+		assert.NoError(t, err)
+
+		err = conn1.(*WebSocketConn).conn.WriteMessage(websocket.BinaryMessage, buf[7:])
+		assert.NoError(t, err)
+
+		in, err := conn1.Receive()
+		assert.Nil(t, in)
+		assert.Equal(t, ConnectionClose, toError(err).Code())
+	})
+
+	in, err := conn2.Receive()
+	assert.Nil(t, err)
+	assert.Equal(t, pkt.String(), in.String())
+
+	err = conn2.Close()
+	assert.NoError(t, err)
+
+	in, err = conn2.Receive()
+	assert.Nil(t, in)
+	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}
+
+func TestWebSocketCoalescedMessage(t *testing.T) {
+	pkt := packet.NewPublishPacket()
+	pkt.Message.Topic = "hello"
+	pkt.Message.Payload = []byte("world")
+
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
+		buf := make([]byte, pkt.Len()*2)
+		pkt.Encode(buf)
+		pkt.Encode(buf[pkt.Len():])
+
+		err := conn1.(*WebSocketConn).conn.WriteMessage(websocket.BinaryMessage, buf)
+		assert.NoError(t, err)
+
+		in, err := conn1.Receive()
+		assert.Nil(t, in)
+		assert.Equal(t, ConnectionClose, toError(err).Code())
+	})
+
+	in, err := conn2.Receive()
+	assert.Nil(t, err)
+	assert.Equal(t, pkt.String(), in.String())
+
+	in, err = conn2.Receive()
+	assert.Nil(t, err)
+	assert.Equal(t, pkt.String(), in.String())
+
+	err = conn2.Close()
+	assert.NoError(t, err)
+
+	in, err = conn2.Receive()
+	assert.Nil(t, in)
+	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}
+
 func BenchmarkWebSocketConn(b *testing.B) {
 	pkt := packet.NewPublishPacket()
 	pkt.Message.Topic = "foo/bar/baz"
@@ -110,6 +181,33 @@ func BenchmarkWebSocketConn(b *testing.B) {
 			panic(err)
 		}
 	}
+
+	b.SetBytes(int64(pkt.Len() * 2))
+
+	<-done
+}
+
+func BenchmarkWebSocketConnBuffered(b *testing.B) {
+	pkt := packet.NewPublishPacket()
+	pkt.Message.Topic = "foo/bar/baz"
+
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
+		for i := 0; i < b.N; i++ {
+			err := conn1.BufferedSend(pkt)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+
+	for i := 0; i < b.N; i++ {
+		_, err := conn2.Receive()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	b.SetBytes(int64(pkt.Len() * 2))
 
 	<-done
 }

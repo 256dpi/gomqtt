@@ -23,6 +23,8 @@ import (
 	"github.com/gomqtt/packet"
 )
 
+var flushTimeout = time.Millisecond
+
 // A Conn is a connection between a client and a broker. It abstracts an
 // existing underlying stream connection.
 type Conn interface {
@@ -32,6 +34,16 @@ type Conn interface {
 	//
 	// Note: Only one goroutine can Send at the same time.
 	Send(pkt packet.Packet) error
+
+	// BufferedSend will write the packet to an internal buffer. It will flush
+	// the internal buffer automatically when it gets stale. Encoding errors are
+	// directly returned as in Send, but any network errors caught while flushing
+	// the buffer at a later time will be returned on the next call. If
+	// BufferedSend ist not supported by the underlying connection it will
+	// fallback to a normal Send.
+	//
+	// Note: Only one goroutine can call BufferedSend at the same time.
+	BufferedSend(pkt packet.Packet) error
 
 	// Receive will read from the underlying connection and return a fully read
 	// packet. It will return an Error if there was an error while decoding or

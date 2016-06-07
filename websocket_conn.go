@@ -15,7 +15,9 @@
 package transport
 
 import (
+	"bufio"
 	"bytes"
+	"io"
 	"net"
 	"strings"
 	"sync"
@@ -26,15 +28,55 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type webSocketStream struct {
+	conn   *websocket.Conn
+	reader io.Reader
+}
+
+func (s *webSocketStream) Read(p []byte) (int, error) {
+	for {
+		// get next reader
+		if s.reader == nil {
+			// TODO: return error if message is not binary.
+			_, reader, err := s.conn.NextReader()
+			if _, ok := err.(*websocket.CloseError); ok {
+				// convert CloseError to EOF
+				return 0, io.EOF
+			} else if err != nil {
+				return 0, err
+			}
+
+			// set current reader
+			s.reader = reader
+		}
+
+		// read data
+		n, err := s.reader.Read(p)
+		if err == io.EOF {
+			// move on to next message on EOF
+			s.reader = nil
+			continue
+		}
+
+		return n, err
+	}
+}
+
 // The WebSocketConn wraps a gorilla WebSocket.Conn.
 type WebSocketConn struct {
-	conn *websocket.Conn
+	conn   *websocket.Conn
+	reader *bufio.Reader
+	writer io.WriteCloser
+
+	flushTimer *time.Timer
+	flushError error
 
 	sMutex sync.Mutex
 	rMutex sync.Mutex
 
 	writeCounter int64
 	readCounter  int64
+	readLimit    int64
 	readTimeout  time.Duration
 
 	receiveBuffer bytes.Buffer
@@ -45,6 +87,9 @@ type WebSocketConn struct {
 func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 	return &WebSocketConn{
 		conn: conn,
+		reader: bufio.NewReader(&webSocketStream{
+			conn: conn,
+		}),
 	}
 }
 
@@ -67,6 +112,45 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
+	// write packet
+	err := c.write(pkt)
+	if err != nil {
+		return err
+	}
+
+	// flush buffer
+	return c.flush()
+}
+
+// BufferedSend is currently not supported and falls back to normal Send.
+func (c *WebSocketConn) BufferedSend(pkt packet.Packet) error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
+	// create the timer if missing
+	if c.flushTimer == nil {
+		c.flushTimer = time.AfterFunc(flushTimeout, c.asyncFlush)
+		c.flushTimer.Stop()
+	}
+
+	// return any error from asyncFlush
+	if c.flushError != nil {
+		return c.flushError
+	}
+
+	// write packet
+	err := c.write(pkt)
+	if err != nil {
+		return err
+	}
+
+	// queue asyncFlush
+	c.flushTimer.Reset(flushTimeout)
+
+	return nil
+}
+
+func (c *WebSocketConn) write(pkt packet.Packet) error {
 	// reset and eventually grow buffer
 	packetLength := pkt.Len()
 	c.sendBuffer.Reset()
@@ -80,8 +164,19 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 		return newTransportError(EncodeError, err)
 	}
 
-	// write packet to connection
-	err = c.conn.WriteMessage(websocket.BinaryMessage, buf)
+	// create writer if missing
+	if c.writer == nil {
+		writer, err := c.conn.NextWriter(websocket.BinaryMessage)
+		if err != nil {
+			c.end(websocket.CloseInternalServerErr)
+			return newTransportError(NetworkError, err)
+		}
+
+		c.writer = writer
+	}
+
+	// write packet to writer
+	_, err = c.writer.Write(buf)
 	if err != nil {
 		c.end(websocket.CloseInternalServerErr)
 		return newTransportError(NetworkError, err)
@@ -93,19 +188,30 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	return nil
 }
 
-// this implementation reuses the buffer in contrast to the official ReadMessage
-// function
-func (c *WebSocketConn) customReadMessage() ([]byte, error) {
-	_, r, err := c.conn.NextReader()
-	if err != nil {
-		return nil, err
+func (c *WebSocketConn) flush() error {
+	// close writer if available
+	if c.writer != nil {
+		err := c.writer.Close()
+		if err != nil {
+			c.conn.Close()
+			return newTransportError(NetworkError, err)
+		}
+
+		c.writer = nil
 	}
 
-	// reset and eventually grow buffer
-	c.receiveBuffer.Reset()
-	c.receiveBuffer.ReadFrom(r)
+	return nil
+}
 
-	return c.receiveBuffer.Bytes(), err
+func (c *WebSocketConn) asyncFlush() {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
+	// flush buffer and save an eventual error
+	err := c.flush()
+	if err != nil {
+		c.flushError = err
+	}
 }
 
 // Receive will read from the underlying connection and return a fully read
@@ -117,65 +223,87 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 	c.rMutex.Lock()
 	defer c.rMutex.Unlock()
 
-	// read next message from connection
-	buf, err := c.customReadMessage()
+	// initial detection length
+	detectionLength := 2
 
-	// return ErrExpectedClose instead
-	if _, ok := err.(*websocket.CloseError); ok {
-		// ensure that the connection gets fully closed
-		c.conn.Close()
+	for {
+		// check length
+		if detectionLength > 5 {
+			c.end(websocket.CloseInvalidFramePayloadData)
+			return nil, newTransportError(DetectionError, ErrDetectionOverflow)
+		}
 
-		// the closing is always expected from the receiver side as it its
-		// transmitted cleanly
-		return nil, newTransportError(ConnectionClose, err)
+		// try read detection bytes
+		header, err := c.reader.Peek(detectionLength)
+		if err == io.EOF && len(header) == 0 {
+			// only if Peek returned no bytes the close is expected
+			c.conn.Close()
+			return nil, newTransportError(ConnectionClose, err)
+		} else if err != nil && strings.Contains(err.Error(), "i/o timeout") {
+			// the read timed out
+			c.end(websocket.CloseGoingAway)
+			return nil, newTransportError(NetworkError, ErrReadTimeout)
+		} else if err != nil {
+			c.end(websocket.CloseAbnormalClosure)
+			return nil, newTransportError(NetworkError, err)
+		}
+
+		// detect packet
+		packetLength, packetType := packet.DetectPacket(header)
+
+		// on zero packet length:
+		// increment detection length and try again
+		if packetLength <= 0 {
+			detectionLength++
+			continue
+		}
+
+		// check read limit
+		if c.readLimit > 0 && int64(packetLength) > c.readLimit {
+			c.end(websocket.CloseMessageTooBig)
+			return nil, newTransportError(NetworkError, ErrReadLimitExceeded)
+		}
+
+		// create packet
+		pkt, err := packetType.New()
+		if err != nil {
+			c.end(websocket.CloseInvalidFramePayloadData)
+			return nil, newTransportError(DetectionError, err)
+		}
+
+		// reset and eventually grow buffer
+		c.receiveBuffer.Reset()
+		c.receiveBuffer.Grow(packetLength)
+		buf := c.receiveBuffer.Bytes()[0:packetLength]
+
+		// read whole packet
+		bytesRead, err := io.ReadFull(c.reader, buf)
+		if err != nil && strings.Contains(err.Error(), "i/o timeout") {
+			// the read timed out
+			c.end(websocket.CloseGoingAway)
+			return nil, newTransportError(NetworkError, ErrReadTimeout)
+		} else if err != nil {
+			c.end(websocket.CloseAbnormalClosure)
+
+			// even if EOF is returned we consider it an network error
+			return nil, newTransportError(NetworkError, err)
+		}
+
+		// decode buffer
+		_, err = pkt.Decode(buf)
+		if err != nil {
+			c.end(websocket.CloseInvalidFramePayloadData)
+			return nil, newTransportError(DecodeError, err)
+		}
+
+		// increment counter
+		atomic.AddInt64(&c.readCounter, int64(bytesRead))
+
+		// reset timeout
+		c.resetTimeout()
+
+		return pkt, nil
 	}
-
-	// return read limit error instead
-	if err == websocket.ErrReadLimit {
-		c.end(websocket.CloseMessageTooBig)
-		return nil, newTransportError(NetworkError, ErrReadLimitExceeded)
-	}
-
-	// return read timeout err instead
-	if err != nil && strings.Contains(err.Error(), "i/o timeout") {
-		c.end(websocket.CloseGoingAway)
-		return nil, newTransportError(NetworkError, ErrReadTimeout)
-	}
-
-	// return on any other errors
-	if err != nil {
-		c.end(websocket.CloseAbnormalClosure)
-		return nil, newTransportError(NetworkError, err)
-	}
-
-	// detect packet
-	packetLength, t := packet.DetectPacket(buf)
-	if packetLength == 0 {
-		c.end(websocket.CloseInvalidFramePayloadData)
-		return nil, newTransportError(DetectionError, ErrDetectionOverflow)
-	}
-
-	// allocate packet
-	pkt, err := t.New()
-	if err != nil {
-		c.end(websocket.CloseInvalidFramePayloadData)
-		return nil, newTransportError(DetectionError, err)
-	}
-
-	// decode packet
-	n, err := pkt.Decode(buf)
-	if err != nil {
-		c.end(websocket.CloseInvalidFramePayloadData)
-		return nil, newTransportError(DecodeError, err)
-	}
-
-	// increment read counter
-	atomic.AddInt64(&c.readCounter, int64(n))
-
-	// reset timeout
-	c.resetTimeout()
-
-	return pkt, nil
 }
 
 func (c *WebSocketConn) end(closeCode int) error {
@@ -215,7 +343,7 @@ func (c *WebSocketConn) BytesRead() int64 {
 // If the limit is greater than zero, Receive will close the connection and
 // return an Error if receiving the next packet will exceed the limit.
 func (c *WebSocketConn) SetReadLimit(limit int64) {
-	c.conn.SetReadLimit(limit)
+	c.readLimit = limit
 }
 
 // SetReadTimeout sets the maximum time that can pass between reads.
