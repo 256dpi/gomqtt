@@ -63,7 +63,7 @@ func (s *webSocketStream) Read(p []byte) (int, error) {
 }
 
 // The WebSocketConn wraps a gorilla WebSocket.Conn. The implementation supports
-// packets that are chunked in several WebSocket messages and packets that are
+// packets that are chunked over several WebSocket messages and packets that are
 // coalesced to one WebSocket message.
 type WebSocketConn struct {
 	conn   *websocket.Conn
