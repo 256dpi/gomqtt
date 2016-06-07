@@ -122,7 +122,12 @@ func (c *WebSocketConn) Send(pkt packet.Packet) error {
 	return c.flush()
 }
 
-// BufferedSend is currently not supported and falls back to normal Send.
+// BufferedSend will write the packet to an internal buffer. It will flush
+// the internal buffer automatically when it gets stale. Encoding errors are
+// directly returned as in Send, but any network errors caught while flushing
+// the buffer at a later time will be returned on the next call.
+//
+// Note: Only one goroutine can call BufferedSend at the same time.
 func (c *WebSocketConn) BufferedSend(pkt packet.Packet) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
