@@ -195,7 +195,7 @@ func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
 		connack.ReturnCode = packet.ErrNotAuthorized
 
 		// send connack
-		err = c.send(connack)
+		err = c.send(connack, false)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -235,7 +235,7 @@ func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// send connack
-	err = c.send(connack)
+	err = c.send(connack, false)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -257,7 +257,7 @@ func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
 			publish.Dup = true
 		}
 
-		err = c.send(pkt)
+		err = c.send(pkt, true)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -276,7 +276,7 @@ func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
 
 // handle an incoming PingreqPacket
 func (c *remoteClient) processPingreq() error {
-	err := c.send(packet.NewPingrespPacket())
+	err := c.send(packet.NewPingrespPacket(), true)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -309,7 +309,7 @@ func (c *remoteClient) processSubscribe(pkt *packet.SubscribePacket) error {
 	}
 
 	// send suback
-	err := c.send(suback)
+	err := c.send(suback, true)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -344,7 +344,7 @@ func (c *remoteClient) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 		}
 	}
 
-	err := c.send(unsuback)
+	err := c.send(unsuback, true)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -359,7 +359,7 @@ func (c *remoteClient) processPublish(publish *packet.PublishPacket) error {
 		puback.PacketID = publish.PacketID
 
 		// acknowledge qos 1 publish
-		err := c.send(puback)
+		err := c.send(puback, true)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -376,7 +376,7 @@ func (c *remoteClient) processPublish(publish *packet.PublishPacket) error {
 		pubrec.PacketID = publish.PacketID
 
 		// signal qos 2 publish
-		err = c.send(pubrec)
+		err = c.send(pubrec, true)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -414,7 +414,7 @@ func (c *remoteClient) processPubrec(packetID uint16) error {
 	}
 
 	// send packet
-	err = c.send(pubrel)
+	err = c.send(pubrel, true)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -440,7 +440,7 @@ func (c *remoteClient) processPubrel(packetID uint16) error {
 	pubcomp.PacketID = publish.PacketID
 
 	// acknowledge PublishPacket
-	err = c.send(pubcomp)
+	err = c.send(pubcomp, true)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -512,7 +512,7 @@ func (c *remoteClient) sender() error {
 			}
 
 			// send packet
-			err = c.send(publish)
+			err = c.send(publish, true)
 			if err != nil {
 				return c.die(err, false)
 			}
@@ -606,9 +606,17 @@ func (c *remoteClient) die(err error, close bool) error {
 	return err
 }
 
-// sends packet
-func (c *remoteClient) send(pkt packet.Packet) error {
-	err := c.conn.Send(pkt)
+func (c *remoteClient) send(pkt packet.Packet, buffered bool) error {
+	var err error
+
+	// send packet
+	if buffered {
+		err = c.conn.BufferedSend(pkt)
+	} else {
+		err = c.conn.Send(pkt)
+	}
+
+	// checke error
 	if err != nil {
 		return err
 	}
