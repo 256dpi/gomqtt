@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"testing"
@@ -93,4 +94,27 @@ func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
 	assert.Equal(t, ConnectionClose, toError(err).Code())
+}
+
+func TestWebSocketServerMux(t *testing.T) {
+	port := tools.NewPort()
+
+	server, err := testLauncher.Launch(port.URL("ws"))
+	require.NoError(t, err)
+
+	ws := server.(*WebSocketServer)
+
+	ws.Mux().HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello world!"))
+	})
+
+	resp, err := http.Get(port.URL("http") + "/test")
+	assert.NoError(t, err)
+	assert.Equal(t, "200 OK", resp.Status)
+	bytes, err := ioutil.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("Hello world!"), bytes)
+
+	err = server.Close()
+	assert.NoError(t, err)
 }

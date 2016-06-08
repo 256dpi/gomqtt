@@ -30,6 +30,7 @@ var errManualClose = errors.New("manual close")
 // The WebSocketServer accepts websocket.Conn based connections.
 type WebSocketServer struct {
 	listener net.Listener
+	mux      *http.ServeMux
 	upgrader *websocket.Upgrader
 	incoming chan *WebSocketConn
 
@@ -75,11 +76,11 @@ func NewSecureWebSocketServer(address string, config *tls.Config) (*WebSocketSer
 }
 
 func (s *WebSocketServer) serveHTTP() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.requestHandler)
+	s.mux = http.NewServeMux()
+	s.mux.HandleFunc("/", s.requestHandler)
 
 	h := &http.Server{
-		Handler: mux,
+		Handler: s.mux,
 	}
 
 	s.tomb.Go(func() error {
@@ -88,6 +89,11 @@ func (s *WebSocketServer) serveHTTP() {
 		// Server will always return an error
 		return newTransportError(NetworkError, err)
 	})
+}
+
+// Mux will return the internally used http.ServeMux.
+func (s *WebSocketServer) Mux() *http.ServeMux {
+	return s.mux
 }
 
 func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request) {

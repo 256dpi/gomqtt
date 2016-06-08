@@ -264,7 +264,7 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 func (c *NetConn) Close() error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
-	
+
 	err := c.conn.Close()
 	if err != nil {
 		return newTransportError(NetworkError, err)
