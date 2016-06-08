@@ -70,6 +70,10 @@ func TestNetConnAddr(t *testing.T) {
 	abstractConnAddrTest(t, "tcp")
 }
 
+func TestNetConnBufferedSend(t *testing.T) {
+	abstractConnBufferedSendTest(t, "tcp")
+}
+
 func TestNetConnCloseWhileReadError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublishPacket()

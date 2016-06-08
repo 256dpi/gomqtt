@@ -70,6 +70,10 @@ func TestWebSocketConnAddr(t *testing.T) {
 	abstractConnAddrTest(t, "ws")
 }
 
+func TestWebSocketConnBufferedSend(t *testing.T) {
+	abstractConnBufferedSendTest(t, "ws")
+}
+
 func TestWebSocketBadFrameError(t *testing.T) {
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // <- bad frame
