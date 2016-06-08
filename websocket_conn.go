@@ -331,6 +331,9 @@ func (c *WebSocketConn) end(closeCode int) error {
 // return an Error if there was an error while closing the underlying
 // connection.
 func (c *WebSocketConn) Close() error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+
 	return c.end(websocket.CloseNormalClosure)
 }
 

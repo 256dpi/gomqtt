@@ -262,6 +262,9 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 // return an Error if there was an error while closing the underlying
 // connection.
 func (c *NetConn) Close() error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
+	
 	err := c.conn.Close()
 	if err != nil {
 		return newTransportError(NetworkError, err)
