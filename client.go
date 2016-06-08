@@ -187,7 +187,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	c.connectFuture.initialize()
 
 	// send connect packet
-	err = c.send(connect)
+	err = c.send(connect, false)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -254,7 +254,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 	}
 
 	// send packet
-	err := c.send(publish)
+	err := c.send(publish, true)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -302,7 +302,7 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (*Subscr
 	c.futureStore.put(subscribe.PacketID, future)
 
 	// send packet
-	err := c.send(subscribe)
+	err := c.send(subscribe, true)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -342,7 +342,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	c.futureStore.put(unsubscribe.PacketID, future)
 
 	// send packet
-	err := c.send(unsubscribe)
+	err := c.send(unsubscribe, true)
 	if err != nil {
 		return nil, c.cleanup(err, false)
 	}
@@ -368,11 +368,8 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	// set state
 	c.state.set(clientDisconnecting)
 
-	// allocate packet
-	m := packet.NewDisconnectPacket()
-
 	// send disconnect packet
-	err := c.send(m)
+	err := c.send(packet.NewDisconnectPacket(), false)
 
 	return c.end(err)
 }
@@ -497,7 +494,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 			publish.Dup = true
 		}
 
-		err = c.send(pkt)
+		err = c.send(pkt, true)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -554,7 +551,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		puback.PacketID = publish.PacketID
 
 		// acknowledge qos 1 publish
-		err := c.send(puback)
+		err := c.send(puback, true)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -571,7 +568,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		pubrec.PacketID = publish.PacketID
 
 		// signal qos 2 publish
-		err = c.send(pubrec)
+		err = c.send(pubrec, true)
 		if err != nil {
 			return c.die(err, false)
 		}
@@ -618,7 +615,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 	}
 
 	// send packet and
-	err = c.send(pubrel)
+	err = c.send(pubrel, true)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -644,7 +641,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	pubcomp.PacketID = publish.PacketID
 
 	// acknowledge PublishPacket
-	err = c.send(pubcomp)
+	err = c.send(pubcomp, true)
 	if err != nil {
 		return c.die(err, false)
 	}
@@ -673,7 +670,7 @@ func (c *Client) pinger() error {
 				return c.die(ErrClientMissingPong, true)
 			}
 
-			err := c.send(packet.NewPingreqPacket())
+			err := c.send(packet.NewPingreqPacket(), true)
 			if err != nil {
 				return c.die(err, false)
 			}
@@ -695,11 +692,20 @@ func (c *Client) pinger() error {
 /* helpers */
 
 // sends packet and updates lastSend
-func (c *Client) send(pkt packet.Packet) error {
+func (c *Client) send(pkt packet.Packet, buffered bool) error {
 	c.tracker.reset()
 
+	// prepare error
+	var err  error
+
 	// send packet
-	err := c.conn.Send(pkt)
+	if buffered {
+		err = c.conn.BufferedSend(pkt)
+	} else {
+		err = c.conn.Send(pkt)
+	}
+
+	// check error
 	if err != nil {
 		return err
 	}
