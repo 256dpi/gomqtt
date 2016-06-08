@@ -287,3 +287,44 @@ func abstractConnBufferedSendTest(t *testing.T, protocol string) {
 
 	<-done
 }
+
+func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
+		err := conn1.Close()
+		assert.NoError(t, err)
+	})
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, ConnectionClose, toError(err).Code())
+
+	err = conn2.BufferedSend(packet.NewConnectPacket())
+	assert.NoError(t, err)
+
+	<-time.After(2 * flushTimeout)
+
+	err = conn2.BufferedSend(packet.NewConnectPacket())
+	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}
+
+func abstractConnBigBufferedSendAfterCloseTest(t *testing.T, protocol string) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
+		err := conn1.Close()
+		assert.NoError(t, err)
+	})
+
+	pkt, err := conn2.Receive()
+	assert.Nil(t, pkt)
+	assert.Equal(t, ConnectionClose, toError(err).Code())
+
+	pub := packet.NewPublishPacket()
+	pub.Message.Topic = "hello"
+	pub.Message.Payload = make([]byte, 6400) // <- bigger than write buffer
+
+	err = conn2.BufferedSend(pub)
+	assert.Equal(t, NetworkError, toError(err).Code())
+
+	<-done
+}

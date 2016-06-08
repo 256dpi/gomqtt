@@ -74,6 +74,14 @@ func TestNetConnBufferedSend(t *testing.T) {
 	abstractConnBufferedSendTest(t, "tcp")
 }
 
+func TestNetConnBufferedSendAfterClose(t *testing.T) {
+	abstractConnBufferedSendAfterCloseTest(t, "tcp")
+}
+
+func TestNetConnBigBufferedSendAfterClose(t *testing.T) {
+	abstractConnBigBufferedSendAfterCloseTest(t, "tcp")
+}
+
 func TestNetConnCloseWhileReadError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublishPacket()
