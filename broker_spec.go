@@ -19,129 +19,129 @@ import (
 // broker will also be tested for properly disconnecting previous clients with
 // the same client id.
 func Spec(t *testing.T, builder func() *Broker, offline, unique bool) {
-	t.Log("Running Broker Publish Subscribe Test (QOS 0)")
+	println("Running Broker Publish Subscribe Test (QOS 0)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 0)
 
-	t.Log("Running Broker Publish Subscribe Test (QOS 1)")
+	println("Running Broker Publish Subscribe Test (QOS 1)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 1, 1)
 
-	t.Log("Running Broker Publish Subscribe Test (QOS 2)")
+	println("Running Broker Publish Subscribe Test (QOS 2)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 2, 2)
 
-	t.Log("Running Broker Publish Subscribe Test (Wildcard One)")
+	println("Running Broker Publish Subscribe Test (Wildcard One)")
 	brokerPublishSubscribeTest(t, builder(), "foo/bar", "foo/+", 0, 0)
 
-	t.Log("Running Broker Publish Subscribe Test (Wildcard Some)")
+	println("Running Broker Publish Subscribe Test (Wildcard Some)")
 	brokerPublishSubscribeTest(t, builder(), "foo/bar", "#", 0, 0)
 
-	t.Log("Running Broker Publish Subscribe Test (QOS Downgrade 1->0)")
+	println("Running Broker Publish Subscribe Test (QOS Downgrade 1->0)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 1)
 
-	t.Log("Running Broker Publish Subscribe Test (QOS Downgrade 2->0)")
+	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->0)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 2)
 
-	t.Log("Running Broker Publish Subscribe Test (QOS Downgrade 2->1)")
+	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->1)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 1, 2)
 
-	t.Log("Running Broker Unsubscribe Test (QOS 0)")
+	println("Running Broker Unsubscribe Test (QOS 0)")
 	brokerUnsubscribeTest(t, builder(), 0)
 
-	t.Log("Running Broker Unsubscribe Test (QOS 1)")
+	println("Running Broker Unsubscribe Test (QOS 1)")
 	brokerUnsubscribeTest(t, builder(), 1)
 
-	t.Log("Running Broker Unsubscribe Test (QOS 2)")
+	println("Running Broker Unsubscribe Test (QOS 2)")
 	brokerUnsubscribeTest(t, builder(), 2)
 
-	t.Log("Running Broker Subscription Upgrade Test (QOS 0->1)")
+	println("Running Broker Subscription Upgrade Test (QOS 0->1)")
 	brokerSubscriptionUpgradeTest(t, builder(), 0, 1)
 
-	t.Log("Running Broker Subscription Upgrade Test (QOS 1->2)")
+	println("Running Broker Subscription Upgrade Test (QOS 1->2)")
 	brokerSubscriptionUpgradeTest(t, builder(), 1, 2)
 
-	t.Log("Running Broker Retained Message Test (QOS 0)")
+	println("Running Broker Retained Message Test (QOS 0)")
 	brokerRetainedMessageTest(t, builder(), "test", "test", 0, 0)
 
-	t.Log("Running Broker Retained Message Test (QOS 1)")
+	println("Running Broker Retained Message Test (QOS 1)")
 	brokerRetainedMessageTest(t, builder(), "test", "test", 1, 1)
 
-	t.Log("Running Broker Retained Message Test (QOS 2)")
+	println("Running Broker Retained Message Test (QOS 2)")
 	brokerRetainedMessageTest(t, builder(), "test", "test", 2, 2)
 
-	t.Log("Running Broker Retained Message Test (Wildcard One)")
+	println("Running Broker Retained Message Test (Wildcard One)")
 	brokerRetainedMessageTest(t, builder(), "foo/bar", "foo/+", 0, 0)
 
-	t.Log("Running Broker Retained Message Test (Wildcard Some)")
+	println("Running Broker Retained Message Test (Wildcard Some)")
 	brokerRetainedMessageTest(t, builder(), "foo/bar", "#", 0, 0)
 
-	t.Log("Running Broker Clear Retained Message Test")
+	println("Running Broker Clear Retained Message Test")
 	brokerClearRetainedMessageTest(t, builder())
 
-	t.Log("Running Broker Direct Retained Message Test")
+	println("Running Broker Direct Retained Message Test")
 	brokerDirectRetainedMessageTest(t, builder())
 
-	t.Log("Running Broker Will Test (QOS 0)")
+	println("Running Broker Will Test (QOS 0)")
 	brokerWillTest(t, builder(), 0, 0)
 
-	t.Log("Running Broker Will Test (QOS 1)")
+	println("Running Broker Will Test (QOS 1)")
 	brokerWillTest(t, builder(), 1, 1)
 
-	t.Log("Running Broker Will Test (QOS 2)")
+	println("Running Broker Will Test (QOS 2)")
 	brokerWillTest(t, builder(), 2, 2)
 
 	// TODO: Test Clean Disconnect without forwarding the will.
 
-	t.Log("Running Broker Retained Will Test)")
+	println("Running Broker Retained Will Test)")
 	brokerRetainedWillTest(t, builder())
 
-	t.Log("Running Broker Authentication Test")
+	println("Running Broker Authentication Test")
 	brokerAuthenticationTest(t, builder())
 
-	t.Log("Running Broker Multiple Subscription Test")
+	println("Running Broker Multiple Subscription Test")
 	brokerMultipleSubscriptionTest(t, builder())
 
-	t.Log("Running Broker Duplicate Subscription Test")
+	println("Running Broker Duplicate Subscription Test")
 	brokerDuplicateSubscriptionTest(t, builder())
 
-	t.Log("Running Broker Stored Subscriptions Test (QOS 0)")
+	println("Running Broker Stored Subscriptions Test (QOS 0)")
 	brokerStoredSubscriptionsTest(t, builder(), 0)
 
-	t.Log("Running Broker Stored Subscriptions Test (QOS 1)")
+	println("Running Broker Stored Subscriptions Test (QOS 1)")
 	brokerStoredSubscriptionsTest(t, builder(), 1)
 
-	t.Log("Running Broker Stored Subscriptions Test (QOS 2)")
+	println("Running Broker Stored Subscriptions Test (QOS 2)")
 	brokerStoredSubscriptionsTest(t, builder(), 2)
 
-	t.Log("Running Broker Clean Stored Subscriptions Test")
+	println("Running Broker Clean Stored Subscriptions Test")
 	brokerCleanStoredSubscriptions(t, builder())
 
-	t.Log("Running Broker Remove Stored Subscription Test")
+	println("Running Broker Remove Stored Subscription Test")
 	brokerRemoveStoredSubscription(t, builder())
 
-	t.Log("Running Broker Publish Resend Test (QOS 1)")
+	println("Running Broker Publish Resend Test (QOS 1)")
 	brokerPublishResendTestQOS1(t, builder())
 
-	t.Log("Running Broker Publish Resend Test (QOS 2)")
+	println("Running Broker Publish Resend Test (QOS 2)")
 	brokerPublishResendTestQOS2(t, builder())
 
-	t.Log("Running Broker Pubrel Resend Test (QOS 2)")
+	println("Running Broker Pubrel Resend Test (QOS 2)")
 	brokerPubrelResendTestQOS2(t, builder())
 
 	if offline {
-		t.Log("Running Optional Broker Offline Subscription Test (QOS 1)")
+		println("Running Optional Broker Offline Subscription Test (QOS 1)")
 		brokerOfflineSubscriptionTest(t, builder(), 1)
 
-		t.Log("Running Optional Broker Offline Subscription Test (QOS 2)")
+		println("Running Optional Broker Offline Subscription Test (QOS 2)")
 		brokerOfflineSubscriptionTest(t, builder(), 2)
 
-		t.Log("Running Optional Broker Offline Subscription Test Retained (QOS 1)")
+		println("Running Optional Broker Offline Subscription Test Retained (QOS 1)")
 		brokerOfflineSubscriptionRetainedTest(t, builder(), 1)
 
-		t.Log("Running Optional Broker Offline Subscription Test Retained (QOS 2)")
+		println("Running Optional Broker Offline Subscription Test Retained (QOS 2)")
 		brokerOfflineSubscriptionRetainedTest(t, builder(), 2)
 	}
 
 	if unique {
-		t.Log("Running Optional Broker Unique Client ID Test")
+		println("Running Optional Broker Unique Client ID Test")
 		brokerUniqueClientIDTest(t, builder())
 	}
 }
