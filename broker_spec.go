@@ -11,14 +11,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type SpecMatrix struct {
+	RetainedMessages bool
+	StoredSubscriptions bool
+	OfflineSubscriptions bool
+	UniqueClientIDs bool
+}
+
+var FullSpecMatrix = SpecMatrix{
+	RetainedMessages: true,
+	StoredSubscriptions: true,
+	OfflineSubscriptions: true,
+	UniqueClientIDs: true,
+}
+
 // Spec will fully test a Broker with its Backend and Session implementation to
-// support all mandatory features. The passed builder callback should always
-// return a fresh instances of the Broker which should only allow the
-// "allow:allow" login. If offline=true the broker will also be tested for
-// proper support of QOS 1 and QOS 2 offline subscriptions. If unique=true the
-// broker will also be tested for properly disconnecting previous clients with
-// the same client id.
-func Spec(t *testing.T, builder func() *Broker, offline, unique bool) {
+// support all specified features in the matrix. The passed builder callback
+// should always return a fresh instances of the Broker which should only allow the
+// "allow:allow" login.
+func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 	println("Running Broker Publish Subscribe Test (QOS 0)")
 	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 0)
 
@@ -58,27 +69,6 @@ func Spec(t *testing.T, builder func() *Broker, offline, unique bool) {
 	println("Running Broker Subscription Upgrade Test (QOS 1->2)")
 	brokerSubscriptionUpgradeTest(t, builder(), 1, 2)
 
-	println("Running Broker Retained Message Test (QOS 0)")
-	brokerRetainedMessageTest(t, builder(), "test", "test", 0, 0)
-
-	println("Running Broker Retained Message Test (QOS 1)")
-	brokerRetainedMessageTest(t, builder(), "test", "test", 1, 1)
-
-	println("Running Broker Retained Message Test (QOS 2)")
-	brokerRetainedMessageTest(t, builder(), "test", "test", 2, 2)
-
-	println("Running Broker Retained Message Test (Wildcard One)")
-	brokerRetainedMessageTest(t, builder(), "foo/bar", "foo/+", 0, 0)
-
-	println("Running Broker Retained Message Test (Wildcard Some)")
-	brokerRetainedMessageTest(t, builder(), "foo/bar", "#", 0, 0)
-
-	println("Running Broker Clear Retained Message Test")
-	brokerClearRetainedMessageTest(t, builder())
-
-	println("Running Broker Direct Retained Message Test")
-	brokerDirectRetainedMessageTest(t, builder())
-
 	println("Running Broker Will Test (QOS 0)")
 	brokerWillTest(t, builder(), 0, 0)
 
@@ -90,9 +80,6 @@ func Spec(t *testing.T, builder func() *Broker, offline, unique bool) {
 
 	// TODO: Test Clean Disconnect without forwarding the will.
 
-	println("Running Broker Retained Will Test)")
-	brokerRetainedWillTest(t, builder())
-
 	println("Running Broker Authentication Test")
 	brokerAuthenticationTest(t, builder())
 
@@ -101,21 +88,6 @@ func Spec(t *testing.T, builder func() *Broker, offline, unique bool) {
 
 	println("Running Broker Duplicate Subscription Test")
 	brokerDuplicateSubscriptionTest(t, builder())
-
-	println("Running Broker Stored Subscriptions Test (QOS 0)")
-	brokerStoredSubscriptionsTest(t, builder(), 0)
-
-	println("Running Broker Stored Subscriptions Test (QOS 1)")
-	brokerStoredSubscriptionsTest(t, builder(), 1)
-
-	println("Running Broker Stored Subscriptions Test (QOS 2)")
-	brokerStoredSubscriptionsTest(t, builder(), 2)
-
-	println("Running Broker Clean Stored Subscriptions Test")
-	brokerCleanStoredSubscriptions(t, builder())
-
-	println("Running Broker Remove Stored Subscription Test")
-	brokerRemoveStoredSubscription(t, builder())
 
 	println("Running Broker Publish Resend Test (QOS 1)")
 	brokerPublishResendTestQOS1(t, builder())
@@ -126,7 +98,50 @@ func Spec(t *testing.T, builder func() *Broker, offline, unique bool) {
 	println("Running Broker Pubrel Resend Test (QOS 2)")
 	brokerPubrelResendTestQOS2(t, builder())
 
-	if offline {
+	if matrix.RetainedMessages {
+		println("Running Broker Retained Message Test (QOS 0)")
+		brokerRetainedMessageTest(t, builder(), "test", "test", 0, 0)
+
+		println("Running Broker Retained Message Test (QOS 1)")
+		brokerRetainedMessageTest(t, builder(), "test", "test", 1, 1)
+
+		println("Running Broker Retained Message Test (QOS 2)")
+		brokerRetainedMessageTest(t, builder(), "test", "test", 2, 2)
+
+		println("Running Broker Retained Message Test (Wildcard One)")
+		brokerRetainedMessageTest(t, builder(), "foo/bar", "foo/+", 0, 0)
+
+		println("Running Broker Retained Message Test (Wildcard Some)")
+		brokerRetainedMessageTest(t, builder(), "foo/bar", "#", 0, 0)
+
+		println("Running Broker Clear Retained Message Test")
+		brokerClearRetainedMessageTest(t, builder())
+
+		println("Running Broker Direct Retained Message Test")
+		brokerDirectRetainedMessageTest(t, builder())
+
+		println("Running Broker Retained Will Test)")
+		brokerRetainedWillTest(t, builder())
+	}
+
+	if matrix.StoredSubscriptions {
+		println("Running Broker Stored Subscriptions Test (QOS 0)")
+		brokerStoredSubscriptionsTest(t, builder(), 0)
+
+		println("Running Broker Stored Subscriptions Test (QOS 1)")
+		brokerStoredSubscriptionsTest(t, builder(), 1)
+
+		println("Running Broker Stored Subscriptions Test (QOS 2)")
+		brokerStoredSubscriptionsTest(t, builder(), 2)
+
+		println("Running Broker Clean Stored Subscriptions Test")
+		brokerCleanStoredSubscriptions(t, builder())
+
+		println("Running Broker Remove Stored Subscription Test")
+		brokerRemoveStoredSubscription(t, builder())
+	}
+
+	if matrix.OfflineSubscriptions {
 		println("Running Optional Broker Offline Subscription Test (QOS 1)")
 		brokerOfflineSubscriptionTest(t, builder(), 1)
 
@@ -140,7 +155,7 @@ func Spec(t *testing.T, builder func() *Broker, offline, unique bool) {
 		brokerOfflineSubscriptionRetainedTest(t, builder(), 2)
 	}
 
-	if unique {
+	if matrix.UniqueClientIDs {
 		println("Running Optional Broker Unique Client ID Test")
 		brokerUniqueClientIDTest(t, builder())
 	}
@@ -327,6 +342,8 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	// client3 should not receive any message
 
 	client3 := client.New()
+
+	// TODO: Test non-receivement?
 
 	connectFuture3, err := client3.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
@@ -812,6 +829,8 @@ func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
+	// TODO: Test non-receivement?
+
 	err = client2.Disconnect()
 	assert.NoError(t, err)
 
@@ -856,6 +875,8 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
 	publishFuture2, err := client2.Publish("test", nil, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
+
+	// TODO: Test non-receivement?
 
 	err = client2.Disconnect()
 	assert.NoError(t, err)

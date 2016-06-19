@@ -28,14 +28,14 @@ import (
 )
 
 func TestBroker(t *testing.T) {
-	Spec(t, func() *Broker {
+	Spec(t, FullSpecMatrix, func() *Broker {
 		backend := NewMemoryBackend()
 		broker := NewWithBackend(backend)
 		backend.Logins = map[string]string{
 			"allow": "allow",
 		}
 		return broker
-	}, true, true)
+	})
 }
 
 func TestConnectTimeout(t *testing.T) {
