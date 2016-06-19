@@ -43,7 +43,12 @@ func newWebSocketServer(listener net.Listener) *WebSocketServer {
 		listener: listener,
 		upgrader: &websocket.Upgrader{
 			HandshakeTimeout: 60 * time.Second,
-			Subprotocols:     []string{"mqtt"},
+			// TODO: Remove mqttv3.1?
+			Subprotocols: []string{"mqtt", "mqttv3.1"},
+			CheckOrigin: func(r *http.Request) bool {
+				// TODO: Allow override.
+				return true
+			},
 		},
 		incoming: make(chan *WebSocketConn),
 	}
