@@ -12,18 +12,18 @@ import (
 // fresh instances of the Backend. For Authentication tests, it expected that
 // the Backend allows the login "allow:allow".
 func BackendSpec(t *testing.T, builder func() Backend) {
-	t.Log("Running Backend Authentication Test")
+	println("Running Backend Authentication Test")
 	backendAuthenticationTest(t, builder())
 
-	t.Log("Running Backend Setup Test")
+	println("Running Backend Setup Test")
 	backendSetupTest(t, builder())
 
-	t.Log("Running Backend Basic Queuing Test")
+	println("Running Backend Basic Queuing Test")
 	backendBasicQueuingTest(t, builder())
 
 	// TODO: Offline Message Test?
 
-	t.Log("Running Backend Retained Messages Test")
+	println("Running Backend Retained Messages Test")
 	backendRetainedMessagesTest(t, builder())
 }
 

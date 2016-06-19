@@ -25,16 +25,16 @@ import (
 // SessionSpec will test a Session implementation. The passed builder callback
 // should always return a fresh instances of the Session.
 func SessionSpec(t *testing.T, builder func() Session) {
-	t.Log("Running Session Packet ID Test")
+	println("Running Session Packet ID Test")
 	sessionPacketIDTest(t, builder())
 
-	t.Log("Running Packet Store Test")
+	println("Running Packet Store Test")
 	sessionPacketStoreTest(t, builder())
 
-	t.Log("Running Subscription Store Test")
+	println("Running Subscription Store Test")
 	sessionSubscriptionStoreTest(t, builder())
 
-	t.Log("Running Will Store Test")
+	println("Running Will Store Test")
 	sessionWillStoreTest(t, builder())
 }
 
