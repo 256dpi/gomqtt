@@ -104,9 +104,12 @@ func TestWebSocketServerMux(t *testing.T) {
 
 	ws := server.(*WebSocketServer)
 
-	ws.Mux().HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello world!"))
 	})
+
+	ws.SetFallback(mux)
 
 	resp, err := http.Get(port.URL("http") + "/test")
 	assert.NoError(t, err)

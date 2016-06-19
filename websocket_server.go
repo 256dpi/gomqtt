@@ -31,6 +31,7 @@ var errManualClose = errors.New("manual close")
 type WebSocketServer struct {
 	listener net.Listener
 	mux      *http.ServeMux
+	fallback http.Handler
 	upgrader *websocket.Upgrader
 	incoming chan *WebSocketConn
 
@@ -91,18 +92,27 @@ func (s *WebSocketServer) serveHTTP() {
 	})
 }
 
-// Mux will return the internally used http.ServeMux.
-func (s *WebSocketServer) Mux() *http.ServeMux {
-	return s.mux
+// SetFallback will register a http.Handler that gets called if a request is not
+// a WebSocket upgrade request.
+func (s *WebSocketServer) SetFallback(handler http.Handler) {
+	s.fallback = handler
 }
 
 func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request) {
+	// run fallback if request is not an upgrade
+	if r.Header.Get("Upgrade") != "websocket" && s.fallback != nil {
+		s.fallback.ServeHTTP(w, r)
+		return
+	}
+
+	// run WebSocket upgrader
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		// upgrader already responded to request
 		return
 	}
 
+	// create connection
 	webSocketConn := NewWebSocketConn(conn)
 
 	select {
