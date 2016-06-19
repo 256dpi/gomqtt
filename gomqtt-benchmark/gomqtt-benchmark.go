@@ -17,6 +17,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -30,7 +31,7 @@ import (
 
 const interval = 1000
 
-var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
+var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")
 var duration = flag.Int("duration", 30, "duration in seconds")
 
@@ -40,7 +41,7 @@ var received = make(chan int)
 func main() {
 	flag.Parse()
 
-	fmt.Printf("Start benchmark of %s using %d Workers for %d seconds.\n", *url, *workers, *duration)
+	fmt.Printf("Start benchmark of %s using %d Workers for %d seconds.\n", *urlString, *workers, *duration)
 
 	go func() {
 		finish := make(chan os.Signal, 1)
@@ -52,7 +53,7 @@ func main() {
 	}()
 
 	if int(*duration) > 0 {
-		time.AfterFunc(time.Duration(*duration) * time.Second, func(){
+		time.AfterFunc(time.Duration(*duration)*time.Second, func() {
 			fmt.Println("Finishing...")
 			os.Exit(0)
 		})
@@ -69,7 +70,12 @@ func main() {
 }
 
 func connection(id string) transport.Conn {
-	conn, err := transport.Dial(*url)
+	conn, err := transport.Dial(*urlString)
+	if err != nil {
+		panic(err)
+	}
+
+	mqttUrl, err := url.Parse(*urlString)
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +83,13 @@ func connection(id string) transport.Conn {
 	connect := packet.NewConnectPacket()
 	connect.ClientID = "gomqtt-benchmark/" + id
 
-	err = conn.BufferedSend(connect)
+	if mqttUrl.User != nil {
+		connect.Username = mqttUrl.User.Username()
+		pw, _ := mqttUrl.User.Password()
+		connect.Password = pw
+	}
+
+	err = conn.Send(connect)
 	if err != nil {
 		panic(err)
 	}
@@ -107,7 +119,7 @@ func consumer(id string) {
 		{Topic: id, QOS: 0},
 	}
 
-	err := conn.BufferedSend(subscribe)
+	err := conn.Send(subscribe)
 	if err != nil {
 		panic(err)
 	}
