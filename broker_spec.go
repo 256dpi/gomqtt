@@ -142,21 +142,21 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 	}
 
 	if matrix.OfflineSubscriptions {
-		println("Running Optional Broker Offline Subscription Test (QOS 1)")
+		println("Running Broker Offline Subscription Test (QOS 1)")
 		brokerOfflineSubscriptionTest(t, builder(), 1)
 
-		println("Running Optional Broker Offline Subscription Test (QOS 2)")
+		println("Running Broker Offline Subscription Test (QOS 2)")
 		brokerOfflineSubscriptionTest(t, builder(), 2)
 
-		println("Running Optional Broker Offline Subscription Test Retained (QOS 1)")
+		println("Running Broker Offline Subscription Test Retained (QOS 1)")
 		brokerOfflineSubscriptionRetainedTest(t, builder(), 1)
 
-		println("Running Optional Broker Offline Subscription Test Retained (QOS 2)")
+		println("Running Broker Offline Subscription Test Retained (QOS 2)")
 		brokerOfflineSubscriptionRetainedTest(t, builder(), 2)
 	}
 
 	if matrix.UniqueClientIDs {
-		println("Running Optional Broker Unique Client ID Test")
+		println("Running Broker Unique Client ID Test")
 		brokerUniqueClientIDTest(t, builder())
 	}
 }
@@ -1249,7 +1249,6 @@ func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
 
 	client1 := client.New()
 	client1.Callback = func(msg *packet.Message, err error) {
-		println(err.Error())
 		assert.Error(t, err)
 		close(wait)
 	}
