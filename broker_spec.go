@@ -507,6 +507,17 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 	port, done := runBroker(t, broker, 1)
 
 	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "test2", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, qos, msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
 
 	connectFuture, err := client.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
@@ -514,18 +525,29 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture, err := client.Subscribe("test", qos)
+	subscribeFuture, err := client.Subscribe("test1", qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
-	unsubscribeFuture, err := client.Unsubscribe("test")
+	subscribeFuture, err = client.Subscribe("test2", qos)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
+
+	unsubscribeFuture, err := client.Unsubscribe("test1")
 	assert.NoError(t, err)
 	assert.NoError(t, unsubscribeFuture.Wait())
 
-	publishFuture, err := client.Publish("test", []byte("test"), qos, true)
+	publishFuture, err := client.Publish("test1", []byte("test"), qos, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
+
+	publishFuture, err = client.Publish("test2", []byte("test"), qos, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
 
 	err = client.Disconnect()
 	assert.NoError(t, err)
