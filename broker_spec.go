@@ -3,7 +3,6 @@ package broker
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
@@ -340,8 +339,6 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	assert.NoError(t, subscribeFuture2.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
 
-	time.Sleep(50 * time.Millisecond)
-
 	err = client3.Disconnect()
 	assert.NoError(t, err)
 
@@ -529,8 +526,6 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 	publishFuture, err := client.Publish("test", []byte("test"), qos, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
-
-	time.Sleep(50 * time.Millisecond)
 
 	err = client.Disconnect()
 	assert.NoError(t, err)
@@ -795,8 +790,6 @@ func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
-	time.Sleep(50 * time.Millisecond)
-
 	err = client2.Disconnect()
 	assert.NoError(t, err)
 
@@ -841,8 +834,6 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
 	publishFuture2, err := client2.Publish("test", nil, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
-
-	time.Sleep(50 * time.Millisecond)
 
 	err = client2.Disconnect()
 	assert.NoError(t, err)
