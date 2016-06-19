@@ -13,6 +13,7 @@ import (
 
 type SpecMatrix struct {
 	RetainedMessages bool
+	StoredSessions bool
 	StoredSubscriptions bool
 	OfflineSubscriptions bool
 	UniqueClientIDs bool
@@ -20,6 +21,7 @@ type SpecMatrix struct {
 
 var FullSpecMatrix = SpecMatrix{
 	RetainedMessages: true,
+	StoredSessions: true,
 	StoredSubscriptions: true,
 	OfflineSubscriptions: true,
 	UniqueClientIDs: true,
@@ -89,14 +91,16 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 	println("Running Broker Duplicate Subscription Test")
 	brokerDuplicateSubscriptionTest(t, builder())
 
-	println("Running Broker Publish Resend Test (QOS 1)")
-	brokerPublishResendTestQOS1(t, builder())
+	if matrix.StoredSessions {
+		println("Running Broker Publish Resend Test (QOS 1)")
+		brokerPublishResendTestQOS1(t, builder())
 
-	println("Running Broker Publish Resend Test (QOS 2)")
-	brokerPublishResendTestQOS2(t, builder())
+		println("Running Broker Publish Resend Test (QOS 2)")
+		brokerPublishResendTestQOS2(t, builder())
 
-	println("Running Broker Pubrel Resend Test (QOS 2)")
-	brokerPubrelResendTestQOS2(t, builder())
+		println("Running Broker Pubrel Resend Test (QOS 2)")
+		brokerPubrelResendTestQOS2(t, builder())
+	}
 
 	if matrix.RetainedMessages {
 		println("Running Broker Retained Message Test (QOS 0)")
