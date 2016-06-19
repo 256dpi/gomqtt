@@ -174,7 +174,7 @@ func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{
 	return port, done
 }
 
-func permitedURL(port *tools.Port) string {
+func permittedURL(port *tools.Port) string {
 	return fmt.Sprintf("tcp://allow:allow@localhost:%s/", port.Port())
 }
 
@@ -194,7 +194,7 @@ func brokerPublishSubscribeTest(t *testing.T, broker *Broker, out, in string, su
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(permitedURL(port), nil)
+	connectFuture, err := client.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -222,7 +222,7 @@ func brokerRetainedMessageTest(t *testing.T, broker *Broker, out, in string, sub
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(permitedURL(port), nil)
+	connectFuture1, err := client1.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -249,7 +249,7 @@ func brokerRetainedMessageTest(t *testing.T, broker *Broker, out, in string, sub
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -275,7 +275,7 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(permitedURL(port), nil)
+	connectFuture1, err := client1.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -304,7 +304,7 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -328,7 +328,7 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 
 	client3 := client.New()
 
-	connectFuture3, err := client3.Connect(permitedURL(port), nil)
+	connectFuture3, err := client3.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
@@ -361,7 +361,7 @@ func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(permitedURL(port), nil)
+	connectFuture, err := client.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -398,7 +398,7 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 		QOS:     pub,
 	}
 
-	connectFuture1, err := client1.Connect(permitedURL(port), opts)
+	connectFuture1, err := client1.Connect(permittedURL(port), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -419,7 +419,7 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -460,7 +460,7 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 		Retain:  true,
 	}
 
-	connectFuture1, err := client1.Connect(permitedURL(port), opts)
+	connectFuture1, err := client1.Connect(permittedURL(port), opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -484,7 +484,7 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -508,7 +508,7 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 
 	client := client.New()
 
-	connectFuture, err := client.Connect(permitedURL(port), nil)
+	connectFuture, err := client.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -549,7 +549,7 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(permitedURL(port), nil)
+	connectFuture, err := client.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -597,7 +597,7 @@ func brokerAuthenticationTest(t *testing.T, broker *Broker) {
 
 	client2 := client.New()
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -625,7 +625,7 @@ func brokerMultipleSubscriptionTest(t *testing.T, broker *Broker) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(permitedURL(port), nil)
+	connectFuture, err := client.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -670,7 +670,7 @@ func brokerDuplicateSubscriptionTest(t *testing.T, broker *Broker) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(permitedURL(port), nil)
+	connectFuture, err := client.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -707,7 +707,7 @@ func brokerStoredSubscriptionsTest(t *testing.T, broker *Broker, qos uint8) {
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(permitedURL(port), options)
+	connectFuture1, err := client1.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -735,7 +735,7 @@ func brokerStoredSubscriptionsTest(t *testing.T, broker *Broker, qos uint8) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(permitedURL(port), options)
+	connectFuture2, err := client2.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -762,7 +762,7 @@ func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker) {
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(permitedURL(port), options)
+	connectFuture1, err := client1.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -780,7 +780,7 @@ func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker) {
 
 	client2 := client.New()
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -805,7 +805,7 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(permitedURL(port), options)
+	connectFuture1, err := client1.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -825,7 +825,7 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
 
 	client2 := client.New()
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -871,7 +871,7 @@ func brokerPublishResendTestQOS1(t *testing.T, broker *Broker) {
 
 	port, done := runBroker(t, broker, 2)
 
-	conn1, err := transport.Dial(permitedURL(port))
+	conn1, err := transport.Dial(permittedURL(port))
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
@@ -886,7 +886,7 @@ func brokerPublishResendTestQOS1(t *testing.T, broker *Broker) {
 		Close().
 		Test(t, conn1)
 
-	conn2, err := transport.Dial(permitedURL(port))
+	conn2, err := transport.Dial(permittedURL(port))
 	assert.NoError(t, err)
 	assert.NotNil(t, conn2)
 
@@ -940,7 +940,7 @@ func brokerPublishResendTestQOS2(t *testing.T, broker *Broker) {
 
 	port, done := runBroker(t, broker, 2)
 
-	conn1, err := transport.Dial(permitedURL(port))
+	conn1, err := transport.Dial(permittedURL(port))
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
@@ -957,7 +957,7 @@ func brokerPublishResendTestQOS2(t *testing.T, broker *Broker) {
 		Close().
 		Test(t, conn1)
 
-	conn2, err := transport.Dial(permitedURL(port))
+	conn2, err := transport.Dial(permittedURL(port))
 	assert.NoError(t, err)
 	assert.NotNil(t, conn2)
 
@@ -1016,7 +1016,7 @@ func brokerPubrelResendTestQOS2(t *testing.T, broker *Broker) {
 
 	port, done := runBroker(t, broker, 2)
 
-	conn1, err := transport.Dial(permitedURL(port))
+	conn1, err := transport.Dial(permittedURL(port))
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
@@ -1034,7 +1034,7 @@ func brokerPubrelResendTestQOS2(t *testing.T, broker *Broker) {
 		Close().
 		Test(t, conn1)
 
-	conn2, err := transport.Dial(permitedURL(port))
+	conn2, err := transport.Dial(permittedURL(port))
 	assert.NoError(t, err)
 	assert.NotNil(t, conn2)
 
@@ -1063,7 +1063,7 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(permitedURL(port), options)
+	connectFuture1, err := client1.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -1081,7 +1081,7 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
 
 	client2 := client.New()
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -1109,7 +1109,7 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, qos uint8) {
 		close(wait)
 	}
 
-	connectFuture3, err := client3.Connect(permitedURL(port), options)
+	connectFuture3, err := client3.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
@@ -1134,7 +1134,7 @@ func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, qos uin
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(permitedURL(port), options)
+	connectFuture1, err := client1.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -1152,7 +1152,7 @@ func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, qos uin
 
 	client2 := client.New()
 
-	connectFuture2, err := client2.Connect(permitedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -1180,7 +1180,7 @@ func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, qos uin
 		close(wait)
 	}
 
-	connectFuture3, err := client3.Connect(permitedURL(port), options)
+	connectFuture3, err := client3.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
@@ -1211,7 +1211,7 @@ func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
 		close(wait)
 	}
 
-	connectFuture1, err := client1.Connect(permitedURL(port), options)
+	connectFuture1, err := client1.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -1221,7 +1221,7 @@ func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
 
 	client2 := client.New()
 
-	connectFuture2, err := client2.Connect(permitedURL(port), options)
+	connectFuture2, err := client2.Connect(permittedURL(port), options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
