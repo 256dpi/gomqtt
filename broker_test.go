@@ -28,18 +28,12 @@ import (
 )
 
 func TestBroker(t *testing.T) {
-	Spec(t, func(secure bool) *Broker {
+	Spec(t, func() *Broker {
 		backend := NewMemoryBackend()
-
-		broker := New()
-		broker.Backend = backend
-
-		if secure {
-			backend.Logins = map[string]string{
-				"allow": "allow",
-			}
+		broker := NewWithBackend(backend)
+		backend.Logins = map[string]string{
+			"allow": "allow",
 		}
-
 		return broker
 	}, true, true)
 }
