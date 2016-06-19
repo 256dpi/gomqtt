@@ -66,8 +66,13 @@ type Broker struct {
 
 // New returns a new Broker with a basic MemoryBackend.
 func New() *Broker {
+	return NewWithBackend(NewMemoryBackend())
+}
+
+// NewWithBackend returns a new Broker with a custom Backend.
+func NewWithBackend(backend Backend) *Broker {
 	return &Broker{
-		Backend:        NewMemoryBackend(),
+		Backend:        backend,
 		ConnectTimeout: 10 * time.Second,
 	}
 }
