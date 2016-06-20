@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO: Migrate session specs to broker specs?
+
 // SessionSpec will test a Session implementation. The passed builder callback
 // should always return a fresh instances of the Session.
 func SessionSpec(t *testing.T, builder func() Session) {

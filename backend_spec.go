@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO: Migrate backend specs to broker specs?
+
 // BackendSpec will test a Backend implementation. The test will test all methods
 // using a fake client. The passed builder callback should always return a
 // fresh instances of the Backend. For Authentication tests, it expected that
