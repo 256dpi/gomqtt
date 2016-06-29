@@ -22,6 +22,7 @@ import (
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/spec"
 	"github.com/gomqtt/tools"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
@@ -29,12 +30,13 @@ import (
 
 func TestBroker(t *testing.T) {
 	backend := NewMemoryBackend()
-	broker := NewWithBackend(backend)
 	backend.Logins = map[string]string{
 		"allow": "allow",
 	}
 
-	Spec(t, FullSpecMatrix, broker)
+	port, _ := runBroker(t, NewWithBackend(backend), 999)
+
+	spec.Run(t, spec.FullSpecMatrix, "localhost:"+port.Port())
 }
 
 func TestConnectTimeout(t *testing.T) {
@@ -113,4 +115,29 @@ func TestKeepAliveTimeout(t *testing.T) {
 	client.Test(t, conn)
 
 	<-done
+}
+
+func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{}) {
+	port := tools.NewPort()
+
+	server, err := transport.Launch(port.URL())
+	assert.NoError(t, err)
+
+	done := make(chan struct{})
+
+	go func() {
+		for i := 0; i < num; i++ {
+			conn, err := server.Accept()
+			assert.NoError(t, err)
+
+			broker.Handle(conn)
+		}
+
+		err := server.Close()
+		assert.NoError(t, err)
+
+		close(done)
+	}()
+
+	return port, done
 }

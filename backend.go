@@ -90,6 +90,8 @@ type MemoryBackend struct {
 
 	sessions      map[string]*MemorySession
 	sessionsMutex sync.Mutex
+
+	clients map[string]Client
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
@@ -99,6 +101,7 @@ func NewMemoryBackend() *MemoryBackend {
 		retained:     tools.NewTree(),
 		offlineQueue: tools.NewTree(),
 		sessions:     make(map[string]*MemorySession),
+		clients:      make(map[string]Client),
 	}
 }
 
@@ -137,41 +140,52 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 		return sess, false, nil
 	}
 
+	// save id
+	client.Context().Set("id", id)
+
+	// close existing client
+	existingClient, ok := m.clients[id]
+	if ok {
+		existingClient.Close(true)
+	}
+
+	// add new client
+	m.clients[id] = client
+
 	// retrieve stored session
 	sess, ok := m.sessions[id]
 
 	// when found
 	if ok {
-		// check if session already has a client
-		if sess.currentClient != nil {
-			sess.currentClient.Close(true)
-		}
-
-		// set current client
-		sess.currentClient = client
-
 		// reset session if clean is true
 		if clean {
+			// reset session
 			sess.Reset()
+
+			// remove session from store
+			delete(m.sessions, id)
 		}
 
 		// clear offline subscriptions
 		m.offlineQueue.Clear(sess)
 
-		// returned stored session
+		// assign stored session
 		client.Context().Set("session", sess)
+
 		return sess, true, nil
 	}
 
 	// create fresh session
 	sess = NewMemorySession()
-	sess.currentClient = client
 
-	// save session
-	m.sessions[id] = sess
+	// save session if not clean
+	if !clean {
+		m.sessions[id] = sess
+	}
 
-	// return new stored session
+	// assign session
 	client.Context().Set("session", sess)
+
 	return sess, false, nil
 }
 
@@ -276,12 +290,14 @@ func (m *MemoryBackend) Terminate(client Client) error {
 	// clear all subscriptions
 	m.queue.Clear(client)
 
+	// remove client from list
+	if id, ok := client.Context().Get("id").(string); ok {
+		delete(m.clients, id)
+	}
+
 	// get session
 	session, ok := client.Context().Get("session").(*MemorySession)
 	if ok {
-		// reset stored client
-		session.currentClient = nil
-
 		// check if the client has connected with clean=true
 		clean, ok := client.Context().Get("clean").(bool)
 		if ok && clean {
