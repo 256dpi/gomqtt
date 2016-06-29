@@ -3,7 +3,7 @@ package spec
 import "testing"
 
 func TestSpec(t *testing.T) {
-	matrix := FullSpecMatrix
+	matrix := FullMatrix
 
 	// mosquitto does not support authentication
 	matrix.Authentication = false

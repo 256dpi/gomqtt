@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type SpecMatrix struct {
+type Matrix struct {
 	Authentication       bool
 	RetainedMessages     bool
 	StoredSessions       bool
@@ -21,7 +21,7 @@ type SpecMatrix struct {
 	UniqueClientIDs      bool
 }
 
-var FullSpecMatrix = SpecMatrix{
+var FullMatrix = Matrix{
 	Authentication:       true,
 	RetainedMessages:     true,
 	StoredSessions:       true,
@@ -34,7 +34,7 @@ var testPayload = []byte("test")
 
 // Run will fully test a broker to support all specified features in the matrix.
 // The broker being tested should only allow the "allow:allow" login.
-func Run(t *testing.T, matrix SpecMatrix, address string) {
+func Run(t *testing.T, matrix Matrix, address string) {
 	url := fmt.Sprintf("tcp://allow:allow@%s/", address)
 
 	println("Running Broker Publish Subscribe Test (QOS 0)")
