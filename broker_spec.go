@@ -101,17 +101,6 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 
 	// TODO: Test Clean Disconnect without forwarding the will.
 
-	if matrix.StoredSessions {
-		println("Running Broker Publish Resend Test (QOS 1)")
-		brokerPublishResendTestQOS1(t, builder(), "pubres/1")
-
-		println("Running Broker Publish Resend Test (QOS 2)")
-		brokerPublishResendTestQOS2(t, builder(), "pubres/2")
-
-		println("Running Broker Pubrel Resend Test (QOS 2)")
-		brokerPubrelResendTestQOS2(t, builder(), "pubres/3")
-	}
-
 	if matrix.RetainedMessages {
 		println("Running Broker Retained Message Test (QOS 0)")
 		brokerRetainedMessageTest(t, builder(), "retained/1", "retained/1", 0, 0)
@@ -138,42 +127,53 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 		brokerRetainedWillTest(t, builder(), "retained/8")
 	}
 
+	if matrix.StoredSessions {
+		println("Running Broker Publish Resend Test (QOS 1)")
+		brokerPublishResendTestQOS1(t, builder(), "c1", "pubres/1")
+
+		println("Running Broker Publish Resend Test (QOS 2)")
+		brokerPublishResendTestQOS2(t, builder(), "c2", "pubres/2")
+
+		println("Running Broker Pubrel Resend Test (QOS 2)")
+		brokerPubrelResendTestQOS2(t, builder(), "c3", "pubres/3")
+	}
+
 	if matrix.StoredSubscriptions {
 		println("Running Broker Stored Subscriptions Test (QOS 0)")
-		brokerStoredSubscriptionsTest(t, builder(), "strdsub/1", 0)
+		brokerStoredSubscriptionsTest(t, builder(), "c4", "strdsub/1", 0)
 
 		println("Running Broker Stored Subscriptions Test (QOS 1)")
-		brokerStoredSubscriptionsTest(t, builder(), "strdsub/2", 1)
+		brokerStoredSubscriptionsTest(t, builder(), "c5", "strdsub/2", 1)
 
 		println("Running Broker Stored Subscriptions Test (QOS 2)")
-		brokerStoredSubscriptionsTest(t, builder(), "strdsub/3", 2)
+		brokerStoredSubscriptionsTest(t, builder(), "c6", "strdsub/3", 2)
 
 		println("Running Broker Clean Stored Subscriptions Test")
-		brokerCleanStoredSubscriptions(t, builder(), "strdsub/4")
+		brokerCleanStoredSubscriptions(t, builder(), "c7", "strdsub/4")
 
 		println("Running Broker Remove Stored Subscription Test")
-		brokerRemoveStoredSubscription(t, builder(), "strdsub/5")
+		brokerRemoveStoredSubscription(t, builder(), "c8", "strdsub/5")
 	}
 
 	// TODO: Add Reboot Persistence Test?
 
 	if matrix.OfflineSubscriptions {
 		println("Running Broker Offline Subscription Test (QOS 1)")
-		brokerOfflineSubscriptionTest(t, builder(), "offsub/1", 1)
+		brokerOfflineSubscriptionTest(t, builder(), "c9", "offsub/1", 1)
 
 		println("Running Broker Offline Subscription Test (QOS 2)")
-		brokerOfflineSubscriptionTest(t, builder(), "offsub/2", 2)
+		brokerOfflineSubscriptionTest(t, builder(), "c10", "offsub/2", 2)
 
 		println("Running Broker Offline Subscription Test Retained (QOS 1)")
-		brokerOfflineSubscriptionRetainedTest(t, builder(), "offsubret/1", 1)
+		brokerOfflineSubscriptionRetainedTest(t, builder(), "c11", "offsubret/1", 1)
 
 		println("Running Broker Offline Subscription Test Retained (QOS 2)")
-		brokerOfflineSubscriptionRetainedTest(t, builder(), "offsubret/2",  2)
+		brokerOfflineSubscriptionRetainedTest(t, builder(), "c12", "offsubret/2",  2)
 	}
 
 	if matrix.UniqueClientIDs {
 		println("Running Broker Unique Client ID Test")
-		brokerUniqueClientIDTest(t, builder())
+		brokerUniqueClientIDTest(t, builder(), "c13")
 	}
 }
 
@@ -794,12 +794,12 @@ func brokerDuplicateSubscriptionTest(t *testing.T, broker *Broker, topic string)
 	<-done
 }
 
-func brokerStoredSubscriptionsTest(t *testing.T, broker *Broker, topic string, qos uint8) {
+func brokerStoredSubscriptionsTest(t *testing.T, broker *Broker, id, topic string, qos uint8) {
 	port, done := runBroker(t, broker, 2)
 
 	options := client.NewOptions()
 	options.CleanSession = false
-	options.ClientID = "test"
+	options.ClientID = id
 
 	client1 := client.New()
 
@@ -849,12 +849,12 @@ func brokerStoredSubscriptionsTest(t *testing.T, broker *Broker, topic string, q
 	<-done
 }
 
-func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker, topic string) {
+func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker, id, topic string) {
 	port, done := runBroker(t, broker, 2)
 
 	options := client.NewOptions()
 	options.CleanSession = false
-	options.ClientID = "test"
+	options.ClientID = id
 
 	client1 := client.New()
 
@@ -894,12 +894,12 @@ func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker, topic string) 
 	<-done
 }
 
-func brokerRemoveStoredSubscription(t *testing.T, broker *Broker, topic string) {
+func brokerRemoveStoredSubscription(t *testing.T, broker *Broker, id, topic string) {
 	port, done := runBroker(t, broker, 2)
 
 	options := client.NewOptions()
 	options.CleanSession = false
-	options.ClientID = "test"
+	options.ClientID = id
 
 	client1 := client.New()
 
@@ -941,10 +941,10 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker, topic string) 
 	<-done
 }
 
-func brokerPublishResendTestQOS1(t *testing.T, broker *Broker, topic string) {
+func brokerPublishResendTestQOS1(t *testing.T, broker *Broker, id, topic string) {
 	connect := packet.NewConnectPacket()
 	connect.CleanSession = false
-	connect.ClientID = "test"
+	connect.ClientID = id
 	connect.Username = "allow"
 	connect.Password = "allow"
 
@@ -1004,10 +1004,10 @@ func brokerPublishResendTestQOS1(t *testing.T, broker *Broker, topic string) {
 	<-done
 }
 
-func brokerPublishResendTestQOS2(t *testing.T, broker *Broker, topic string) {
+func brokerPublishResendTestQOS2(t *testing.T, broker *Broker, id, topic string) {
 	connect := packet.NewConnectPacket()
 	connect.CleanSession = false
-	connect.ClientID = "test"
+	connect.ClientID = id
 	connect.Username = "allow"
 	connect.Password = "allow"
 
@@ -1077,10 +1077,10 @@ func brokerPublishResendTestQOS2(t *testing.T, broker *Broker, topic string) {
 	<-done
 }
 
-func brokerPubrelResendTestQOS2(t *testing.T, broker *Broker, topic string) {
+func brokerPubrelResendTestQOS2(t *testing.T, broker *Broker, id, topic string) {
 	connect := packet.NewConnectPacket()
 	connect.CleanSession = false
-	connect.ClientID = "test"
+	connect.ClientID = id
 	connect.Username = "allow"
 	connect.Password = "allow"
 
@@ -1152,12 +1152,12 @@ func brokerPubrelResendTestQOS2(t *testing.T, broker *Broker, topic string) {
 	<-done
 }
 
-func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, topic string, qos uint8) {
+func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, id, topic string, qos uint8) {
 	port, done := runBroker(t, broker, 3)
 
 	options := client.NewOptions()
 	options.CleanSession = false
-	options.ClientID = "test"
+	options.ClientID = id
 
 	/* offline subscriber */
 
@@ -1223,12 +1223,12 @@ func brokerOfflineSubscriptionTest(t *testing.T, broker *Broker, topic string, q
 	<-done
 }
 
-func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, topic string, qos uint8) {
+func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, id, topic string, qos uint8) {
 	port, done := runBroker(t, broker, 3)
 
 	options := client.NewOptions()
 	options.CleanSession = false
-	options.ClientID = "test"
+	options.ClientID = id
 
 	/* offline subscriber */
 
@@ -1294,11 +1294,11 @@ func brokerOfflineSubscriptionRetainedTest(t *testing.T, broker *Broker, topic s
 	<-done
 }
 
-func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
+func brokerUniqueClientIDTest(t *testing.T, broker *Broker, id string) {
 	port, done := runBroker(t, broker, 2)
 
 	options := client.NewOptions()
-	options.ClientID = "test"
+	options.ClientID = id
 
 	wait := make(chan struct{})
 
