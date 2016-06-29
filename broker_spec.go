@@ -560,11 +560,11 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 	assert.NoError(t, err)
 	assert.NoError(t, unsubscribeFuture.Wait())
 
-	publishFuture, err := client.Publish("test1", []byte("test"), qos, true)
+	publishFuture, err := client.Publish("test1", []byte("test"), qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
-	publishFuture, err = client.Publish("test2", []byte("test"), qos, true)
+	publishFuture, err = client.Publish("test2", []byte("test"), qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -829,7 +829,7 @@ func brokerCleanStoredSubscriptions(t *testing.T, broker *Broker) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	publishFuture2, err := client2.Publish("test", nil, 0, true)
+	publishFuture2, err := client2.Publish("test", nil, 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
@@ -876,7 +876,7 @@ func brokerRemoveStoredSubscription(t *testing.T, broker *Broker) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	publishFuture2, err := client2.Publish("test", nil, 0, true)
+	publishFuture2, err := client2.Publish("test", nil, 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
