@@ -30,72 +30,71 @@ var FullSpecMatrix = SpecMatrix{
 var testPayload = []byte("test")
 
 // Spec will fully test a Broker with its Backend and Session implementation to
-// support all specified features in the matrix. The passed builder callback
-// should always return a fresh instances of the Broker which should only allow the
-// "allow:allow" login.
-func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
+// support all specified features in the matrix. The passed broker should only
+// allow the "allow:allow" login.
+func Spec(t *testing.T, matrix SpecMatrix, broker *Broker) {
 	println("Running Broker Authentication Test")
-	brokerAuthenticationTest(t, builder())
+	brokerAuthenticationTest(t, broker)
 
 	println("Running Broker Publish Subscribe Test (QOS 0)")
-	brokerPublishSubscribeTest(t, builder(), "pubsub/1", "pubsub/1", 0, 0)
+	brokerPublishSubscribeTest(t, broker, "pubsub/1", "pubsub/1", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (QOS 1)")
-	brokerPublishSubscribeTest(t, builder(), "pubsub/2", "pubsub/2", 1, 1)
+	brokerPublishSubscribeTest(t, broker, "pubsub/2", "pubsub/2", 1, 1)
 
 	println("Running Broker Publish Subscribe Test (QOS 2)")
-	brokerPublishSubscribeTest(t, builder(), "pubsub/3", "pubsub/3", 2, 2)
+	brokerPublishSubscribeTest(t, broker, "pubsub/3", "pubsub/3", 2, 2)
 
 	println("Running Broker Publish Subscribe Test (Wildcard One)")
-	brokerPublishSubscribeTest(t, builder(), "pubsub/4/foo", "pubsub/4/+", 0, 0)
+	brokerPublishSubscribeTest(t, broker, "pubsub/4/foo", "pubsub/4/+", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (Wildcard Some)")
-	brokerPublishSubscribeTest(t, builder(), "pubsub/5/foo", "pubsub/5/#", 0, 0)
+	brokerPublishSubscribeTest(t, broker, "pubsub/5/foo", "pubsub/5/#", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 1->0)")
-	brokerPublishSubscribeTest(t, builder(), "pubsub/6", "pubsub/6", 0, 1)
+	brokerPublishSubscribeTest(t, broker, "pubsub/6", "pubsub/6", 0, 1)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->0)")
-	brokerPublishSubscribeTest(t, builder(), "pubsub/7", "pubsub/7", 0, 2)
+	brokerPublishSubscribeTest(t, broker, "pubsub/7", "pubsub/7", 0, 2)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->1)")
-	brokerPublishSubscribeTest(t, builder(), "pubsub/8", "pubsub/8", 1, 2)
+	brokerPublishSubscribeTest(t, broker, "pubsub/8", "pubsub/8", 1, 2)
 
 	println("Running Broker Unsubscribe Test (QOS 0)")
-	brokerUnsubscribeTest(t, builder(), "unsub/1", 0)
+	brokerUnsubscribeTest(t, broker, "unsub/1", 0)
 
 	println("Running Broker Unsubscribe Test (QOS 1)")
-	brokerUnsubscribeTest(t, builder(), "unsub/2", 1)
+	brokerUnsubscribeTest(t, broker, "unsub/2", 1)
 
 	println("Running Broker Unsubscribe Test (QOS 2)")
-	brokerUnsubscribeTest(t, builder(), "unsub/3", 2)
+	brokerUnsubscribeTest(t, broker, "unsub/3", 2)
 
 	println("Running Broker Subscription Upgrade Test (QOS 0->1)")
-	brokerSubscriptionUpgradeTest(t, builder(), "subup/1", 0, 1)
+	brokerSubscriptionUpgradeTest(t, broker, "subup/1", 0, 1)
 
 	println("Running Broker Subscription Upgrade Test (QOS 1->2)")
-	brokerSubscriptionUpgradeTest(t, builder(), "subup/2", 1, 2)
+	brokerSubscriptionUpgradeTest(t, broker, "subup/2", 1, 2)
 
 	println("Running Broker Overlapping Subscriptions Test (Wildcard One)")
-	brokerOverlappingSubscriptionsTest(t, builder(), "ovlsub/foo", "ovlsub/+")
+	brokerOverlappingSubscriptionsTest(t, broker, "ovlsub/foo", "ovlsub/+")
 
 	println("Running Broker Overlapping Subscriptions Test (Wildcard Some)")
-	brokerOverlappingSubscriptionsTest(t, builder(), "ovlsub/foo", "ovlsub/#")
+	brokerOverlappingSubscriptionsTest(t, broker, "ovlsub/foo", "ovlsub/#")
 
 	println("Running Broker Multiple Subscription Test")
-	brokerMultipleSubscriptionTest(t, builder(), "mulsub")
+	brokerMultipleSubscriptionTest(t, broker, "mulsub")
 
 	println("Running Broker Duplicate Subscription Test")
-	brokerDuplicateSubscriptionTest(t, builder(), "dblsub")
+	brokerDuplicateSubscriptionTest(t, broker, "dblsub")
 
 	println("Running Broker Will Test (QOS 0)")
-	brokerWillTest(t, builder(), "will/1", 0, 0)
+	brokerWillTest(t, broker, "will/1", 0, 0)
 
 	println("Running Broker Will Test (QOS 1)")
-	brokerWillTest(t, builder(), "will/2", 1, 1)
+	brokerWillTest(t, broker, "will/2", 1, 1)
 
 	println("Running Broker Will Test (QOS 2)")
-	brokerWillTest(t, builder(), "will/3", 2, 2)
+	brokerWillTest(t, broker, "will/3", 2, 2)
 
 	// TODO: Delivers old Wills in case of a crash.
 
@@ -103,79 +102,79 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 
 	if matrix.RetainedMessages {
 		println("Running Broker Retained Message Test (QOS 0)")
-		brokerRetainedMessageTest(t, builder(), "retained/1", "retained/1", 0, 0)
+		brokerRetainedMessageTest(t, broker, "retained/1", "retained/1", 0, 0)
 
 		println("Running Broker Retained Message Test (QOS 1)")
-		brokerRetainedMessageTest(t, builder(), "retained/2", "retained/2", 1, 1)
+		brokerRetainedMessageTest(t, broker, "retained/2", "retained/2", 1, 1)
 
 		println("Running Broker Retained Message Test (QOS 2)")
-		brokerRetainedMessageTest(t, builder(), "retained/3", "retained/3", 2, 2)
+		brokerRetainedMessageTest(t, broker, "retained/3", "retained/3", 2, 2)
 
 		println("Running Broker Retained Message Test (Wildcard One)")
-		brokerRetainedMessageTest(t, builder(), "retained/4/foo/bar", "retained/4/foo/+", 0, 0)
+		brokerRetainedMessageTest(t, broker, "retained/4/foo/bar", "retained/4/foo/+", 0, 0)
 
 		println("Running Broker Retained Message Test (Wildcard Some)")
-		brokerRetainedMessageTest(t, builder(), "retained/5/foo/bar", "retained/5/#", 0, 0)
+		brokerRetainedMessageTest(t, broker, "retained/5/foo/bar", "retained/5/#", 0, 0)
 
 		println("Running Broker Clear Retained Message Test")
-		brokerClearRetainedMessageTest(t, builder(), "retained/6")
+		brokerClearRetainedMessageTest(t, broker, "retained/6")
 
 		println("Running Broker Direct Retained Message Test")
-		brokerDirectRetainedMessageTest(t, builder(), "retained/7")
+		brokerDirectRetainedMessageTest(t, broker, "retained/7")
 
 		println("Running Broker Retained Will Test)")
-		brokerRetainedWillTest(t, builder(), "retained/8")
+		brokerRetainedWillTest(t, broker, "retained/8")
 	}
 
 	if matrix.StoredSessions {
 		println("Running Broker Publish Resend Test (QOS 1)")
-		brokerPublishResendTestQOS1(t, builder(), "c1", "pubres/1")
+		brokerPublishResendTestQOS1(t, broker, "c1", "pubres/1")
 
 		println("Running Broker Publish Resend Test (QOS 2)")
-		brokerPublishResendTestQOS2(t, builder(), "c2", "pubres/2")
+		brokerPublishResendTestQOS2(t, broker, "c2", "pubres/2")
 
 		println("Running Broker Pubrel Resend Test (QOS 2)")
-		brokerPubrelResendTestQOS2(t, builder(), "c3", "pubres/3")
+		brokerPubrelResendTestQOS2(t, broker, "c3", "pubres/3")
 	}
 
 	if matrix.StoredSubscriptions {
 		println("Running Broker Stored Subscriptions Test (QOS 0)")
-		brokerStoredSubscriptionsTest(t, builder(), "c4", "strdsub/1", 0)
+		brokerStoredSubscriptionsTest(t, broker, "c4", "strdsub/1", 0)
 
 		println("Running Broker Stored Subscriptions Test (QOS 1)")
-		brokerStoredSubscriptionsTest(t, builder(), "c5", "strdsub/2", 1)
+		brokerStoredSubscriptionsTest(t, broker, "c5", "strdsub/2", 1)
 
 		println("Running Broker Stored Subscriptions Test (QOS 2)")
-		brokerStoredSubscriptionsTest(t, builder(), "c6", "strdsub/3", 2)
+		brokerStoredSubscriptionsTest(t, broker, "c6", "strdsub/3", 2)
 
 		println("Running Broker Clean Stored Subscriptions Test")
-		brokerCleanStoredSubscriptions(t, builder(), "c7", "strdsub/4")
+		brokerCleanStoredSubscriptions(t, broker, "c7", "strdsub/4")
 
 		println("Running Broker Remove Stored Subscription Test")
-		brokerRemoveStoredSubscription(t, builder(), "c8", "strdsub/5")
+		brokerRemoveStoredSubscription(t, broker, "c8", "strdsub/5")
 	}
 
 	// TODO: Add Reboot Persistence Test?
 
 	if matrix.OfflineSubscriptions {
 		println("Running Broker Offline Subscription Test (QOS 1)")
-		brokerOfflineSubscriptionTest(t, builder(), "c9", "offsub/1", 1)
+		brokerOfflineSubscriptionTest(t, broker, "c9", "offsub/1", 1)
 
 		println("Running Broker Offline Subscription Test (QOS 2)")
-		brokerOfflineSubscriptionTest(t, builder(), "c10", "offsub/2", 2)
+		brokerOfflineSubscriptionTest(t, broker, "c10", "offsub/2", 2)
 	}
 
 	if matrix.OfflineSubscriptions && matrix.RetainedMessages {
 		println("Running Broker Offline Subscription Test Retained (QOS 1)")
-		brokerOfflineSubscriptionRetainedTest(t, builder(), "c11", "offsubret/1", 1)
+		brokerOfflineSubscriptionRetainedTest(t, broker, "c11", "offsubret/1", 1)
 
 		println("Running Broker Offline Subscription Test Retained (QOS 2)")
-		brokerOfflineSubscriptionRetainedTest(t, builder(), "c12", "offsubret/2",  2)
+		brokerOfflineSubscriptionRetainedTest(t, broker, "c12", "offsubret/2",  2)
 	}
 
 	if matrix.UniqueClientIDs {
 		println("Running Broker Unique Client ID Test")
-		brokerUniqueClientIDTest(t, builder(), "c13")
+		brokerUniqueClientIDTest(t, broker, "c13")
 	}
 }
 
