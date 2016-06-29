@@ -17,7 +17,3 @@ Get it using go's standard toolset:
 ```bash
 $ go get github.com/gomqtt/broker
 ```
-
-## Performance
-
-- To get the best performance and high message throughput you should consider to set `GOMAXPROCS=1`.
