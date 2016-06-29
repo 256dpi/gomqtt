@@ -30,13 +30,13 @@ func SessionSpec(t *testing.T, builder func() Session) {
 	println("Running Session Packet ID Test")
 	sessionPacketIDTest(t, builder())
 
-	println("Running Packet Store Test")
+	println("Running Session Packet Store Test")
 	sessionPacketStoreTest(t, builder())
 
-	println("Running Subscription Store Test")
+	println("Running Session Subscription Store Test")
 	sessionSubscriptionStoreTest(t, builder())
 
-	println("Running Will Store Test")
+	println("Running Session Will Store Test")
 	sessionWillStoreTest(t, builder())
 }
 
