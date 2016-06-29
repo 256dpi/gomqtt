@@ -237,57 +237,28 @@ func brokerPublishSubscribeTest(t *testing.T, broker *Broker, out, in string, su
 }
 
 func brokerRetainedMessageTest(t *testing.T, broker *Broker, out, in string, sub, pub uint8) {
-	port, done := runBroker(t, broker, 3)
+	port, done := runBroker(t, broker, 2)
 
-	checker := client.New()
-	check := make(chan struct{})
+	client1 := client.New()
 
-	checker.Callback = func(msg *packet.Message, err error) {
-		assert.NoError(t, err)
-		assert.Equal(t, out, msg.Topic)
-		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(sub), msg.QOS)
-		assert.False(t, msg.Retain)
-
-		close(check)
-	}
-
-	connectFuture, err := checker.Connect(permittedURL(port), nil)
+	connectFuture1, err := client1.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
-	subscribeFuture, err := checker.Subscribe(in, sub)
-	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
-
-	publisher := client.New()
-
-	connectFuture, err = publisher.Connect(permittedURL(port), nil)
-	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
-
-	publishFuture, err := publisher.Publish(out, []byte("test"), pub, true)
+	publishFuture, err := client1.Publish(out, []byte("test"), pub, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
-	<-check
-
-	err = publisher.Disconnect()
+	err = client1.Disconnect()
 	assert.NoError(t, err)
 
-	err = checker.Disconnect()
-	assert.NoError(t, err)
-
-	subscriber := client.New()
+	client2 := client.New()
 
 	wait := make(chan struct{})
 
-	subscriber.Callback = func(msg *packet.Message, err error) {
+	client2.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, out, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
@@ -297,20 +268,20 @@ func brokerRetainedMessageTest(t *testing.T, broker *Broker, out, in string, sub
 		close(wait)
 	}
 
-	connectFuture, err = subscriber.Connect(permittedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err = subscriber.Subscribe(in, sub)
+	subscribeFuture, err := client2.Subscribe(in, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
 
 	<-wait
 
-	err = subscriber.Disconnect()
+	err = client2.Disconnect()
 	assert.NoError(t, err)
 
 	<-done
@@ -319,26 +290,30 @@ func brokerRetainedMessageTest(t *testing.T, broker *Broker, out, in string, sub
 func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	port, done := runBroker(t, broker, 3)
 
-	publisher := client.New()
+	// client1 retains message
 
-	connectFuture, err := publisher.Connect(permittedURL(port), nil)
+	client1 := client.New()
+
+	connectFuture1, err := client1.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
-	publishFuture, err := publisher.Publish("test", []byte("test1"), 0, true)
+	publishFuture1, err := client1.Publish("test", []byte("test1"), 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture1.Wait())
 
-	err = publisher.Disconnect()
+	err = client1.Disconnect()
 	assert.NoError(t, err)
 
-	subscriber := client.New()
+	// client2 receives retained message and clears it
+
+	client2 := client.New()
 
 	wait := make(chan struct{})
 
-	subscriber.Callback = func(msg *packet.Message, err error) {
+	client2.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test1"), msg.Payload)
@@ -348,42 +323,44 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 		close(wait)
 	}
 
-	connectFuture, err = subscriber.Connect(permittedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err := subscriber.Subscribe("test", 0)
+	subscribeFuture1, err := client2.Subscribe("test", 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+	assert.NoError(t, subscribeFuture1.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
 
 	<-wait
 
-	publishFuture, err = subscriber.Publish("test", nil, 0, true)
+	publishFuture2, err := client2.Publish("test", nil, 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture2.Wait())
 
-	err = subscriber.Disconnect()
+	err = client2.Disconnect()
 	assert.NoError(t, err)
 
-	checker := client.New()
+	// client3 should not receive any message
+
+	client3 := client.New()
 
 	// TODO: Test non-receivement?
 
-	connectFuture, err = checker.Connect(permittedURL(port), nil)
+	connectFuture3, err := client3.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture3.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
+	assert.False(t, connectFuture3.SessionPresent)
 
-	subscribeFuture, err = checker.Subscribe("test", 0)
+	subscribeFuture2, err := client3.Subscribe("test", 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+	assert.NoError(t, subscribeFuture2.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
 
-	err = checker.Disconnect()
+	err = client3.Disconnect()
 	assert.NoError(t, err)
 
 	<-done
@@ -431,7 +408,9 @@ func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker) {
 func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 	port, done := runBroker(t, broker, 2)
 
-	publisher := client.New()
+	// client1 connects with a will
+
+	client1 := client.New()
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
@@ -440,16 +419,18 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 		QOS:     pub,
 	}
 
-	connectFuture, err := publisher.Connect(permittedURL(port), opts)
+	connectFuture1, err := client1.Connect(permittedURL(port), opts)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
-	subscriber := client.New()
+	// client2 subscribe to the wills topic
+
+	client2 := client.New()
 	wait := make(chan struct{})
 
-	subscriber.Callback = func(msg *packet.Message, err error) {
+	client2.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
@@ -459,27 +440,27 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 		close(wait)
 	}
 
-	connectFuture, err = subscriber.Connect(permittedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err := subscriber.Subscribe("test", sub)
+	subscribeFuture, err := client2.Subscribe("test", sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
 
 	// client1 dies
 
-	err = publisher.Close()
+	err = client1.Close()
 	assert.NoError(t, err)
 
 	// client2 should receive the message
 
 	<-wait
 
-	err = subscriber.Disconnect()
+	err = client2.Disconnect()
 	assert.NoError(t, err)
 
 	<-done
@@ -488,7 +469,9 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 	port, done := runBroker(t, broker, 2)
 
-	publisher := client.New()
+	// client1 connects with a retained will and dies
+
+	client1 := client.New()
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
@@ -498,19 +481,21 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 		Retain:  true,
 	}
 
-	connectFuture, err := publisher.Connect(permittedURL(port), opts)
+	connectFuture1, err := client1.Connect(permittedURL(port), opts)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture1.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
+	assert.False(t, connectFuture1.SessionPresent)
 
-	err = publisher.Close()
+	err = client1.Close()
 	assert.NoError(t, err)
 
-	subscriber := client.New()
+	// client2 subscribes to the wills topic and receives the retained will
+
+	client2 := client.New()
 	wait := make(chan struct{})
 
-	subscriber.Callback = func(msg *packet.Message, err error) {
+	client2.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
@@ -520,20 +505,20 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 		close(wait)
 	}
 
-	connectFuture, err = subscriber.Connect(permittedURL(port), nil)
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
-	assert.False(t, connectFuture.SessionPresent)
+	assert.NoError(t, connectFuture2.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
+	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err := subscriber.Subscribe("test", 0)
+	subscribeFuture, err := client2.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	<-wait
 
-	err = subscriber.Disconnect()
+	err = client2.Disconnect()
 	assert.NoError(t, err)
 
 	<-done
@@ -613,15 +598,15 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture, err := client.Subscribe("test", from)
+	subscribeFuture1, err := client.Subscribe("test", from)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{from}, subscribeFuture.ReturnCodes)
+	assert.NoError(t, subscribeFuture1.Wait())
+	assert.Equal(t, []uint8{from}, subscribeFuture1.ReturnCodes)
 
-	subscribeFuture, err = client.Subscribe("test", to)
+	subscribeFuture2, err := client.Subscribe("test", to)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{to}, subscribeFuture.ReturnCodes)
+	assert.NoError(t, subscribeFuture2.Wait())
+	assert.Equal(t, []uint8{to}, subscribeFuture2.ReturnCodes)
 
 	publishFuture, err := client.Publish("test", []byte("test"), to, false)
 	assert.NoError(t, err)
@@ -638,26 +623,30 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 func brokerAuthenticationTest(t *testing.T, broker *Broker) {
 	port, done := runBroker(t, broker, 2)
 
-	deniedClient := client.New()
-	deniedClient.Callback = func(msg *packet.Message, err error) {
+	// client1 should be denied
+
+	client1 := client.New()
+	client1.Callback = func(msg *packet.Message, err error) {
 		assert.Equal(t, client.ErrClientConnectionDenied, err)
 	}
 
-	connectFuture1, err := deniedClient.Connect(port.URL(), nil)
+	connectFuture1, err := client1.Connect(port.URL(), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	allowedClient := client.New()
+	// client2 should be allowed
 
-	connectFuture2, err := allowedClient.Connect(permittedURL(port), nil)
+	client2 := client.New()
+
+	connectFuture2, err := client2.Connect(permittedURL(port), nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	err = allowedClient.Disconnect()
+	err = client2.Disconnect()
 	assert.NoError(t, err)
 
 	<-done
@@ -1260,6 +1249,8 @@ func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
 
 	wait := make(chan struct{})
 
+	/* first client */
+
 	client1 := client.New()
 	client1.Callback = func(msg *packet.Message, err error) {
 		assert.Error(t, err)
@@ -1271,6 +1262,8 @@ func brokerUniqueClientIDTest(t *testing.T, broker *Broker) {
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
+
+	/* second client */
 
 	client2 := client.New()
 
