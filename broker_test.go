@@ -36,7 +36,7 @@ func TestBroker(t *testing.T) {
 
 	port, _ := runBroker(t, NewWithBackend(backend), 999)
 
-	spec.Run(t, spec.FullSpecMatrix, "localhost:"+port.Port())
+	spec.Run(t, spec.FullMatrix, "localhost:"+port.Port())
 }
 
 func TestConnectTimeout(t *testing.T) {
