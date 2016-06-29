@@ -29,6 +29,8 @@ var FullSpecMatrix = SpecMatrix{
 
 var testPayload = []byte("test")
 
+// TODO: We migh want to move this in its own package.
+
 // Spec will fully test a Broker with its Backend and Session implementation to
 // support all specified features in the matrix. The passed broker should only
 // allow the "allow:allow" login.
