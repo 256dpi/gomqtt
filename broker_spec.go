@@ -163,7 +163,9 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 
 		println("Running Broker Offline Subscription Test (QOS 2)")
 		brokerOfflineSubscriptionTest(t, builder(), "c10", "offsub/2", 2)
+	}
 
+	if matrix.OfflineSubscriptions && matrix.RetainedMessages {
 		println("Running Broker Offline Subscription Test Retained (QOS 1)")
 		brokerOfflineSubscriptionRetainedTest(t, builder(), "c11", "offsubret/1", 1)
 
