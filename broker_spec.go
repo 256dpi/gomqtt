@@ -33,55 +33,55 @@ var FullSpecMatrix = SpecMatrix{
 // "allow:allow" login.
 func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 	println("Running Broker Publish Subscribe Test (QOS 0)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 0)
+	brokerPublishSubscribeTest(t, builder(), "pubsub/1", "pubsub/1", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (QOS 1)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 1, 1)
+	brokerPublishSubscribeTest(t, builder(), "pubsub/2", "pubsub/2", 1, 1)
 
 	println("Running Broker Publish Subscribe Test (QOS 2)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 2, 2)
+	brokerPublishSubscribeTest(t, builder(), "pubsub/3", "pubsub/3", 2, 2)
 
 	println("Running Broker Publish Subscribe Test (Wildcard One)")
-	brokerPublishSubscribeTest(t, builder(), "foo/bar", "foo/+", 0, 0)
+	brokerPublishSubscribeTest(t, builder(), "pubsub/4/foo", "pubsub/4/+", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (Wildcard Some)")
-	brokerPublishSubscribeTest(t, builder(), "foo/bar", "#", 0, 0)
+	brokerPublishSubscribeTest(t, builder(), "pubsub/5/foo", "pubsub/5/#", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 1->0)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 1)
+	brokerPublishSubscribeTest(t, builder(), "pubsub/6", "pubsub/6", 0, 1)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->0)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 0, 2)
+	brokerPublishSubscribeTest(t, builder(), "pubsub/7", "pubsub/7", 0, 2)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->1)")
-	brokerPublishSubscribeTest(t, builder(), "test", "test", 1, 2)
+	brokerPublishSubscribeTest(t, builder(), "pubsub/8", "pubsub/8", 1, 2)
 
 	println("Running Broker Unsubscribe Test (QOS 0)")
-	brokerUnsubscribeTest(t, builder(), 0)
+	brokerUnsubscribeTest(t, builder(), "unsub/1/1", "pubsub/1/2", 0)
 
 	println("Running Broker Unsubscribe Test (QOS 1)")
-	brokerUnsubscribeTest(t, builder(), 1)
+	brokerUnsubscribeTest(t, builder(), "unsub/2/1", "unsub/2/2", 1)
 
 	println("Running Broker Unsubscribe Test (QOS 2)")
-	brokerUnsubscribeTest(t, builder(), 2)
+	brokerUnsubscribeTest(t, builder(), "unsub/3/1", "unsub/3/2", 2)
 
 	println("Running Broker Subscription Upgrade Test (QOS 0->1)")
-	brokerSubscriptionUpgradeTest(t, builder(), 0, 1)
+	brokerSubscriptionUpgradeTest(t, builder(), "subup/1", 0, 1)
 
 	println("Running Broker Subscription Upgrade Test (QOS 1->2)")
-	brokerSubscriptionUpgradeTest(t, builder(), 1, 2)
+	brokerSubscriptionUpgradeTest(t, builder(), "subup/2", 1, 2)
 
 	println("Running Broker Overlapping Subscriptions Tests")
-	brokerOverlappingSubscriptionsTest(t, builder())
+	brokerOverlappingSubscriptionsTest(t, builder(), "dblsub/foo", "dblsub/+")
 
 	println("Running Broker Will Test (QOS 0)")
-	brokerWillTest(t, builder(), 0, 0)
+	brokerWillTest(t, builder(), "will/1", 0, 0)
 
 	println("Running Broker Will Test (QOS 1)")
-	brokerWillTest(t, builder(), 1, 1)
+	brokerWillTest(t, builder(), "will/2", 1, 1)
 
 	println("Running Broker Will Test (QOS 2)")
-	brokerWillTest(t, builder(), 2, 2)
+	brokerWillTest(t, builder(), "will/3", 2, 2)
 
 	// TODO: Test Clean Disconnect without forwarding the will.
 
@@ -107,28 +107,28 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 
 	if matrix.RetainedMessages {
 		println("Running Broker Retained Message Test (QOS 0)")
-		brokerRetainedMessageTest(t, builder(), "test/r/1", "test/r/1", 0, 0)
+		brokerRetainedMessageTest(t, builder(), "retained/1", "retained/1", 0, 0)
 
 		println("Running Broker Retained Message Test (QOS 1)")
-		brokerRetainedMessageTest(t, builder(), "test/r/2", "test/r/2", 1, 1)
+		brokerRetainedMessageTest(t, builder(), "retained/2", "retained/2", 1, 1)
 
 		println("Running Broker Retained Message Test (QOS 2)")
-		brokerRetainedMessageTest(t, builder(), "test/r/3", "test/r/3", 2, 2)
+		brokerRetainedMessageTest(t, builder(), "retained/3", "retained/3", 2, 2)
 
 		println("Running Broker Retained Message Test (Wildcard One)")
-		brokerRetainedMessageTest(t, builder(), "test/r/4/foo/bar", "test/r/4/foo/+", 0, 0)
+		brokerRetainedMessageTest(t, builder(), "retained/4/foo/bar", "retained/4/foo/+", 0, 0)
 
 		println("Running Broker Retained Message Test (Wildcard Some)")
-		brokerRetainedMessageTest(t, builder(), "test/r/5/foo/bar", "test/r/5/#", 0, 0)
+		brokerRetainedMessageTest(t, builder(), "retained/5/foo/bar", "retained/5/#", 0, 0)
 
 		println("Running Broker Clear Retained Message Test")
-		brokerClearRetainedMessageTest(t, builder(), "test/r/6")
+		brokerClearRetainedMessageTest(t, builder(), "retained/6")
 
 		println("Running Broker Direct Retained Message Test")
-		brokerDirectRetainedMessageTest(t, builder(), "test/r/7")
+		brokerDirectRetainedMessageTest(t, builder(), "retained/7")
 
 		println("Running Broker Retained Will Test)")
-		brokerRetainedWillTest(t, builder(), "test/r/8")
+		brokerRetainedWillTest(t, builder(), "retained/8")
 	}
 
 	if matrix.StoredSubscriptions {
@@ -408,7 +408,7 @@ func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker, topic string)
 	<-done
 }
 
-func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
+func brokerWillTest(t *testing.T, broker *Broker, topic string, sub, pub uint8) {
 	port, done := runBroker(t, broker, 2)
 
 	// client1 connects with a will
@@ -417,7 +417,7 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
-		Topic:   "test",
+		Topic:   topic,
 		Payload: []byte("test"),
 		QOS:     pub,
 	}
@@ -435,7 +435,7 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 
 	client2.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(sub), msg.QOS)
 		assert.False(t, msg.Retain)
@@ -449,7 +449,7 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err := client2.Subscribe("test", sub)
+	subscribeFuture, err := client2.Subscribe(topic, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
@@ -527,7 +527,7 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker, topic string) {
 	<-done
 }
 
-func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
+func brokerUnsubscribeTest(t *testing.T, broker *Broker, topic1, topic2 string, qos uint8) {
 	port, done := runBroker(t, broker, 1)
 
 	client := client.New()
@@ -535,7 +535,7 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test2", msg.Topic)
+		assert.Equal(t, topic2, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, qos, msg.QOS)
 		assert.False(t, msg.Retain)
@@ -549,25 +549,25 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture, err := client.Subscribe("test1", qos)
+	subscribeFuture, err := client.Subscribe(topic1, qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
-	subscribeFuture, err = client.Subscribe("test2", qos)
+	subscribeFuture, err = client.Subscribe(topic2, qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
-	unsubscribeFuture, err := client.Unsubscribe("test1")
+	unsubscribeFuture, err := client.Unsubscribe(topic1)
 	assert.NoError(t, err)
 	assert.NoError(t, unsubscribeFuture.Wait())
 
-	publishFuture, err := client.Publish("test1", []byte("test"), qos, false)
+	publishFuture, err := client.Publish(topic1, []byte("test"), qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
-	publishFuture, err = client.Publish("test2", []byte("test"), qos, false)
+	publishFuture, err = client.Publish(topic2, []byte("test"), qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -579,7 +579,7 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, qos uint8) {
 	<-done
 }
 
-func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8) {
+func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, topic string, from, to uint8) {
 	port, done := runBroker(t, broker, 1)
 
 	client := client.New()
@@ -587,7 +587,7 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(to), msg.QOS)
 		assert.False(t, msg.Retain)
@@ -601,17 +601,17 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture1, err := client.Subscribe("test", from)
+	subscribeFuture1, err := client.Subscribe(topic, from)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture1.Wait())
 	assert.Equal(t, []uint8{from}, subscribeFuture1.ReturnCodes)
 
-	subscribeFuture2, err := client.Subscribe("test", to)
+	subscribeFuture2, err := client.Subscribe(topic, to)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture2.Wait())
 	assert.Equal(t, []uint8{to}, subscribeFuture2.ReturnCodes)
 
-	publishFuture, err := client.Publish("test", []byte("test"), to, false)
+	publishFuture, err := client.Publish(topic, []byte("test"), to, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -623,7 +623,7 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 	<-done
 }
 
-func brokerOverlappingSubscriptionsTest(t *testing.T, broker *Broker) {
+func brokerOverlappingSubscriptionsTest(t *testing.T, broker *Broker, pub, sub string) {
 	port, done := runBroker(t, broker, 1)
 
 	client := client.New()
@@ -631,7 +631,7 @@ func brokerOverlappingSubscriptionsTest(t *testing.T, broker *Broker) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "foo/bar", msg.Topic)
+		assert.Equal(t, pub, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, byte(0), msg.QOS)
 		assert.False(t, msg.Retain)
@@ -645,17 +645,17 @@ func brokerOverlappingSubscriptionsTest(t *testing.T, broker *Broker) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture1, err := client.Subscribe("foo/bar", 0)
+	subscribeFuture1, err := client.Subscribe(sub, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture1.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
 
-	subscribeFuture2, err := client.Subscribe("foo/+", 0)
+	subscribeFuture2, err := client.Subscribe(pub, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture2.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
 
-	publishFuture, err := client.Publish("foo/bar", []byte("test"), 0, false)
+	publishFuture, err := client.Publish(pub, []byte("test"), 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
