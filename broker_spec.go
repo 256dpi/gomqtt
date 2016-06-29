@@ -12,19 +12,19 @@ import (
 )
 
 type SpecMatrix struct {
-	RetainedMessages bool
-	StoredSessions bool
-	StoredSubscriptions bool
+	RetainedMessages     bool
+	StoredSessions       bool
+	StoredSubscriptions  bool
 	OfflineSubscriptions bool
-	UniqueClientIDs bool
+	UniqueClientIDs      bool
 }
 
 var FullSpecMatrix = SpecMatrix{
-	RetainedMessages: true,
-	StoredSessions: true,
-	StoredSubscriptions: true,
+	RetainedMessages:     true,
+	StoredSessions:       true,
+	StoredSubscriptions:  true,
 	OfflineSubscriptions: true,
-	UniqueClientIDs: true,
+	UniqueClientIDs:      true,
 }
 
 var testPayload = []byte("test")
@@ -171,7 +171,7 @@ func Spec(t *testing.T, matrix SpecMatrix, broker *Broker) {
 		brokerOfflineSubscriptionRetainedTest(t, broker, "c11", "offsubret/1", 1)
 
 		println("Running Broker Offline Subscription Test Retained (QOS 2)")
-		brokerOfflineSubscriptionRetainedTest(t, broker, "c12", "offsubret/2",  2)
+		brokerOfflineSubscriptionRetainedTest(t, broker, "c12", "offsubret/2", 2)
 	}
 
 	if matrix.UniqueClientIDs {
@@ -544,7 +544,7 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, topic string, qos uint8
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, topic + "/2", msg.Topic)
+		assert.Equal(t, topic+"/2", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
 		assert.Equal(t, qos, msg.QOS)
 		assert.False(t, msg.Retain)
@@ -558,12 +558,12 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, topic string, qos uint8
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture, err := client.Subscribe(topic + "/1", qos)
+	subscribeFuture, err := client.Subscribe(topic+"/1", qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
-	subscribeFuture, err = client.Subscribe(topic + "/2", qos)
+	subscribeFuture, err = client.Subscribe(topic+"/2", qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
@@ -572,11 +572,11 @@ func brokerUnsubscribeTest(t *testing.T, broker *Broker, topic string, qos uint8
 	assert.NoError(t, err)
 	assert.NoError(t, unsubscribeFuture.Wait())
 
-	publishFuture, err := client.Publish(topic + "/1", testPayload, qos, false)
+	publishFuture, err := client.Publish(topic+"/1", testPayload, qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
-	publishFuture, err = client.Publish(topic + "/2", testPayload, qos, false)
+	publishFuture, err = client.Publish(topic+"/2", testPayload, qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -716,7 +716,7 @@ func brokerMultipleSubscriptionTest(t *testing.T, broker *Broker, topic string) 
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, topic + "/3", msg.Topic)
+		assert.Equal(t, topic+"/3", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
 		assert.Equal(t, uint8(2), msg.QOS)
 		assert.False(t, msg.Retain)
@@ -741,7 +741,7 @@ func brokerMultipleSubscriptionTest(t *testing.T, broker *Broker, topic string) 
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0, 1, 2}, subscribeFuture.ReturnCodes)
 
-	publishFuture, err := client.Publish(topic + "/3", testPayload, 2, false)
+	publishFuture, err := client.Publish(topic+"/3", testPayload, 2, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
