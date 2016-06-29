@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/release/gomqtt/spec.svg)](https://github.com/gomqtt/spec/releases)
 [![Go Report Card](http://goreportcard.com/badge/gomqtt/spec)](http://goreportcard.com/report/gomqtt/spec)
 
-**Package spec provides a universal [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker spec implementation.**
+**Package spec provides functionality for testing [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker implementations.**
 
 _The package is currently WIP and will be available soon!_
 
