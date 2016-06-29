@@ -40,6 +40,26 @@ func TestClearSession(t *testing.T) {
 	<-done
 }
 
+func TestClearRetainedMessage(t *testing.T) {
+	publish := packet.NewPublishPacket()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = nil
+	publish.Message.Retain = true
+
+	broker := tools.NewFlow().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	ClearRetainedMessage(port.URL(), "test")
+
+	<-done
+}
+
 func TestServicePublishSubscribe(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{

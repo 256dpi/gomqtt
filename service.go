@@ -53,6 +53,36 @@ func ClearSession(url string, clientID string) error {
 	return client.Disconnect()
 }
 
+// ClearRetainedMessage will connect/disconnect and send an empty retained message.
+// This is useful in situations where its not clear if a message has already been
+// retained.
+func ClearRetainedMessage(url string, topic string) error {
+	client := New()
+
+	// connect to broker
+	future, err := client.Connect(url, nil)
+	if err != nil {
+		return err
+	}
+
+	// wait for connack
+	future.Wait()
+
+	// check if connection has been accepted
+	if future.ReturnCode != packet.ConnectionAccepted {
+		return ErrClientConnectionDenied
+	}
+
+	// clear retained message
+	_, err = client.Publish(topic, nil, 0, true)
+	if err != nil {
+		return err
+	}
+
+	// disconnect
+	return client.Disconnect()
+}
+
 type publish struct {
 	topic   string
 	payload []byte
