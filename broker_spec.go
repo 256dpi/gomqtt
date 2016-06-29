@@ -71,6 +71,9 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 	println("Running Broker Subscription Upgrade Test (QOS 1->2)")
 	brokerSubscriptionUpgradeTest(t, builder(), 1, 2)
 
+	println("Running Broker Overlapping Subscriptions Tests")
+	brokerOverlappingSubscriptionsTest(t, builder())
+
 	println("Running Broker Will Test (QOS 0)")
 	brokerWillTest(t, builder(), 0, 0)
 
@@ -609,6 +612,50 @@ func brokerSubscriptionUpgradeTest(t *testing.T, broker *Broker, from, to uint8)
 	assert.Equal(t, []uint8{to}, subscribeFuture2.ReturnCodes)
 
 	publishFuture, err := client.Publish("test", []byte("test"), to, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func brokerOverlappingSubscriptionsTest(t *testing.T, broker *Broker) {
+	port, done := runBroker(t, broker, 1)
+
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, "foo/bar", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, byte(0), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(permittedURL(port), nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subscribeFuture1, err := client.Subscribe("foo/bar", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture1.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
+
+	subscribeFuture2, err := client.Subscribe("foo/+", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture2.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
+
+	publishFuture, err := client.Publish("foo/bar", []byte("test"), 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
