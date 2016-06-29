@@ -104,28 +104,28 @@ func Spec(t *testing.T, matrix SpecMatrix, builder func() *Broker) {
 
 	if matrix.RetainedMessages {
 		println("Running Broker Retained Message Test (QOS 0)")
-		brokerRetainedMessageTest(t, builder(), "test", "test", 0, 0)
+		brokerRetainedMessageTest(t, builder(), "test/r/1", "test/r/1", 0, 0)
 
 		println("Running Broker Retained Message Test (QOS 1)")
-		brokerRetainedMessageTest(t, builder(), "test", "test", 1, 1)
+		brokerRetainedMessageTest(t, builder(), "test/r/2", "test/r/2", 1, 1)
 
 		println("Running Broker Retained Message Test (QOS 2)")
-		brokerRetainedMessageTest(t, builder(), "test", "test", 2, 2)
+		brokerRetainedMessageTest(t, builder(), "test/r/3", "test/r/3", 2, 2)
 
 		println("Running Broker Retained Message Test (Wildcard One)")
-		brokerRetainedMessageTest(t, builder(), "foo/bar", "foo/+", 0, 0)
+		brokerRetainedMessageTest(t, builder(), "test/r/4/foo/bar", "test/r/4/foo/+", 0, 0)
 
 		println("Running Broker Retained Message Test (Wildcard Some)")
-		brokerRetainedMessageTest(t, builder(), "foo/bar", "#", 0, 0)
+		brokerRetainedMessageTest(t, builder(), "test/r/5/foo/bar", "test/r/5/#", 0, 0)
 
 		println("Running Broker Clear Retained Message Test")
-		brokerClearRetainedMessageTest(t, builder())
+		brokerClearRetainedMessageTest(t, builder(), "test/r/6")
 
 		println("Running Broker Direct Retained Message Test")
-		brokerDirectRetainedMessageTest(t, builder())
+		brokerDirectRetainedMessageTest(t, builder(), "test/r/7")
 
 		println("Running Broker Retained Will Test)")
-		brokerRetainedWillTest(t, builder())
+		brokerRetainedWillTest(t, builder(), "test/r/8")
 	}
 
 	if matrix.StoredSubscriptions {
@@ -287,7 +287,7 @@ func brokerRetainedMessageTest(t *testing.T, broker *Broker, out, in string, sub
 	<-done
 }
 
-func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
+func brokerClearRetainedMessageTest(t *testing.T, broker *Broker, topic string) {
 	port, done := runBroker(t, broker, 3)
 
 	// client1 retains message
@@ -300,7 +300,7 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	publishFuture1, err := client1.Publish("test", []byte("test1"), 0, true)
+	publishFuture1, err := client1.Publish(topic, []byte("test"), 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture1.Wait())
 
@@ -315,8 +315,8 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 
 	client2.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
-		assert.Equal(t, []byte("test1"), msg.Payload)
+		assert.Equal(t, topic, msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
 		assert.True(t, msg.Retain)
 
@@ -329,14 +329,14 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture1, err := client2.Subscribe("test", 0)
+	subscribeFuture1, err := client2.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture1.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
 
 	<-wait
 
-	publishFuture2, err := client2.Publish("test", nil, 0, true)
+	publishFuture2, err := client2.Publish(topic, nil, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
@@ -355,7 +355,7 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
 	assert.False(t, connectFuture3.SessionPresent)
 
-	subscribeFuture2, err := client3.Subscribe("test", 0)
+	subscribeFuture2, err := client3.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture2.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
@@ -366,7 +366,7 @@ func brokerClearRetainedMessageTest(t *testing.T, broker *Broker) {
 	<-done
 }
 
-func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker) {
+func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker, topic string) {
 	port, done := runBroker(t, broker, 1)
 
 	client := client.New()
@@ -374,7 +374,7 @@ func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
 		assert.False(t, msg.Retain)
@@ -388,12 +388,12 @@ func brokerDirectRetainedMessageTest(t *testing.T, broker *Broker) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture, err := client.Subscribe("test", 0)
+	subscribeFuture, err := client.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
-	publishFuture, err := client.Publish("test", []byte("test"), 0, true)
+	publishFuture, err := client.Publish(topic, []byte("test"), 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -466,7 +466,7 @@ func brokerWillTest(t *testing.T, broker *Broker, sub, pub uint8) {
 	<-done
 }
 
-func brokerRetainedWillTest(t *testing.T, broker *Broker) {
+func brokerRetainedWillTest(t *testing.T, broker *Broker, topic string) {
 	port, done := runBroker(t, broker, 2)
 
 	// client1 connects with a retained will and dies
@@ -475,7 +475,7 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
-		Topic:   "test",
+		Topic:   topic,
 		Payload: []byte("test"),
 		QOS:     0,
 		Retain:  true,
@@ -497,7 +497,7 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 
 	client2.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
 		assert.True(t, msg.Retain)
@@ -511,7 +511,7 @@ func brokerRetainedWillTest(t *testing.T, broker *Broker) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err := client2.Subscribe("test", 0)
+	subscribeFuture, err := client2.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
