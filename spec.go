@@ -77,10 +77,10 @@ func Run(t *testing.T, matrix Matrix, address string) {
 	brokerSubscriptionUpgradeTest(t, url, "subup/2", 1, 2)
 
 	println("Running Broker Overlapping Subscriptions Test (Wildcard One)")
-	brokerOverlappingSubscriptionsTest(t, url, "ovlsub/foo", "ovlsub/+")
+	brokerOverlappingSubscriptionsTest(t, url, "ovlsub/1/foo", "ovlsub/1/+")
 
 	println("Running Broker Overlapping Subscriptions Test (Wildcard Some)")
-	brokerOverlappingSubscriptionsTest(t, url, "ovlsub/foo", "ovlsub/#")
+	brokerOverlappingSubscriptionsTest(t, url, "ovlsub/2/foo", "ovlsub/2/#")
 
 	println("Running Broker Multiple Subscription Test")
 	brokerMultipleSubscriptionTest(t, url, "mulsub")
