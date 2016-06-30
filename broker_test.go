@@ -34,16 +34,18 @@ func TestBroker(t *testing.T) {
 		"allow": "allow",
 	}
 
-	port, _ := runBroker(t, NewWithBackend(backend), 999)
+	port, done := runBroker(NewWithBackend(backend), 999)
 
 	spec.Run(t, spec.FullMatrix, "localhost:"+port.Port())
+
+	close(done)
 }
 
 func TestConnectTimeout(t *testing.T) {
 	broker := New()
 	broker.ConnectTimeout = 10 * time.Millisecond
 
-	port, done := runBroker(t, broker, 1)
+	port, done := runBroker(broker, 1)
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -52,13 +54,13 @@ func TestConnectTimeout(t *testing.T) {
 	assert.Nil(t, pkt)
 	assert.Error(t, err)
 
-	<-done
+	close(done)
 }
 
 func TestKeepAlive(t *testing.T) {
 	t.Parallel()
 
-	port, done := runBroker(t, New(), 1)
+	port, done := runBroker(New(), 1)
 
 	opts := client.NewOptions()
 	opts.KeepAlive = "1s"
@@ -87,10 +89,10 @@ func TestKeepAlive(t *testing.T) {
 	err = client.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
-
 	assert.Equal(t, int32(2), atomic.LoadInt32(&reqCounter))
 	assert.Equal(t, int32(2), atomic.LoadInt32(&respCounter))
+
+	close(done)
 }
 
 func TestKeepAliveTimeout(t *testing.T) {
@@ -106,7 +108,7 @@ func TestKeepAliveTimeout(t *testing.T) {
 		Receive(connack).
 		End()
 
-	port, done := runBroker(t, New(), 1)
+	port, done := runBroker(New(), 1)
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -114,29 +116,29 @@ func TestKeepAliveTimeout(t *testing.T) {
 
 	client.Test(t, conn)
 
-	<-done
+	close(done)
 }
 
-func runBroker(t *testing.T, broker *Broker, num int) (*tools.Port, chan struct{}) {
+func runBroker(broker *Broker, num int) (*tools.Port, chan struct{}) {
 	port := tools.NewPort()
 
-	server, err := transport.Launch(port.URL())
-	assert.NoError(t, err)
+	server, _ := transport.Launch(port.URL())
 
 	done := make(chan struct{})
 
 	go func() {
 		for i := 0; i < num; i++ {
-			conn, err := server.Accept()
-			assert.NoError(t, err)
+			conn, _ := server.Accept()
 
-			broker.Handle(conn)
+			if conn != nil {
+				broker.Handle(conn)
+			}
 		}
+	}()
 
-		err := server.Close()
-		assert.NoError(t, err)
-
-		close(done)
+	go func() {
+		<-done
+		server.Close()
 	}()
 
 	return port, done
