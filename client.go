@@ -163,7 +163,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	if c.clean {
 		err = c.Session.Reset()
 		if err != nil {
-			return nil, c.cleanup(err, true)
+			return nil, c.cleanup(err, true, false)
 		}
 	}
 
@@ -189,7 +189,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	// send connect packet
 	err = c.send(connect, false)
 	if err != nil {
-		return nil, c.cleanup(err, false)
+		return nil, c.cleanup(err, false, false)
 	}
 
 	// start process routine
@@ -249,14 +249,14 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 	if msg.QOS > 0 {
 		err := c.Session.SavePacket(outgoing, publish)
 		if err != nil {
-			return nil, c.cleanup(err, true)
+			return nil, c.cleanup(err, true, false)
 		}
 	}
 
 	// send packet
 	err := c.send(publish, true)
 	if err != nil {
-		return nil, c.cleanup(err, false)
+		return nil, c.cleanup(err, false, false)
 	}
 
 	// complete and remove qos 1 future
@@ -304,7 +304,7 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (*Subscr
 	// send packet
 	err := c.send(subscribe, true)
 	if err != nil {
-		return nil, c.cleanup(err, false)
+		return nil, c.cleanup(err, false, false)
 	}
 
 	return future, nil
@@ -344,7 +344,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	// send packet
 	err := c.send(unsubscribe, true)
 	if err != nil {
-		return nil, c.cleanup(err, false)
+		return nil, c.cleanup(err, false, false)
 	}
 
 	return future, nil
@@ -371,7 +371,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	// send disconnect packet
 	err := c.send(packet.NewDisconnectPacket(), false)
 
-	return c.end(err)
+	return c.end(err, true)
 }
 
 // Close closes the client immediately without sending a DisconnectPacket and
@@ -385,7 +385,7 @@ func (c *Client) Close() error {
 		return ErrClientNotConnected
 	}
 
-	return c.end(nil)
+	return c.end(nil, false)
 }
 
 /* processor goroutine */
@@ -729,7 +729,7 @@ func (c *Client) log(format string, a ...interface{}) {
 }
 
 // will try to cleanup as many resources as possible
-func (c *Client) cleanup(err error, close bool) error {
+func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	// cancel connect future if appropriate
 	if c.state.get() < clientConnacked && c.connectFuture != nil {
 		c.connectFuture.cancel()
@@ -739,9 +739,9 @@ func (c *Client) cleanup(err error, close bool) error {
 	c.state.set(clientDisconnected)
 
 	// ensure that the connection gets closed
-	if close {
+	if doClose {
 		_err := c.conn.Close()
-		if err == nil {
+		if err == nil && !possiblyClosed {
 			err = _err
 		}
 	}
@@ -763,7 +763,7 @@ func (c *Client) cleanup(err error, close bool) error {
 // used for closing and cleaning up from inside internal goroutines
 func (c *Client) die(err error, close bool) error {
 	c.finish.Do(func() {
-		err = c.cleanup(err, close)
+		err = c.cleanup(err, close, false)
 
 		if c.Callback != nil {
 			c.Callback(nil, err)
@@ -774,9 +774,9 @@ func (c *Client) die(err error, close bool) error {
 }
 
 // called by Disconnect and Close
-func (c *Client) end(err error) error {
+func (c *Client) end(err error, possiblyClosed bool) error {
 	// close connection
-	err = c.cleanup(err, true)
+	err = c.cleanup(err, true, true)
 
 	// shutdown goroutines
 	c.tomb.Kill(nil)
