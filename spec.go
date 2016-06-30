@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// A Matrix defines which features should be tested.
 type Matrix struct {
 	Authentication       bool
 	RetainedMessages     bool
@@ -21,6 +22,7 @@ type Matrix struct {
 	UniqueClientIDs      bool
 }
 
+// FullMatrix tests all available features.
 var FullMatrix = Matrix{
 	Authentication:       true,
 	RetainedMessages:     true,
@@ -29,8 +31,6 @@ var FullMatrix = Matrix{
 	OfflineSubscriptions: true,
 	UniqueClientIDs:      true,
 }
-
-var testPayload = []byte("test")
 
 // Run will fully test a broker to support all specified features in the matrix.
 // The broker being tested should only allow the "allow:allow" login.
@@ -181,6 +181,8 @@ func Run(t *testing.T, matrix Matrix, address string) {
 		brokerUniqueClientIDTest(t, url, "c13")
 	}
 }
+
+var testPayload = []byte("test")
 
 func brokerPublishSubscribeTest(t *testing.T, url string, out, in string, sub, pub uint8) {
 	client := client.New()
