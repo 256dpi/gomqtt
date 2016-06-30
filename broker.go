@@ -79,5 +79,9 @@ func NewWithBackend(backend Backend) *Broker {
 
 // Handle takes over responsibility and handles a transport.Conn.
 func (b *Broker) Handle(conn transport.Conn) {
+	if conn == nil {
+		panic("passed conn is nil")
+	}
+
 	newRemoteClient(b, conn)
 }
