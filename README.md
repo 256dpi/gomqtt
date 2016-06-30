@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/gomqtt/client/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/client?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/client?status.svg)](http://godoc.org/github.com/gomqtt/client)
 [![Release](https://img.shields.io/github/release/gomqtt/client.svg)](https://github.com/gomqtt/client/releases)
-[![Go Report Card](http://goreportcard.com/badge/gomqtt/client)](http://goreportcard.com/report/gomqtt/client)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/client)](http://goreportcard.com/report/gomqtt/client)
 
 **This go package implements functionality for communicating with a [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker.**
 
