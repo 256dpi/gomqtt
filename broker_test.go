@@ -118,28 +118,3 @@ func TestKeepAliveTimeout(t *testing.T) {
 
 	close(done)
 }
-
-func runBroker(broker *Broker, num int) (*tools.Port, chan struct{}) {
-	port := tools.NewPort()
-
-	server, _ := transport.Launch(port.URL())
-
-	done := make(chan struct{})
-
-	go func() {
-		for i := 0; i < num; i++ {
-			conn, _ := server.Accept()
-
-			if conn != nil {
-				broker.Handle(conn)
-			}
-		}
-	}()
-
-	go func() {
-		<-done
-		server.Close()
-	}()
-
-	return port, done
-}

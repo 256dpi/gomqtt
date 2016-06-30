@@ -14,12 +14,7 @@
 
 package broker
 
-import (
-	"sync"
-
-	"github.com/gomqtt/packet"
-	"github.com/satori/go.uuid"
-)
+import "sync"
 
 /* state */
 
@@ -82,36 +77,4 @@ func (c *Context) Get(key string) interface{} {
 	defer c.mutex.Unlock()
 
 	return c.store[key]
-}
-
-/* fakeClient */
-
-// a fake client for testing backend implementations
-type fakeClient struct {
-	in  []*packet.Message
-	ctx *Context
-}
-
-// returns a new fake client
-func newFakeClient() *fakeClient {
-	ctx := NewContext()
-	ctx.Set("uuid", uuid.NewV1().String())
-
-	return &fakeClient{
-		ctx: ctx,
-	}
-}
-
-// publish will append the message to the in slice
-func (c *fakeClient) Publish(msg *packet.Message) bool {
-	c.in = append(c.in, msg)
-	return true
-}
-
-// does nothing atm
-func (c *fakeClient) Close(clean bool) {}
-
-// returns the context
-func (c *fakeClient) Context() *Context {
-	return c.ctx
 }
