@@ -400,7 +400,6 @@ func (c *Client) processor() error {
 		if err != nil {
 			// if we are disconnecting we can ignore the error
 			if c.state.get() >= clientDisconnecting {
-
 				return nil
 			}
 
