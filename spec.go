@@ -97,8 +97,6 @@ func Run(t *testing.T, matrix Matrix, address string) {
 	println("Running Broker Will Test (QOS 2)")
 	brokerWillTest(t, url, "will/3", 2, 2)
 
-	// TODO: Delivers old Wills in case of a crash.
-
 	// TODO: Test Clean Disconnect without forwarding the will.
 
 	if matrix.RetainedMessages {
