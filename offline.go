@@ -17,11 +17,11 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 
 	offlineSubscribe := client.New()
 
-	connectFuture1, err := offlineSubscribe.Connect(config.URL, options)
+	connectFuture, err := offlineSubscribe.Connect(config.URL, options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture1.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
-	assert.False(t, connectFuture1.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := offlineSubscribe.Subscribe(topic, qos)
 	assert.NoError(t, err)
@@ -33,11 +33,11 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 
 	publisher := client.New()
 
-	connectFuture2, err := publisher.Connect(config.URL, nil)
+	connectFuture, err = publisher.Connect(config.URL, nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture2.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
-	assert.False(t, connectFuture2.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	publishFuture, err := publisher.Publish(topic, testPayload, qos, false)
 	assert.NoError(t, err)
@@ -59,11 +59,11 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 		close(wait)
 	}
 
-	connectFuture3, err := offlineReceiver.Connect(config.URL, options)
+	connectFuture, err = offlineReceiver.Connect(config.URL, options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture3.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
-	assert.True(t, connectFuture3.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.True(t, connectFuture.SessionPresent)
 
 	<-wait
 
@@ -81,11 +81,11 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 
 	offlineSubscriber := client.New()
 
-	connectFuture1, err := offlineSubscriber.Connect(config.URL, options)
+	connectFuture, err := offlineSubscriber.Connect(config.URL, options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture1.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
-	assert.False(t, connectFuture1.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := offlineSubscriber.Subscribe(topic, qos)
 	assert.NoError(t, err)
@@ -97,11 +97,11 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 
 	publisher := client.New()
 
-	connectFuture2, err := publisher.Connect(config.URL, nil)
+	connectFuture, err = publisher.Connect(config.URL, nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture2.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
-	assert.False(t, connectFuture2.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	publishFuture, err := publisher.Publish(topic, testPayload, qos, true)
 	assert.NoError(t, err)
@@ -123,11 +123,11 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 		close(wait)
 	}
 
-	connectFuture3, err := offlineReceiver.Connect(config.URL, options)
+	connectFuture, err = offlineReceiver.Connect(config.URL, options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture3.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
-	assert.True(t, connectFuture3.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.True(t, connectFuture.SessionPresent)
 
 	<-wait
 

@@ -111,15 +111,15 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture1, err := client.Subscribe(topic, from)
+	subscribeFuture, err := client.Subscribe(topic, from)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture1.Wait())
-	assert.Equal(t, []uint8{from}, subscribeFuture1.ReturnCodes)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{from}, subscribeFuture.ReturnCodes)
 
-	subscribeFuture2, err := client.Subscribe(topic, to)
+	subscribeFuture, err = client.Subscribe(topic, to)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture2.Wait())
-	assert.Equal(t, []uint8{to}, subscribeFuture2.ReturnCodes)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{to}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := client.Publish(topic, testPayload, to, false)
 	assert.NoError(t, err)
@@ -151,15 +151,15 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture1, err := client.Subscribe(sub, 0)
+	subscribeFuture, err := client.Subscribe(sub, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture1.Wait())
-	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
-	subscribeFuture2, err := client.Subscribe(pub, 0)
+	subscribeFuture, err = client.Subscribe(pub, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture2.Wait())
-	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := client.Publish(pub, testPayload, 0, false)
 	assert.NoError(t, err)
@@ -309,11 +309,11 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 		QOS:     pub,
 	}
 
-	connectFuture1, err := clientWithWill.Connect(config.URL, opts)
+	connectFuture, err := clientWithWill.Connect(config.URL, opts)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture1.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
-	assert.False(t, connectFuture1.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	clientReceivingWill := client.New()
 	wait := make(chan struct{})
@@ -328,11 +328,11 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 		close(wait)
 	}
 
-	connectFuture2, err := clientReceivingWill.Connect(config.URL, nil)
+	connectFuture, err = clientReceivingWill.Connect(config.URL, nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture2.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
-	assert.False(t, connectFuture2.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := clientReceivingWill.Subscribe(topic, sub)
 	assert.NoError(t, err)

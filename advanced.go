@@ -14,19 +14,19 @@ func AuthenticationTest(t *testing.T, config *Config, denyURL string) {
 		assert.Equal(t, client.ErrClientConnectionDenied, err)
 	}
 
-	connectFuture1, err := deniedClient.Connect(denyURL, nil)
+	connectFuture, err := deniedClient.Connect(denyURL, nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture1.Wait())
-	assert.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
-	assert.False(t, connectFuture1.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ErrNotAuthorized, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	allowedClient := client.New()
 
-	connectFuture2, err := allowedClient.Connect(config.URL, nil)
+	connectFuture, err = allowedClient.Connect(config.URL, nil)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture2.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
-	assert.False(t, connectFuture2.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	err = allowedClient.Disconnect()
 	assert.NoError(t, err)
@@ -46,19 +46,19 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 		close(wait)
 	}
 
-	connectFuture1, err := firstClient.Connect(config.URL, options)
+	connectFuture, err := firstClient.Connect(config.URL, options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture1.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
-	assert.False(t, connectFuture1.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	secondClient := client.New()
 
-	connectFuture2, err := secondClient.Connect(config.URL, options)
+	connectFuture, err = secondClient.Connect(config.URL, options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture2.Wait())
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
-	assert.False(t, connectFuture2.SessionPresent)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
 
 	<-wait
 
