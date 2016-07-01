@@ -223,27 +223,27 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 	options.CleanSession = false
 	options.ClientID = id
 
-	client1 := client.New()
+	subscriber := client.New()
 
-	connectFuture1, err := client1.Connect(config.URL, options)
+	connectFuture1, err := subscriber.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	subscribeFuture, err := client1.Subscribe(topic, qos)
+	subscribeFuture, err := subscriber.Subscribe(topic, qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
-	err = client1.Disconnect()
+	err = subscriber.Disconnect()
 	assert.NoError(t, err)
 
-	client2 := client.New()
+	receiver := client.New()
 
 	wait := make(chan struct{})
 
-	client2.Callback = func(msg *packet.Message, err error) {
+	receiver.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -253,19 +253,19 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(config.URL, options)
+	connectFuture2, err := receiver.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.True(t, connectFuture2.SessionPresent)
 
-	publishFuture, err := client2.Publish(topic, testPayload, qos, false)
+	publishFuture, err := receiver.Publish(topic, testPayload, qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
 	<-wait
 
-	err = client2.Disconnect()
+	err = receiver.Disconnect()
 	assert.NoError(t, err)
 }
 
@@ -276,40 +276,42 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 	options.CleanSession = false
 	options.ClientID = id
 
-	client1 := client.New()
+	subscriber := client.New()
 
-	connectFuture1, err := client1.Connect(config.URL, options)
+	connectFuture1, err := subscriber.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	subscribeFuture, err := client1.Subscribe(topic, 0)
+	subscribeFuture, err := subscriber.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
-	err = client1.Disconnect()
+	err = subscriber.Disconnect()
 	assert.NoError(t, err)
 
-	client2 := client.New()
-	client2.Callback = func(msg *packet.Message, err error) {
+	nonReceiver := client.New()
+	nonReceiver.Callback = func(msg *packet.Message, err error) {
 		assert.Fail(t, "should not be called")
 	}
 
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	// TODO: Is that test working?
+
+	connectFuture2, err := nonReceiver.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	publishFuture2, err := client2.Publish(topic, testPayload, 0, false)
+	publishFuture2, err := nonReceiver.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
 	time.Sleep(config.NoMessageWait)
 
-	err = client2.Disconnect()
+	err = nonReceiver.Disconnect()
 	assert.NoError(t, err)
 }
 
@@ -320,43 +322,43 @@ func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string
 	options.CleanSession = false
 	options.ClientID = id
 
-	client1 := client.New()
+	subscriberAndUnsubscriber := client.New()
 
-	connectFuture1, err := client1.Connect(config.URL, options)
+	connectFuture1, err := subscriberAndUnsubscriber.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	subscribeFuture, err := client1.Subscribe(topic, 0)
+	subscribeFuture, err := subscriberAndUnsubscriber.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
-	unsubscribeFuture, err := client1.Unsubscribe(topic)
+	unsubscribeFuture, err := subscriberAndUnsubscriber.Unsubscribe(topic)
 	assert.NoError(t, err)
 	assert.NoError(t, unsubscribeFuture.Wait())
 
-	err = client1.Disconnect()
+	err = subscriberAndUnsubscriber.Disconnect()
 	assert.NoError(t, err)
 
-	client2 := client.New()
-	client2.Callback = func(msg *packet.Message, err error) {
+	nonReceiver := client.New()
+	nonReceiver.Callback = func(msg *packet.Message, err error) {
 		assert.Fail(t, "should not be called")
 	}
 
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	connectFuture2, err := nonReceiver.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	publishFuture2, err := client2.Publish(topic, testPayload, 0, false)
+	publishFuture2, err := nonReceiver.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
 	time.Sleep(config.NoMessageWait)
 
-	err = client2.Disconnect()
+	err = nonReceiver.Disconnect()
 	assert.NoError(t, err)
 }
