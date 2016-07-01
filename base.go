@@ -362,3 +362,45 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	err = clientReceivingWill.Disconnect()
 	assert.NoError(t, err)
 }
+
+func CleanWillTest(t *testing.T, config *Config, topic string) {
+	clientWithWill := client.New()
+
+	opts := client.NewOptions()
+	opts.Will = &packet.Message{
+		Topic:   topic,
+		Payload: testPayload,
+		QOS:     0,
+	}
+
+	connectFuture, err := clientWithWill.Connect(config.URL, opts)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	nonReceiver := client.New()
+
+	nonReceiver.Callback = func(msg *packet.Message, err error) {
+		assert.Fail(t, "should not be called")
+	}
+
+	connectFuture, err = nonReceiver.Connect(config.URL, nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subscribeFuture, err := nonReceiver.Subscribe(topic, 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+
+	err = clientWithWill.Disconnect()
+	assert.NoError(t, err)
+
+	time.Sleep(config.NoMessageWait)
+
+	err = nonReceiver.Disconnect()
+	assert.NoError(t, err)
+}

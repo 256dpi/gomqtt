@@ -98,6 +98,9 @@ func Run(t *testing.T, config *Config) {
 	println("Running Broker Will Test (QOS 2)")
 	WillTest(t, config, "will/3", 2, 2)
 
+	println("Running Broker Clean Will Test")
+	CleanWillTest(t, config, "will/4")
+
 	// TODO: Test Clean Disconnect without forwarding the will.
 
 	if config.RetainedMessages {
