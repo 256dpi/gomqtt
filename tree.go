@@ -314,7 +314,7 @@ func (t *Tree) search(result []interface{}, i int, segments []string, node *node
 
 // clean will remove remove duplicates
 func (t *Tree) clean(values []interface{}) []interface{} {
-	result := make([]interface{}, 0, len(values))
+	result := values[:0]
 	seen := make(map[interface{}]bool, len(values))
 
 	for _, v := range values {
