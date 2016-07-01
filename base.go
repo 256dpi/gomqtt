@@ -300,9 +300,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 }
 
 func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
-	// client1 connects with a will
-
-	client1 := client.New()
+	clientWithWill := client.New()
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
@@ -311,18 +309,16 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 		QOS:     pub,
 	}
 
-	connectFuture1, err := client1.Connect(config.URL, opts)
+	connectFuture1, err := clientWithWill.Connect(config.URL, opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	// client2 subscribe to the wills topic
-
-	client2 := client.New()
+	clientReceivingWill := client.New()
 	wait := make(chan struct{})
 
-	client2.Callback = func(msg *packet.Message, err error) {
+	clientReceivingWill.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -332,26 +328,22 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	connectFuture2, err := clientReceivingWill.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err := client2.Subscribe(topic, sub)
+	subscribeFuture, err := clientReceivingWill.Subscribe(topic, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
 
-	// client1 dies
-
-	err = client1.Close()
+	err = clientWithWill.Close()
 	assert.NoError(t, err)
-
-	// client2 should receive the message
 
 	<-wait
 
-	err = client2.Disconnect()
+	err = clientReceivingWill.Disconnect()
 	assert.NoError(t, err)
 }
