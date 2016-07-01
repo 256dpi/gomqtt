@@ -265,6 +265,8 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 
 	<-wait
 
+	time.Sleep(config.NoMessageWait)
+
 	err = receiver.Disconnect()
 	assert.NoError(t, err)
 }

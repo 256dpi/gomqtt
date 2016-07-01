@@ -56,6 +56,8 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 
 	<-wait
 
+	time.Sleep(config.NoMessageWait)
+
 	err = receiver.Disconnect()
 	assert.NoError(t, err)
 }
@@ -111,6 +113,8 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	<-wait
+
+	time.Sleep(config.NoMessageWait)
 
 	publishFuture, err = receiverAndClearer.Publish(topic, nil, 0, true)
 	assert.NoError(t, err)
@@ -176,6 +180,8 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 
 	<-wait
 
+	time.Sleep(config.NoMessageWait)
+
 	err = client.Disconnect()
 	assert.NoError(t, err)
 }
@@ -229,6 +235,8 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	<-wait
+
+	time.Sleep(config.NoMessageWait)
 
 	err = receiver.Disconnect()
 	assert.NoError(t, err)

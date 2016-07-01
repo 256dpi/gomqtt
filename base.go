@@ -2,6 +2,7 @@ package spec
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
@@ -38,6 +39,8 @@ func PublishSubscribeTest(t *testing.T, config *Config, out, in string, sub, pub
 	assert.NoError(t, publishFuture.Wait())
 
 	<-wait
+
+	time.Sleep(config.NoMessageWait)
 
 	err = client.Disconnect()
 	assert.NoError(t, err)
@@ -86,6 +89,8 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 	assert.NoError(t, publishFuture.Wait())
 
 	<-wait
+
+	time.Sleep(config.NoMessageWait)
 
 	err = client.Disconnect()
 	assert.NoError(t, err)
@@ -167,6 +172,8 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 
 	<-wait
 
+	time.Sleep(config.NoMessageWait)
+
 	err = client.Disconnect()
 	assert.NoError(t, err)
 }
@@ -208,6 +215,8 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 
 	<-wait
 
+	time.Sleep(config.NoMessageWait)
+
 	err = client.Disconnect()
 	assert.NoError(t, err)
 }
@@ -247,6 +256,8 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, publishFuture.Wait())
 
 	<-wait
+
+	time.Sleep(config.NoMessageWait)
 
 	err = client.Disconnect()
 	assert.NoError(t, err)
@@ -294,6 +305,8 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, publishFuture.Wait())
 
 	<-wait
+
+	time.Sleep(config.NoMessageWait)
 
 	err = client.Disconnect()
 	assert.NoError(t, err)
@@ -343,6 +356,8 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	assert.NoError(t, err)
 
 	<-wait
+
+	time.Sleep(config.NoMessageWait)
 
 	err = clientReceivingWill.Disconnect()
 	assert.NoError(t, err)

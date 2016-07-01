@@ -2,6 +2,7 @@ package spec
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
@@ -67,6 +68,8 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 
 	<-wait
 
+	time.Sleep(config.NoMessageWait)
+
 	err = offlineReceiver.Disconnect()
 	assert.NoError(t, err)
 }
@@ -130,6 +133,8 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 	assert.True(t, connectFuture.SessionPresent)
 
 	<-wait
+
+	time.Sleep(config.NoMessageWait)
 
 	err = offlineReceiver.Disconnect()
 	assert.NoError(t, err)
