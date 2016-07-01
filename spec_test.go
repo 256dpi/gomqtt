@@ -3,10 +3,11 @@ package spec
 import "testing"
 
 func TestSpec(t *testing.T) {
-	matrix := FullMatrix
+	config := AllFeatures()
+	config.URL = "tcp://localhost:1883"
 
 	// mosquitto does not support authentication
-	matrix.Authentication = false
+	config.Authentication = false
 
-	Run(t, matrix, "localhost:1883")
+	Run(t, config)
 }

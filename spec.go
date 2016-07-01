@@ -1,8 +1,6 @@
 package spec
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/gomqtt/client"
@@ -12,8 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// A Matrix defines which features should be tested.
-type Matrix struct {
+// A Config defines which features should be tested.
+type Config struct {
+	URL     string
+	DenyURL string
+
 	Authentication       bool
 	RetainedMessages     bool
 	StoredSessions       bool
@@ -22,161 +23,161 @@ type Matrix struct {
 	UniqueClientIDs      bool
 }
 
-// FullMatrix tests all available features.
-var FullMatrix = Matrix{
-	Authentication:       true,
-	RetainedMessages:     true,
-	StoredSessions:       true,
-	StoredSubscriptions:  true,
-	OfflineSubscriptions: true,
-	UniqueClientIDs:      true,
+// AllFeatures returns a config that enables all features.
+func AllFeatures() Config {
+	return Config{
+		Authentication:       true,
+		RetainedMessages:     true,
+		StoredSessions:       true,
+		StoredSubscriptions:  true,
+		OfflineSubscriptions: true,
+		UniqueClientIDs:      true,
+	}
 }
 
 // Run will fully test a broker to support all specified features in the matrix.
 // The broker being tested should only allow the "allow:allow" login.
-func Run(t *testing.T, matrix Matrix, address string) {
-	url := fmt.Sprintf("tcp://allow:allow@%s/", address)
-
+func Run(t *testing.T, config Config) {
 	println("Running Broker Publish Subscribe Test (QOS 0)")
-	brokerPublishSubscribeTest(t, url, "pubsub/1", "pubsub/1", 0, 0)
+	brokerPublishSubscribeTest(t, config.URL, "pubsub/1", "pubsub/1", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (QOS 1)")
-	brokerPublishSubscribeTest(t, url, "pubsub/2", "pubsub/2", 1, 1)
+	brokerPublishSubscribeTest(t, config.URL, "pubsub/2", "pubsub/2", 1, 1)
 
 	println("Running Broker Publish Subscribe Test (QOS 2)")
-	brokerPublishSubscribeTest(t, url, "pubsub/3", "pubsub/3", 2, 2)
+	brokerPublishSubscribeTest(t, config.URL, "pubsub/3", "pubsub/3", 2, 2)
 
 	println("Running Broker Publish Subscribe Test (Wildcard One)")
-	brokerPublishSubscribeTest(t, url, "pubsub/4/foo", "pubsub/4/+", 0, 0)
+	brokerPublishSubscribeTest(t, config.URL, "pubsub/4/foo", "pubsub/4/+", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (Wildcard Some)")
-	brokerPublishSubscribeTest(t, url, "pubsub/5/foo", "pubsub/5/#", 0, 0)
+	brokerPublishSubscribeTest(t, config.URL, "pubsub/5/foo", "pubsub/5/#", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 1->0)")
-	brokerPublishSubscribeTest(t, url, "pubsub/6", "pubsub/6", 0, 1)
+	brokerPublishSubscribeTest(t, config.URL, "pubsub/6", "pubsub/6", 0, 1)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->0)")
-	brokerPublishSubscribeTest(t, url, "pubsub/7", "pubsub/7", 0, 2)
+	brokerPublishSubscribeTest(t, config.URL, "pubsub/7", "pubsub/7", 0, 2)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->1)")
-	brokerPublishSubscribeTest(t, url, "pubsub/8", "pubsub/8", 1, 2)
+	brokerPublishSubscribeTest(t, config.URL, "pubsub/8", "pubsub/8", 1, 2)
 
 	println("Running Broker Unsubscribe Test (QOS 0)")
-	brokerUnsubscribeTest(t, url, "unsub/1", 0)
+	brokerUnsubscribeTest(t, config.URL, "unsub/1", 0)
 
 	println("Running Broker Unsubscribe Test (QOS 1)")
-	brokerUnsubscribeTest(t, url, "unsub/2", 1)
+	brokerUnsubscribeTest(t, config.URL, "unsub/2", 1)
 
 	println("Running Broker Unsubscribe Test (QOS 2)")
-	brokerUnsubscribeTest(t, url, "unsub/3", 2)
+	brokerUnsubscribeTest(t, config.URL, "unsub/3", 2)
 
 	println("Running Broker Subscription Upgrade Test (QOS 0->1)")
-	brokerSubscriptionUpgradeTest(t, url, "subup/1", 0, 1)
+	brokerSubscriptionUpgradeTest(t, config.URL, "subup/1", 0, 1)
 
 	println("Running Broker Subscription Upgrade Test (QOS 1->2)")
-	brokerSubscriptionUpgradeTest(t, url, "subup/2", 1, 2)
+	brokerSubscriptionUpgradeTest(t, config.URL, "subup/2", 1, 2)
 
 	println("Running Broker Overlapping Subscriptions Test (Wildcard One)")
-	brokerOverlappingSubscriptionsTest(t, url, "ovlsub/1/foo", "ovlsub/1/+")
+	brokerOverlappingSubscriptionsTest(t, config.URL, "ovlsub/1/foo", "ovlsub/1/+")
 
 	println("Running Broker Overlapping Subscriptions Test (Wildcard Some)")
-	brokerOverlappingSubscriptionsTest(t, url, "ovlsub/2/foo", "ovlsub/2/#")
+	brokerOverlappingSubscriptionsTest(t, config.URL, "ovlsub/2/foo", "ovlsub/2/#")
 
 	println("Running Broker Multiple Subscription Test")
-	brokerMultipleSubscriptionTest(t, url, "mulsub")
+	brokerMultipleSubscriptionTest(t, config.URL, "mulsub")
 
 	println("Running Broker Duplicate Subscription Test")
-	brokerDuplicateSubscriptionTest(t, url, "dblsub")
+	brokerDuplicateSubscriptionTest(t, config.URL, "dblsub")
 
 	println("Running Broker Will Test (QOS 0)")
-	brokerWillTest(t, url, "will/1", 0, 0)
+	brokerWillTest(t, config.URL, "will/1", 0, 0)
 
 	println("Running Broker Will Test (QOS 1)")
-	brokerWillTest(t, url, "will/2", 1, 1)
+	brokerWillTest(t, config.URL, "will/2", 1, 1)
 
 	println("Running Broker Will Test (QOS 2)")
-	brokerWillTest(t, url, "will/3", 2, 2)
+	brokerWillTest(t, config.URL, "will/3", 2, 2)
 
 	// TODO: Test Clean Disconnect without forwarding the will.
 
-	if matrix.RetainedMessages {
+	if config.RetainedMessages {
 		println("Running Broker Retained Message Test (QOS 0)")
-		brokerRetainedMessageTest(t, url, "retained/1", "retained/1", 0, 0)
+		brokerRetainedMessageTest(t, config.URL, "retained/1", "retained/1", 0, 0)
 
 		println("Running Broker Retained Message Test (QOS 1)")
-		brokerRetainedMessageTest(t, url, "retained/2", "retained/2", 1, 1)
+		brokerRetainedMessageTest(t, config.URL, "retained/2", "retained/2", 1, 1)
 
 		println("Running Broker Retained Message Test (QOS 2)")
-		brokerRetainedMessageTest(t, url, "retained/3", "retained/3", 2, 2)
+		brokerRetainedMessageTest(t, config.URL, "retained/3", "retained/3", 2, 2)
 
 		println("Running Broker Retained Message Test (Wildcard One)")
-		brokerRetainedMessageTest(t, url, "retained/4/foo/bar", "retained/4/foo/+", 0, 0)
+		brokerRetainedMessageTest(t, config.URL, "retained/4/foo/bar", "retained/4/foo/+", 0, 0)
 
 		println("Running Broker Retained Message Test (Wildcard Some)")
-		brokerRetainedMessageTest(t, url, "retained/5/foo/bar", "retained/5/#", 0, 0)
+		brokerRetainedMessageTest(t, config.URL, "retained/5/foo/bar", "retained/5/#", 0, 0)
 
 		println("Running Broker Clear Retained Message Test")
-		brokerClearRetainedMessageTest(t, url, "retained/6")
+		brokerClearRetainedMessageTest(t, config.URL, "retained/6")
 
 		println("Running Broker Direct Retained Message Test")
-		brokerDirectRetainedMessageTest(t, url, "retained/7")
+		brokerDirectRetainedMessageTest(t, config.URL, "retained/7")
 
 		println("Running Broker Retained Will Test)")
-		brokerRetainedWillTest(t, url, "retained/8")
+		brokerRetainedWillTest(t, config.URL, "retained/8")
 	}
 
-	if matrix.StoredSessions {
+	if config.StoredSessions {
 		println("Running Broker Publish Resend Test (QOS 1)")
-		brokerPublishResendTestQOS1(t, url, "c1", "pubres/1")
+		brokerPublishResendTestQOS1(t, config.URL, "c1", "pubres/1")
 
 		println("Running Broker Publish Resend Test (QOS 2)")
-		brokerPublishResendTestQOS2(t, url, "c2", "pubres/2")
+		brokerPublishResendTestQOS2(t, config.URL, "c2", "pubres/2")
 
 		println("Running Broker Pubrel Resend Test (QOS 2)")
-		brokerPubrelResendTestQOS2(t, url, "c3", "pubres/3")
+		brokerPubrelResendTestQOS2(t, config.URL, "c3", "pubres/3")
 	}
 
-	if matrix.StoredSubscriptions {
+	if config.StoredSubscriptions {
 		println("Running Broker Stored Subscriptions Test (QOS 0)")
-		brokerStoredSubscriptionsTest(t, url, "c4", "strdsub/1", 0)
+		brokerStoredSubscriptionsTest(t, config.URL, "c4", "strdsub/1", 0)
 
 		println("Running Broker Stored Subscriptions Test (QOS 1)")
-		brokerStoredSubscriptionsTest(t, url, "c5", "strdsub/2", 1)
+		brokerStoredSubscriptionsTest(t, config.URL, "c5", "strdsub/2", 1)
 
 		println("Running Broker Stored Subscriptions Test (QOS 2)")
-		brokerStoredSubscriptionsTest(t, url, "c6", "strdsub/3", 2)
+		brokerStoredSubscriptionsTest(t, config.URL, "c6", "strdsub/3", 2)
 
 		println("Running Broker Clean Stored Subscriptions Test")
-		brokerCleanStoredSubscriptions(t, url, "c7", "strdsub/4")
+		brokerCleanStoredSubscriptions(t, config.URL, "c7", "strdsub/4")
 
 		println("Running Broker Remove Stored Subscription Test")
-		brokerRemoveStoredSubscription(t, url, "c8", "strdsub/5")
+		brokerRemoveStoredSubscription(t, config.URL, "c8", "strdsub/5")
 	}
 
-	if matrix.OfflineSubscriptions {
+	if config.OfflineSubscriptions {
 		println("Running Broker Offline Subscription Test (QOS 1)")
-		brokerOfflineSubscriptionTest(t, url, "c9", "offsub/1", 1)
+		brokerOfflineSubscriptionTest(t, config.URL, "c9", "offsub/1", 1)
 
 		println("Running Broker Offline Subscription Test (QOS 2)")
-		brokerOfflineSubscriptionTest(t, url, "c10", "offsub/2", 2)
+		brokerOfflineSubscriptionTest(t, config.URL, "c10", "offsub/2", 2)
 	}
 
-	if matrix.OfflineSubscriptions && matrix.RetainedMessages {
+	if config.OfflineSubscriptions && config.RetainedMessages {
 		println("Running Broker Offline Subscription Test Retained (QOS 1)")
-		brokerOfflineSubscriptionRetainedTest(t, url, "c11", "offsubret/1", 1)
+		brokerOfflineSubscriptionRetainedTest(t, config.URL, "c11", "offsubret/1", 1)
 
 		println("Running Broker Offline Subscription Test Retained (QOS 2)")
-		brokerOfflineSubscriptionRetainedTest(t, url, "c12", "offsubret/2", 2)
+		brokerOfflineSubscriptionRetainedTest(t, config.URL, "c12", "offsubret/2", 2)
 	}
 
-	if matrix.Authentication {
+	if config.Authentication {
 		println("Running Broker Authentication Test")
-		brokerAuthenticationTest(t, url)
+		brokerAuthenticationTest(t, config.URL, config.DenyURL)
 	}
 
-	if matrix.UniqueClientIDs {
+	if config.UniqueClientIDs {
 		println("Running Broker Unique Client ID Test")
-		brokerUniqueClientIDTest(t, url, "c13")
+		brokerUniqueClientIDTest(t, config.URL, "c13")
 	}
 }
 
@@ -622,9 +623,7 @@ func brokerOverlappingSubscriptionsTest(t *testing.T, url string, pub, sub strin
 	require.NoError(t, err)
 }
 
-func brokerAuthenticationTest(t *testing.T, url string) {
-	deniedURL := strings.Replace(url, "allow:allow", "deny:deny", -1)
-
+func brokerAuthenticationTest(t *testing.T, url, denyURL string) {
 	// client1 should be denied
 
 	client1 := client.New()
@@ -632,7 +631,7 @@ func brokerAuthenticationTest(t *testing.T, url string) {
 		require.Equal(t, client.ErrClientConnectionDenied, err)
 	}
 
-	connectFuture1, err := client1.Connect(deniedURL, nil)
+	connectFuture1, err := client1.Connect(denyURL, nil)
 	require.NoError(t, err)
 	require.NoError(t, connectFuture1.Wait())
 	require.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
