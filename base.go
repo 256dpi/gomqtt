@@ -1,11 +1,15 @@
 package spec
 
 import (
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
+	"github.com/gomqtt/tools"
+	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -403,4 +407,54 @@ func CleanWillTest(t *testing.T, config *Config, topic string) {
 
 	err = nonReceiver.Disconnect()
 	assert.NoError(t, err)
+}
+
+func KeepAliveTest(t *testing.T, config *Config) {
+	opts := client.NewOptions()
+	opts.KeepAlive = "2s" // mosquitto fails with a keep alive of 1s
+
+	client := client.New()
+
+	var reqCounter int32
+	var respCounter int32
+
+	client.Logger = func(message string) {
+		if strings.Contains(message, "Pingreq") {
+			atomic.AddInt32(&reqCounter, 1)
+		} else if strings.Contains(message, "Pingresp") {
+			atomic.AddInt32(&respCounter, 1)
+		}
+	}
+
+	connectFuture, err := client.Connect(config.URL, opts)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	time.Sleep(4500 * time.Millisecond)
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+
+	assert.Equal(t, int32(2), atomic.LoadInt32(&reqCounter))
+	assert.Equal(t, int32(2), atomic.LoadInt32(&respCounter))
+}
+
+func KeepAliveTimeoutTest(t *testing.T, config *Config) {
+	connect := packet.NewConnectPacket()
+	connect.KeepAlive = 1
+
+	connack := packet.NewConnackPacket()
+
+	client := tools.NewFlow().
+		Send(connect).
+		Receive(connack).
+		End()
+
+	conn, err := transport.Dial(config.URL)
+	assert.NoError(t, err)
+	assert.NotNil(t, conn)
+
+	client.Test(t, conn)
 }

@@ -101,7 +101,11 @@ func Run(t *testing.T, config *Config) {
 	println("Running Clean Will Test")
 	CleanWillTest(t, config, "will/4")
 
-	// TODO: Test Clean Disconnect without forwarding the will.
+	println("Running Keep Alive Test")
+	KeepAliveTest(t, config)
+
+	println("Running Keep Alive Timeout Test")
+	KeepAliveTimeoutTest(t, config)
 
 	if config.RetainedMessages {
 		println("Running Retained Message Test (QOS 0)")
