@@ -1,6 +1,9 @@
 package spec
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 var testPayload = []byte("test")
 
@@ -14,6 +17,8 @@ type Config struct {
 	StoredSessions       bool
 	OfflineSubscriptions bool
 	UniqueClientIDs      bool
+
+	MessageRetainWait time.Duration
 }
 
 // AllFeatures returns a config that enables all features.
@@ -116,7 +121,7 @@ func Run(t *testing.T, config *Config) {
 		println("Running Broker Direct Retained Message Test")
 		DirectRetainedMessageTest(t, config, "retained/7")
 
-		println("Running Broker Retained Will Test)")
+		println("Running Broker Retained Will Test")
 		RetainedWillTest(t, config, "retained/8")
 	}
 

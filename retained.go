@@ -2,6 +2,7 @@ package spec
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
@@ -22,6 +23,8 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 	publishFuture, err := client1.Publish(out, testPayload, pub, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
+
+	time.Sleep(config.MessageRetainWait)
 
 	err = client1.Disconnect()
 	assert.NoError(t, err)
@@ -70,9 +73,11 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	publishFuture1, err := client1.Publish(topic, testPayload, 1, true)
+	publishFuture1, err := client1.Publish(topic, testPayload, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture1.Wait())
+
+	time.Sleep(config.MessageRetainWait)
 
 	err = client1.Disconnect()
 	assert.NoError(t, err)
@@ -84,6 +89,11 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	wait := make(chan struct{})
 
 	client2.Callback = func(msg *packet.Message, err error) {
+		// ignore directly send message
+		if msg.Topic == topic && msg.Payload == nil {
+			return
+		}
+
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -109,6 +119,8 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	publishFuture2, err := client2.Publish(topic, nil, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
+
+	time.Sleep(config.MessageRetainWait)
 
 	err = client2.Disconnect()
 	assert.NoError(t, err)
@@ -195,6 +207,8 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 
 	err = client1.Close()
 	assert.NoError(t, err)
+
+	time.Sleep(config.MessageRetainWait)
 
 	// client2 subscribes to the wills topic and receives the retained will
 
