@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func AuthenticationTest(t *testing.T, url, denyURL string) {
+func AuthenticationTest(t *testing.T, config *Config, denyURL string) {
 	// client1 should be denied
 
 	client1 := client.New()
@@ -26,7 +26,7 @@ func AuthenticationTest(t *testing.T, url, denyURL string) {
 
 	client2 := client.New()
 
-	connectFuture2, err := client2.Connect(url, nil)
+	connectFuture2, err := client2.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -36,8 +36,8 @@ func AuthenticationTest(t *testing.T, url, denyURL string) {
 	assert.NoError(t, err)
 }
 
-func UniqueClientIDTest(t *testing.T, url string, id string) {
-	assert.NoError(t, client.ClearSession(url, id))
+func UniqueClientIDTest(t *testing.T, config *Config, id string) {
+	assert.NoError(t, client.ClearSession(config.URL, id))
 
 	options := client.NewOptions()
 	options.ClientID = id
@@ -52,7 +52,7 @@ func UniqueClientIDTest(t *testing.T, url string, id string) {
 		close(wait)
 	}
 
-	connectFuture1, err := client1.Connect(url, options)
+	connectFuture1, err := client1.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -62,7 +62,7 @@ func UniqueClientIDTest(t *testing.T, url string, id string) {
 
 	client2 := client.New()
 
-	connectFuture2, err := client2.Connect(url, options)
+	connectFuture2, err := client2.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)

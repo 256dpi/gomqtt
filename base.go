@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func PublishSubscribeTest(t *testing.T, url string, out, in string, sub, pub uint8) {
+func PublishSubscribeTest(t *testing.T, config *Config, out, in string, sub, pub uint8) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -22,7 +22,7 @@ func PublishSubscribeTest(t *testing.T, url string, out, in string, sub, pub uin
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(url, nil)
+	connectFuture, err := client.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -43,7 +43,7 @@ func PublishSubscribeTest(t *testing.T, url string, out, in string, sub, pub uin
 	assert.NoError(t, err)
 }
 
-func UnsubscribeTest(t *testing.T, url string, topic string, qos uint8) {
+func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -57,7 +57,7 @@ func UnsubscribeTest(t *testing.T, url string, topic string, qos uint8) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(url, nil)
+	connectFuture, err := client.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -91,7 +91,7 @@ func UnsubscribeTest(t *testing.T, url string, topic string, qos uint8) {
 	assert.NoError(t, err)
 }
 
-func SubscriptionUpgradeTest(t *testing.T, url string, topic string, from, to uint8) {
+func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, to uint8) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -105,7 +105,7 @@ func SubscriptionUpgradeTest(t *testing.T, url string, topic string, from, to ui
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(url, nil)
+	connectFuture, err := client.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -131,7 +131,7 @@ func SubscriptionUpgradeTest(t *testing.T, url string, topic string, from, to ui
 	assert.NoError(t, err)
 }
 
-func OverlappingSubscriptionsTest(t *testing.T, url string, pub, sub string) {
+func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -145,7 +145,7 @@ func OverlappingSubscriptionsTest(t *testing.T, url string, pub, sub string) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(url, nil)
+	connectFuture, err := client.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -171,7 +171,7 @@ func OverlappingSubscriptionsTest(t *testing.T, url string, pub, sub string) {
 	assert.NoError(t, err)
 }
 
-func MultipleSubscriptionTest(t *testing.T, url string, topic string) {
+func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -185,7 +185,7 @@ func MultipleSubscriptionTest(t *testing.T, url string, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(url, nil)
+	connectFuture, err := client.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -212,7 +212,7 @@ func MultipleSubscriptionTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func DuplicateSubscriptionTest(t *testing.T, url string, topic string) {
+func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -226,7 +226,7 @@ func DuplicateSubscriptionTest(t *testing.T, url string, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(url, nil)
+	connectFuture, err := client.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -252,7 +252,7 @@ func DuplicateSubscriptionTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func IsolatedSubscriptionTest(t *testing.T, url string, topic string) {
+func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -266,7 +266,7 @@ func IsolatedSubscriptionTest(t *testing.T, url string, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(url, nil)
+	connectFuture, err := client.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -299,7 +299,7 @@ func IsolatedSubscriptionTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func WillTest(t *testing.T, url string, topic string, sub, pub uint8) {
+func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	// client1 connects with a will
 
 	client1 := client.New()
@@ -311,7 +311,7 @@ func WillTest(t *testing.T, url string, topic string, sub, pub uint8) {
 		QOS:     pub,
 	}
 
-	connectFuture1, err := client1.Connect(url, opts)
+	connectFuture1, err := client1.Connect(config.URL, opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -332,7 +332,7 @@ func WillTest(t *testing.T, url string, topic string, sub, pub uint8) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(url, nil)
+	connectFuture2, err := client2.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)

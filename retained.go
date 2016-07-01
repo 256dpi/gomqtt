@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func RetainedMessageTest(t *testing.T, url string, out, in string, sub, pub uint8) {
-	assert.NoError(t, client.ClearRetainedMessage(url, out))
+func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub uint8) {
+	assert.NoError(t, client.ClearRetainedMessage(config.URL, out))
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(url, nil)
+	connectFuture1, err := client1.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -40,7 +40,7 @@ func RetainedMessageTest(t *testing.T, url string, out, in string, sub, pub uint
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(url, nil)
+	connectFuture2, err := client2.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -57,14 +57,14 @@ func RetainedMessageTest(t *testing.T, url string, out, in string, sub, pub uint
 	assert.NoError(t, err)
 }
 
-func ClearRetainedMessageTest(t *testing.T, url string, topic string) {
-	assert.NoError(t, client.ClearRetainedMessage(url, topic))
+func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
+	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
 	// client1 retains message
 
 	client1 := client.New()
 
-	connectFuture1, err := client1.Connect(url, nil)
+	connectFuture1, err := client1.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -93,7 +93,7 @@ func ClearRetainedMessageTest(t *testing.T, url string, topic string) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(url, nil)
+	connectFuture2, err := client2.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -120,7 +120,7 @@ func ClearRetainedMessageTest(t *testing.T, url string, topic string) {
 		assert.Fail(t, "should not be called")
 	}
 
-	connectFuture3, err := client3.Connect(url, nil)
+	connectFuture3, err := client3.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
@@ -135,8 +135,8 @@ func ClearRetainedMessageTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func DirectRetainedMessageTest(t *testing.T, url string, topic string) {
-	assert.NoError(t, client.ClearRetainedMessage(url, topic))
+func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
+	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
 	client := client.New()
 	wait := make(chan struct{})
@@ -151,7 +151,7 @@ func DirectRetainedMessageTest(t *testing.T, url string, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(url, nil)
+	connectFuture, err := client.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -172,8 +172,8 @@ func DirectRetainedMessageTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func RetainedWillTest(t *testing.T, url string, topic string) {
-	assert.NoError(t, client.ClearRetainedMessage(url, topic))
+func RetainedWillTest(t *testing.T, config *Config, topic string) {
+	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
 	// client1 connects with a retained will and dies
 
@@ -187,7 +187,7 @@ func RetainedWillTest(t *testing.T, url string, topic string) {
 		Retain:  true,
 	}
 
-	connectFuture1, err := client1.Connect(url, opts)
+	connectFuture1, err := client1.Connect(config.URL, opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
@@ -211,7 +211,7 @@ func RetainedWillTest(t *testing.T, url string, topic string) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(url, nil)
+	connectFuture2, err := client2.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
