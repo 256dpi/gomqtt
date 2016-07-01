@@ -15,6 +15,7 @@
 package broker
 
 import (
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -28,15 +29,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBroker(t *testing.T) {
+func TestBrokerTCP(t *testing.T) {
+	testBroker(t, "tcp")
+}
+
+func TestBrokerWS(t *testing.T) {
+	testBroker(t, "ws")
+}
+
+func testBroker(t *testing.T, protocol string) {
 	backend := NewMemoryBackend()
 	backend.Logins = map[string]string{
 		"allow": "allow",
 	}
 
-	port, done := runBroker(NewWithBackend(backend))
+	port, done := RunBroker(NewWithBackend(backend), protocol)
 
-	spec.Run(t, spec.FullMatrix, "localhost:"+port.Port())
+	config := spec.AllFeatures()
+	config.URL = fmt.Sprintf("%s://allow:allow@localhost:%s", protocol, port.Port())
+	config.DenyURL = fmt.Sprintf("%s://deny:deny@localhost:%s", protocol, port.Port())
+
+	spec.Run(t, config)
 
 	close(done)
 }
@@ -45,7 +58,7 @@ func TestConnectTimeout(t *testing.T) {
 	broker := New()
 	broker.ConnectTimeout = 10 * time.Millisecond
 
-	port, done := runBroker(broker)
+	port, done := RunBroker(broker, "tcp")
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -60,7 +73,7 @@ func TestConnectTimeout(t *testing.T) {
 func TestKeepAlive(t *testing.T) {
 	t.Parallel()
 
-	port, done := runBroker(New())
+	port, done := RunBroker(New(), "tcp")
 
 	opts := client.NewOptions()
 	opts.KeepAlive = "1s"
@@ -108,7 +121,7 @@ func TestKeepAliveTimeout(t *testing.T) {
 		Receive(connack).
 		End()
 
-	port, done := runBroker(New())
+	port, done := RunBroker(New(), "tcp")
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)

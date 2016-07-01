@@ -2,8 +2,6 @@ package broker
 
 import (
 	"github.com/gomqtt/packet"
-	"github.com/gomqtt/tools"
-	"github.com/gomqtt/transport"
 	"github.com/satori/go.uuid"
 )
 
@@ -35,30 +33,4 @@ func (c *fakeClient) Close(clean bool) {}
 // returns the context
 func (c *fakeClient) Context() *Context {
 	return c.ctx
-}
-
-// runs broker on a test port
-func runBroker(broker *Broker) (*tools.Port, chan struct{}) {
-	port := tools.NewPort()
-
-	server, _ := transport.Launch(port.URL())
-
-	done := make(chan struct{})
-
-	go func() {
-		for {
-			conn, _ := server.Accept()
-
-			if conn != nil {
-				broker.Handle(conn)
-			}
-		}
-	}()
-
-	go func() {
-		<-done
-		server.Close()
-	}()
-
-	return port, done
 }

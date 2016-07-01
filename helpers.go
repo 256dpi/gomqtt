@@ -14,7 +14,46 @@
 
 package broker
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/gomqtt/tools"
+	"github.com/gomqtt/transport"
+)
+
+// RunBroker runs the passed broker on a random available port and returns a
+// channel that can be closed to shutdown the broker. This method is ideal for
+// testing purposes.
+func RunBroker(broker *Broker, protocol string) (*tools.Port, chan struct{}) {
+	port := tools.NewPort()
+
+	server, err := transport.Launch(port.URL(protocol))
+	if err != nil {
+		panic(err)
+	}
+
+	done := make(chan struct{})
+
+	go func() {
+		for {
+			// errors from accept are ignored
+			conn, _ := server.Accept()
+
+			if conn != nil {
+				broker.Handle(conn)
+			}
+		}
+	}()
+
+	go func() {
+		<-done
+
+		// errors from close are ignored
+		server.Close()
+	}()
+
+	return port, done
+}
 
 /* state */
 
