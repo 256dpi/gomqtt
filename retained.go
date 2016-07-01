@@ -12,28 +12,28 @@ import (
 func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub uint8) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, out))
 
-	client1 := client.New()
+	retainer := client.New()
 
-	connectFuture1, err := client1.Connect(config.URL, nil)
+	connectFuture1, err := retainer.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	publishFuture, err := client1.Publish(out, testPayload, pub, true)
+	publishFuture, err := retainer.Publish(out, testPayload, pub, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
 	time.Sleep(config.MessageRetainWait)
 
-	err = client1.Disconnect()
+	err = retainer.Disconnect()
 	assert.NoError(t, err)
 
-	client2 := client.New()
+	receiver := client.New()
 
 	wait := make(chan struct{})
 
-	client2.Callback = func(msg *packet.Message, err error) {
+	receiver.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, out, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -43,52 +43,48 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	connectFuture2, err := receiver.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err := client2.Subscribe(in, sub)
+	subscribeFuture, err := receiver.Subscribe(in, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
 
 	<-wait
 
-	err = client2.Disconnect()
+	err = receiver.Disconnect()
 	assert.NoError(t, err)
 }
 
 func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
-	// client1 retains message
+	retainer := client.New()
 
-	client1 := client.New()
-
-	connectFuture1, err := client1.Connect(config.URL, nil)
+	connectFuture1, err := retainer.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	publishFuture1, err := client1.Publish(topic, testPayload, 0, true)
+	publishFuture1, err := retainer.Publish(topic, testPayload, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture1.Wait())
 
 	time.Sleep(config.MessageRetainWait)
 
-	err = client1.Disconnect()
+	err = retainer.Disconnect()
 	assert.NoError(t, err)
 
-	// client2 receives retained message and clears it
-
-	client2 := client.New()
+	receiverAndClearer := client.New()
 
 	wait := make(chan struct{})
 
-	client2.Callback = func(msg *packet.Message, err error) {
+	receiverAndClearer.Callback = func(msg *packet.Message, err error) {
 		// ignore directly send message
 		if msg.Topic == topic && msg.Payload == nil {
 			return
@@ -103,49 +99,47 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	connectFuture2, err := receiverAndClearer.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture1, err := client2.Subscribe(topic, 0)
+	subscribeFuture1, err := receiverAndClearer.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture1.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture1.ReturnCodes)
 
 	<-wait
 
-	publishFuture2, err := client2.Publish(topic, nil, 0, true)
+	publishFuture2, err := receiverAndClearer.Publish(topic, nil, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
 	time.Sleep(config.MessageRetainWait)
 
-	err = client2.Disconnect()
+	err = receiverAndClearer.Disconnect()
 	assert.NoError(t, err)
 
-	// client3 should not receive any message
-
-	client3 := client.New()
-	client3.Callback = func(msg *packet.Message, err error) {
+	nonReceiver := client.New()
+	nonReceiver.Callback = func(msg *packet.Message, err error) {
 		assert.Fail(t, "should not be called")
 	}
 
-	connectFuture3, err := client3.Connect(config.URL, nil)
+	connectFuture3, err := nonReceiver.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
 	assert.False(t, connectFuture3.SessionPresent)
 
-	subscribeFuture2, err := client3.Subscribe(topic, 0)
+	subscribeFuture2, err := nonReceiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture2.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
 
 	time.Sleep(config.NoMessageWait)
 
-	err = client3.Disconnect()
+	err = nonReceiver.Disconnect()
 	assert.NoError(t, err)
 }
 
@@ -189,9 +183,7 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
-	// client1 connects with a retained will and dies
-
-	client1 := client.New()
+	clientWithRetainedWill := client.New()
 
 	opts := client.NewOptions()
 	opts.Will = &packet.Message{
@@ -201,23 +193,21 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 		Retain:  true,
 	}
 
-	connectFuture1, err := client1.Connect(config.URL, opts)
+	connectFuture1, err := clientWithRetainedWill.Connect(config.URL, opts)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	err = client1.Close()
+	err = clientWithRetainedWill.Close()
 	assert.NoError(t, err)
 
 	time.Sleep(config.MessageRetainWait)
 
-	// client2 subscribes to the wills topic and receives the retained will
-
-	client2 := client.New()
+	receiver := client.New()
 	wait := make(chan struct{})
 
-	client2.Callback = func(msg *packet.Message, err error) {
+	receiver.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -227,19 +217,19 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 		close(wait)
 	}
 
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	connectFuture2, err := receiver.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	subscribeFuture, err := client2.Subscribe(topic, 0)
+	subscribeFuture, err := receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	<-wait
 
-	err = client2.Disconnect()
+	err = receiver.Disconnect()
 	assert.NoError(t, err)
 }
