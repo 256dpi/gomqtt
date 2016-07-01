@@ -61,7 +61,7 @@ func (n *node) string(i int) string {
 	return str
 }
 
-// The Tree implements a thread-safe topic tree.
+// A Tree implements a thread-safe topic tree.
 type Tree struct {
 	// The separator character. Default: "/"
 	Separator string
