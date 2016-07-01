@@ -2,6 +2,8 @@ package spec
 
 import "testing"
 
+var testPayload = []byte("test")
+
 // A Config defines which features should be tested.
 type Config struct {
 	URL     string
@@ -170,5 +172,3 @@ func Run(t *testing.T, config Config) {
 		UniqueClientIDTest(t, config.URL, "c13")
 	}
 }
-
-var testPayload = []byte("test")
