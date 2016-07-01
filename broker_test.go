@@ -48,6 +48,8 @@ func testBroker(t *testing.T, protocol string) {
 	config := spec.AllFeatures()
 	config.URL = fmt.Sprintf("%s://allow:allow@localhost:%s", protocol, port.Port())
 	config.DenyURL = fmt.Sprintf("%s://deny:deny@localhost:%s", protocol, port.Port())
+	config.NoMessageWait = 50 * time.Millisecond
+	config.MessageRetainWait = 50 * time.Millisecond
 
 	spec.Run(t, config)
 
