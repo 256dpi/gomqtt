@@ -11,7 +11,8 @@ func TestSpec(t *testing.T) {
 
 	// mosquitto specific config
 	config.Authentication = false
-	config.MessageRetainWait = 500 * time.Millisecond
+	config.MessageRetainWait = 300 * time.Millisecond
+	config.NoMessageWait = 100 * time.Millisecond
 
 	Run(t, config)
 }

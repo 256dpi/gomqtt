@@ -19,6 +19,7 @@ type Config struct {
 	UniqueClientIDs      bool
 
 	MessageRetainWait time.Duration
+	NoMessageWait     time.Duration
 }
 
 // AllFeatures returns a config that enables all features.

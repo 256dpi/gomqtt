@@ -143,6 +143,8 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, subscribeFuture2.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture2.ReturnCodes)
 
+	time.Sleep(config.NoMessageWait)
+
 	err = client3.Disconnect()
 	assert.NoError(t, err)
 }

@@ -2,6 +2,7 @@ package spec
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
@@ -306,6 +307,8 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
 
+	time.Sleep(config.NoMessageWait)
+
 	err = client2.Disconnect()
 	assert.NoError(t, err)
 }
@@ -351,6 +354,8 @@ func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string
 	publishFuture2, err := client2.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture2.Wait())
+
+	time.Sleep(config.NoMessageWait)
 
 	err = client2.Disconnect()
 	assert.NoError(t, err)
