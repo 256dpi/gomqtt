@@ -28,7 +28,6 @@ type node struct {
 func newNode() *node {
 	return &node{
 		children: make(map[string]*node),
-		values:   make([]interface{}, 0),
 	}
 }
 
@@ -44,7 +43,7 @@ func (n *node) removeValue(value interface{}) {
 }
 
 func (n *node) clearValues() {
-	n.values = make([]interface{}, 0)
+	n.values = []interface{}{}
 }
 
 func (n *node) string(i int) string {
@@ -227,7 +226,7 @@ func (t *Tree) Match(topic string) []interface{} {
 	defer t.mutex.RUnlock()
 
 	segments := strings.Split(topic, t.Separator)
-	values := t.match(make([]interface{}, 0), 0, segments, t.root)
+	values := t.match([]interface{}{}, 0, segments, t.root)
 
 	return t.clean(values)
 }
@@ -270,7 +269,7 @@ func (t *Tree) Search(topic string) []interface{} {
 	defer t.mutex.RUnlock()
 
 	segments := strings.Split(topic, t.Separator)
-	values := t.search(make([]interface{}, 0), 0, segments, t.root)
+	values := t.search([]interface{}{}, 0, segments, t.root)
 
 	return t.clean(values)
 }
@@ -332,7 +331,7 @@ func (t *Tree) All() []interface{} {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	return t.clean(t.all(make([]interface{}, 0), t.root))
+	return t.clean(t.all([]interface{}{}, t.root))
 }
 
 func (t *Tree) all(result []interface{}, node *node) []interface{} {
