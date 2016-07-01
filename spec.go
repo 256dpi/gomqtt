@@ -151,10 +151,10 @@ func Run(t *testing.T, config Config) {
 		brokerStoredSubscriptionsTest(t, config.URL, "c6", "strdsub/3", 2)
 
 		println("Running Broker Clean Stored Subscriptions Test")
-		brokerCleanStoredSubscriptions(t, config.URL, "c7", "strdsub/4")
+		brokerCleanStoredSubscriptionsTest(t, config.URL, "c7", "strdsub/4")
 
 		println("Running Broker Remove Stored Subscription Test")
-		brokerRemoveStoredSubscription(t, config.URL, "c8", "strdsub/5")
+		brokerRemoveStoredSubscriptionTest(t, config.URL, "c8", "strdsub/5")
 	}
 
 	if config.OfflineSubscriptions {
@@ -835,7 +835,7 @@ func brokerStoredSubscriptionsTest(t *testing.T, url string, id, topic string, q
 	assert.NoError(t, err)
 }
 
-func brokerCleanStoredSubscriptions(t *testing.T, url string, id, topic string) {
+func brokerCleanStoredSubscriptionsTest(t *testing.T, url string, id, topic string) {
 	assert.NoError(t, client.ClearSession(url, id))
 
 	options := client.NewOptions()
@@ -877,7 +877,7 @@ func brokerCleanStoredSubscriptions(t *testing.T, url string, id, topic string) 
 	assert.NoError(t, err)
 }
 
-func brokerRemoveStoredSubscription(t *testing.T, url string, id, topic string) {
+func brokerRemoveStoredSubscriptionTest(t *testing.T, url string, id, topic string) {
 	assert.NoError(t, client.ClearSession(url, id))
 
 	options := client.NewOptions()
