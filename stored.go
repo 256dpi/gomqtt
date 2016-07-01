@@ -14,11 +14,13 @@ import (
 func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, client.ClearSession(config.URL, id))
 
+	username, password := config.usernamePassword()
+
 	connect := packet.NewConnectPacket()
 	connect.CleanSession = false
 	connect.ClientID = id
-	connect.Username = "allow"
-	connect.Password = "allow"
+	connect.Username = username
+	connect.Password = password
 
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1
@@ -75,11 +77,13 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, client.ClearSession(config.URL, id))
 
+	username, password := config.usernamePassword()
+
 	connect := packet.NewConnectPacket()
 	connect.CleanSession = false
 	connect.ClientID = id
-	connect.Username = "allow"
-	connect.Password = "allow"
+	connect.Username = username
+	connect.Password = password
 
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1
@@ -146,11 +150,13 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, client.ClearSession(config.URL, id))
 
+	username, password := config.usernamePassword()
+
 	connect := packet.NewConnectPacket()
 	connect.CleanSession = false
 	connect.ClientID = id
-	connect.Username = "allow"
-	connect.Password = "allow"
+	connect.Username = username
+	connect.Password = password
 
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1

@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"net/url"
 	"testing"
 	"time"
 )
@@ -31,6 +32,21 @@ func AllFeatures() *Config {
 		OfflineSubscriptions: true,
 		UniqueClientIDs:      true,
 	}
+}
+
+func (c *Config) usernamePassword() (string, string) {
+	url, err := url.Parse(c.URL)
+	if err != nil {
+		panic(err)
+	}
+
+	if url.User == nil {
+		return "", ""
+	}
+
+	pw, _ := url.User.Password()
+
+	return url.User.Username(), pw
 }
 
 // Run will fully test a to support all specified features in the matrix.
