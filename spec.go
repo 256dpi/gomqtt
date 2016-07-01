@@ -39,94 +39,94 @@ func AllFeatures() Config {
 // The broker being tested should only allow the "allow:allow" login.
 func Run(t *testing.T, config Config) {
 	println("Running Broker Publish Subscribe Test (QOS 0)")
-	brokerPublishSubscribeTest(t, config.URL, "pubsub/1", "pubsub/1", 0, 0)
+	PublishSubscribeTest(t, config.URL, "pubsub/1", "pubsub/1", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (QOS 1)")
-	brokerPublishSubscribeTest(t, config.URL, "pubsub/2", "pubsub/2", 1, 1)
+	PublishSubscribeTest(t, config.URL, "pubsub/2", "pubsub/2", 1, 1)
 
 	println("Running Broker Publish Subscribe Test (QOS 2)")
-	brokerPublishSubscribeTest(t, config.URL, "pubsub/3", "pubsub/3", 2, 2)
+	PublishSubscribeTest(t, config.URL, "pubsub/3", "pubsub/3", 2, 2)
 
 	println("Running Broker Publish Subscribe Test (Wildcard One)")
-	brokerPublishSubscribeTest(t, config.URL, "pubsub/4/foo", "pubsub/4/+", 0, 0)
+	PublishSubscribeTest(t, config.URL, "pubsub/4/foo", "pubsub/4/+", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (Wildcard Some)")
-	brokerPublishSubscribeTest(t, config.URL, "pubsub/5/foo", "pubsub/5/#", 0, 0)
+	PublishSubscribeTest(t, config.URL, "pubsub/5/foo", "pubsub/5/#", 0, 0)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 1->0)")
-	brokerPublishSubscribeTest(t, config.URL, "pubsub/6", "pubsub/6", 0, 1)
+	PublishSubscribeTest(t, config.URL, "pubsub/6", "pubsub/6", 0, 1)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->0)")
-	brokerPublishSubscribeTest(t, config.URL, "pubsub/7", "pubsub/7", 0, 2)
+	PublishSubscribeTest(t, config.URL, "pubsub/7", "pubsub/7", 0, 2)
 
 	println("Running Broker Publish Subscribe Test (QOS Downgrade 2->1)")
-	brokerPublishSubscribeTest(t, config.URL, "pubsub/8", "pubsub/8", 1, 2)
+	PublishSubscribeTest(t, config.URL, "pubsub/8", "pubsub/8", 1, 2)
 
 	println("Running Broker Unsubscribe Test (QOS 0)")
-	brokerUnsubscribeTest(t, config.URL, "unsub/1", 0)
+	UnsubscribeTest(t, config.URL, "unsub/1", 0)
 
 	println("Running Broker Unsubscribe Test (QOS 1)")
-	brokerUnsubscribeTest(t, config.URL, "unsub/2", 1)
+	UnsubscribeTest(t, config.URL, "unsub/2", 1)
 
 	println("Running Broker Unsubscribe Test (QOS 2)")
-	brokerUnsubscribeTest(t, config.URL, "unsub/3", 2)
+	UnsubscribeTest(t, config.URL, "unsub/3", 2)
 
 	println("Running Broker Subscription Upgrade Test (QOS 0->1)")
-	brokerSubscriptionUpgradeTest(t, config.URL, "subup/1", 0, 1)
+	SubscriptionUpgradeTest(t, config.URL, "subup/1", 0, 1)
 
 	println("Running Broker Subscription Upgrade Test (QOS 1->2)")
-	brokerSubscriptionUpgradeTest(t, config.URL, "subup/2", 1, 2)
+	SubscriptionUpgradeTest(t, config.URL, "subup/2", 1, 2)
 
 	println("Running Broker Overlapping Subscriptions Test (Wildcard One)")
-	brokerOverlappingSubscriptionsTest(t, config.URL, "ovlsub/1/foo", "ovlsub/1/+")
+	OverlappingSubscriptionsTest(t, config.URL, "ovlsub/1/foo", "ovlsub/1/+")
 
 	println("Running Broker Overlapping Subscriptions Test (Wildcard Some)")
-	brokerOverlappingSubscriptionsTest(t, config.URL, "ovlsub/2/foo", "ovlsub/2/#")
+	OverlappingSubscriptionsTest(t, config.URL, "ovlsub/2/foo", "ovlsub/2/#")
 
 	println("Running Broker Multiple Subscription Test")
-	brokerMultipleSubscriptionTest(t, config.URL, "mulsub")
+	MultipleSubscriptionTest(t, config.URL, "mulsub")
 
 	println("Running Broker Duplicate Subscription Test")
-	brokerDuplicateSubscriptionTest(t, config.URL, "dblsub")
+	DuplicateSubscriptionTest(t, config.URL, "dblsub")
 
 	println("Running Broker Isolated Subscription Test")
-	brokerIsolatedSubscriptionTest(t, config.URL, "islsub")
+	IsolatedSubscriptionTest(t, config.URL, "islsub")
 
 	println("Running Broker Will Test (QOS 0)")
-	brokerWillTest(t, config.URL, "will/1", 0, 0)
+	WillTest(t, config.URL, "will/1", 0, 0)
 
 	println("Running Broker Will Test (QOS 1)")
-	brokerWillTest(t, config.URL, "will/2", 1, 1)
+	WillTest(t, config.URL, "will/2", 1, 1)
 
 	println("Running Broker Will Test (QOS 2)")
-	brokerWillTest(t, config.URL, "will/3", 2, 2)
+	WillTest(t, config.URL, "will/3", 2, 2)
 
 	// TODO: Test Clean Disconnect without forwarding the will.
 
 	if config.RetainedMessages {
 		println("Running Broker Retained Message Test (QOS 0)")
-		brokerRetainedMessageTest(t, config.URL, "retained/1", "retained/1", 0, 0)
+		RetainedMessageTest(t, config.URL, "retained/1", "retained/1", 0, 0)
 
 		println("Running Broker Retained Message Test (QOS 1)")
-		brokerRetainedMessageTest(t, config.URL, "retained/2", "retained/2", 1, 1)
+		RetainedMessageTest(t, config.URL, "retained/2", "retained/2", 1, 1)
 
 		println("Running Broker Retained Message Test (QOS 2)")
-		brokerRetainedMessageTest(t, config.URL, "retained/3", "retained/3", 2, 2)
+		RetainedMessageTest(t, config.URL, "retained/3", "retained/3", 2, 2)
 
 		println("Running Broker Retained Message Test (Wildcard One)")
-		brokerRetainedMessageTest(t, config.URL, "retained/4/foo/bar", "retained/4/foo/+", 0, 0)
+		RetainedMessageTest(t, config.URL, "retained/4/foo/bar", "retained/4/foo/+", 0, 0)
 
 		println("Running Broker Retained Message Test (Wildcard Some)")
-		brokerRetainedMessageTest(t, config.URL, "retained/5/foo/bar", "retained/5/#", 0, 0)
+		RetainedMessageTest(t, config.URL, "retained/5/foo/bar", "retained/5/#", 0, 0)
 
 		println("Running Broker Clear Retained Message Test")
-		brokerClearRetainedMessageTest(t, config.URL, "retained/6")
+		ClearRetainedMessageTest(t, config.URL, "retained/6")
 
 		println("Running Broker Direct Retained Message Test")
-		brokerDirectRetainedMessageTest(t, config.URL, "retained/7")
+		DirectRetainedMessageTest(t, config.URL, "retained/7")
 
 		println("Running Broker Retained Will Test)")
-		brokerRetainedWillTest(t, config.URL, "retained/8")
+		RetainedWillTest(t, config.URL, "retained/8")
 	}
 
 	if config.StoredSessions {
@@ -142,51 +142,51 @@ func Run(t *testing.T, config Config) {
 
 	if config.StoredSubscriptions {
 		println("Running Broker Stored Subscriptions Test (QOS 0)")
-		brokerStoredSubscriptionsTest(t, config.URL, "c4", "strdsub/1", 0)
+		StoredSubscriptionsTest(t, config.URL, "c4", "strdsub/1", 0)
 
 		println("Running Broker Stored Subscriptions Test (QOS 1)")
-		brokerStoredSubscriptionsTest(t, config.URL, "c5", "strdsub/2", 1)
+		StoredSubscriptionsTest(t, config.URL, "c5", "strdsub/2", 1)
 
 		println("Running Broker Stored Subscriptions Test (QOS 2)")
-		brokerStoredSubscriptionsTest(t, config.URL, "c6", "strdsub/3", 2)
+		StoredSubscriptionsTest(t, config.URL, "c6", "strdsub/3", 2)
 
 		println("Running Broker Clean Stored Subscriptions Test")
-		brokerCleanStoredSubscriptionsTest(t, config.URL, "c7", "strdsub/4")
+		CleanStoredSubscriptionsTest(t, config.URL, "c7", "strdsub/4")
 
 		println("Running Broker Remove Stored Subscription Test")
-		brokerRemoveStoredSubscriptionTest(t, config.URL, "c8", "strdsub/5")
+		RemoveStoredSubscriptionTest(t, config.URL, "c8", "strdsub/5")
 	}
 
 	if config.OfflineSubscriptions {
 		println("Running Broker Offline Subscription Test (QOS 1)")
-		brokerOfflineSubscriptionTest(t, config.URL, "c9", "offsub/1", 1)
+		OfflineSubscriptionTest(t, config.URL, "c9", "offsub/1", 1)
 
 		println("Running Broker Offline Subscription Test (QOS 2)")
-		brokerOfflineSubscriptionTest(t, config.URL, "c10", "offsub/2", 2)
+		OfflineSubscriptionTest(t, config.URL, "c10", "offsub/2", 2)
 	}
 
 	if config.OfflineSubscriptions && config.RetainedMessages {
 		println("Running Broker Offline Subscription Test Retained (QOS 1)")
-		brokerOfflineSubscriptionRetainedTest(t, config.URL, "c11", "offsubret/1", 1)
+		OfflineSubscriptionRetainedTest(t, config.URL, "c11", "offsubret/1", 1)
 
 		println("Running Broker Offline Subscription Test Retained (QOS 2)")
-		brokerOfflineSubscriptionRetainedTest(t, config.URL, "c12", "offsubret/2", 2)
+		OfflineSubscriptionRetainedTest(t, config.URL, "c12", "offsubret/2", 2)
 	}
 
 	if config.Authentication {
 		println("Running Broker Authentication Test")
-		brokerAuthenticationTest(t, config.URL, config.DenyURL)
+		AuthenticationTest(t, config.URL, config.DenyURL)
 	}
 
 	if config.UniqueClientIDs {
 		println("Running Broker Unique Client ID Test")
-		brokerUniqueClientIDTest(t, config.URL, "c13")
+		UniqueClientIDTest(t, config.URL, "c13")
 	}
 }
 
 var testPayload = []byte("test")
 
-func brokerPublishSubscribeTest(t *testing.T, url string, out, in string, sub, pub uint8) {
+func PublishSubscribeTest(t *testing.T, url string, out, in string, sub, pub uint8) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -221,7 +221,7 @@ func brokerPublishSubscribeTest(t *testing.T, url string, out, in string, sub, p
 	assert.NoError(t, err)
 }
 
-func brokerRetainedMessageTest(t *testing.T, url string, out, in string, sub, pub uint8) {
+func RetainedMessageTest(t *testing.T, url string, out, in string, sub, pub uint8) {
 	assert.NoError(t, client.ClearRetainedMessage(url, out))
 
 	client1 := client.New()
@@ -270,7 +270,7 @@ func brokerRetainedMessageTest(t *testing.T, url string, out, in string, sub, pu
 	assert.NoError(t, err)
 }
 
-func brokerClearRetainedMessageTest(t *testing.T, url string, topic string) {
+func ClearRetainedMessageTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(url, topic))
 
 	// client1 retains message
@@ -348,7 +348,7 @@ func brokerClearRetainedMessageTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func brokerDirectRetainedMessageTest(t *testing.T, url string, topic string) {
+func DirectRetainedMessageTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(url, topic))
 
 	client := client.New()
@@ -385,7 +385,7 @@ func brokerDirectRetainedMessageTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func brokerWillTest(t *testing.T, url string, topic string, sub, pub uint8) {
+func WillTest(t *testing.T, url string, topic string, sub, pub uint8) {
 	// client1 connects with a will
 
 	client1 := client.New()
@@ -442,7 +442,7 @@ func brokerWillTest(t *testing.T, url string, topic string, sub, pub uint8) {
 	assert.NoError(t, err)
 }
 
-func brokerRetainedWillTest(t *testing.T, url string, topic string) {
+func RetainedWillTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(url, topic))
 
 	// client1 connects with a retained will and dies
@@ -498,7 +498,7 @@ func brokerRetainedWillTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func brokerUnsubscribeTest(t *testing.T, url string, topic string, qos uint8) {
+func UnsubscribeTest(t *testing.T, url string, topic string, qos uint8) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -546,7 +546,7 @@ func brokerUnsubscribeTest(t *testing.T, url string, topic string, qos uint8) {
 	assert.NoError(t, err)
 }
 
-func brokerSubscriptionUpgradeTest(t *testing.T, url string, topic string, from, to uint8) {
+func SubscriptionUpgradeTest(t *testing.T, url string, topic string, from, to uint8) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -586,7 +586,7 @@ func brokerSubscriptionUpgradeTest(t *testing.T, url string, topic string, from,
 	assert.NoError(t, err)
 }
 
-func brokerOverlappingSubscriptionsTest(t *testing.T, url string, pub, sub string) {
+func OverlappingSubscriptionsTest(t *testing.T, url string, pub, sub string) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -626,7 +626,7 @@ func brokerOverlappingSubscriptionsTest(t *testing.T, url string, pub, sub strin
 	assert.NoError(t, err)
 }
 
-func brokerAuthenticationTest(t *testing.T, url, denyURL string) {
+func AuthenticationTest(t *testing.T, url, denyURL string) {
 	// client1 should be denied
 
 	client1 := client.New()
@@ -654,7 +654,7 @@ func brokerAuthenticationTest(t *testing.T, url, denyURL string) {
 	assert.NoError(t, err)
 }
 
-func brokerMultipleSubscriptionTest(t *testing.T, url string, topic string) {
+func MultipleSubscriptionTest(t *testing.T, url string, topic string) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -695,7 +695,7 @@ func brokerMultipleSubscriptionTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func brokerDuplicateSubscriptionTest(t *testing.T, url string, topic string) {
+func DuplicateSubscriptionTest(t *testing.T, url string, topic string) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -735,7 +735,7 @@ func brokerDuplicateSubscriptionTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func brokerIsolatedSubscriptionTest(t *testing.T, url string, topic string) {
+func IsolatedSubscriptionTest(t *testing.T, url string, topic string) {
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -782,7 +782,7 @@ func brokerIsolatedSubscriptionTest(t *testing.T, url string, topic string) {
 	assert.NoError(t, err)
 }
 
-func brokerStoredSubscriptionsTest(t *testing.T, url string, id, topic string, qos uint8) {
+func StoredSubscriptionsTest(t *testing.T, url string, id, topic string, qos uint8) {
 	assert.NoError(t, client.ClearSession(url, id))
 
 	options := client.NewOptions()
@@ -835,7 +835,7 @@ func brokerStoredSubscriptionsTest(t *testing.T, url string, id, topic string, q
 	assert.NoError(t, err)
 }
 
-func brokerCleanStoredSubscriptionsTest(t *testing.T, url string, id, topic string) {
+func CleanStoredSubscriptionsTest(t *testing.T, url string, id, topic string) {
 	assert.NoError(t, client.ClearSession(url, id))
 
 	options := client.NewOptions()
@@ -877,7 +877,7 @@ func brokerCleanStoredSubscriptionsTest(t *testing.T, url string, id, topic stri
 	assert.NoError(t, err)
 }
 
-func brokerRemoveStoredSubscriptionTest(t *testing.T, url string, id, topic string) {
+func RemoveStoredSubscriptionTest(t *testing.T, url string, id, topic string) {
 	assert.NoError(t, client.ClearSession(url, id))
 
 	options := client.NewOptions()
@@ -1128,7 +1128,7 @@ func brokerPubrelResendTestQOS2(t *testing.T, url string, id, topic string) {
 		Test(t, conn2)
 }
 
-func brokerOfflineSubscriptionTest(t *testing.T, url string, id, topic string, qos uint8) {
+func OfflineSubscriptionTest(t *testing.T, url string, id, topic string, qos uint8) {
 	assert.NoError(t, client.ClearSession(url, id))
 
 	options := client.NewOptions()
@@ -1197,7 +1197,7 @@ func brokerOfflineSubscriptionTest(t *testing.T, url string, id, topic string, q
 	assert.NoError(t, err)
 }
 
-func brokerOfflineSubscriptionRetainedTest(t *testing.T, url string, id, topic string, qos uint8) {
+func OfflineSubscriptionRetainedTest(t *testing.T, url string, id, topic string, qos uint8) {
 	assert.NoError(t, client.ClearSession(url, id))
 	assert.NoError(t, client.ClearRetainedMessage(url, topic))
 
@@ -1267,7 +1267,7 @@ func brokerOfflineSubscriptionRetainedTest(t *testing.T, url string, id, topic s
 	assert.NoError(t, err)
 }
 
-func brokerUniqueClientIDTest(t *testing.T, url string, id string) {
+func UniqueClientIDTest(t *testing.T, url string, id string) {
 	assert.NoError(t, client.ClearSession(url, id))
 
 	options := client.NewOptions()
