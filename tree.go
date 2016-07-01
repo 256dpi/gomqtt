@@ -312,16 +312,16 @@ func (t *Tree) search(result []interface{}, i int, segments []string, node *node
 	return result
 }
 
-// clean will remove remove duplicates
+// clean will remove duplicates
 func (t *Tree) clean(values []interface{}) []interface{} {
 	result := values[:0]
-	seen := make(map[interface{}]bool, len(values))
 
 	for _, v := range values {
-		if _, ok := seen[v]; !ok {
-			result = append(result, v)
-			seen[v] = true
+		if contains(result, v) {
+			continue
 		}
+
+		result = append(result, v)
 	}
 
 	return result
