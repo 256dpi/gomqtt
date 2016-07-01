@@ -253,6 +253,8 @@ func TestTreeString(t *testing.T) {
 func BenchmarkTreeAddSame(b *testing.B) {
 	tree := NewTree()
 
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		tree.Add("foo/bar", 1)
 	}
@@ -261,13 +263,23 @@ func BenchmarkTreeAddSame(b *testing.B) {
 func BenchmarkTreeAddUnique(b *testing.B) {
 	tree := NewTree()
 
+	strings := make([]string, 0, b.N)
+
 	for i := 0; i < b.N; i++ {
-		tree.Add(fmt.Sprintf("foo/%d", i), 1)
+		strings = append(strings, fmt.Sprintf("foo/%d", i))
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		tree.Add(strings[i], 1)
 	}
 }
 
 func BenchmarkTreeSetSame(b *testing.B) {
 	tree := NewTree()
+
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		tree.Set("foo/bar", 1)
@@ -277,14 +289,24 @@ func BenchmarkTreeSetSame(b *testing.B) {
 func BenchmarkTreeSetUnique(b *testing.B) {
 	tree := NewTree()
 
+	strings := make([]string, 0, b.N)
+
 	for i := 0; i < b.N; i++ {
-		tree.Set(fmt.Sprintf("foo/%d", i), 1)
+		strings = append(strings, fmt.Sprintf("foo/%d", i))
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		tree.Set(strings[i], 1)
 	}
 }
 
 func BenchmarkTreeMatchExact(b *testing.B) {
 	tree := NewTree()
 	tree.Add("foo/bar", 1)
+
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		tree.Match("foo/bar")
@@ -295,6 +317,8 @@ func BenchmarkTreeMatchWildcardOne(b *testing.B) {
 	tree := NewTree()
 	tree.Add("foo/+", 1)
 
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		tree.Match("foo/bar")
 	}
@@ -303,6 +327,8 @@ func BenchmarkTreeMatchWildcardOne(b *testing.B) {
 func BenchmarkTreeMatchWildcardSome(b *testing.B) {
 	tree := NewTree()
 	tree.Add("#", 1)
+
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		tree.Match("foo/bar")
@@ -313,6 +339,8 @@ func BenchmarkTreeSearchExact(b *testing.B) {
 	tree := NewTree()
 	tree.Add("foo/bar", 1)
 
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		tree.Search("foo/bar")
 	}
@@ -322,6 +350,8 @@ func BenchmarkTreeSearchWildcardOne(b *testing.B) {
 	tree := NewTree()
 	tree.Add("foo/bar", 1)
 
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		tree.Search("foo/+")
 	}
@@ -330,6 +360,8 @@ func BenchmarkTreeSearchWildcardOne(b *testing.B) {
 func BenchmarkTreeSearchWildcardSome(b *testing.B) {
 	tree := NewTree()
 	tree.Add("foo/bar", 1)
+
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		tree.Match("#")
