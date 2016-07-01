@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func AuthenticationTest(t *testing.T, config *Config, denyURL string) {
+func AuthenticationTest(t *testing.T, config *Config) {
 	deniedClient := client.New()
 	deniedClient.Callback = func(msg *packet.Message, err error) {
 		assert.Equal(t, client.ErrClientConnectionDenied, err)
 	}
 
-	connectFuture, err := deniedClient.Connect(denyURL, nil)
+	connectFuture, err := deniedClient.Connect(config.DenyURL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture.ReturnCode)

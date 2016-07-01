@@ -173,7 +173,7 @@ func Run(t *testing.T, config *Config) {
 
 	if config.Authentication {
 		println("Running Authentication Test")
-		AuthenticationTest(t, config, config.DenyURL)
+		AuthenticationTest(t, config)
 	}
 
 	if config.UniqueClientIDs {
