@@ -15,47 +15,41 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 	options.CleanSession = false
 	options.ClientID = id
 
-	/* offline subscriber */
+	offlineSubscribe := client.New()
 
-	client1 := client.New()
-
-	connectFuture1, err := client1.Connect(config.URL, options)
+	connectFuture1, err := offlineSubscribe.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	subscribeFuture, err := client1.Subscribe(topic, qos)
+	subscribeFuture, err := offlineSubscribe.Subscribe(topic, qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
-	err = client1.Disconnect()
+	err = offlineSubscribe.Disconnect()
 	assert.NoError(t, err)
 
-	/* publisher */
+	publisher := client.New()
 
-	client2 := client.New()
-
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	connectFuture2, err := publisher.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	publishFuture, err := client2.Publish(topic, testPayload, qos, false)
+	publishFuture, err := publisher.Publish(topic, testPayload, qos, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
-	err = client2.Disconnect()
+	err = publisher.Disconnect()
 	assert.NoError(t, err)
-
-	/* receiver */
 
 	wait := make(chan struct{})
 
-	client3 := client.New()
-	client3.Callback = func(msg *packet.Message, err error) {
+	offlineReceiver := client.New()
+	offlineReceiver.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -65,7 +59,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 		close(wait)
 	}
 
-	connectFuture3, err := client3.Connect(config.URL, options)
+	connectFuture3, err := offlineReceiver.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
@@ -73,7 +67,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 
 	<-wait
 
-	err = client3.Disconnect()
+	err = offlineReceiver.Disconnect()
 	assert.NoError(t, err)
 }
 
@@ -85,47 +79,41 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 	options.CleanSession = false
 	options.ClientID = id
 
-	/* offline subscriber */
+	offlineSubscriber := client.New()
 
-	client1 := client.New()
-
-	connectFuture1, err := client1.Connect(config.URL, options)
+	connectFuture1, err := offlineSubscriber.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	subscribeFuture, err := client1.Subscribe(topic, qos)
+	subscribeFuture, err := offlineSubscriber.Subscribe(topic, qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
-	err = client1.Disconnect()
+	err = offlineSubscriber.Disconnect()
 	assert.NoError(t, err)
 
-	/* publisher */
+	publisher := client.New()
 
-	client2 := client.New()
-
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	connectFuture2, err := publisher.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	publishFuture, err := client2.Publish(topic, testPayload, qos, true)
+	publishFuture, err := publisher.Publish(topic, testPayload, qos, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
-	err = client2.Disconnect()
+	err = publisher.Disconnect()
 	assert.NoError(t, err)
-
-	/* receiver */
 
 	wait := make(chan struct{})
 
-	client3 := client.New()
-	client3.Callback = func(msg *packet.Message, err error) {
+	offlineReceiver := client.New()
+	offlineReceiver.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -135,7 +123,7 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 		close(wait)
 	}
 
-	connectFuture3, err := client3.Connect(config.URL, options)
+	connectFuture3, err := offlineReceiver.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture3.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture3.ReturnCode)
@@ -143,6 +131,6 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 
 	<-wait
 
-	err = client3.Disconnect()
+	err = offlineReceiver.Disconnect()
 	assert.NoError(t, err)
 }
