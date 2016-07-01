@@ -43,7 +43,7 @@ func testBroker(t *testing.T, protocol string) {
 		"allow": "allow",
 	}
 
-	port, done := RunBroker(NewWithBackend(backend), protocol)
+	port, done := Run(NewWithBackend(backend), protocol)
 
 	config := spec.AllFeatures()
 	config.URL = fmt.Sprintf("%s://allow:allow@localhost:%s", protocol, port.Port())
@@ -58,7 +58,7 @@ func TestConnectTimeout(t *testing.T) {
 	broker := New()
 	broker.ConnectTimeout = 10 * time.Millisecond
 
-	port, done := RunBroker(broker, "tcp")
+	port, done := Run(broker, "tcp")
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -73,7 +73,7 @@ func TestConnectTimeout(t *testing.T) {
 func TestKeepAlive(t *testing.T) {
 	t.Parallel()
 
-	port, done := RunBroker(New(), "tcp")
+	port, done := Run(New(), "tcp")
 
 	opts := client.NewOptions()
 	opts.KeepAlive = "1s"
@@ -121,7 +121,7 @@ func TestKeepAliveTimeout(t *testing.T) {
 		Receive(connack).
 		End()
 
-	port, done := RunBroker(New(), "tcp")
+	port, done := Run(New(), "tcp")
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
