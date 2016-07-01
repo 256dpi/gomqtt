@@ -9,30 +9,26 @@ import (
 )
 
 func AuthenticationTest(t *testing.T, config *Config, denyURL string) {
-	// client1 should be denied
-
-	client1 := client.New()
-	client1.Callback = func(msg *packet.Message, err error) {
+	deniedClient := client.New()
+	deniedClient.Callback = func(msg *packet.Message, err error) {
 		assert.Equal(t, client.ErrClientConnectionDenied, err)
 	}
 
-	connectFuture1, err := client1.Connect(denyURL, nil)
+	connectFuture1, err := deniedClient.Connect(denyURL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	// client2 should be allowed
+	allowedClient := client.New()
 
-	client2 := client.New()
-
-	connectFuture2, err := client2.Connect(config.URL, nil)
+	connectFuture2, err := allowedClient.Connect(config.URL, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
 	assert.False(t, connectFuture2.SessionPresent)
 
-	err = client2.Disconnect()
+	err = allowedClient.Disconnect()
 	assert.NoError(t, err)
 }
 
@@ -44,25 +40,21 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 
 	wait := make(chan struct{})
 
-	/* first client */
-
-	client1 := client.New()
-	client1.Callback = func(msg *packet.Message, err error) {
+	firstClient := client.New()
+	firstClient.Callback = func(msg *packet.Message, err error) {
 		assert.Error(t, err)
 		close(wait)
 	}
 
-	connectFuture1, err := client1.Connect(config.URL, options)
+	connectFuture1, err := firstClient.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture1.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture1.ReturnCode)
 	assert.False(t, connectFuture1.SessionPresent)
 
-	/* second client */
+	secondClient := client.New()
 
-	client2 := client.New()
-
-	connectFuture2, err := client2.Connect(config.URL, options)
+	connectFuture2, err := secondClient.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture2.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture2.ReturnCode)
@@ -70,6 +62,6 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 
 	<-wait
 
-	err = client2.Disconnect()
+	err = secondClient.Disconnect()
 	assert.NoError(t, err)
 }
