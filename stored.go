@@ -299,9 +299,9 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 		assert.Fail(t, "should not be called")
 	}
 
-	// TODO: Is that test working?
+	options.CleanSession = true
 
-	connectFuture, err = nonReceiver.Connect(config.URL, nil)
+	connectFuture, err = nonReceiver.Connect(config.URL, options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
