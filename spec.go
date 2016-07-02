@@ -13,11 +13,12 @@ type Config struct {
 	URL     string
 	DenyURL string
 
-	Authentication       bool
 	RetainedMessages     bool
 	StoredSessions       bool
 	OfflineSubscriptions bool
+	Authentication       bool
 	UniqueClientIDs      bool
+	RootSlashDistinction bool
 
 	MessageRetainWait time.Duration
 	NoMessageWait     time.Duration
@@ -26,11 +27,12 @@ type Config struct {
 // AllFeatures returns a config that enables all features.
 func AllFeatures() *Config {
 	return &Config{
-		Authentication:       true,
 		RetainedMessages:     true,
 		StoredSessions:       true,
 		OfflineSubscriptions: true,
+		Authentication:       true,
 		UniqueClientIDs:      true,
+		RootSlashDistinction: true,
 	}
 }
 
@@ -199,5 +201,10 @@ func Run(t *testing.T, config *Config) {
 	if config.UniqueClientIDs {
 		println("Running Unique Client ID Test")
 		UniqueClientIDTest(t, config, "c13")
+	}
+
+	if config.RootSlashDistinction {
+		println("Running Root Slash Distinction Test")
+		RootSlashDistinctionTest(t, config, "rootslash")
 	}
 }
