@@ -14,7 +14,8 @@ type Config struct {
 	DenyURL string
 
 	RetainedMessages     bool
-	StoredSessions       bool
+	StoredPackets        bool
+	StoredSubscriptions  bool
 	OfflineSubscriptions bool
 	Authentication       bool
 	UniqueClientIDs      bool
@@ -28,7 +29,8 @@ type Config struct {
 func AllFeatures() *Config {
 	return &Config{
 		RetainedMessages:     true,
-		StoredSessions:       true,
+		StoredPackets:        true,
+		StoredSubscriptions:  true,
 		OfflineSubscriptions: true,
 		Authentication:       true,
 		UniqueClientIDs:      true,
@@ -151,7 +153,7 @@ func Run(t *testing.T, config *Config) {
 		RetainedWillTest(t, config, "retained/8")
 	}
 
-	if config.StoredSessions {
+	if config.StoredPackets {
 		println("Running Publish Resend Test (QOS 1)")
 		PublishResendQOS1Test(t, config, "c1", "pubres/1")
 
@@ -160,7 +162,9 @@ func Run(t *testing.T, config *Config) {
 
 		println("Running Pubrel Resend Test (QOS 2)")
 		PubrelResendQOS2Test(t, config, "c3", "pubres/3")
+	}
 
+	if config.StoredSubscriptions {
 		println("Running Stored Subscriptions Test (QOS 0)")
 		StoredSubscriptionsTest(t, config, "c4", "strdsub/1", 0)
 
