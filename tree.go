@@ -259,6 +259,17 @@ func (t *Tree) match(result []interface{}, i int, segments []string, node *node)
 	return result
 }
 
+// MatchFirst will run Match and return the first value or nil.
+func (t *Tree) MatchFirst(topic string) interface{} {
+	values := t.Match(topic)
+
+	if len(values) > 0 {
+		return values[0]
+	}
+
+	return nil
+}
+
 // Search will return a set of values from topics that match the supplied topic.
 // The result set will be cleared from duplicate values.
 //
@@ -309,6 +320,17 @@ func (t *Tree) search(result []interface{}, i int, segments []string, node *node
 	}
 
 	return result
+}
+
+// SearchFirst will run Search and return the first value or nil.
+func (t *Tree) SearchFirst(topic string) interface{} {
+	values := t.Search(topic)
+
+	if len(values) > 0 {
+		return values[0]
+	}
+
+	return nil
 }
 
 // clean will remove duplicates

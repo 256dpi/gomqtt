@@ -153,6 +153,14 @@ func TestTreeMatchNoDuplicates(t *testing.T) {
 	assert.Equal(t, 1, len(tree.Match("foo/bar")))
 }
 
+func TestTreeMatchFirst(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/+", 1)
+
+	assert.Equal(t, 1, tree.MatchFirst("foo/bar"))
+}
+
 func TestTreeSearchExact(t *testing.T) {
 	tree := NewTree()
 
@@ -211,6 +219,14 @@ func TestTreeSearchNoDuplicates(t *testing.T) {
 	tree.Add("foo/bar/baz", 1)
 
 	assert.Equal(t, 1, len(tree.Search("foo/#")))
+}
+
+func TestTreeSearchFirst(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar", 1)
+
+	assert.Equal(t, 1, tree.SearchFirst("foo/+"))
 }
 
 func TestTreeAll(t *testing.T) {
