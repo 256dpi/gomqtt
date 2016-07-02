@@ -13,15 +13,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func PublishSubscribeTest(t *testing.T, config *Config, out, in string, sub, pub uint8) {
+func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS, pubQOS uint8) {
 	client := client.New()
 	wait := make(chan struct{})
 
 	client.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, out, msg.Topic)
+		assert.Equal(t, pub, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(sub), msg.QOS)
+		assert.Equal(t, uint8(subQOS), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -33,12 +33,12 @@ func PublishSubscribeTest(t *testing.T, config *Config, out, in string, sub, pub
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture, err := client.Subscribe(in, sub)
+	subscribeFuture, err := client.Subscribe(sub, subQOS)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
-	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
+	assert.Equal(t, []uint8{subQOS}, subscribeFuture.ReturnCodes)
 
-	publishFuture, err := client.Publish(out, testPayload, pub, false)
+	publishFuture, err := client.Publish(pub, testPayload, pubQOS, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
