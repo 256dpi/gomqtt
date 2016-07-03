@@ -135,9 +135,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
-		sess := NewMemorySession()
-		client.Context().Set("session", sess)
-		return sess, false, nil
+		return NewMemorySession(), false, nil
 	}
 
 	// save id
@@ -169,9 +167,6 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 		// clear offline subscriptions
 		m.offlineQueue.Clear(sess)
 
-		// assign stored session
-		client.Context().Set("session", sess)
-
 		return sess, true, nil
 	}
 
@@ -183,9 +178,6 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 		m.sessions[id] = sess
 	}
 
-	// assign session
-	client.Context().Set("session", sess)
-
 	return sess, false, nil
 }
 
@@ -193,7 +185,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 // all missed messages in another goroutine.
 func (m *MemoryBackend) Restore(client *Client) error {
 	// get client session
-	sess := client.Context().Get("session").(*MemorySession)
+	sess := client.Session().(*MemorySession)
 
 	// get stored subscriptions
 	subs, err := sess.AllSubscriptions()
@@ -295,19 +287,17 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 		delete(m.clients, id)
 	}
 
-	// get session
-	session, ok := client.Context().Get("session").(*MemorySession)
-	if ok {
+	if client.Session() != nil {
 		// check if the client has connected with clean=true
 		clean, ok := client.Context().Get("clean").(bool)
 		if ok && clean {
 			// reset session
-			session.Reset()
+			client.Session().Reset()
 			return nil
 		}
 
 		// otherwise get stored subscriptions
-		subscriptions, err := session.AllSubscriptions()
+		subscriptions, err := client.Session().AllSubscriptions()
 		if err != nil {
 			return err
 		}
@@ -316,7 +306,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 		for _, sub := range subscriptions {
 			if sub.QOS >= 1 {
 				// add offline subscription
-				m.offlineQueue.Add(sub.Topic, session)
+				m.offlineQueue.Add(sub.Topic, client.Session())
 			}
 		}
 	}
