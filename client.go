@@ -21,7 +21,6 @@ import (
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
-	"github.com/satori/go.uuid"
 	"gopkg.in/tomb.v2"
 )
 
@@ -61,16 +60,13 @@ func newClient(broker *Broker, conn transport.Conn) *Client {
 		state:   newState(clientConnecting),
 	}
 
-	c.Context().Set("uuid", uuid.NewV1().String())
-
 	// start processor
 	c.tomb.Go(c.processor)
 
 	return c
 }
 
-// Context returns the associated context. Every client will already have the
-// "uuid" value set in the context.
+// Context returns the associated context.
 func (c *Client) Context() *Context {
 	return c.context
 }
