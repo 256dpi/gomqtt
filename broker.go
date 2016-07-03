@@ -54,7 +54,7 @@ const (
 )
 
 // The Logger callback handles incoming log messages.
-type Logger func(LogEvent, Client, interface{})
+type Logger func(LogEvent, *Client, interface{})
 
 // The Broker handles incoming connections and connects them to the backend.
 type Broker struct {
@@ -83,5 +83,5 @@ func (b *Broker) Handle(conn transport.Conn) {
 		panic("passed conn is nil")
 	}
 
-	newRemoteClient(b, conn)
+	newClient(b, conn)
 }

@@ -25,20 +25,6 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// A Client represents a remote client that is connected to the broker.
-type Client interface {
-	// Publish will send a Message to the client and initiate QOS flows.
-	Publish(msg *packet.Message) bool
-
-	// Close will immediately close the connection. When clean=true the client
-	// will be marked as cleanly disconnected, and the will messages will not
-	// get dispatched.
-	Close(clean bool)
-
-	// Context returns the associated context.
-	Context() *Context
-}
-
 const (
 	clientConnecting byte = iota
 	clientConnected
@@ -49,7 +35,8 @@ const (
 // ConnectPacket.
 var ErrExpectedConnect = errors.New("expected ConnectPacket")
 
-type remoteClient struct {
+// A Client represents a remote client that is connected to the broker.
+type Client struct {
 	broker *Broker
 	conn   transport.Conn
 
@@ -64,9 +51,9 @@ type remoteClient struct {
 	finish sync.Once
 }
 
-// newRemoteClient takes over a connection and returns a remoteClient
-func newRemoteClient(broker *Broker, conn transport.Conn) *remoteClient {
-	c := &remoteClient{
+// newClient takes over a connection and returns a Client
+func newClient(broker *Broker, conn transport.Conn) *Client {
+	c := &Client{
 		broker:  broker,
 		conn:    conn,
 		context: NewContext(),
@@ -84,12 +71,12 @@ func newRemoteClient(broker *Broker, conn transport.Conn) *remoteClient {
 
 // Context returns the associated context. Every client will already have the
 // "uuid" value set in the context.
-func (c *remoteClient) Context() *Context {
+func (c *Client) Context() *Context {
 	return c.context
 }
 
 // Publish will send a Message to the client and initiate QOS flows.
-func (c *remoteClient) Publish(msg *packet.Message) bool {
+func (c *Client) Publish(msg *packet.Message) bool {
 	select {
 	case c.out <- msg:
 		return true
@@ -98,8 +85,10 @@ func (c *remoteClient) Publish(msg *packet.Message) bool {
 	}
 }
 
-// Close will immediately close the connection.
-func (c *remoteClient) Close(clean bool) {
+// Close will immediately close the connection. When clean=true the client
+// will be marked as cleanly disconnected, and the will messages will not
+// get dispatched.
+func (c *Client) Close(clean bool) {
 	if clean {
 		// mark client as cleanly disconnected
 		c.state.set(clientDisconnected)
@@ -112,7 +101,7 @@ func (c *remoteClient) Close(clean bool) {
 /* processor goroutine */
 
 // processes incoming packets
-func (c *remoteClient) processor() error {
+func (c *Client) processor() error {
 	first := true
 
 	c.log(NewConnectionLogEvent, c, nil)
@@ -175,7 +164,7 @@ func (c *remoteClient) processor() error {
 }
 
 // handle an incoming ConnackPacket
-func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
+func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	connack := packet.NewConnackPacket()
 	connack.ReturnCode = packet.ConnectionAccepted
 	connack.SessionPresent = false
@@ -275,7 +264,7 @@ func (c *remoteClient) processConnect(pkt *packet.ConnectPacket) error {
 }
 
 // handle an incoming PingreqPacket
-func (c *remoteClient) processPingreq() error {
+func (c *Client) processPingreq() error {
 	err := c.send(packet.NewPingrespPacket(), true)
 	if err != nil {
 		return c.die(err, false)
@@ -285,7 +274,7 @@ func (c *remoteClient) processPingreq() error {
 }
 
 // handle an incoming SubscribePacket
-func (c *remoteClient) processSubscribe(pkt *packet.SubscribePacket) error {
+func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
 	suback.PacketID = pkt.PacketID
@@ -326,7 +315,7 @@ func (c *remoteClient) processSubscribe(pkt *packet.SubscribePacket) error {
 }
 
 // handle an incoming UnsubscribePacket
-func (c *remoteClient) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
+func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	unsuback := packet.NewUnsubackPacket()
 	unsuback.PacketID = pkt.PacketID
 
@@ -353,7 +342,7 @@ func (c *remoteClient) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 }
 
 // handle an incoming PublishPacket
-func (c *remoteClient) processPublish(publish *packet.PublishPacket) error {
+func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	if publish.Message.QOS == 1 {
 		puback := packet.NewPubackPacket()
 		puback.PacketID = publish.PacketID
@@ -394,7 +383,7 @@ func (c *remoteClient) processPublish(publish *packet.PublishPacket) error {
 }
 
 // handle an incoming PubackPacket or PubcompPacket
-func (c *remoteClient) processPubackAndPubcomp(packetID uint16) error {
+func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
 	c.session.DeletePacket(outgoing, packetID)
 
@@ -402,7 +391,7 @@ func (c *remoteClient) processPubackAndPubcomp(packetID uint16) error {
 }
 
 // handle an incoming PubrecPacket
-func (c *remoteClient) processPubrec(packetID uint16) error {
+func (c *Client) processPubrec(packetID uint16) error {
 	// allocate packet
 	pubrel := packet.NewPubrelPacket()
 	pubrel.PacketID = packetID
@@ -423,7 +412,7 @@ func (c *remoteClient) processPubrec(packetID uint16) error {
 }
 
 // handle an incoming PubrelPacket
-func (c *remoteClient) processPubrel(packetID uint16) error {
+func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
 	pkt, err := c.session.LookupPacket(incoming, packetID)
 	if err != nil {
@@ -461,7 +450,7 @@ func (c *remoteClient) processPubrel(packetID uint16) error {
 }
 
 // handle an incoming DisconnectPacket
-func (c *remoteClient) processDisconnect() error {
+func (c *Client) processDisconnect() error {
 	// mark client as cleanly disconnected
 	c.state.set(clientDisconnected)
 
@@ -477,7 +466,7 @@ func (c *remoteClient) processDisconnect() error {
 /* sender goroutine */
 
 // sends outgoing messages
-func (c *remoteClient) sender() error {
+func (c *Client) sender() error {
 	for {
 		select {
 		case <-c.tomb.Dying():
@@ -524,7 +513,7 @@ func (c *remoteClient) sender() error {
 
 /* helpers */
 
-func (c *remoteClient) finishPublish(msg *packet.Message) error {
+func (c *Client) finishPublish(msg *packet.Message) error {
 	// check retain flag
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
@@ -555,7 +544,7 @@ func (c *remoteClient) finishPublish(msg *packet.Message) error {
 }
 
 // will try to cleanup as many resources as possible
-func (c *remoteClient) cleanup(err error, close bool) error {
+func (c *Client) cleanup(err error, close bool) error {
 	// check session
 	if c.session != nil && c.state.get() != clientDisconnected {
 		// get will
@@ -593,7 +582,7 @@ func (c *remoteClient) cleanup(err error, close bool) error {
 }
 
 // used for closing and cleaning up from inside internal goroutines
-func (c *remoteClient) die(err error, close bool) error {
+func (c *Client) die(err error, close bool) error {
 	c.finish.Do(func() {
 		err = c.cleanup(err, close)
 
@@ -606,7 +595,7 @@ func (c *remoteClient) die(err error, close bool) error {
 	return err
 }
 
-func (c *remoteClient) send(pkt packet.Packet, buffered bool) error {
+func (c *Client) send(pkt packet.Packet, buffered bool) error {
 	var err error
 
 	// send packet
@@ -627,7 +616,7 @@ func (c *remoteClient) send(pkt packet.Packet, buffered bool) error {
 }
 
 // log a message
-func (c *remoteClient) log(event LogEvent, client Client, val interface{}) {
+func (c *Client) log(event LogEvent, client *Client, val interface{}) {
 	if c.broker.Logger != nil {
 		c.broker.Logger(event, client, val)
 	}

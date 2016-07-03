@@ -26,7 +26,7 @@ type Backend interface {
 	// Authenticate should authenticate the client using the user and password
 	// values and return true if the client is eligible to continue or false
 	// when the broker should terminate the connection.
-	Authenticate(client Client, user, password string) (bool, error)
+	Authenticate(client *Client, user, password string) (bool, error)
 
 	// Setup is called when a new client comes online and is successfully
 	// authenticated. Setup should return the already stored session for the
@@ -39,35 +39,35 @@ type Backend interface {
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the client for further usage as the broker will acknowledge the
 	// connection when the call returns.
-	Setup(client Client, id string, clean bool) (Session, bool, error)
+	Setup(client *Client, id string, clean bool) (Session, bool, error)
 
 	// Restore is called after the client has been acknowledged and if clean is
 	// set to false. It should be used to restore a clients subscriptions from
 	// the session and triggering a background process that forwards all missed
 	// messages.
-	Restore(client Client) error
+	Restore(client *Client) error
 
 	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages.
-	Subscribe(client Client, topic string) error
+	Subscribe(client *Client, topic string) error
 
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
-	Unsubscribe(client Client, topic string) error
+	Unsubscribe(client *Client, topic string) error
 
 	// StoreRetained should store the specified message.
-	StoreRetained(client Client, msg *packet.Message) error
+	StoreRetained(client *Client, msg *packet.Message) error
 
 	// ClearRetained should remove the stored messages for the given topic.
-	ClearRetained(client Client, topic string) error
+	ClearRetained(client *Client, topic string) error
 
 	// QueueRetained is called after acknowledging a subscription and should be
 	// used to trigger a background process that forwards all retained messages.
-	QueueRetained(client Client, topic string) error
+	QueueRetained(client *Client, topic string) error
 
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
 	// message to all sessions that have a matching offline subscription.
-	Publish(client Client, msg *packet.Message) error
+	Publish(client *Client, msg *packet.Message) error
 
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics. The
@@ -77,7 +77,7 @@ type Backend interface {
 	// Note: The Backend may also cleanup previously allocated resources for
 	// that client as the broker will close the connection when the call
 	// returns.
-	Terminate(client Client) error
+	Terminate(client *Client) error
 }
 
 // A MemoryBackend stores everything in memory.
@@ -91,7 +91,7 @@ type MemoryBackend struct {
 	sessions      map[string]*MemorySession
 	sessionsMutex sync.Mutex
 
-	clients map[string]Client
+	clients map[string]*Client
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
@@ -101,13 +101,13 @@ func NewMemoryBackend() *MemoryBackend {
 		retained:     tools.NewTree(),
 		offlineQueue: tools.NewTree(),
 		sessions:     make(map[string]*MemorySession),
-		clients:      make(map[string]Client),
+		clients:      make(map[string]*Client),
 	}
 }
 
 // Authenticate authenticates a clients credentials by matching them to the
 // saved Logins map.
-func (m *MemoryBackend) Authenticate(client Client, user, password string) (bool, error) {
+func (m *MemoryBackend) Authenticate(client *Client, user, password string) (bool, error) {
 	// allow all if there are no logins
 	if m.Logins == nil {
 		return true, nil
@@ -126,7 +126,7 @@ func (m *MemoryBackend) Authenticate(client Client, user, password string) (bool
 // the session. If the supplied id has a zero length, a new session is returned
 // that is not stored further. Furthermore, it will disconnect any client
 // connected with the same client id.
-func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bool, error) {
+func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
@@ -191,7 +191,7 @@ func (m *MemoryBackend) Setup(client Client, id string, clean bool) (Session, bo
 
 // Restore will resubscribe the client to the saved subscriptions and forward
 // all missed messages in another goroutine.
-func (m *MemoryBackend) Restore(client Client) error {
+func (m *MemoryBackend) Restore(client *Client) error {
 	// get client session
 	sess := client.Context().Get("session").(*MemorySession)
 
@@ -218,7 +218,7 @@ func (m *MemoryBackend) Restore(client Client) error {
 
 // Subscribe will subscribe the passed client to the specified topic and
 // begin to forward messages by calling the clients Publish method.
-func (m *MemoryBackend) Subscribe(client Client, topic string) error {
+func (m *MemoryBackend) Subscribe(client *Client, topic string) error {
 	// add subscription
 	m.queue.Add(topic, client)
 
@@ -226,7 +226,7 @@ func (m *MemoryBackend) Subscribe(client Client, topic string) error {
 }
 
 // Unsubscribe will unsubscribe the passed client from the specified topic.
-func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
+func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 	// remove subscription
 	m.queue.Remove(topic, client)
 
@@ -234,7 +234,7 @@ func (m *MemoryBackend) Unsubscribe(client Client, topic string) error {
 }
 
 // StoreRetained will store the specified message.
-func (m *MemoryBackend) StoreRetained(client Client, msg *packet.Message) error {
+func (m *MemoryBackend) StoreRetained(client *Client, msg *packet.Message) error {
 	// set retained message
 	m.retained.Set(msg.Topic, msg.Copy())
 
@@ -242,7 +242,7 @@ func (m *MemoryBackend) StoreRetained(client Client, msg *packet.Message) error 
 }
 
 // ClearRetained will remove the stored messages for the given topic.
-func (m *MemoryBackend) ClearRetained(client Client, topic string) error {
+func (m *MemoryBackend) ClearRetained(client *Client, topic string) error {
 	// clear retained message
 	m.retained.Empty(topic)
 
@@ -250,7 +250,7 @@ func (m *MemoryBackend) ClearRetained(client Client, topic string) error {
 }
 
 // QueueRetained will queue all retained messages matching the given topic.
-func (m *MemoryBackend) QueueRetained(client Client, topic string) error {
+func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
 	// get retained messages
 	values := m.retained.Search(topic)
 
@@ -265,10 +265,10 @@ func (m *MemoryBackend) QueueRetained(client Client, topic string) error {
 // Publish will forward the passed message to all other subscribed clients. It
 // will also add the message to all sessions that have a matching offline
 // subscription.
-func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
+func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	// publish directly to clients
 	for _, v := range m.queue.Match(msg.Topic) {
-		v.(Client).Publish(msg)
+		v.(*Client).Publish(msg)
 	}
 
 	// queue for offline clients
@@ -283,7 +283,7 @@ func (m *MemoryBackend) Publish(client Client, msg *packet.Message) error {
 // topics. If the client connect with clean=true it will also clean the session.
 // Otherwise it will create offline subscriptions for all QOS 1 and QOS 2
 // subscriptions.
-func (m *MemoryBackend) Terminate(client Client) error {
+func (m *MemoryBackend) Terminate(client *Client) error {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 

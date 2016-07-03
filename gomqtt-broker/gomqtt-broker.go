@@ -55,7 +55,7 @@ func main() {
 	var published int32
 	var forwarded int32
 
-	engine.Logger = func(event broker.LogEvent, client broker.Client, val interface{}) {
+	engine.Logger = func(event broker.LogEvent, client *broker.Client, val interface{}) {
 		if event == broker.MessagePublishedLogEvent {
 			atomic.AddInt32(&published, 1)
 		} else if event == broker.MessageForwardedLogEvent {
