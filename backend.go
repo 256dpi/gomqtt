@@ -130,16 +130,10 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
-	// save clean flag
-	client.Context().Set("clean", clean)
-
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
 		return NewMemorySession(), false, nil
 	}
-
-	// save id
-	client.Context().Set("id", id)
 
 	// close existing client
 	existingClient, ok := m.clients[id]
@@ -283,15 +277,14 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	m.queue.Clear(client)
 
 	// remove client from list
-	if id, ok := client.Context().Get("id").(string); ok {
-		delete(m.clients, id)
+	if len(client.ClientID()) > 0 {
+		delete(m.clients, client.ClientID())
 	}
 
+	// check session existence
 	if client.Session() != nil {
-		// check if the client has connected with clean=true
-		clean, ok := client.Context().Get("clean").(bool)
-		if ok && clean {
-			// reset session
+		// reset session if the client requested a clean session
+		if client.CleanSession() {
 			client.Session().Reset()
 			return nil
 		}

@@ -39,8 +39,10 @@ type Client struct {
 	broker *Broker
 	conn   transport.Conn
 
-	session Session
-	context *Context
+	clientID     string
+	cleanSession bool
+	session      Session
+	context      *Context
 
 	out   chan *packet.Message
 	state *state
@@ -74,6 +76,16 @@ func (c *Client) Context() *Context {
 // Session returns the current Session used by the client.
 func (c *Client) Session() Session {
 	return c.session
+}
+
+// CleanSession returns whether the client requested a clean session during connect.
+func (c *Client) CleanSession() bool {
+	return c.cleanSession
+}
+
+// ClientID returns the supplied client id during connect.
+func (c *Client) ClientID() string {
+	return c.clientID
 }
 
 // Publish will send a Message to the client and initiate QOS flows.
@@ -203,6 +215,10 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	} else {
 		c.conn.SetReadTimeout(0)
 	}
+
+	// set values
+	c.cleanSession = pkt.CleanSession
+	c.clientID = pkt.ClientID
 
 	// retrieve session
 	sess, resumed, err := c.broker.Backend.Setup(c, pkt.ClientID, pkt.CleanSession)
