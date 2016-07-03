@@ -24,25 +24,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBrokerTCP(t *testing.T) {
-	testBroker(t, "tcp")
-}
-
-func TestBrokerWS(t *testing.T) {
-	testBroker(t, "ws")
-}
-
-func testBroker(t *testing.T, protocol string) {
+func TestBroker(t *testing.T) {
 	backend := NewMemoryBackend()
 	backend.Logins = map[string]string{
 		"allow": "allow",
 	}
 
-	port, done := Run(NewWithBackend(backend), protocol)
+	port, done := Run(NewWithBackend(backend), "tcp")
 
 	config := spec.AllFeatures()
-	config.URL = fmt.Sprintf("%s://allow:allow@localhost:%s", protocol, port.Port())
-	config.DenyURL = fmt.Sprintf("%s://deny:deny@localhost:%s", protocol, port.Port())
+	config.URL = fmt.Sprintf("tcp://allow:allow@localhost:%s", port.Port())
+	config.DenyURL = fmt.Sprintf("tcp://deny:deny@localhost:%s", port.Port())
 	config.NoMessageWait = 50 * time.Millisecond
 	config.MessageRetainWait = 50 * time.Millisecond
 
