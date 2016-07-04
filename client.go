@@ -505,7 +505,10 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 // handle an incoming SubackPacket
 func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
-	c.Session.DeletePacket(outgoing, suback.PacketID)
+	err := c.Session.DeletePacket(outgoing, suback.PacketID)
+	if err != nil {
+		return err
+	}
 
 	// get future
 	subscribeFuture, ok := c.futureStore.get(suback.PacketID).(*SubscribeFuture)
@@ -526,7 +529,10 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 // handle an incoming UnsubackPacket
 func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
-	c.Session.DeletePacket(outgoing, unsuback.PacketID)
+	err := c.Session.DeletePacket(outgoing, unsuback.PacketID)
+	if err != nil {
+		return err
+	}
 
 	// get future
 	unsubscribeFuture, ok := c.futureStore.get(unsuback.PacketID).(*UnsubscribeFuture)
@@ -584,7 +590,10 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
-	c.Session.DeletePacket(outgoing, packetID)
+	err := c.Session.DeletePacket(outgoing, packetID)
+	if err != nil {
+		return err
+	}
 
 	// get future
 	publishFuture, ok := c.futureStore.get(packetID).(*PublishFuture)
