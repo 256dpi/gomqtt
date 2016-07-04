@@ -223,3 +223,20 @@ func BenchmarkWebSocketConnBuffered(b *testing.B) {
 
 	<-done
 }
+
+func TestWebSocketNotBinaryMessage(t *testing.T) {
+	pkt := packet.NewPublishPacket()
+	pkt.Message.Topic = "hello"
+	pkt.Message.Payload = []byte("world")
+
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
+		err := conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.TextMessage, []byte("hello"))
+		assert.NoError(t, err)
+	})
+
+	in, err := conn2.Receive()
+	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Nil(t, in)
+
+	<-done
+}

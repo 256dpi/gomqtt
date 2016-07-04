@@ -36,7 +36,7 @@ type WebSocketServer struct {
 	incoming      chan *WebSocketConn
 	originChecker func(r *http.Request) bool
 
-	tomb          tomb.Tomb
+	tomb tomb.Tomb
 }
 
 func newWebSocketServer(listener net.Listener) *WebSocketServer {
@@ -44,7 +44,7 @@ func newWebSocketServer(listener net.Listener) *WebSocketServer {
 		listener: listener,
 		upgrader: &websocket.Upgrader{
 			HandshakeTimeout: 60 * time.Second,
-			Subprotocols: []string{"mqtt", "mqttv3.1"},
+			Subprotocols:     []string{"mqtt", "mqttv3.1"},
 		},
 		incoming: make(chan *WebSocketConn),
 	}
@@ -112,7 +112,7 @@ func (s *WebSocketServer) SetFallback(handler http.Handler) {
 
 // SetOriginChecker sets an optional function that allows check the request origin
 // before accepting the connection.
-func (s *WebSocketServer) SetOriginChecker(fn func(r *http.Request)bool) {
+func (s *WebSocketServer) SetOriginChecker(fn func(r *http.Request) bool) {
 	s.originChecker = fn
 }
 

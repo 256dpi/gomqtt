@@ -129,7 +129,7 @@ func TestWebSocketOriginChecker(t *testing.T) {
 	require.NoError(t, err)
 
 	ws := server.(*WebSocketServer)
-	ws.SetOriginChecker(func(r *http.Request)bool{
+	ws.SetOriginChecker(func(r *http.Request) bool {
 		return false
 	})
 

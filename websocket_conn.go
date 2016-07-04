@@ -17,6 +17,7 @@ package transport
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"io"
 	"net"
 	"strings"
@@ -33,17 +34,20 @@ type webSocketStream struct {
 	reader io.Reader
 }
 
+var errNotBinary = errors.New("not binary")
+
 func (s *webSocketStream) Read(p []byte) (int, error) {
 	for {
 		// get next reader
 		if s.reader == nil {
-			// TODO: return error if message is not binary.
-			_, reader, err := s.conn.NextReader()
+			messageType, reader, err := s.conn.NextReader()
 			if _, ok := err.(*websocket.CloseError); ok {
 				// convert CloseError to EOF
 				return 0, io.EOF
 			} else if err != nil {
 				return 0, err
+			} else if messageType != websocket.BinaryMessage {
+				return 0, errNotBinary
 			}
 
 			// set current reader
