@@ -364,6 +364,11 @@ func (c *WebSocketConn) SetReadTimeout(timeout time.Duration) {
 	c.resetTimeout()
 }
 
+// UnderlyingConn returns the underlying websocket.Conn.
+func (c *WebSocketConn) UnderlyingConn() *websocket.Conn {
+	return c.conn
+}
+
 func (c *WebSocketConn) resetTimeout() {
 	if c.readTimeout > 0 {
 		c.conn.SetReadDeadline(time.Now().Add(c.readTimeout))

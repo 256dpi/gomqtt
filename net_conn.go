@@ -300,6 +300,11 @@ func (c *NetConn) SetReadTimeout(timeout time.Duration) {
 	c.resetTimeout()
 }
 
+// UnderlyingConn returns the underlying net.Conn.
+func (c *NetConn) UnderlyingConn() net.Conn {
+	return c.conn
+}
+
 func (c *NetConn) resetTimeout() {
 	if c.readTimeout > 0 {
 		c.conn.SetReadDeadline(time.Now().Add(c.readTimeout))

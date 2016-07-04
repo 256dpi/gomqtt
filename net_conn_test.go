@@ -90,10 +90,10 @@ func TestNetConnCloseWhileReadError(t *testing.T) {
 		pkt.Encode(buf)
 
 		netConn := conn1.(*NetConn)
-		_, err := netConn.conn.Write(buf[0:7]) // <- incomplete packet
+		_, err := netConn.UnderlyingConn().Write(buf[0:7]) // <- incomplete packet
 		assert.NoError(t, err)
 
-		err = netConn.conn.Close()
+		err = netConn.UnderlyingConn().Close()
 		assert.NoError(t, err)
 	})
 
@@ -112,10 +112,10 @@ func TestNetConnCloseWhileDetectError(t *testing.T) {
 		pkt.Encode(buf)
 
 		netConn := conn1.(*NetConn)
-		_, err := netConn.conn.Write(buf[0:1]) // <- too less for a detection
+		_, err := netConn.UnderlyingConn().Write(buf[0:1]) // <- too less for a detection
 		assert.NoError(t, err)
 
-		err = netConn.conn.Close()
+		err = netConn.UnderlyingConn().Close()
 		assert.NoError(t, err)
 	})
 
@@ -134,7 +134,7 @@ func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 		pkt.Encode(buf)
 
 		netConn := conn1.(*NetConn)
-		_, err := netConn.conn.Write(buf[0 : len(buf)-1]) // <- not all of the bytes
+		_, err := netConn.UnderlyingConn().Write(buf[0 : len(buf)-1]) // <- not all of the bytes
 		assert.NoError(t, err)
 	})
 
