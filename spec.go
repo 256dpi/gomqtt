@@ -88,6 +88,10 @@ func Run(t *testing.T, config *Config) {
 	println("Running Unsubscribe Test (QOS 2)")
 	UnsubscribeTest(t, config, "unsub/3", 2)
 
+	// TODO: Unsubscribe not existing subscription.
+
+	// TODO: Unsubscribe overlapping subscriptions.
+
 	println("Running Subscription Upgrade Test (QOS 0->1)")
 	SubscriptionUpgradeTest(t, config, "subup/1", 0, 1)
 
@@ -127,6 +131,8 @@ func Run(t *testing.T, config *Config) {
 	println("Running Keep Alive Timeout Test")
 	KeepAliveTimeoutTest(t, config)
 
+	// TODO: Test invalid command.
+
 	if config.RetainedMessages {
 		println("Running Retained Message Test (QOS 0)")
 		RetainedMessageTest(t, config, "retained/1", "retained/1", 0, 0)
@@ -151,6 +157,8 @@ func Run(t *testing.T, config *Config) {
 
 		println("Running Retained Will Test")
 		RetainedWillTest(t, config, "retained/8")
+
+		// TODO: Test retained message replace.
 	}
 
 	if config.StoredPackets {
