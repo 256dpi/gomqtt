@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSessionPacketID(t *testing.T) {
+func TestMemorySessionPacketID(t *testing.T) {
 	session := NewMemorySession()
 
 	assert.Equal(t, uint16(1), session.PacketID())
@@ -41,7 +41,7 @@ func TestSessionPacketID(t *testing.T) {
 	assert.Equal(t, uint16(1), session.PacketID())
 }
 
-func TestSessionPacketStore(t *testing.T) {
+func TestMemorySessionPacketStore(t *testing.T) {
 	session := NewMemorySession()
 
 	publish := packet.NewPublishPacket()
@@ -88,7 +88,7 @@ func TestSessionPacketStore(t *testing.T) {
 	assert.Equal(t, 0, len(pkts))
 }
 
-func TestSessionSubscriptionStore(t *testing.T) {
+func TestMemorySessionSubscriptionStore(t *testing.T) {
 	session := NewMemorySession()
 
 	subscription := &packet.Subscription{
@@ -136,7 +136,7 @@ func TestSessionSubscriptionStore(t *testing.T) {
 	assert.Equal(t, 0, len(subs))
 }
 
-func TestSessionWillStore(t *testing.T) {
+func TestMemorySessionWillStore(t *testing.T) {
 	session := NewMemorySession()
 
 	theWill := &packet.Message{"test", []byte("test"), 0, false}

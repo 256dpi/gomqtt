@@ -15,25 +15,28 @@
 package broker
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/gomqtt/transport"
-	"github.com/stretchr/testify/assert"
+	"github.com/gomqtt/spec"
 )
 
-func TestConnectTimeout(t *testing.T) {
-	broker := New()
-	broker.ConnectTimeout = 10 * time.Millisecond
+func TestBrokerWithMemoryBackend(t *testing.T) {
+	backend := NewMemoryBackend()
+	backend.Logins = map[string]string{
+		"allow": "allow",
+	}
 
-	port, done := Run(broker, "tcp")
+	port, done := Run(NewWithBackend(backend), "tcp")
 
-	conn, err := transport.Dial(port.URL())
-	assert.NoError(t, err)
+	config := spec.AllFeatures()
+	config.URL = fmt.Sprintf("tcp://allow:allow@localhost:%s", port.Port())
+	config.DenyURL = fmt.Sprintf("tcp://deny:deny@localhost:%s", port.Port())
+	config.NoMessageWait = 50 * time.Millisecond
+	config.MessageRetainWait = 50 * time.Millisecond
 
-	pkt, err := conn.Receive()
-	assert.Nil(t, pkt)
-	assert.Error(t, err)
+	spec.Run(t, config)
 
 	close(done)
 }
