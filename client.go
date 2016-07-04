@@ -200,7 +200,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		}
 
 		// close client
-		c.die(nil, true)
+		return c.die(nil, true)
 	}
 
 	// set state
