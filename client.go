@@ -190,9 +190,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// check authentication
 	if !ok {
-		// set state
-		c.state.set(clientDisconnected)
-
 		// set return code
 		connack.ReturnCode = packet.ErrNotAuthorized
 
@@ -578,7 +575,7 @@ func (c *Client) finishPublish(msg *packet.Message) error {
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error, close bool) error {
 	// check session
-	if c.session != nil && c.state.get() != clientDisconnected {
+	if c.session != nil && c.state.get() == clientConnected {
 		// get will
 		will, _err := c.session.LookupWill()
 		if err == nil {
@@ -595,9 +592,11 @@ func (c *Client) cleanup(err error, close bool) error {
 	}
 
 	// remove client from the queue
-	_err := c.broker.Backend.Terminate(c)
-	if err == nil {
-		err = _err
+	if c.state.get() > clientConnecting {
+		_err := c.broker.Backend.Terminate(c)
+		if err == nil {
+			err = _err
+		}
 	}
 
 	// ensure that the connection gets closed

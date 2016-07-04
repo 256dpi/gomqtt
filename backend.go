@@ -279,26 +279,23 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 		delete(m.clients, client.ClientID())
 	}
 
-	// check session existence
-	if client.Session() != nil {
-		// reset session if the client requested a clean session
-		if client.CleanSession() {
-			client.Session().Reset()
-			return nil
-		}
+	// reset session if the client requested a clean session
+	if client.CleanSession() {
+		client.Session().Reset()
+		return nil
+	}
 
-		// otherwise get stored subscriptions
-		subscriptions, err := client.Session().AllSubscriptions()
-		if err != nil {
-			return err
-		}
+	// otherwise get stored subscriptions
+	subscriptions, err := client.Session().AllSubscriptions()
+	if err != nil {
+		return err
+	}
 
-		// iterate through stored subscriptions
-		for _, sub := range subscriptions {
-			if sub.QOS >= 1 {
-				// add offline subscription
-				m.offlineQueue.Add(sub.Topic, client.Session())
-			}
+	// iterate through stored subscriptions
+	for _, sub := range subscriptions {
+		if sub.QOS >= 1 {
+			// add offline subscription
+			m.offlineQueue.Add(sub.Topic, client.Session())
 		}
 	}
 
