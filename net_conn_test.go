@@ -50,6 +50,10 @@ func TestNetConnSendAfterClose(t *testing.T) {
 	abstractConnSendAfterCloseTest(t, "tcp")
 }
 
+func TestNetConnSendAndCloseTest(t *testing.T) {
+	abstractConnSendAndCloseTest(t, "tcp")
+}
+
 func TestNetConnCounters(t *testing.T) {
 	abstractConnCountersTest(t, "tcp")
 }
