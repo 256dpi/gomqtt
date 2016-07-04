@@ -281,6 +281,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 
 	// reset session if the client requested a clean session
 	if client.CleanSession() {
+		// TODO: Move to client.
 		client.Session().Reset()
 		return nil
 	}
