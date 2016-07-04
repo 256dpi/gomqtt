@@ -129,6 +129,8 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 		Close().
 		Test(t, conn1)
 
+	time.Sleep(config.ProcessWait)
+
 	conn2, err := transport.Dial(config.URL)
 	assert.NoError(t, err)
 	assert.NotNil(t, conn2)
@@ -205,6 +207,8 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 		Send(pubrecIn).
 		Close().
 		Test(t, conn1)
+
+	time.Sleep(config.ProcessWait)
 
 	conn2, err := transport.Dial(config.URL)
 	assert.NoError(t, err)

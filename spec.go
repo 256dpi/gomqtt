@@ -21,6 +21,7 @@ type Config struct {
 	UniqueClientIDs      bool
 	RootSlashDistinction bool
 
+	ProcessWait       time.Duration
 	MessageRetainWait time.Duration
 	NoMessageWait     time.Duration
 }
