@@ -70,8 +70,7 @@ type Backend interface {
 
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics. The
-	// backend may also convert a clients subscriptions into offline subscriptions,
-	// which allows missed messages to be forwarded on the next connect.
+	// backend may also convert a clients subscriptions to offline subscriptions.
 	//
 	// Note: The Backend may also cleanup previously allocated resources for
 	// that client as the broker will close the connection when the call
@@ -151,6 +150,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 		// reset session if clean is true
 		if clean {
 			// reset session
+			// TODO: Move to client.
 			sess.Reset()
 
 			// remove session from store
@@ -182,9 +182,16 @@ func (m *MemoryBackend) QueueOffline(client *Client) error {
 
 	// send all missed messages in another goroutine
 	go func() {
-		// TODO: Use an iterator to not loose message if we close early.
-		for _, msg := range sess.missed() {
+		for {
+			// get next missed message
+			msg := sess.nextMissed()
+			if msg == nil {
+				return
+			}
+
+			// publish or add back to queue
 			if !client.Publish(msg) {
+				sess.queue(msg)
 				return
 			}
 		}

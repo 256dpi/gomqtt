@@ -43,7 +43,8 @@ type Session interface {
 	// not return an error if no packet with the specified id does exists.
 	DeletePacket(direction string, id uint16) error
 
-	// AllPackets should return all packets currently saved in the session.
+	// AllPackets should return all packets currently saved in the session. This
+	// method is used to resend stored packets when the session is resumed.
 	AllPackets(direction string) ([]packet.Packet, error)
 
 	// SaveSubscription should store the subscription in the session. An eventual
@@ -220,6 +221,6 @@ func (s *MemorySession) queue(msg *packet.Message) {
 }
 
 // called by the backend to retrieve all offline messages
-func (s *MemorySession) missed() []*packet.Message {
-	return s.offlineStore.All()
+func (s *MemorySession) nextMissed() *packet.Message {
+	return s.offlineStore.Pop()
 }
