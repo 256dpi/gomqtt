@@ -29,29 +29,36 @@ var errManualClose = errors.New("manual close")
 
 // The WebSocketServer accepts websocket.Conn based connections.
 type WebSocketServer struct {
-	listener net.Listener
-	mux      *http.ServeMux
-	fallback http.Handler
-	upgrader *websocket.Upgrader
-	incoming chan *WebSocketConn
+	listener      net.Listener
+	mux           *http.ServeMux
+	fallback      http.Handler
+	upgrader      *websocket.Upgrader
+	incoming      chan *WebSocketConn
+	originChecker func(r *http.Request) bool
 
-	tomb tomb.Tomb
+	tomb          tomb.Tomb
 }
 
 func newWebSocketServer(listener net.Listener) *WebSocketServer {
-	return &WebSocketServer{
+	ws := &WebSocketServer{
 		listener: listener,
 		upgrader: &websocket.Upgrader{
 			HandshakeTimeout: 60 * time.Second,
-			// TODO: Remove mqttv3.1?
 			Subprotocols: []string{"mqtt", "mqttv3.1"},
-			CheckOrigin: func(r *http.Request) bool {
-				// TODO: Allow override.
-				return true
-			},
 		},
 		incoming: make(chan *WebSocketConn),
 	}
+
+	// add check origin method that uses the optional check origin function
+	ws.upgrader.CheckOrigin = func(r *http.Request) bool {
+		if ws.originChecker != nil {
+			return ws.originChecker(r)
+		}
+
+		return true
+	}
+
+	return ws
 }
 
 // NewWebSocketServer creates a new WS server that listens on the provided address.
@@ -101,6 +108,12 @@ func (s *WebSocketServer) serveHTTP() {
 // a WebSocket upgrade request.
 func (s *WebSocketServer) SetFallback(handler http.Handler) {
 	s.fallback = handler
+}
+
+// SetOriginChecker sets an optional function that allows check the request origin
+// before accepting the connection.
+func (s *WebSocketServer) SetOriginChecker(fn func(r *http.Request)bool) {
+	s.originChecker = fn
 }
 
 func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request) {

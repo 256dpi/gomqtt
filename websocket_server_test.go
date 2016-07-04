@@ -85,18 +85,18 @@ func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
 	server, err := testLauncher.Launch(port.URL("ws"))
 	require.NoError(t, err)
 
-	conn2, err := testDialer.Dial(port.URL("ws"))
+	conn, err := testDialer.Dial(port.URL("ws"))
 	require.NoError(t, err)
 
 	err = server.Close()
 	assert.NoError(t, err)
 
-	pkt, err := conn2.Receive()
+	pkt, err := conn.Receive()
 	assert.Nil(t, pkt)
 	assert.Equal(t, ConnectionClose, toError(err).Code())
 }
 
-func TestWebSocketServerMux(t *testing.T) {
+func TestWebSocketFallback(t *testing.T) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL("ws"))
@@ -120,4 +120,20 @@ func TestWebSocketServerMux(t *testing.T) {
 
 	err = server.Close()
 	assert.NoError(t, err)
+}
+
+func TestWebSocketOriginChecker(t *testing.T) {
+	port := tools.NewPort()
+
+	server, err := testLauncher.Launch(port.URL("ws"))
+	require.NoError(t, err)
+
+	ws := server.(*WebSocketServer)
+	ws.SetOriginChecker(func(r *http.Request)bool{
+		return false
+	})
+
+	conn, err := testDialer.Dial(port.URL("ws"))
+	require.Error(t, err)
+	require.Nil(t, conn)
 }
