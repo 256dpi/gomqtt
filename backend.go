@@ -41,11 +41,10 @@ type Backend interface {
 	// connection when the call returns.
 	Setup(client *Client, id string, clean bool) (Session, bool, error)
 
-	// Restore is called after the client has been acknowledged and if clean is
-	// set to false. It should be used to restore a clients subscriptions from
-	// the session and triggering a background process that forwards all missed
-	// messages.
-	Restore(client *Client) error
+	// QueueOffline is called after the clients stored subscriptions have been
+	// resubscribed. It should be used to trigger a background process that
+	// forwards all missed messages.
+	QueueOffline(client *Client) error
 
 	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages.
@@ -175,27 +174,19 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	return sess, false, nil
 }
 
-// Restore will resubscribe the client to the saved subscriptions and forward
-// all missed messages in another goroutine.
-func (m *MemoryBackend) Restore(client *Client) error {
+// QueueOffline will begin with forwarding all missed messages in a separate
+// goroutine.
+func (m *MemoryBackend) QueueOffline(client *Client) error {
 	// get client session
 	sess := client.Session().(*MemorySession)
 
-	// get stored subscriptions
-	subs, err := sess.AllSubscriptions()
-	if err != nil {
-		return err
-	}
-
-	// add subscriptions
-	for _, sub := range subs {
-		m.queue.Add(sub.Topic, client)
-	}
-
 	// send all missed messages in another goroutine
 	go func() {
+		// TODO: Use an iterator to not loose message if we close early.
 		for _, msg := range sess.missed() {
-			client.Publish(msg)
+			if !client.Publish(msg) {
+				return
+			}
 		}
 	}()
 

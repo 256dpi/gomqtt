@@ -60,7 +60,8 @@ type Session interface {
 	DeleteSubscription(topic string) error
 
 	// AllSubscriptions should return all subscriptions currently saved in the
-	// session.
+	// session. This method is used to restore a clients subscriptions when the
+	// session is resumed.
 	AllSubscriptions() ([]*packet.Subscription, error)
 
 	// SaveWill should store the will message.
@@ -151,6 +152,17 @@ func (s *MemorySession) LookupSubscription(topic string) (*packet.Subscription, 
 func (s *MemorySession) DeleteSubscription(topic string) error {
 	s.subscriptions.Empty(topic)
 	return nil
+}
+
+// StoredSubscriptions will return all subscriptions currently saved in the session.
+func (s *MemorySession) StoredSubscriptions() ([]*packet.Subscription, error) {
+	var all []*packet.Subscription
+
+	for _, value := range s.subscriptions.All() {
+		all = append(all, value.(*packet.Subscription))
+	}
+
+	return all, nil
 }
 
 // AllSubscriptions will return all subscriptions currently saved in the session.

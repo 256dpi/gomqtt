@@ -271,7 +271,22 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// attempt to restore client if not clean
 	if !pkt.CleanSession {
-		err = c.broker.Backend.Restore(c)
+		// get stored subscriptions
+		subs, err := sess.AllSubscriptions()
+		if err != nil {
+			return c.die(err, true)
+		}
+
+		// resubscribe subscriptions
+		for _, sub := range subs {
+			err = c.broker.Backend.Subscribe(c, sub.Topic)
+			if err != nil {
+				return c.die(err, true)
+			}
+		}
+
+		// begin with queueing offline messages
+		err = c.broker.Backend.QueueOffline(c)
 		if err != nil {
 			return c.die(err, true)
 		}
