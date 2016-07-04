@@ -100,6 +100,29 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 	assert.NoError(t, err)
 }
 
+func UnsubscribeNotExistingSubscriptionTest(t *testing.T, config *Config, topic string) {
+	client := client.New()
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.Fail(t, "should not be called")
+	}
+
+	connectFuture, err := client.Connect(config.URL, nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	unsubscribeFuture, err := client.Unsubscribe(topic)
+	assert.NoError(t, err)
+	assert.NoError(t, unsubscribeFuture.Wait())
+
+	time.Sleep(config.NoMessageWait)
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+}
+
 func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, to uint8) {
 	client := client.New()
 	wait := make(chan struct{})
