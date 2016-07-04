@@ -8,12 +8,24 @@
 
 **Package spec provides functionality for testing [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker implementations.**
 
-_The package is currently WIP and will be available soon!_
-
 ## Installation
 
 Get it using go's standard toolset:
 
 ```bash
 $ go get github.com/gomqtt/spec
+```
+
+## Usage
+
+```go
+config := AllFeatures()
+config.URL = "tcp://localhost:1883"
+
+// mosquitto specific config
+config.Authentication = false
+config.MessageRetainWait = 300 * time.Millisecond
+config.NoMessageWait = 100 * time.Millisecond
+
+Run(t, config)
 ```
