@@ -132,8 +132,6 @@ func Run(t *testing.T, config *Config) {
 	println("Running Keep Alive Timeout Test")
 	KeepAliveTimeoutTest(t, config)
 
-	// TODO: Test invalid command.
-
 	if config.RetainedMessages {
 		println("Running Retained Message Test (QOS 0)")
 		RetainedMessageTest(t, config, "retained/1", "retained/1", 0, 0)
