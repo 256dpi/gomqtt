@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -22,6 +23,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestIsConnectionCloseError(t *testing.T) {
+	assert.True(t, IsConnectionCloseError(newTransportError(ConnectionClose, nil)))
+	assert.False(t, IsConnectionCloseError(nil))
+	assert.False(t, IsConnectionCloseError(errors.New("foo")))
+}
 
 func abstractConnConnectTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {

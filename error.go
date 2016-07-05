@@ -88,6 +88,16 @@ type Error interface {
 	Err() error
 }
 
+// IsConnectionCloseError returns true if the supplied error is a ConnectionClose
+// transport error.
+func IsConnectionCloseError(value interface{}) bool {
+	if err, ok := value.(*transportError); ok {
+		return err.code == ConnectionClose
+	}
+
+	return false
+}
+
 type transportError struct {
 	code ErrorCode
 	err  error
