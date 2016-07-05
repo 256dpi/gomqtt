@@ -52,8 +52,8 @@ func Run(t *testing.T, broker *Broker, protocol string) (*tools.Port, chan struc
 	go func() {
 		<-quit
 
-		// wait for all clients to close
-		time.Sleep(2000 * time.Millisecond)
+		// check for active clients
+		time.Sleep(100 * time.Millisecond)
 		assert.Equal(t, 0, len(broker.Clients()))
 
 		// close broker
