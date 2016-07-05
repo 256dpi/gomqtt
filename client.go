@@ -704,7 +704,7 @@ func (c *Client) send(pkt packet.Packet, buffered bool) error {
 	c.tracker.reset()
 
 	// prepare error
-	var err  error
+	var err error
 
 	// send packet
 	if buffered {

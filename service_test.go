@@ -18,12 +18,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fortytw2/leaktest"
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestClearSession(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	connect := connectPacket()
 	connect.ClientID = "test"
 
@@ -41,6 +44,8 @@ func TestClearSession(t *testing.T) {
 }
 
 func TestClearRetainedMessage(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = nil
@@ -61,6 +66,8 @@ func TestClearRetainedMessage(t *testing.T) {
 }
 
 func TestServicePublishSubscribe(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: "test"},
@@ -126,6 +133,8 @@ func TestServicePublishSubscribe(t *testing.T) {
 }
 
 func TestStartStopVariations(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	broker := tools.NewFlow().
 		Receive(connectPacket()).
 		Send(connackPacket()).
@@ -161,6 +170,8 @@ func TestStartStopVariations(t *testing.T) {
 }
 
 func TestServiceUnsubscribe(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	unsubscribe := packet.NewUnsubscribePacket()
 	unsubscribe.Topics = []string{"test"}
 	unsubscribe.PacketID = 1
@@ -205,6 +216,8 @@ func TestServiceUnsubscribe(t *testing.T) {
 }
 
 func TestServiceReconnect(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	delay := tools.NewFlow().
 		Receive(connectPacket()).
 		Delay(55 * time.Millisecond).
@@ -254,6 +267,8 @@ func TestServiceReconnect(t *testing.T) {
 }
 
 func TestServiceFutureSurvival(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	connect := connectPacket()
 	connect.ClientID = "test"
 	connect.CleanSession = false

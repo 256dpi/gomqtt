@@ -15,7 +15,6 @@
 package client
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/gomqtt/packet"
@@ -32,56 +31,6 @@ func errorCallback(t *testing.T) func(*packet.Message, error) {
 
 		assert.Fail(t, "callback should not have been called")
 	}
-}
-
-type testSession struct {
-	MemorySession
-
-	saveError   bool
-	lookupError bool
-	deleteError bool
-	allError    bool
-	resetError  bool
-}
-
-func (s *testSession) SavePacket(direction string, pkt packet.Packet) error {
-	if s.saveError {
-		return errors.New("error")
-	}
-
-	return s.MemorySession.SavePacket(direction, pkt)
-}
-
-func (s *testSession) LookupPacket(direction string, id uint16) (packet.Packet, error) {
-	if s.lookupError {
-		return nil, errors.New("error")
-	}
-
-	return s.MemorySession.LookupPacket(direction, id)
-}
-
-func (s *testSession) DeletePacket(direction string, id uint16) error {
-	if s.deleteError {
-		return errors.New("error")
-	}
-
-	return s.MemorySession.DeletePacket(direction, id)
-}
-
-func (s *testSession) AllPackets(direction string) ([]packet.Packet, error) {
-	if s.allError {
-		return nil, errors.New("error")
-	}
-
-	return s.MemorySession.AllPackets(direction)
-}
-
-func (s *testSession) Reset() error {
-	if s.resetError {
-		return errors.New("error")
-	}
-
-	return s.MemorySession.Reset()
 }
 
 func fakeBroker(t *testing.T, testFlows ...*tools.Flow) (chan struct{}, *tools.Port) {
