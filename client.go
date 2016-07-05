@@ -126,11 +126,6 @@ func (c *Client) processor() error {
 		// get next packet from connection
 		pkt, err := c.conn.Receive()
 		if err != nil {
-			if c.state.get() == clientDisconnected {
-				return c.die(nil, false)
-			}
-
-			// die on any other error
 			return c.die(err, false)
 		}
 
@@ -480,14 +475,14 @@ func (c *Client) processPubrel(packetID uint16) error {
 
 // handle an incoming DisconnectPacket
 func (c *Client) processDisconnect() error {
-	// mark client as cleanly disconnected
-	c.state.set(clientDisconnected)
-
 	// clear will
 	err := c.session.ClearWill()
 	if err != nil {
 		return c.die(err, true)
 	}
+
+	// close client
+	c.Close(true)
 
 	return nil
 }
