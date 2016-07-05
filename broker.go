@@ -123,7 +123,6 @@ func (b *Broker) Clients() []*Client {
 // The call will block until all clients are properly closed.
 func (b *Broker) Close() {
 	b.mutex.Lock()
-	defer b.mutex.Unlock()
 
 	// set closing
 	b.closing = true
@@ -134,6 +133,7 @@ func (b *Broker) Close() {
 	}
 
 	// wait for all clients to close
+	b.mutex.Unlock()
 	b.waitGroup.Wait()
 }
 
