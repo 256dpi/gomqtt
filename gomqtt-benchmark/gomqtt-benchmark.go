@@ -29,14 +29,14 @@ import (
 	"github.com/gomqtt/transport"
 )
 
-const interval = 100
-
 var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")
 var duration = flag.Int("duration", 30, "duration in seconds")
 
-var sent = make(chan int)
-var received = make(chan int)
+var sent int32
+var received int32
+var delta int32
+var total int32
 
 func main() {
 	flag.Parse()
@@ -124,20 +124,15 @@ func consumer(id string) {
 		panic(err)
 	}
 
-	counter := 0
-
 	for {
 		_, err := conn.Receive()
 		if err != nil {
 			panic(err)
 		}
 
-		counter++
-
-		if counter >= interval {
-			received <- counter
-			counter = 0
-		}
+		atomic.AddInt32(&received, 1)
+		atomic.AddInt32(&delta, -1)
+		atomic.AddInt32(&total, 1)
 	}
 }
 
@@ -148,63 +143,36 @@ func publisher(id string) {
 	publish.Message.Topic = id
 	publish.Message.Payload = []byte("foo")
 
-	counter := 0
-
 	for {
 		err := conn.BufferedSend(publish)
 		if err != nil {
 			panic(err)
 		}
 
-		counter++
-
-		if counter >= interval {
-			sent <- counter
-			counter = 0
-		}
+		atomic.AddInt32(&sent, 1)
+		atomic.AddInt32(&delta, 1)
 	}
 }
 
 func reporter() {
-	var sentCounter int32
-	var receivedCounter int32
-	var balance int32
-
-	go func() {
-		for {
-			n := int32(<-sent)
-			atomic.AddInt32(&sentCounter, n)
-			atomic.AddInt32(&balance, n)
-		}
-	}()
-
-	go func() {
-		for {
-			n := int32(<-received)
-			atomic.AddInt32(&receivedCounter, n)
-			atomic.AddInt32(&balance, -n)
-		}
-	}()
-
 	var iterations int32
-	var totalReceived int32
 
 	for {
 		<-time.After(1 * time.Second)
 
-		sentPerSecond := atomic.LoadInt32(&sentCounter)
-		receivedPerSecond := atomic.LoadInt32(&receivedCounter)
-		currentBalance := atomic.LoadInt32(&balance)
+		_sent := atomic.LoadInt32(&sent)
+		_received := atomic.LoadInt32(&received)
+		_delta := atomic.LoadInt32(&delta)
+		_total := atomic.LoadInt32(&total)
 
 		iterations++
-		totalReceived += receivedPerSecond
 
-		fmt.Printf("Sent: %d msgs - ", sentPerSecond)
-		fmt.Printf("Received: %d msgs ", receivedPerSecond)
-		fmt.Printf("(Buffered: %d msgs) ", currentBalance)
-		fmt.Printf("(Average Throughput: %d msg/s)\n", totalReceived/iterations)
+		fmt.Printf("Sent: %d msgs - ", _sent)
+		fmt.Printf("Received: %d msgs ", _received)
+		fmt.Printf("(Buffered: %d msgs) ", _delta)
+		fmt.Printf("(Average Throughput: %d msg/s)\n", _total/iterations)
 
-		atomic.StoreInt32(&sentCounter, 0)
-		atomic.StoreInt32(&receivedCounter, 0)
+		atomic.StoreInt32(&sent, 0)
+		atomic.StoreInt32(&received, 0)
 	}
 }
