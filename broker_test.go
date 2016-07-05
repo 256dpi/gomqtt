@@ -18,15 +18,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fortytw2/leaktest"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConnectTimeout(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	broker := New()
 	broker.ConnectTimeout = 10 * time.Millisecond
 
-	port, done := Run(broker, "tcp")
+	port, quit, done := Run(t, broker, "tcp")
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)
@@ -35,5 +38,6 @@ func TestConnectTimeout(t *testing.T) {
 	assert.Nil(t, pkt)
 	assert.Error(t, err)
 
-	close(done)
+	close(quit)
+	<-done
 }

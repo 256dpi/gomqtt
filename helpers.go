@@ -16,43 +16,56 @@ package broker
 
 import (
 	"sync"
+	"testing"
+	"time"
 
 	"github.com/gomqtt/tools"
 	"github.com/gomqtt/transport"
+	"github.com/stretchr/testify/assert"
 )
 
 // Run runs the passed broker on a random available port and returns a channel
 // that can be closed to shutdown the broker. This method is intended to be used
 // in testing scenarios.
-func Run(broker *Broker, protocol string) (*tools.Port, chan struct{}) {
+func Run(t *testing.T, broker *Broker, protocol string) (*tools.Port, chan struct{}, chan struct{}) {
 	port := tools.NewPort()
 
 	server, err := transport.Launch(port.URL(protocol))
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 
+	quit := make(chan struct{})
 	done := make(chan struct{})
 
 	go func() {
 		for {
-			// errors from accept are ignored
-			conn, _ := server.Accept()
-
-			if conn != nil {
-				broker.Handle(conn)
+			// get next connection and return on error
+			conn, err := server.Accept()
+			if err != nil {
+				return
 			}
+
+			// handle connection
+			broker.Handle(conn)
 		}
 	}()
 
 	go func() {
-		<-done
+		<-quit
+
+		// wait for all clients to close
+		time.Sleep(2000 * time.Millisecond)
+		assert.Equal(t, 0, len(broker.Clients()))
+
+		// close broker
+		broker.Close()
 
 		// errors from close are ignored
 		server.Close()
+
+		close(done)
 	}()
 
-	return port, done
+	return port, quit, done
 }
 
 /* state */

@@ -19,16 +19,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fortytw2/leaktest"
 	"github.com/gomqtt/spec"
 )
 
 func TestBrokerWithMemoryBackend(t *testing.T) {
+	defer leaktest.Check(t)()
+
 	backend := NewMemoryBackend()
 	backend.Logins = map[string]string{
 		"allow": "allow",
 	}
 
-	port, done := Run(NewWithBackend(backend), "tcp")
+	port, quit, done := Run(t, NewWithBackend(backend), "tcp")
 
 	config := spec.AllFeatures()
 	config.URL = fmt.Sprintf("tcp://allow:allow@localhost:%s", port.Port())
@@ -38,5 +41,7 @@ func TestBrokerWithMemoryBackend(t *testing.T) {
 
 	spec.Run(t, config)
 
-	close(done)
+	close(quit)
+
+	<-done
 }

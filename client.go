@@ -201,6 +201,9 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// set state
 	c.state.set(clientConnected)
 
+	// add client to the brokers list
+	c.broker.add(c)
+
 	// set keep alive
 	if pkt.KeepAlive > 0 {
 		c.conn.SetReadTimeout(time.Duration(pkt.KeepAlive) * 1500 * time.Millisecond)
@@ -603,6 +606,11 @@ func (c *Client) cleanup(err error, close bool) error {
 	}
 
 	c.log(LostConnectionLogEvent, c, nil)
+
+	// remove client from the brokers list if added
+	if c.state.get() > clientConnecting {
+		c.broker.remove(c)
+	}
 
 	return err
 }
