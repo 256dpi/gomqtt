@@ -126,7 +126,9 @@ func consumer(id string) {
 
 	for {
 		_, err := conn.Receive()
-		if err != nil {
+		if transport.IsConnectionCloseError(err) {
+			return
+		} else if err != nil {
 			panic(err)
 		}
 
@@ -145,7 +147,9 @@ func publisher(id string) {
 
 	for {
 		err := conn.BufferedSend(publish)
-		if err != nil {
+		if transport.IsConnectionCloseError(err) {
+			return
+		} else if err != nil {
 			panic(err)
 		}
 
@@ -158,7 +162,7 @@ func reporter() {
 	var iterations int32
 
 	for {
-		<-time.After(1 * time.Second)
+		time.Sleep(1 * time.Second)
 
 		_sent := atomic.LoadInt32(&sent)
 		_received := atomic.LoadInt32(&received)
