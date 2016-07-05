@@ -64,9 +64,10 @@ type Broker struct {
 
 	ConnectTimeout time.Duration
 
-	closing bool
-	clients []*Client
-	mutex   sync.Mutex
+	closing   bool
+	clients   []*Client
+	mutex     sync.Mutex
+	waitGroup sync.WaitGroup
 }
 
 // New returns a new Broker with a basic MemoryBackend.
@@ -119,6 +120,7 @@ func (b *Broker) Clients() []*Client {
 }
 
 // Close will stop handling incoming connections and close all current clients.
+// The call will block until all clients are properly closed.
 func (b *Broker) Close() {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -131,7 +133,8 @@ func (b *Broker) Close() {
 		client.Close(false)
 	}
 
-	// TODO: Wait for all clients to remove themselves?
+	// wait for all clients to close
+	b.waitGroup.Wait()
 }
 
 // clients call add to add themselves to the list
@@ -141,6 +144,9 @@ func (b *Broker) add(client *Client) {
 
 	// add client
 	b.clients = append(b.clients, client)
+
+	// increment wait group
+	b.waitGroup.Add(1)
 }
 
 // clients call remove when closed to remove themselves from the list
@@ -162,4 +168,7 @@ func (b *Broker) remove(client *Client) {
 	b.clients[index] = b.clients[len(b.clients)-1]
 	b.clients[len(b.clients)-1] = nil
 	b.clients = b.clients[:len(b.clients)-1]
+
+	// decrement wait group
+	b.waitGroup.Add(-1)
 }
