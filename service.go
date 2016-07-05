@@ -200,7 +200,7 @@ func (s *Service) Start(url string, opts *Options) {
 	// create new tomb
 	s.tomb = &tomb.Tomb{}
 
-	// start reconnector
+	// start supervisor
 	s.tomb.Go(s.supervisor)
 }
 
