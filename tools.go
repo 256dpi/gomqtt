@@ -34,7 +34,7 @@ func NewCounter() *Counter {
 // Next will return the next id.
 func (c *Counter) Next() uint16 {
 	c.mutex.Lock()
-	c.mutex.Unlock()
+	defer c.mutex.Unlock()
 
 	// cache current id
 	id := c.current
