@@ -404,8 +404,7 @@ func (c *Client) processor() error {
 			}
 
 			// check if the connection has been closed by the server
-			transportErr, ok := err.(transport.Error)
-			if ok && transportErr.Code() == transport.ConnectionClose {
+			if transport.IsConnectionCloseError(err) {
 				return c.die(ErrClientUnexpectedClose, false)
 			}
 
