@@ -29,7 +29,7 @@ import (
 	"github.com/gomqtt/transport"
 )
 
-const interval = 1000
+const interval = 100
 
 var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")

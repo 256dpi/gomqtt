@@ -94,5 +94,7 @@ func main() {
 
 	<-finish
 
-	fmt.Println("Exiting...")
+	engine.Close()
+
+	fmt.Println("Bye!")
 }
