@@ -28,33 +28,33 @@ import (
 type LogEvent int
 
 const (
-	// NewConnectionLogEvent is emitted when a client comes online. The third
-	// parameter will be nil.
-	NewConnectionLogEvent LogEvent = iota
+	// NewConnection is emitted when a client comes online. The third parameter
+	// will be nil.
+	NewConnection LogEvent = iota
 
-	// PacketReceivedLogEvent is emitted when a packet has been received. The
-	// third parameter will be the received packet.
-	PacketReceivedLogEvent
+	// PacketReceived is emitted when a packet has been received. The third
+	// parameter will be the received packet.
+	PacketReceived
 
-	// MessagePublishedLogEvent is emitted after a message has been published.
-	// The third parameter will be the published message.
-	MessagePublishedLogEvent
+	// MessagePublished is emitted after a message has been published. The third
+	// parameter will be the published message.
+	MessagePublished
 
-	// MessageForwardedLogEvent is emitted after a message has been forwarded.
-	// The third parameter will be the forwarded message.
-	MessageForwardedLogEvent
+	// MessageForwarded is emitted after a message has been forwarded. The third
+	// parameter will be the forwarded message.
+	MessageForwarded
 
-	// PacketSentLogEvent is emitted when a packet has been sent. The third
-	// parameter will be the sent packet.
-	PacketSentLogEvent
+	// PacketSent is emitted when a packet has been sent. The third parameter
+	// will be the sent packet.
+	PacketSent
 
-	// LostConnectionLogEvent is emitted when the connection has been terminated.
-	// The third parameter will be nil.
-	LostConnectionLogEvent
+	// LostConnection is emitted when the connection has been terminated. The
+	// third parameter will be nil.
+	LostConnection
 
-	// ErrorLogEvent is emitted when an error occurs. The third parameter will be
-	// the caught error.
-	ErrorLogEvent
+	// Error is emitted when an error occurs. The third parameter will be the
+	// caught error.
+	Error
 )
 
 // The Logger callback handles incoming log messages.
