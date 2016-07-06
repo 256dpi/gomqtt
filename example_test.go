@@ -28,7 +28,7 @@ func Example() {
 		panic(err)
 	}
 
-	broker := New()
+	engine := NewEngine()
 
 	go func() {
 		for {
@@ -37,7 +37,7 @@ func Example() {
 				return
 			}
 
-			broker.Handle(conn)
+			engine.Handle(conn)
 		}
 	}()
 

@@ -26,10 +26,10 @@ import (
 func TestConnectTimeout(t *testing.T) {
 	defer leaktest.Check(t)()
 
-	broker := New()
-	broker.ConnectTimeout = 10 * time.Millisecond
+	engine := NewEngine()
+	engine.ConnectTimeout = 10 * time.Millisecond
 
-	port, quit, done := Run(t, broker, "tcp")
+	port, quit, done := Run(t, engine, "tcp")
 
 	conn, err := transport.Dial(port.URL())
 	assert.NoError(t, err)

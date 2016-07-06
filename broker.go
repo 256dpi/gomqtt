@@ -59,8 +59,8 @@ const (
 // The Logger callback handles incoming log messages.
 type Logger func(LogEvent, *Client, interface{})
 
-// The Broker handles incoming connections and connects them to the backend.
-type Broker struct {
+// The Engine handles incoming connections and connects them to the backend.
+type Engine struct {
 	Backend Backend
 	Logger  Logger
 
@@ -72,14 +72,14 @@ type Broker struct {
 	waitGroup sync.WaitGroup
 }
 
-// New returns a new Broker with a basic MemoryBackend.
-func New() *Broker {
-	return NewWithBackend(NewMemoryBackend())
+// NewEngine returns a new Engine with a basic MemoryBackend.
+func NewEngine() *Engine {
+	return NewEngineWithBackend(NewMemoryBackend())
 }
 
-// NewWithBackend returns a new Broker with a custom Backend.
-func NewWithBackend(backend Backend) *Broker {
-	return &Broker{
+// NewEngineWithBackend returns a new Engine with a custom Backend.
+func NewEngineWithBackend(backend Backend) *Engine {
+	return &Engine{
 		Backend:        backend,
 		ConnectTimeout: 10 * time.Second,
 		clients:        make([]*Client, 0),
@@ -87,8 +87,8 @@ func NewWithBackend(backend Backend) *Broker {
 }
 
 // Handle takes over responsibility and handles a transport.Conn. It returns
-// false if the broker is closing and the connection has been closed.
-func (b *Broker) Handle(conn transport.Conn) bool {
+// false if the engine is closing and the connection has been closed.
+func (b *Engine) Handle(conn transport.Conn) bool {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -110,7 +110,7 @@ func (b *Broker) Handle(conn transport.Conn) bool {
 }
 
 // Clients returns a current list of connected clients.
-func (b *Broker) Clients() []*Client {
+func (b *Engine) Clients() []*Client {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -123,7 +123,7 @@ func (b *Broker) Clients() []*Client {
 
 // Close will stop handling incoming connections and close all current clients.
 // The call will block until all clients are properly closed.
-func (b *Broker) Close() {
+func (b *Engine) Close() {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -137,10 +137,10 @@ func (b *Broker) Close() {
 }
 
 // Wait can be called after close to wait until all clients have been closed.
-func (b *Broker) Wait(timeout time.Duration) {
+func (b *Engine) Wait(timeout time.Duration) {
 	wait := make(chan struct{})
 
-	go func(){
+	go func() {
 		b.waitGroup.Wait()
 		close(wait)
 	}()
@@ -152,7 +152,7 @@ func (b *Broker) Wait(timeout time.Duration) {
 }
 
 // clients call add to add themselves to the list
-func (b *Broker) add(client *Client) {
+func (b *Engine) add(client *Client) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -164,7 +164,7 @@ func (b *Broker) add(client *Client) {
 }
 
 // clients call remove when closed to remove themselves from the list
-func (b *Broker) remove(client *Client) {
+func (b *Engine) remove(client *Client) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 

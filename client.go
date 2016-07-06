@@ -36,7 +36,7 @@ var ErrExpectedConnect = errors.New("expected ConnectPacket")
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
-	broker *Broker
+	engine *Engine
 	conn   transport.Conn
 
 	clientID     string
@@ -53,9 +53,9 @@ type Client struct {
 }
 
 // newClient takes over a connection and returns a Client
-func newClient(broker *Broker, conn transport.Conn) *Client {
+func newClient(engine *Engine, conn transport.Conn) *Client {
 	c := &Client{
-		broker:  broker,
+		engine:  engine,
 		conn:    conn,
 		context: NewContext(),
 		out:     make(chan *packet.Message),
@@ -120,7 +120,7 @@ func (c *Client) processor() error {
 	c.log(NewConnectionLogEvent, c, nil)
 
 	// set initial read timeout
-	c.conn.SetReadTimeout(c.broker.ConnectTimeout)
+	c.conn.SetReadTimeout(c.engine.ConnectTimeout)
 
 	for {
 		// get next packet from connection
@@ -178,7 +178,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	connack.SessionPresent = false
 
 	// authenticate
-	ok, err := c.broker.Backend.Authenticate(c, pkt.Username, pkt.Password)
+	ok, err := c.engine.Backend.Authenticate(c, pkt.Username, pkt.Password)
 	if err != nil {
 		c.die(err, true)
 	}
@@ -202,7 +202,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.state.set(clientConnected)
 
 	// add client to the brokers list
-	c.broker.add(c)
+	c.engine.add(c)
 
 	// set keep alive
 	if pkt.KeepAlive > 0 {
@@ -216,7 +216,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.clientID = pkt.ClientID
 
 	// retrieve session
-	sess, resumed, err := c.broker.Backend.Setup(c, pkt.ClientID, pkt.CleanSession)
+	sess, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID, pkt.CleanSession)
 	if err != nil {
 		return c.die(err, true)
 	}
@@ -274,14 +274,14 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 		// resubscribe subscriptions
 		for _, sub := range subs {
-			err = c.broker.Backend.Subscribe(c, sub.Topic)
+			err = c.engine.Backend.Subscribe(c, sub.Topic)
 			if err != nil {
 				return c.die(err, true)
 			}
 		}
 
 		// begin with queueing offline messages
-		err = c.broker.Backend.QueueOffline(c)
+		err = c.engine.Backend.QueueOffline(c)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -315,7 +315,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		}
 
 		// subscribe client to queue
-		err = c.broker.Backend.Subscribe(c, subscription.Topic)
+		err = c.engine.Backend.Subscribe(c, subscription.Topic)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -332,7 +332,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 	// queue retained messages
 	for _, sub := range pkt.Subscriptions {
-		err := c.broker.Backend.QueueRetained(c, sub.Topic)
+		err := c.engine.Backend.QueueRetained(c, sub.Topic)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -348,7 +348,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 
 	for _, topic := range pkt.Topics {
 		// unsubscribe client from queue
-		err := c.broker.Backend.Unsubscribe(c, topic)
+		err := c.engine.Backend.Unsubscribe(c, topic)
 		if err != nil {
 			return c.die(err, true)
 		}
@@ -544,12 +544,12 @@ func (c *Client) finishPublish(msg *packet.Message) error {
 	// check retain flag
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
-			err := c.broker.Backend.StoreRetained(c, msg)
+			err := c.engine.Backend.StoreRetained(c, msg)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := c.broker.Backend.ClearRetained(c, msg.Topic)
+			err := c.engine.Backend.ClearRetained(c, msg.Topic)
 			if err != nil {
 				return err
 			}
@@ -560,7 +560,7 @@ func (c *Client) finishPublish(msg *packet.Message) error {
 	msg.Retain = false
 
 	// publish message to others
-	err := c.broker.Backend.Publish(c, msg)
+	err := c.engine.Backend.Publish(c, msg)
 	if err != nil {
 		return err
 	}
@@ -591,7 +591,7 @@ func (c *Client) cleanup(err error, close bool) error {
 
 	// remove client from the queue
 	if c.state.get() > clientConnecting {
-		_err := c.broker.Backend.Terminate(c)
+		_err := c.engine.Backend.Terminate(c)
 		if err == nil {
 			err = _err
 		}
@@ -609,7 +609,7 @@ func (c *Client) cleanup(err error, close bool) error {
 
 	// remove client from the brokers list if added
 	if c.state.get() > clientConnecting {
-		c.broker.remove(c)
+		c.engine.remove(c)
 	}
 
 	return err
@@ -651,7 +651,7 @@ func (c *Client) send(pkt packet.Packet, buffered bool) error {
 
 // log a message
 func (c *Client) log(event LogEvent, client *Client, val interface{}) {
-	if c.broker.Logger != nil {
-		c.broker.Logger(event, client, val)
+	if c.engine.Logger != nil {
+		c.engine.Logger(event, client, val)
 	}
 }

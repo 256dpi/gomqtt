@@ -31,7 +31,7 @@ func TestBrokerWithMemoryBackend(t *testing.T) {
 		"allow": "allow",
 	}
 
-	port, quit, done := Run(t, NewWithBackend(backend), "tcp")
+	port, quit, done := Run(t, NewEngineWithBackend(backend), "tcp")
 
 	config := spec.AllFeatures()
 	config.URL = fmt.Sprintf("tcp://allow:allow@localhost:%s", port.Port())

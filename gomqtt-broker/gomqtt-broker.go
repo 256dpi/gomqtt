@@ -50,7 +50,7 @@ func main() {
 
 	fmt.Println("Done!")
 
-	engine := broker.New()
+	engine := broker.NewEngine()
 
 	var published int32
 	var forwarded int32

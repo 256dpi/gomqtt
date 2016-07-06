@@ -27,7 +27,7 @@ import (
 // Run runs the passed broker on a random available port and returns a channel
 // that can be closed to shutdown the broker. This method is intended to be used
 // in testing scenarios.
-func Run(t *testing.T, broker *Broker, protocol string) (*tools.Port, chan struct{}, chan struct{}) {
+func Run(t *testing.T, engine *Engine, protocol string) (*tools.Port, chan struct{}, chan struct{}) {
 	port := tools.NewPort()
 
 	server, err := transport.Launch(port.URL(protocol))
@@ -45,7 +45,7 @@ func Run(t *testing.T, broker *Broker, protocol string) (*tools.Port, chan struc
 			}
 
 			// handle connection
-			broker.Handle(conn)
+			engine.Handle(conn)
 		}
 	}()
 
@@ -54,10 +54,10 @@ func Run(t *testing.T, broker *Broker, protocol string) (*tools.Port, chan struc
 
 		// check for active clients
 		time.Sleep(100 * time.Millisecond)
-		assert.Equal(t, 0, len(broker.Clients()))
+		assert.Equal(t, 0, len(engine.Clients()))
 
 		// close broker
-		broker.Close()
+		engine.Close()
 
 		// errors from close are ignored
 		server.Close()
