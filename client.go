@@ -117,7 +117,7 @@ func (c *Client) Close(clean bool) {
 func (c *Client) processor() error {
 	first := true
 
-	c.log(NewConnection, c, nil)
+	c.log(NewConnection, c, nil, nil, nil)
 
 	// set initial read timeout
 	c.conn.SetReadTimeout(c.engine.ConnectTimeout)
@@ -129,7 +129,7 @@ func (c *Client) processor() error {
 			return c.die(err, false)
 		}
 
-		c.log(PacketReceived, c, pkt)
+		c.log(PacketReceived, c, pkt, nil, nil)
 
 		if first {
 			// get connect
@@ -533,7 +533,7 @@ func (c *Client) sender() error {
 				return c.die(err, false)
 			}
 
-			c.log(MessageForwarded, c, msg)
+			c.log(MessageForwarded, c, nil, msg, nil)
 		}
 	}
 }
@@ -565,7 +565,7 @@ func (c *Client) finishPublish(msg *packet.Message) error {
 		return err
 	}
 
-	c.log(MessagePublished, c, msg)
+	c.log(MessagePublished, c, nil, msg, nil)
 
 	return nil
 }
@@ -605,7 +605,7 @@ func (c *Client) cleanup(err error, close bool) error {
 		}
 	}
 
-	c.log(LostConnection, c, nil)
+	c.log(LostConnection, c, nil, nil, nil)
 
 	// remove client from the brokers list if added
 	if c.state.get() > clientConnecting {
@@ -622,7 +622,7 @@ func (c *Client) die(err error, close bool) error {
 
 		// report error
 		if err != nil {
-			c.log(Error, c, err)
+			c.log(Error, c, nil, nil, err)
 		}
 	})
 
@@ -644,14 +644,14 @@ func (c *Client) send(pkt packet.Packet, buffered bool) error {
 		return err
 	}
 
-	c.log(PacketSent, c, pkt)
+	c.log(PacketSent, c, pkt, nil, nil)
 
 	return nil
 }
 
 // log a message
-func (c *Client) log(event LogEvent, client *Client, val interface{}) {
+func (c *Client) log(event LogEvent, client *Client, pkt packet.Packet, msg *packet.Message, err error) {
 	if c.engine.Logger != nil {
-		c.engine.Logger(event, client, val)
+		c.engine.Logger(event, client, pkt, msg, err)
 	}
 }

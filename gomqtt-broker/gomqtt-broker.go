@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/gomqtt/broker"
+	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 )
 
@@ -56,7 +57,7 @@ func main() {
 	var published int32
 	var forwarded int32
 
-	engine.Logger = func(event broker.LogEvent, client *broker.Client, val interface{}) {
+	engine.Logger = func(event broker.LogEvent, client *broker.Client, pkt packet.Packet, msg *packet.Message, err error) {
 		if event == broker.MessagePublished {
 			atomic.AddInt32(&published, 1)
 		} else if event == broker.MessageForwarded {

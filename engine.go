@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 	"gopkg.in/tomb.v2"
 )
@@ -28,37 +29,30 @@ import (
 type LogEvent int
 
 const (
-	// NewConnection is emitted when a client comes online. The third parameter
-	// will be nil.
+	// NewConnection is emitted when a client comes online.
 	NewConnection LogEvent = iota
 
-	// PacketReceived is emitted when a packet has been received. The third
-	// parameter will be the received packet.
+	// PacketReceived is emitted when a packet has been received.
 	PacketReceived
 
-	// MessagePublished is emitted after a message has been published. The third
-	// parameter will be the published message.
+	// MessagePublished is emitted after a message has been published.
 	MessagePublished
 
-	// MessageForwarded is emitted after a message has been forwarded. The third
-	// parameter will be the forwarded message.
+	// MessageForwarded is emitted after a message has been forwarded.
 	MessageForwarded
 
-	// PacketSent is emitted when a packet has been sent. The third parameter
-	// will be the sent packet.
+	// PacketSent is emitted when a packet has been sent.
 	PacketSent
 
-	// LostConnection is emitted when the connection has been terminated. The
-	// third parameter will be nil.
+	// LostConnection is emitted when the connection has been terminated.
 	LostConnection
 
-	// Error is emitted when an error occurs. The third parameter will be the
-	// caught error.
+	// Error is emitted when an error occurs.
 	Error
 )
 
 // The Logger callback handles incoming log messages.
-type Logger func(LogEvent, *Client, interface{})
+type Logger func(LogEvent, *Client, packet.Packet, *packet.Message, error)
 
 // The Engine handles incoming connections and connects them to the backend.
 type Engine struct {
