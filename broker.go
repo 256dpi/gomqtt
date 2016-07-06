@@ -21,6 +21,8 @@ import (
 	"github.com/gomqtt/transport"
 )
 
+// TODO: Test Logger.
+
 // LogEvent are received by a Logger.
 type LogEvent int
 
