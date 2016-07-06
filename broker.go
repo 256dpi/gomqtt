@@ -125,6 +125,7 @@ func (b *Broker) Clients() []*Client {
 // The call will block until all clients are properly closed.
 func (b *Broker) Close() {
 	b.mutex.Lock()
+	defer b.mutex.Unlock()
 
 	// set closing
 	b.closing = true
@@ -133,10 +134,21 @@ func (b *Broker) Close() {
 	for _, client := range b.clients {
 		client.Close(false)
 	}
+}
 
-	// wait for all clients to close
-	b.mutex.Unlock()
-	b.waitGroup.Wait()
+// Wait can be called after close to wait until all clients have been closed.
+func (b *Broker) Wait(timeout time.Duration) {
+	wait := make(chan struct{})
+
+	go func(){
+		b.waitGroup.Wait()
+		close(wait)
+	}()
+
+	select {
+	case <-wait:
+	case <-time.After(timeout):
+	}
 }
 
 // clients call add to add themselves to the list

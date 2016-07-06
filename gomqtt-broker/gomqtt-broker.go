@@ -95,6 +95,7 @@ func main() {
 	<-finish
 
 	engine.Close()
+	engine.Wait(1 * time.Second)
 
 	fmt.Println("Bye!")
 }
