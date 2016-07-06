@@ -21,9 +21,17 @@ type Config struct {
 	UniqueClientIDs      bool
 	RootSlashDistinction bool
 
-	ProcessWait       time.Duration
+	// ProcessWait defines the time some tests should wait and let the broker
+	// finish processing (e.g. properly terminating a connection)
+	ProcessWait time.Duration
+
+	// MessageRetainWait defines the time retain test should wait to be sure
+	// the published messages has been retained.
 	MessageRetainWait time.Duration
-	NoMessageWait     time.Duration
+
+	// NoMessageWait defines the time some tests should wait for eventually
+	// receiving a wrongly sent message or an error.
+	NoMessageWait time.Duration
 }
 
 // AllFeatures returns a config that enables all features.
