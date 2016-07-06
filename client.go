@@ -126,7 +126,7 @@ func (c *Client) processor() error {
 		// get next packet from connection
 		pkt, err := c.conn.Receive()
 		if err != nil {
-			return c.die(err, false)
+			return c.die(NetworkError, err, false)
 		}
 
 		c.log(PacketReceived, c, pkt, nil, nil)
@@ -135,7 +135,7 @@ func (c *Client) processor() error {
 			// get connect
 			connect, ok := pkt.(*packet.ConnectPacket)
 			if !ok {
-				return c.die(ErrExpectedConnect, true)
+				return c.die(ClientError, ErrExpectedConnect, true)
 			}
 
 			// process connect
@@ -180,7 +180,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// authenticate
 	ok, err := c.engine.Backend.Authenticate(c, pkt.Username, pkt.Password)
 	if err != nil {
-		c.die(err, true)
+		c.die(BackendError, err, true)
 	}
 
 	// check authentication
@@ -191,11 +191,11 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		// send connack
 		err = c.send(connack, false)
 		if err != nil {
-			return c.die(err, false)
+			return c.die(NetworkError, err, false)
 		}
 
 		// close client
-		return c.die(nil, true)
+		return c.die(ClientError, nil, true)
 	}
 
 	// set state
@@ -218,7 +218,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// retrieve session
 	sess, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID, pkt.CleanSession)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(BackendError, err, true)
 	}
 
 	// set session present
@@ -231,14 +231,14 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	if pkt.Will != nil {
 		err = c.session.SaveWill(pkt.Will)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(SessionError, err, true)
 		}
 	}
 
 	// send connack
 	err = c.send(connack, false)
 	if err != nil {
-		return c.die(err, false)
+		return c.die(NetworkError, err, false)
 	}
 
 	// start sender
@@ -247,7 +247,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// retrieve stored packets
 	packets, err := c.session.AllPackets(outgoing)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(SessionError, err, true)
 	}
 
 	// resend stored packets
@@ -260,7 +260,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 		err = c.send(pkt, true)
 		if err != nil {
-			return c.die(err, false)
+			return c.die(NetworkError, err, false)
 		}
 	}
 
@@ -269,21 +269,21 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		// get stored subscriptions
 		subs, err := sess.AllSubscriptions()
 		if err != nil {
-			return c.die(err, true)
+			return c.die(SessionError, err, true)
 		}
 
 		// resubscribe subscriptions
 		for _, sub := range subs {
 			err = c.engine.Backend.Subscribe(c, sub.Topic)
 			if err != nil {
-				return c.die(err, true)
+				return c.die(BackendError, err, true)
 			}
 		}
 
 		// begin with queueing offline messages
 		err = c.engine.Backend.QueueOffline(c)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(BackendError, err, true)
 		}
 	}
 
@@ -294,7 +294,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 func (c *Client) processPingreq() error {
 	err := c.send(packet.NewPingrespPacket(), true)
 	if err != nil {
-		return c.die(err, false)
+		return c.die(NetworkError, err, false)
 	}
 
 	return nil
@@ -311,13 +311,13 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		// save subscription in session
 		err := c.session.SaveSubscription(&subscription)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(SessionError, err, true)
 		}
 
 		// subscribe client to queue
 		err = c.engine.Backend.Subscribe(c, subscription.Topic)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(BackendError, err, true)
 		}
 
 		// save granted qos
@@ -327,14 +327,14 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	// send suback
 	err := c.send(suback, true)
 	if err != nil {
-		return c.die(err, false)
+		return c.die(NetworkError, err, false)
 	}
 
 	// queue retained messages
 	for _, sub := range pkt.Subscriptions {
 		err := c.engine.Backend.QueueRetained(c, sub.Topic)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(BackendError, err, true)
 		}
 	}
 
@@ -350,19 +350,19 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 		// unsubscribe client from queue
 		err := c.engine.Backend.Unsubscribe(c, topic)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(BackendError, err, true)
 		}
 
 		// remove subscription from session
 		err = c.session.DeleteSubscription(topic)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(SessionError, err, true)
 		}
 	}
 
 	err := c.send(unsuback, true)
 	if err != nil {
-		return c.die(err, false)
+		return c.die(NetworkError, err, false)
 	}
 
 	return nil
@@ -377,7 +377,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// acknowledge qos 1 publish
 		err := c.send(puback, true)
 		if err != nil {
-			return c.die(err, false)
+			return c.die(NetworkError, err, false)
 		}
 	}
 
@@ -385,7 +385,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// store packet
 		err := c.session.SavePacket(incoming, publish)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(SessionError, err, true)
 		}
 
 		pubrec := packet.NewPubrecPacket()
@@ -394,7 +394,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// signal qos 2 publish
 		err = c.send(pubrec, true)
 		if err != nil {
-			return c.die(err, false)
+			return c.die(NetworkError, err, false)
 		}
 	}
 
@@ -402,7 +402,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// publish packet to others
 		err := c.finishPublish(&publish.Message)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(BackendError, err, true)
 		}
 	}
 
@@ -426,13 +426,13 @@ func (c *Client) processPubrec(packetID uint16) error {
 	// overwrite stored PublishPacket with PubrelPacket
 	err := c.session.SavePacket(outgoing, pubrel)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(SessionError, err, true)
 	}
 
 	// send packet
 	err = c.send(pubrel, true)
 	if err != nil {
-		return c.die(err, false)
+		return c.die(NetworkError, err, false)
 	}
 
 	return nil
@@ -443,7 +443,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
 	pkt, err := c.session.LookupPacket(incoming, packetID)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(SessionError, err, true)
 	}
 
 	// get packet from store
@@ -458,19 +458,19 @@ func (c *Client) processPubrel(packetID uint16) error {
 	// acknowledge PublishPacket
 	err = c.send(pubcomp, true)
 	if err != nil {
-		return c.die(err, false)
+		return c.die(NetworkError, err, false)
 	}
 
 	// remove packet from store
 	err = c.session.DeletePacket(incoming, packetID)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(SessionError, err, true)
 	}
 
 	// publish packet to others
 	err = c.finishPublish(&publish.Message)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(BackendError, err, true)
 	}
 
 	return nil
@@ -481,7 +481,7 @@ func (c *Client) processDisconnect() error {
 	// clear will
 	err := c.session.ClearWill()
 	if err != nil {
-		return c.die(err, true)
+		return c.die(SessionError, err, true)
 	}
 
 	// close client
@@ -505,7 +505,7 @@ func (c *Client) sender() error {
 			// get stored subscription
 			sub, err := c.session.LookupSubscription(publish.Message.Topic)
 			if err != nil {
-				return c.die(err, true)
+				return c.die(SessionError, err, true)
 			}
 			if sub != nil {
 				// respect maximum qos
@@ -523,14 +523,14 @@ func (c *Client) sender() error {
 			if publish.Message.QOS > 0 {
 				err := c.session.SavePacket(outgoing, publish)
 				if err != nil {
-					return c.die(err, true)
+					return c.die(SessionError, err, true)
 				}
 			}
 
 			// send packet
 			err = c.send(publish, true)
 			if err != nil {
-				return c.die(err, false)
+				return c.die(NetworkError, err, false)
 			}
 
 			c.log(MessageForwarded, c, nil, msg, nil)
@@ -571,12 +571,13 @@ func (c *Client) finishPublish(msg *packet.Message) error {
 }
 
 // will try to cleanup as many resources as possible
-func (c *Client) cleanup(err error, close bool) error {
+func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error) {
 	// check session
 	if c.session != nil && c.state.get() == clientConnected {
 		// get will
 		will, _err := c.session.LookupWill()
 		if err == nil {
+			event = SessionError
 			err = _err
 		}
 
@@ -584,6 +585,7 @@ func (c *Client) cleanup(err error, close bool) error {
 		if will != nil {
 			_err = c.finishPublish(will)
 			if err == nil {
+				event = BackendError
 				err = _err
 			}
 		}
@@ -593,6 +595,7 @@ func (c *Client) cleanup(err error, close bool) error {
 	if c.state.get() > clientConnecting {
 		_err := c.engine.Backend.Terminate(c)
 		if err == nil {
+			event = BackendError
 			err = _err
 		}
 	}
@@ -601,6 +604,7 @@ func (c *Client) cleanup(err error, close bool) error {
 	if close {
 		_err := c.conn.Close()
 		if err == nil {
+			event = NetworkError
 			err = _err
 		}
 	}
@@ -612,17 +616,17 @@ func (c *Client) cleanup(err error, close bool) error {
 		c.engine.remove(c)
 	}
 
-	return err
+	return event, err
 }
 
 // used for closing and cleaning up from inside internal goroutines
-func (c *Client) die(err error, close bool) error {
+func (c *Client) die(event LogEvent, err error, close bool) error {
 	c.finish.Do(func() {
-		err = c.cleanup(err, close)
+		event, err = c.cleanup(event, err, close)
 
 		// report error
 		if err != nil {
-			c.log(Error, c, nil, nil, err)
+			c.log(event, c, nil, nil, err)
 		}
 	})
 

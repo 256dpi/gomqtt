@@ -47,8 +47,17 @@ const (
 	// LostConnection is emitted when the connection has been terminated.
 	LostConnection
 
-	// Error is emitted when an error occurs.
-	Error
+	// NetworkError is emitted when an underlying networking error occurs.
+	NetworkError
+
+	// SessionError is emitted when a call to the session fails.
+	SessionError
+
+	// BackendError is emitted when a call to the backend fails.
+	BackendError
+
+	// ClientError is emitted when the client violates the protocol.
+	ClientError
 )
 
 // The Logger callback handles incoming log messages.
