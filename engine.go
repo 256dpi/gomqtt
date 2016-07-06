@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gomqtt/transport"
+	"gopkg.in/tomb.v2"
 )
 
 // TODO: Test Logger.
@@ -70,6 +71,8 @@ type Engine struct {
 	clients   []*Client
 	mutex     sync.Mutex
 	waitGroup sync.WaitGroup
+
+	tomb tomb.Tomb
 }
 
 // NewEngine returns a new Engine with a basic MemoryBackend.
@@ -86,11 +89,27 @@ func NewEngineWithBackend(backend Backend) *Engine {
 	}
 }
 
+// Accept begins accepting connections from the passed server.
+func (e *Engine) Accept(server transport.Server) {
+	e.tomb.Go(func() error {
+		for {
+			conn, err := server.Accept()
+			if err != nil {
+				return err
+			}
+
+			if !e.Handle(conn) {
+				return nil
+			}
+		}
+	})
+}
+
 // Handle takes over responsibility and handles a transport.Conn. It returns
 // false if the engine is closing and the connection has been closed.
-func (b *Engine) Handle(conn transport.Conn) bool {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+func (e *Engine) Handle(conn transport.Conn) bool {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
 
 	// check conn
 	if conn == nil {
@@ -98,50 +117,56 @@ func (b *Engine) Handle(conn transport.Conn) bool {
 	}
 
 	// close conn immediately when closing
-	if b.closing {
+	if e.closing {
 		conn.Close()
 		return false
 	}
 
 	// handle client
-	newClient(b, conn)
+	newClient(e, conn)
 
 	return true
 }
 
 // Clients returns a current list of connected clients.
-func (b *Engine) Clients() []*Client {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+func (e *Engine) Clients() []*Client {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
 
 	// copy list
-	clients := make([]*Client, len(b.clients))
-	copy(clients, b.clients)
+	clients := make([]*Client, len(e.clients))
+	copy(clients, e.clients)
 
 	return clients
 }
 
 // Close will stop handling incoming connections and close all current clients.
 // The call will block until all clients are properly closed.
-func (b *Engine) Close() {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+//
+// Note: All passed servers to Accept must be closed before calling this method.
+func (e *Engine) Close() {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
 
 	// set closing
-	b.closing = true
+	e.closing = true
+
+	// stop acceptors
+	e.tomb.Kill(nil)
+	e.tomb.Wait()
 
 	// close all clients
-	for _, client := range b.clients {
+	for _, client := range e.clients {
 		client.Close(false)
 	}
 }
 
 // Wait can be called after close to wait until all clients have been closed.
-func (b *Engine) Wait(timeout time.Duration) {
+func (e *Engine) Wait(timeout time.Duration) {
 	wait := make(chan struct{})
 
 	go func() {
-		b.waitGroup.Wait()
+		e.waitGroup.Wait()
 		close(wait)
 	}()
 
@@ -152,25 +177,25 @@ func (b *Engine) Wait(timeout time.Duration) {
 }
 
 // clients call add to add themselves to the list
-func (b *Engine) add(client *Client) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+func (e *Engine) add(client *Client) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
 
 	// add client
-	b.clients = append(b.clients, client)
+	e.clients = append(e.clients, client)
 
 	// increment wait group
-	b.waitGroup.Add(1)
+	e.waitGroup.Add(1)
 }
 
 // clients call remove when closed to remove themselves from the list
-func (b *Engine) remove(client *Client) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+func (e *Engine) remove(client *Client) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
 
 	// get index of client
 	index := 0
-	for i, c := range b.clients {
+	for i, c := range e.clients {
 		if c == client {
 			index = i
 			break
@@ -179,10 +204,10 @@ func (b *Engine) remove(client *Client) {
 
 	// remove client from list
 	// https://github.com/golang/go/wiki/SliceTricks
-	b.clients[index] = b.clients[len(b.clients)-1]
-	b.clients[len(b.clients)-1] = nil
-	b.clients = b.clients[:len(b.clients)-1]
+	e.clients[index] = e.clients[len(e.clients)-1]
+	e.clients[len(e.clients)-1] = nil
+	e.clients = e.clients[:len(e.clients)-1]
 
 	// decrement wait group
-	b.waitGroup.Add(-1)
+	e.waitGroup.Add(-1)
 }

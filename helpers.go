@@ -36,18 +36,7 @@ func Run(t *testing.T, engine *Engine, protocol string) (*tools.Port, chan struc
 	quit := make(chan struct{})
 	done := make(chan struct{})
 
-	go func() {
-		for {
-			// get next connection and return on error
-			conn, err := server.Accept()
-			if err != nil {
-				return
-			}
-
-			// handle connection
-			engine.Handle(conn)
-		}
-	}()
+	engine.Accept(server)
 
 	go func() {
 		<-quit
@@ -56,11 +45,11 @@ func Run(t *testing.T, engine *Engine, protocol string) (*tools.Port, chan struc
 		time.Sleep(100 * time.Millisecond)
 		assert.Equal(t, 0, len(engine.Clients()))
 
-		// close broker
-		engine.Close()
-
 		// errors from close are ignored
 		server.Close()
+
+		// close broker
+		engine.Close()
 
 		close(done)
 	}()

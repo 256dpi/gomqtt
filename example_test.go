@@ -29,17 +29,7 @@ func Example() {
 	}
 
 	engine := NewEngine()
-
-	go func() {
-		for {
-			conn, err := server.Accept()
-			if err != nil {
-				return
-			}
-
-			engine.Handle(conn)
-		}
-	}()
+	engine.Accept(server)
 
 	client := client.New()
 	wait := make(chan struct{})
@@ -85,6 +75,8 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
+
+	engine.Close()
 
 	// Output:
 	// <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>

@@ -51,6 +51,7 @@ func main() {
 	fmt.Println("Done!")
 
 	engine := broker.NewEngine()
+	engine.Accept(server)
 
 	var published int32
 	var forwarded int32
@@ -62,17 +63,6 @@ func main() {
 			atomic.AddInt32(&forwarded, 1)
 		}
 	}
-
-	go func() {
-		for {
-			conn, err := server.Accept()
-			if err != nil {
-				panic(err)
-			}
-
-			engine.Handle(conn)
-		}
-	}()
 
 	go func() {
 		for {
@@ -93,6 +83,8 @@ func main() {
 	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
 
 	<-finish
+
+	server.Close()
 
 	engine.Close()
 	engine.Wait(1 * time.Second)
