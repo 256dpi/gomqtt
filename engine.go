@@ -47,8 +47,8 @@ const (
 	// LostConnection is emitted when the connection has been terminated.
 	LostConnection
 
-	// NetworkError is emitted when an underlying networking error occurs.
-	NetworkError
+	// TransportError is emitted when an underlying transport error occurs.
+	TransportError
 
 	// SessionError is emitted when a call to the session fails.
 	SessionError
