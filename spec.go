@@ -7,6 +7,7 @@ import (
 )
 
 var testPayload = []byte("test")
+var testPayload2 = []byte("test2")
 
 // A Config defines which features should be tested.
 type Config struct {
@@ -158,16 +159,17 @@ func Run(t *testing.T, config *Config) {
 		println("Running Retained Message Test (Wildcard Some)")
 		RetainedMessageTest(t, config, "retained/5/foo/bar", "retained/5/#", 0, 0)
 
+		println("Running Retained Message Replace Test")
+		RetainedMessageReplaceTest(t, config, "retained/6")
+
 		println("Running Clear Retained Message Test")
-		ClearRetainedMessageTest(t, config, "retained/6")
+		ClearRetainedMessageTest(t, config, "retained/7")
 
 		println("Running Direct Retained Message Test")
-		DirectRetainedMessageTest(t, config, "retained/7")
+		DirectRetainedMessageTest(t, config, "retained/8")
 
 		println("Running Retained Will Test")
-		RetainedWillTest(t, config, "retained/8")
-
-		// TODO: Test retained message replace.
+		RetainedWillTest(t, config, "retained/9")
 	}
 
 	if config.StoredPackets {

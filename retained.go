@@ -64,6 +64,65 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 	assert.NoError(t, err)
 }
 
+func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
+	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
+
+	time.Sleep(config.MessageRetainWait)
+
+	retainer := client.New()
+
+	connectFuture, err := retainer.Connect(config.URL, nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	publishFuture, err := retainer.Publish(topic, testPayload, 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	publishFuture, err = retainer.Publish(topic, testPayload2, 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	time.Sleep(config.MessageRetainWait)
+
+	err = retainer.Disconnect()
+	assert.NoError(t, err)
+
+	receiver := client.New()
+
+	wait := make(chan struct{})
+
+	receiver.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, topic, msg.Topic)
+		assert.Equal(t, testPayload2, msg.Payload)
+		assert.Equal(t, uint8(0), msg.QOS)
+		assert.True(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err = receiver.Connect(config.URL, nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subscribeFuture, err := receiver.Subscribe(topic, 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+
+	<-wait
+
+	time.Sleep(config.NoMessageWait)
+
+	err = receiver.Disconnect()
+	assert.NoError(t, err)
+}
+
 func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
