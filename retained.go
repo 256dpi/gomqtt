@@ -81,6 +81,8 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
+	time.Sleep(config.MessageRetainWait)
+
 	publishFuture, err = retainer.Publish(topic, testPayload2, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
