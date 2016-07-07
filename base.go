@@ -123,6 +123,52 @@ func UnsubscribeNotExistingSubscriptionTest(t *testing.T, config *Config, topic 
 	assert.NoError(t, err)
 }
 
+func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic string) {
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, topic + "/foo", msg.Topic)
+		assert.Equal(t, testPayload, msg.Payload)
+		assert.Equal(t, uint8(0), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(config.URL, nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subscribeFuture, err := client.Subscribe(topic + "/#", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+
+	subscribeFuture, err = client.Subscribe(topic + "/+", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+
+	unsubscribeFuture, err := client.Unsubscribe(topic + "/#")
+	assert.NoError(t, err)
+	assert.NoError(t, unsubscribeFuture.Wait())
+
+	publishFuture, err := client.Publish(topic + "/foo", testPayload, 0, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	time.Sleep(config.NoMessageWait)
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+}
+
 func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, to uint8) {
 	client := client.New()
 	wait := make(chan struct{})

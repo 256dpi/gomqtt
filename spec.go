@@ -100,7 +100,8 @@ func Run(t *testing.T, config *Config) {
 	println("Running Unsubscribe Not Existing Subscription Test")
 	UnsubscribeNotExistingSubscriptionTest(t, config, "unsub/4")
 
-	// TODO: Unsubscribe overlapping subscriptions.
+	println("Running Unsubscribe Overlapping Subscription Test")
+	UnsubscribeOverlappingSubscriptions(t, config, "unsub/5")
 
 	println("Running Subscription Upgrade Test (QOS 0->1)")
 	SubscriptionUpgradeTest(t, config, "subup/1", 0, 1)
