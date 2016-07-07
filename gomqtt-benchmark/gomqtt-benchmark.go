@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -37,6 +38,8 @@ var sent int32
 var received int32
 var delta int32
 var total int32
+
+var wg sync.WaitGroup
 
 func main() {
 	flag.Parse()
@@ -59,6 +62,8 @@ func main() {
 		})
 	}
 
+	wg.Add(*workers * 2)
+
 	for i := 0; i < *workers; i++ {
 		id := strconv.Itoa(i)
 
@@ -66,7 +71,9 @@ func main() {
 		go publisher(id)
 	}
 
-	reporter()
+	go reporter()
+
+	wg.Wait()
 }
 
 func connection(id string) transport.Conn {
@@ -111,7 +118,8 @@ func connection(id string) transport.Conn {
 }
 
 func consumer(id string) {
-	conn := connection("consumer/" + id)
+	name := "consumer/" + id
+	conn := connection(name)
 
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1
@@ -127,6 +135,8 @@ func consumer(id string) {
 	for {
 		_, err := conn.Receive()
 		if transport.IsConnectionCloseError(err) {
+			fmt.Printf("Lost: %s\n", name)
+			wg.Done()
 			return
 		} else if err != nil {
 			panic(err)
@@ -139,7 +149,8 @@ func consumer(id string) {
 }
 
 func publisher(id string) {
-	conn := connection("publisher/" + id)
+	name := "publisher/" + id
+	conn := connection(name)
 
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = id
@@ -148,6 +159,8 @@ func publisher(id string) {
 	for {
 		err := conn.BufferedSend(publish)
 		if transport.IsConnectionCloseError(err) {
+			fmt.Printf("Lost: %s\n", name)
+			wg.Done()
 			return
 		} else if err != nil {
 			panic(err)
