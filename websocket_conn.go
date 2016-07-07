@@ -188,7 +188,9 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 
 	// write packet to writer
 	_, err = c.writer.Write(buf)
-	if err != nil {
+	if isCloseError(err) {
+		return newTransportError(ConnectionClose, err)
+	} else if err != nil {
 		c.end(websocket.CloseInternalServerErr)
 		return newTransportError(NetworkError, err)
 	}
@@ -203,7 +205,9 @@ func (c *WebSocketConn) flush() error {
 	// close writer if available
 	if c.writer != nil {
 		err := c.writer.Close()
-		if err != nil {
+		if isCloseError(err) {
+			return newTransportError(ConnectionClose, err)
+		} else if err != nil {
 			c.conn.Close()
 			return newTransportError(NetworkError, err)
 		}
@@ -246,7 +250,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 
 		// try read detection bytes
 		header, err := c.reader.Peek(detectionLength)
-		if err == io.EOF && len(header) == 0 {
+		if isCloseError(err) && len(header) == 0 {
 			// only if Peek returned no bytes the close is expected
 			c.conn.Close()
 			return nil, newTransportError(ConnectionClose, err)

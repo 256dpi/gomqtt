@@ -17,6 +17,10 @@ package transport
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net"
+	"os"
+	"syscall"
 )
 
 // ErrUnsupportedProtocol is returned if either the launcher or dialer
@@ -54,6 +58,11 @@ const (
 	_ ErrorCode = iota
 
 	// ConnectionClose marks errors that symbolizes the close of a connection.
+	//
+	// Note: If this error code is returned during Receive it means that the
+	// connection ended smoothly between sending whole packets. If the error is
+	// returned during Send or BufferedSend it could mean that it happened
+	// before, during or after submitting the packet.
 	ConnectionClose
 
 	// DialError marks errors that came up during a Dial call.
@@ -137,4 +146,26 @@ func (err *transportError) Code() ErrorCode {
 
 func (err *transportError) Err() error {
 	return err.err
+}
+
+func isCloseError(err error) bool {
+	// EOF is considered a connection close
+	if err == io.EOF {
+		return true
+	}
+
+	// a broken pipe and connection reset is considered a connection close
+	opErr, ok := err.(*net.OpError)
+	if ok {
+		if opErr.Err == syscall.EPIPE || opErr.Err == syscall.ECONNRESET {
+			return true
+		}
+
+		sysErr, ok := opErr.Err.(*os.SyscallError)
+		if ok && (sysErr.Err == syscall.EPIPE || sysErr.Err == syscall.ECONNRESET) {
+			return true
+		}
+	}
+
+	return false
 }

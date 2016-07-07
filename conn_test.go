@@ -168,6 +168,31 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 	<-done
 }
 
+func abstractConnCloseWhileSendTest(t *testing.T, protocol string) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
+		err := conn1.Send(packet.NewConnectPacket())
+		assert.NoError(t, err)
+
+		err = conn1.Close()
+		assert.NoError(t, err)
+	})
+
+	pkt, err := conn2.Receive()
+	assert.NotNil(t, pkt)
+	assert.NoError(t, err)
+
+	for {
+		// keep writing
+		err := conn2.Send(packet.NewConnectPacket())
+		if err != nil {
+			assert.Equal(t, ConnectionClose, toError(err).Code())
+			break
+		}
+	}
+
+	<-done
+}
+
 func abstractConnSendAndCloseTest(t *testing.T, protocol string) {
 	wait := make(chan struct{})
 

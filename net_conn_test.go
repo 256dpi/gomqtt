@@ -50,6 +50,10 @@ func TestNetConnSendAfterClose(t *testing.T) {
 	abstractConnSendAfterCloseTest(t, "tcp")
 }
 
+func TestNetConnCloseWhileSend(t *testing.T) {
+	abstractConnCloseWhileSendTest(t, "tcp")
+}
+
 func TestNetConnSendAndCloseTest(t *testing.T) {
 	abstractConnSendAndCloseTest(t, "tcp")
 }

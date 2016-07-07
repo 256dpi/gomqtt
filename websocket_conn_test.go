@@ -50,6 +50,10 @@ func TestWebSocketConnSendAfterClose(t *testing.T) {
 	abstractConnSendAfterCloseTest(t, "ws")
 }
 
+func TestWebSocketConnCloseWhileSend(t *testing.T) {
+	abstractConnCloseWhileSendTest(t, "ws")
+}
+
 func TestWebSocketSendAndCloseTest(t *testing.T) {
 	abstractConnSendAndCloseTest(t, "ws")
 }
