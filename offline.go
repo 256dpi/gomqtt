@@ -78,6 +78,8 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 	assert.NoError(t, client.ClearSession(config.URL, id))
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
+	time.Sleep(config.MessageRetainWait)
+
 	options := client.NewOptions()
 	options.CleanSession = false
 	options.ClientID = id

@@ -12,6 +12,8 @@ import (
 func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub uint8) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, out))
 
+	time.Sleep(config.MessageRetainWait)
+
 	retainer := client.New()
 
 	connectFuture, err := retainer.Connect(config.URL, nil)
@@ -64,6 +66,8 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 
 func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
+
+	time.Sleep(config.MessageRetainWait)
 
 	retainer := client.New()
 
@@ -150,6 +154,8 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
+	time.Sleep(config.MessageRetainWait)
+
 	client := client.New()
 	wait := make(chan struct{})
 
@@ -188,6 +194,8 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 
 func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
+
+	time.Sleep(config.MessageRetainWait)
 
 	clientWithRetainedWill := client.New()
 
