@@ -168,8 +168,11 @@ func Run(t *testing.T, config *Config) {
 		println("Running Direct Retained Message Test")
 		DirectRetainedMessageTest(t, config, "retained/8")
 
+		println("Running Direct Clear Retained Message Test")
+		DirectClearRetainedMessageTest(t, config, "retained/9")
+
 		println("Running Retained Will Test")
-		RetainedWillTest(t, config, "retained/9")
+		RetainedWillTest(t, config, "retained/10")
 	}
 
 	if config.StoredPackets {

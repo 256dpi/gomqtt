@@ -251,6 +251,47 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
+	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
+
+	time.Sleep(config.MessageRetainWait)
+
+	client := client.New()
+	wait := make(chan struct{})
+
+	client.Callback = func(msg *packet.Message, err error) {
+		assert.NoError(t, err)
+		assert.Equal(t, topic, msg.Topic)
+		assert.Nil(t, msg.Payload)
+		assert.Equal(t, uint8(0), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(wait)
+	}
+
+	connectFuture, err := client.Connect(config.URL, nil)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
+	assert.False(t, connectFuture.SessionPresent)
+
+	subscribeFuture, err := client.Subscribe(topic, 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait())
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
+
+	publishFuture, err := client.Publish(topic, nil, 0, true)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait())
+
+	<-wait
+
+	time.Sleep(config.NoMessageWait)
+
+	err = client.Disconnect()
+	assert.NoError(t, err)
+}
+
 func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(config.URL, topic))
 
