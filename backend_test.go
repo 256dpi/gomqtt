@@ -36,6 +36,7 @@ func TestBrokerWithMemoryBackend(t *testing.T) {
 	config := spec.AllFeatures()
 	config.URL = fmt.Sprintf("tcp://allow:allow@localhost:%s", port.Port())
 	config.DenyURL = fmt.Sprintf("tcp://deny:deny@localhost:%s", port.Port())
+	config.ProcessWait = 5 * time.Millisecond
 	config.NoMessageWait = 50 * time.Millisecond
 	config.MessageRetainWait = 50 * time.Millisecond
 
