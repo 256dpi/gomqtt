@@ -28,11 +28,13 @@ import (
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
+	"github.com/juju/ratelimit"
 )
 
 var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")
 var duration = flag.Int("duration", 30, "duration in seconds")
+var rate = flag.Int("rate", 0, "messages per second")
 
 var sent int32
 var received int32
@@ -156,7 +158,16 @@ func publisher(id string) {
 	publish.Message.Topic = id
 	publish.Message.Payload = []byte("foo")
 
+	var bucket *ratelimit.Bucket
+	if *rate > 0 {
+		bucket = ratelimit.NewBucketWithRate(float64(*rate), int64(*rate))
+	}
+
 	for {
+		if bucket != nil {
+			bucket.Wait(1)
+		}
+
 		err := conn.BufferedSend(publish)
 		if transport.IsConnectionCloseError(err) {
 			fmt.Printf("Lost: %s\n", name)
