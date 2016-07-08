@@ -34,7 +34,8 @@ import (
 var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var workers = flag.Int("workers", 1, "number of workers")
 var duration = flag.Int("duration", 30, "duration in seconds")
-var rate = flag.Int("rate", 0, "messages per second")
+var publishRate = flag.Int("publish-rate", 0, "messages per second")
+var receiveRate = flag.Int("receive-rate", 0, "messages per second")
 
 var sent int32
 var received int32
@@ -134,7 +135,16 @@ func consumer(id string) {
 		panic(err)
 	}
 
+	var bucket *ratelimit.Bucket
+	if *receiveRate > 0 {
+		bucket = ratelimit.NewBucketWithRate(float64(*receiveRate), int64(*receiveRate))
+	}
+
 	for {
+		if bucket != nil {
+			bucket.Wait(1)
+		}
+
 		_, err := conn.Receive()
 		if transport.IsConnectionCloseError(err) {
 			fmt.Printf("Lost: %s\n", name)
@@ -159,8 +169,8 @@ func publisher(id string) {
 	publish.Message.Payload = []byte("foo")
 
 	var bucket *ratelimit.Bucket
-	if *rate > 0 {
-		bucket = ratelimit.NewBucketWithRate(float64(*rate), int64(*rate))
+	if *publishRate > 0 {
+		bucket = ratelimit.NewBucketWithRate(float64(*publishRate), int64(*publishRate))
 	}
 
 	for {
