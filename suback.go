@@ -95,7 +95,7 @@ func (sp *SubackPacket) Decode(src []byte) (int, error) {
 
 	// read return codes
 	sp.ReturnCodes = make([]uint8, rcl)
-	copy(sp.ReturnCodes, src[total : total+rcl])
+	copy(sp.ReturnCodes, src[total:total+rcl])
 	total += len(sp.ReturnCodes)
 
 	// validate return codes
