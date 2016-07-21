@@ -20,10 +20,9 @@ import (
 	"fmt"
 )
 
-var (
-	version311Name      = []byte{'M', 'Q', 'T', 'T'}
-	version311Byte byte = 4
-)
+const version311Byte byte = 4
+
+var version311Name = []byte{'M', 'Q', 'T', 'T'}
 
 // A ConnectPacket is sent by a client to the server after a network
 // connection has been established.
@@ -112,7 +111,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check protocol string and version
 	if versionByte != version311Byte {
-		return total, fmt.Errorf("Protocol violation: Invalid protocol version (%d)", version311Byte)
+		return total, fmt.Errorf("Protocol violation: Invalid protocol version (%x)", version311Byte)
 	}
 
 	// check protocol version string
