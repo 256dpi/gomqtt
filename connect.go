@@ -21,8 +21,10 @@ import (
 )
 
 const version311Byte byte = 4
+const version31Byte byte = 3
 
-var version311Name = []byte{'M', 'Q', 'T', 'T'}
+var version311Name = []byte("MQTT")
+var version31Name = []byte("MQIsdp")
 
 // A ConnectPacket is sent by a client to the server after a network
 // connection has been established.
@@ -44,11 +46,17 @@ type ConnectPacket struct {
 
 	// The will message.
 	Will *Message
+
+	// The MQTT version 3 or 4 (defaults to 4 when 0).
+	Version byte
 }
 
 // NewConnectPacket creates a new ConnectPacket.
 func NewConnectPacket() *ConnectPacket {
-	return &ConnectPacket{CleanSession: true}
+	return &ConnectPacket{
+		CleanSession: true,
+		Version: 4,
+	}
 }
 
 // Type returns the packets type.
@@ -65,13 +73,14 @@ func (cp *ConnectPacket) String() string {
 	}
 
 	return fmt.Sprintf("<ConnectPacket ClientID=%q KeepAlive=%d Username=%q "+
-		"Password=%q CleanSession=%t Will=%s>",
+		"Password=%q CleanSession=%t Will=%s Version=%d>",
 		cp.ClientID,
 		cp.KeepAlive,
 		cp.Username,
 		cp.Password,
 		cp.CleanSession,
 		will,
+		cp.Version,
 	)
 }
 
@@ -110,12 +119,15 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	total++
 
 	// check protocol string and version
-	if versionByte != version311Byte {
+	if versionByte != version311Byte && versionByte != version31Byte {
 		return total, fmt.Errorf("Protocol violation: Invalid protocol version (%d)", versionByte)
 	}
 
+	// set version
+	cp.Version = versionByte
+
 	// check protocol version string
-	if !bytes.Equal(protoName, version311Name) {
+	if !bytes.Equal(protoName, version311Name) && !bytes.Equal(protoName, version31Name) {
 		return total, fmt.Errorf("Protocol violation: Invalid protocol version description (%s)", protoName)
 	}
 
@@ -231,12 +243,27 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 		return total, err
 	}
 
+	// set default version byte
+	if cp.Version == 0 {
+		cp.Version = version311Byte
+	}
+
+	// check version byte
+	if cp.Version != version311Byte && cp.Version != version31Byte {
+		return total, fmt.Errorf("Unsupported protocol version %d", cp.Version)
+	}
+
 	// write version string, length has been checked beforehand
-	n, _ = writeLPBytes(dst[total:], version311Name)
-	total += n
+	if cp.Version == version311Byte {
+		n, _ = writeLPBytes(dst[total:], version311Name)
+		total += n
+	} else if cp.Version == version31Byte {
+		n, _ = writeLPBytes(dst[total:], version31Name)
+		total += n
+	}
 
 	// write version value
-	dst[total] = version311Byte
+	dst[total] = cp.Version
 	total++
 
 	var connectFlags byte
@@ -349,12 +376,21 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 func (cp *ConnectPacket) len() int {
 	total := 0
 
-	// 2 bytes protocol name length
-	// 4 bytes protocol name
-	// 1 byte protocol version
+	if cp.Version == version311Byte {
+		// 2 bytes protocol name length
+		// 4 bytes protocol name
+		// 1 byte protocol version
+		total += 2 + 4 + 1
+	} else if cp.Version == version31Byte {
+		// 2 bytes protocol name length
+		// 6 bytes protocol name
+		// 1 byte protocol version
+		total += 2 + 6 + 1
+	}
+
 	// 1 byte connect flags
 	// 2 bytes keep alive timer
-	total += 2 + 4 + 1 + 1 + 2
+	total += 1 + 2
 
 	// add the clientID length
 	total += 2 + len(cp.ClientID)

@@ -29,10 +29,10 @@ func TestConnectInterface(t *testing.T) {
 	}
 
 	assert.Equal(t, pkt.Type(), CONNECT)
-	assert.Equal(t, "<ConnectPacket ClientID=\"\" KeepAlive=0 Username=\"\" Password=\"\" CleanSession=true Will=<Message Topic=\"w\" QOS=1 Retain=false Payload=[109]>>", pkt.String())
+	assert.Equal(t, "<ConnectPacket ClientID=\"\" KeepAlive=0 Username=\"\" Password=\"\" CleanSession=true Will=<Message Topic=\"w\" QOS=1 Retain=false Payload=[109]> Version=4>", pkt.String())
 }
 
-func TestConnectPacketDecode(t *testing.T) {
+func TestConnectPacketDecode1(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),
 		60,
@@ -71,6 +71,49 @@ func TestConnectPacketDecode(t *testing.T) {
 	assert.Equal(t, []byte("send me home"), pkt.Will.Payload)
 	assert.Equal(t, "surgemq", pkt.Username)
 	assert.Equal(t, "verysecret", pkt.Password)
+	assert.Equal(t, byte(4), pkt.Version)
+}
+
+func TestConnectPacketDecode2(t *testing.T) {
+	pktBytes := []byte{
+		byte(CONNECT << 4),
+		60,
+		0, // Protocol String MSB
+		6, // Protocol String LSB
+		'M', 'Q', 'I', 's', 'd', 'p',
+		3,   // Protocol Level
+		206, // Connect Flags
+		0,   // Keep Alive MSB
+		10,  // Keep Alive LSB
+		0,   // Client ID MSB
+		7,   // Client ID LSB
+		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		0, // Will Topic MSB
+		4, // Will Topic LSB
+		'w', 'i', 'l', 'l',
+		0,  // Will Message MSB
+		12, // Will Message LSB
+		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
+		0, // Username ID MSB
+		7, // Username ID LSB
+		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		0,  // Password ID MSB
+		10, // Password ID LSB
+		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
+	}
+
+	pkt := NewConnectPacket()
+	n, err := pkt.Decode(pktBytes)
+
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, uint16(10), pkt.KeepAlive)
+	assert.Equal(t, "surgemq", pkt.ClientID)
+	assert.Equal(t, "will", pkt.Will.Topic)
+	assert.Equal(t, []byte("send me home"), pkt.Will.Payload)
+	assert.Equal(t, "surgemq", pkt.Username)
+	assert.Equal(t, "verysecret", pkt.Password)
+	assert.Equal(t, byte(3), pkt.Version)
 }
 
 func TestConnectPacketDecodeError1(t *testing.T) {
@@ -445,11 +488,11 @@ func TestConnectPacketEncode1(t *testing.T) {
 func TestConnectPacketEncode2(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),
-		12,
+		14,
 		0, // Protocol String MSB
-		4, // Protocol String LSB
-		'M', 'Q', 'T', 'T',
-		4,  // Protocol level 4
+		6, // Protocol String LSB
+		'M', 'Q', 'I', 's', 'd', 'p',
+		3,  // Protocol level 4
 		2,  // Connect Flags
 		0,  // Keep Alive MSB
 		10, // Keep Alive LSB
@@ -460,6 +503,7 @@ func TestConnectPacketEncode2(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.CleanSession = true
 	pkt.KeepAlive = 10
+	pkt.Version = 3
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
