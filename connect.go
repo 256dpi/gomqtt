@@ -111,7 +111,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check protocol string and version
 	if versionByte != version311Byte {
-		return total, fmt.Errorf("Protocol violation: Invalid protocol version (%x)", version311Byte)
+		return total, fmt.Errorf("Protocol violation: Invalid protocol version (%d)", versionByte)
 	}
 
 	// check protocol version string
