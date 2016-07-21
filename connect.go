@@ -55,7 +55,7 @@ type ConnectPacket struct {
 func NewConnectPacket() *ConnectPacket {
 	return &ConnectPacket{
 		CleanSession: true,
-		Version: 4,
+		Version:      4,
 	}
 }
 
