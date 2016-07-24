@@ -8,12 +8,72 @@
 
 **Package broker provides an extensible [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker implementation.**
 
-_The package is currently WIP and will be available soon!_
-
 ## Installation
 
 Get it using go's standard toolset:
 
 ```bash
 $ go get github.com/gomqtt/broker
+```
+
+## Usage
+
+```go
+server, err := transport.Launch("tcp://localhost:8080")
+if err != nil {
+    panic(err)
+}
+
+engine := NewEngine()
+engine.Accept(server)
+
+client := client.New()
+wait := make(chan struct{})
+
+client.Callback = func(msg *packet.Message, err error) {
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(msg.String())
+    close(wait)
+}
+
+cf, err := client.Connect("tcp://localhost:8080", nil)
+if err != nil {
+    panic(err)
+}
+
+cf.Wait()
+
+sf, err := client.Subscribe("test", 0)
+if err != nil {
+    panic(err)
+}
+
+sf.Wait()
+
+pf, err := client.Publish("test", []byte("test"), 0, false)
+if err != nil {
+    panic(err)
+}
+
+pf.Wait()
+
+<-wait
+
+err = client.Disconnect()
+if err != nil {
+    panic(err)
+}
+
+err = server.Close()
+if err != nil {
+    panic(err)
+}
+
+engine.Close()
+
+// Output:
+// <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
 ```
