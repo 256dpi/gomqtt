@@ -71,7 +71,7 @@ func TestConnectPacketDecode1(t *testing.T) {
 	assert.Equal(t, []byte("send me home"), pkt.Will.Payload)
 	assert.Equal(t, "surgemq", pkt.Username)
 	assert.Equal(t, "verysecret", pkt.Password)
-	assert.Equal(t, byte(4), pkt.Version)
+	assert.Equal(t, Version311, pkt.Version)
 }
 
 func TestConnectPacketDecode2(t *testing.T) {
@@ -113,7 +113,7 @@ func TestConnectPacketDecode2(t *testing.T) {
 	assert.Equal(t, []byte("send me home"), pkt.Will.Payload)
 	assert.Equal(t, "surgemq", pkt.Username)
 	assert.Equal(t, "verysecret", pkt.Password)
-	assert.Equal(t, byte(3), pkt.Version)
+	assert.Equal(t, Version31, pkt.Version)
 }
 
 func TestConnectPacketDecodeError1(t *testing.T) {
@@ -503,7 +503,7 @@ func TestConnectPacketEncode2(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.CleanSession = true
 	pkt.KeepAlive = 10
-	pkt.Version = 3
+	pkt.Version = Version31
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
