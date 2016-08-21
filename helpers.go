@@ -51,6 +51,9 @@ func Run(t *testing.T, engine *Engine, protocol string) (*tools.Port, chan struc
 		// close broker
 		engine.Close()
 
+		// wait for proper closing
+		engine.Wait(10 * time.Millisecond)
+
 		close(done)
 	}()
 
