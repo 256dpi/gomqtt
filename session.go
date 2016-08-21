@@ -155,17 +155,6 @@ func (s *MemorySession) DeleteSubscription(topic string) error {
 	return nil
 }
 
-// StoredSubscriptions will return all subscriptions currently saved in the session.
-func (s *MemorySession) StoredSubscriptions() ([]*packet.Subscription, error) {
-	var all []*packet.Subscription
-
-	for _, value := range s.subscriptions.All() {
-		all = append(all, value.(*packet.Subscription))
-	}
-
-	return all, nil
-}
-
 // AllSubscriptions will return all subscriptions currently saved in the session.
 func (s *MemorySession) AllSubscriptions() ([]*packet.Subscription, error) {
 	var all []*packet.Subscription
