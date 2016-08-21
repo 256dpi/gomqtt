@@ -30,8 +30,7 @@ type Backend interface {
 
 	// Setup is called when a new client comes online and is successfully
 	// authenticated. Setup should return the already stored session for the
-	// supplied id or create and return a new one. If clean is set to true it
-	// should additionally reset the session. If the supplied id has a zero
+	// supplied id or create and return a new one. If the supplied id has a zero
 	// length, a new temporary session should returned that is not stored
 	// further. The backend may also close any existing clients that use the
 	// same client id.
@@ -39,7 +38,7 @@ type Backend interface {
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the client for further usage as the broker will acknowledge the
 	// connection when the call returns.
-	Setup(client *Client, id string, clean bool) (Session, bool, error)
+	Setup(client *Client, id string) (Session, bool, error)
 
 	// QueueOffline is called after the clients stored subscriptions have been
 	// resubscribed. It should be used to trigger a background process that
@@ -119,12 +118,11 @@ func (m *MemoryBackend) Authenticate(client *Client, user, password string) (boo
 	return false, nil
 }
 
-// Setup returns the already stored session for the supplied id or creates
-// and returns a new one. If clean is set to true it will additionally reset
-// the session. If the supplied id has a zero length, a new session is returned
-// that is not stored further. Furthermore, it will disconnect any client
+// Setup returns the already stored session for the supplied id or creates and
+// returns a new one. If the supplied id has a zero length, a new session is
+// returned that is not stored further. Furthermore, it will disconnect any client
 // connected with the same client id.
-func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, bool, error) {
+func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) {
 	m.sessionsMutex.Lock()
 	defer m.sessionsMutex.Unlock()
 
@@ -147,13 +145,8 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 
 	// when found
 	if ok {
-		// reset session if clean is true
-		if clean {
-			// reset session
-			// TODO: Move to client.
-			sess.Reset()
-
-			// remove session from store
+		// remove session if clean is true
+		if client.CleanSession() {
 			delete(m.sessions, id)
 		}
 
@@ -167,7 +160,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	sess = NewMemorySession()
 
 	// save session if not clean
-	if !clean {
+	if !client.CleanSession() {
 		m.sessions[id] = sess
 	}
 
@@ -279,10 +272,8 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 		delete(m.clients, client.ClientID())
 	}
 
-	// reset session if the client requested a clean session
+	// return if the client requested a clean session
 	if client.CleanSession() {
-		// TODO: Move to client.
-		client.Session().Reset()
 		return nil
 	}
 

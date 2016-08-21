@@ -216,9 +216,14 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.clientID = pkt.ClientID
 
 	// retrieve session
-	sess, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID, pkt.CleanSession)
+	sess, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID)
 	if err != nil {
 		return c.die(BackendError, err, true)
+	}
+
+	// reset the session if clean is requested
+	if pkt.CleanSession {
+		sess.Reset()
 	}
 
 	// set session present
@@ -597,6 +602,15 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 		if err == nil {
 			event = BackendError
 			err = _err
+		}
+
+		// reset the session if clean is requested
+		if c.cleanSession {
+			_err := c.session.Reset()
+			if err == nil {
+				event = SessionError
+				err = _err
+			}
 		}
 	}
 
