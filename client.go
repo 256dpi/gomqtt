@@ -36,13 +36,14 @@ var ErrExpectedConnect = errors.New("expected ConnectPacket")
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
+	Context *Context
+
 	engine *Engine
 	conn   transport.Conn
 
 	clientID     string
 	cleanSession bool
 	session      Session
-	context      *Context
 
 	out   chan *packet.Message
 	state *state
@@ -55,9 +56,9 @@ type Client struct {
 // newClient takes over a connection and returns a Client
 func newClient(engine *Engine, conn transport.Conn) *Client {
 	c := &Client{
+		Context: NewContext(),
 		engine:  engine,
 		conn:    conn,
-		context: NewContext(),
 		out:     make(chan *packet.Message),
 		state:   newState(clientConnecting),
 	}
@@ -66,11 +67,6 @@ func newClient(engine *Engine, conn transport.Conn) *Client {
 	c.tomb.Go(c.processor)
 
 	return c
-}
-
-// Context returns the associated context.
-func (c *Client) Context() *Context {
-	return c.context
 }
 
 // Session returns the current Session used by the client.
