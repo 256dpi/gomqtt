@@ -165,7 +165,9 @@ func (e *Engine) Close() {
 }
 
 // Wait can be called after close to wait until all clients have been closed.
-func (e *Engine) Wait(timeout time.Duration) {
+// The method returns whether all clients have been closed (true) or the timeout
+// has been reached (false).
+func (e *Engine) Wait(timeout time.Duration) bool {
 	wait := make(chan struct{})
 
 	go func() {
@@ -175,7 +177,9 @@ func (e *Engine) Wait(timeout time.Duration) {
 
 	select {
 	case <-wait:
+		return true
 	case <-time.After(timeout):
+		return false
 	}
 }
 
