@@ -41,5 +41,3 @@ func TestConnectTimeout(t *testing.T) {
 	close(quit)
 	<-done
 }
-
-// TODO: Add Close Test.
