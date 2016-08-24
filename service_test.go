@@ -169,7 +169,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 	s.Online = func(resumed bool) {
 		assert.False(t, resumed)
 
-		s.Subscribe("test", 0).Wait()
+		s.Subscribe("test", 0)
 		s.Publish("test", []byte("test"), 0, false)
 	}
 

@@ -106,17 +106,20 @@ type unsubscribe struct {
 
 // Online is a function that is called when the service is connected.
 //
-// Note: The function is called in a fresh goroutine.
+// Note: Execution of the service is resumed after the callback returns. This
+// means that waiting on a future will actually deadlock the service.
 type Online func(resumed bool)
 
 // Message is a function that is called when a message is received.
 //
-// Note: The function is called in a fresh goroutine.
+// Note: Execution of the service is resumed after the callback returns. This
+// means that waiting on a future will actually deadlock the service.
 type Message func(msg *packet.Message)
 
 // Offline is a function that is called when the service is disconnected.
 //
-// Note: The function is called in a fresh goroutine.
+// Note: Execution of the service is resumed after the callback returns. This
+// means that waiting on a future will actually deadlock the service.
 type Offline func()
 
 const (
@@ -352,7 +355,7 @@ func (s *Service) supervisor() error {
 
 		// run callback
 		if s.Online != nil {
-			go s.Online(resumed)
+			s.Online(resumed)
 		}
 
 		// run dispatcher on client
@@ -360,7 +363,7 @@ func (s *Service) supervisor() error {
 
 		// run callback
 		if s.Offline != nil {
-			go s.Offline()
+			s.Offline()
 		}
 
 		// return goroutine if dying
@@ -386,7 +389,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 		// call the handler
 		if s.Message != nil {
-			go s.Message(msg)
+			s.Message(msg)
 		}
 	}
 
