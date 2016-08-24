@@ -132,6 +132,70 @@ func TestServicePublishSubscribe(t *testing.T) {
 	<-done
 }
 
+func TestServiceCommandsInCallback(t *testing.T) {
+	defer leaktest.Check(t)()
+
+	subscribe := packet.NewSubscribePacket()
+	subscribe.Subscriptions = []packet.Subscription{
+		{Topic: "test"},
+	}
+	subscribe.PacketID = 1
+
+	suback := packet.NewSubackPacket()
+	suback.ReturnCodes = []uint8{0}
+	suback.PacketID = 1
+
+	publish := packet.NewPublishPacket()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+
+	broker := tools.NewFlow().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	message := make(chan struct{})
+	offline := make(chan struct{})
+
+	s := NewService()
+
+	s.Online = func(resumed bool) {
+		assert.False(t, resumed)
+
+		s.Subscribe("test", 0).Wait()
+		s.Publish("test", []byte("test"), 0, false)
+	}
+
+	s.Offline = func() {
+		close(offline)
+	}
+
+	s.Message = func(msg *packet.Message) {
+		assert.Equal(t, "test", msg.Topic)
+		assert.Equal(t, []byte("test"), msg.Payload)
+		assert.Equal(t, uint8(0), msg.QOS)
+		assert.False(t, msg.Retain)
+
+		close(message)
+	}
+
+	s.Start(port.URL(), nil)
+
+	<-message
+
+	s.Stop(true)
+
+	<-offline
+	<-done
+}
+
 func TestStartStopVariations(t *testing.T) {
 	defer leaktest.Check(t)()
 

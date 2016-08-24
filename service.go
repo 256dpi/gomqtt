@@ -101,13 +101,22 @@ type unsubscribe struct {
 	future *UnsubscribeFuture
 }
 
+// TODO: Calling a callback should be cheaper and maybe use one separate goroutine
+// that calls the callbacks in sequence.
+
 // Online is a function that is called when the service is connected.
+//
+// Note: The function is called in a fresh goroutine.
 type Online func(resumed bool)
 
 // Message is a function that is called when a message is received.
+//
+// Note: The function is called in a fresh goroutine.
 type Message func(msg *packet.Message)
 
 // Offline is a function that is called when the service is disconnected.
+//
+// Note: The function is called in a fresh goroutine.
 type Offline func()
 
 const (
@@ -225,7 +234,9 @@ func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) 
 	return future
 }
 
-// Subscribe will send a SubscribePacket containing one topic to subscribe.
+// Subscribe will send a SubscribePacket containing one topic to subscribe. It
+// will return a SubscribeFuture that gets completed once the acknowledgements
+// have been received.
 func (s *Service) Subscribe(topic string, qos uint8) *SubscribeFuture {
 	return s.SubscribeMultiple([]packet.Subscription{
 		{Topic: topic, QOS: qos},
@@ -233,7 +244,8 @@ func (s *Service) Subscribe(topic string, qos uint8) *SubscribeFuture {
 }
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
-// subscribe.
+// subscribe. It will return a SubscribeFuture that gets completed once the
+// acknowledgements have been received.
 func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) *SubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -252,12 +264,15 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) *Subscr
 }
 
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
+// It will return a SubscribeFuture that gets completed once the acknowledgements
+// have been received.
 func (s *Service) Unsubscribe(topic string) *UnsubscribeFuture {
 	return s.UnsubscribeMultiple([]string{topic})
 }
 
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
-// topics to unsubscribe.
+// topics to unsubscribe. It will return a SubscribeFuture that gets completed
+// once the acknowledgements have been received.
 func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -278,8 +293,8 @@ func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 // Stop will disconnect the client if online and cancel all futures if requested.
 // After the service is stopped in can be started again.
 //
-// Note: You should clear the futures on the last shutdown before exiting to
-// ensure that all goroutines return that wait on futures.
+// Note: You should clear the futures on the last stop before exiting to ensure
+// that all goroutines return that wait on futures.
 func (s *Service) Stop(clearFutures bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -337,7 +352,7 @@ func (s *Service) supervisor() error {
 
 		// run callback
 		if s.Online != nil {
-			s.Online(resumed)
+			go s.Online(resumed)
 		}
 
 		// run dispatcher on client
@@ -345,7 +360,7 @@ func (s *Service) supervisor() error {
 
 		// run callback
 		if s.Offline != nil {
-			s.Offline()
+			go s.Offline()
 		}
 
 		// return goroutine if dying
@@ -371,7 +386,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 		// call the handler
 		if s.Message != nil {
-			s.Message(msg)
+			go s.Message(msg)
 		}
 	}
 
