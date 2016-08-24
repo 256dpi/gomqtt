@@ -21,9 +21,9 @@ func Example() {
 		close(done)
 	})
 
-	r.Start(client.NewOptions("mqtt://localhost"))
+	r.Start(client.NewOptions("mqtt://try:try@broker.shiftr.io"))
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(2 * time.Second)
 
 	r.Publish("device/foo/bar/baz", []byte("42"), 0, false)
 
