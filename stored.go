@@ -12,7 +12,7 @@ import (
 )
 
 func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(config.URL, id))
+	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
 
 	username, password := config.usernamePassword()
 
@@ -75,7 +75,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 }
 
 func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(config.URL, id))
+	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
 
 	username, password := config.usernamePassword()
 
@@ -150,7 +150,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 }
 
 func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(config.URL, id))
+	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
 
 	username, password := config.usernamePassword()
 
@@ -227,15 +227,14 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 }
 
 func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos uint8) {
-	assert.NoError(t, client.ClearSession(config.URL, id))
-
-	options := client.NewOptions()
+	options := client.NewOptionsWithClientID(config.URL, id)
 	options.CleanSession = false
-	options.ClientID = id
+
+	assert.NoError(t, client.ClearSession(options))
 
 	subscriber := client.New()
 
-	connectFuture, err := subscriber.Connect(config.URL, options)
+	connectFuture, err := subscriber.Connect(options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -263,7 +262,7 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 		close(wait)
 	}
 
-	connectFuture, err = receiver.Connect(config.URL, options)
+	connectFuture, err = receiver.Connect(options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -282,15 +281,14 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 }
 
 func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(config.URL, id))
-
-	options := client.NewOptions()
+	options := client.NewOptionsWithClientID(config.URL, id)
 	options.CleanSession = false
-	options.ClientID = id
+
+	assert.NoError(t, client.ClearSession(options))
 
 	subscriber := client.New()
 
-	connectFuture, err := subscriber.Connect(config.URL, options)
+	connectFuture, err := subscriber.Connect(options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -311,7 +309,7 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 
 	options.CleanSession = true
 
-	connectFuture, err = nonReceiver.Connect(config.URL, options)
+	connectFuture, err = nonReceiver.Connect(options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -328,15 +326,14 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 }
 
 func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(config.URL, id))
-
-	options := client.NewOptions()
+	options := client.NewOptionsWithClientID(config.URL, id)
 	options.CleanSession = false
-	options.ClientID = id
+
+	assert.NoError(t, client.ClearSession(options))
 
 	subscriberAndUnsubscriber := client.New()
 
-	connectFuture, err := subscriberAndUnsubscriber.Connect(config.URL, options)
+	connectFuture, err := subscriberAndUnsubscriber.Connect(options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -359,7 +356,7 @@ func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string
 		assert.Fail(t, "should not be called")
 	}
 
-	connectFuture, err = nonReceiver.Connect(config.URL, nil)
+	connectFuture, err = nonReceiver.Connect(client.NewOptions(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)

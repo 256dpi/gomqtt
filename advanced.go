@@ -15,7 +15,7 @@ func AuthenticationTest(t *testing.T, config *Config) {
 		assert.Equal(t, client.ErrClientConnectionDenied, err)
 	}
 
-	connectFuture, err := deniedClient.Connect(config.DenyURL, nil)
+	connectFuture, err := deniedClient.Connect(client.NewOptions(config.DenyURL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture.ReturnCode)
@@ -23,7 +23,7 @@ func AuthenticationTest(t *testing.T, config *Config) {
 
 	allowedClient := client.New()
 
-	connectFuture, err = allowedClient.Connect(config.URL, nil)
+	connectFuture, err = allowedClient.Connect(client.NewOptions(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -34,10 +34,9 @@ func AuthenticationTest(t *testing.T, config *Config) {
 }
 
 func UniqueClientIDTest(t *testing.T, config *Config, id string) {
-	assert.NoError(t, client.ClearSession(config.URL, id))
+	options := client.NewOptionsWithClientID(config.URL, id)
 
-	options := client.NewOptions()
-	options.ClientID = id
+	assert.NoError(t, client.ClearSession(options))
 
 	wait := make(chan struct{})
 
@@ -47,7 +46,7 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 		close(wait)
 	}
 
-	connectFuture, err := firstClient.Connect(config.URL, options)
+	connectFuture, err := firstClient.Connect(options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -55,7 +54,7 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 
 	secondClient := client.New()
 
-	connectFuture, err = secondClient.Connect(config.URL, options)
+	connectFuture, err = secondClient.Connect(options)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -68,10 +67,10 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 }
 
 func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
-	client := client.New()
+	c := client.New()
 	wait := make(chan struct{})
 
-	client.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -81,23 +80,23 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := client.Connect(config.URL, nil)
+	connectFuture, err := c.Connect(client.NewOptions(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture, err := client.Subscribe("/"+topic, 0)
+	subscribeFuture, err := c.Subscribe("/"+topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
-	subscribeFuture, err = client.Subscribe(topic, 0)
+	subscribeFuture, err = c.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
-	publishFuture, err := client.Publish(topic, testPayload, 0, false)
+	publishFuture, err := c.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
@@ -105,6 +104,6 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 
 	time.Sleep(config.NoMessageWait)
 
-	err = client.Disconnect()
+	err = c.Disconnect()
 	assert.NoError(t, err)
 }
