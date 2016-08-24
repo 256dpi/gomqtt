@@ -992,12 +992,7 @@ func BenchmarkClientPublish(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		publishFuture, err := c.Publish("test", []byte("test"), 0, false)
-		if err != nil {
-			panic(err)
-		}
-
-		err = publishFuture.Wait()
+		_, err := c.Publish("test", []byte("test"), 0, false)
 		if err != nil {
 			panic(err)
 		}

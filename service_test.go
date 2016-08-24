@@ -387,3 +387,30 @@ func TestServiceFutureSurvival(t *testing.T) {
 
 	<-done
 }
+
+func BenchmarkServicePublish(b *testing.B) {
+	ready := make(chan struct{})
+	done := make(chan struct{})
+
+	c := NewService()
+
+	c.Online = func(_ bool) {
+		close(ready)
+	}
+
+	c.Offline = func() {
+		close(done)
+	}
+
+	c.Start("mqtt://0.0.0.0", nil)
+
+	<-ready
+
+	for i := 0; i < b.N; i++ {
+		c.Publish("test", []byte("test"), 0, false)
+	}
+
+	c.Stop(true)
+
+	<-done
+}
