@@ -268,8 +268,8 @@ func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 
 	// queue unsubscribe
 	s.unsubscribeQueue <- &unsubscribe{
-		topics:  topics,
-		future:  future,
+		topics: topics,
+		future: future,
 	}
 
 	return future
