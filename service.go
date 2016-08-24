@@ -329,7 +329,7 @@ func (s *Service) supervisor() error {
 		} else {
 			// get backoff duration
 			d := s.backoff.Duration()
-			s.log("Delay Reconnect: %v", d)
+			s.log(fmt.Sprintf("Delay Reconnect: %v", d))
 
 			// sleep but return on Stop
 			select {
@@ -379,7 +379,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		if err != nil {
-			s.log("Error: %v", err)
+			s.log(fmt.Sprintf("Error: %v", err))
 			close(fail)
 			return
 		}
@@ -392,28 +392,28 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 	future, err := client.Connect(s.broker, s.options)
 	if err != nil {
-		s.log("Connect Error: %v", err)
+		s.log(fmt.Sprintf("Connect Error: %v", err))
 		return nil, false
 	}
 
 	err = future.Wait(s.ConnectTimeout)
 
 	if err == ErrFutureCanceled {
-		s.log("Connack: %v", err)
+		s.log(fmt.Sprintf("Connack: %v", err))
 		return nil, false
 	}
 
 	if err == ErrFutureTimeout {
 		client.Close()
 
-		s.log("Connack: %v", err)
+		s.log(fmt.Sprintf("Connack: %v", err))
 		return nil, false
 	}
 
 	if future.ReturnCode != packet.ConnectionAccepted {
 		client.Close()
 
-		s.log("Connack: %s", future.ReturnCode.Error())
+		s.log(fmt.Sprintf("Connack: %s", future.ReturnCode.Error()))
 		return nil, false
 	}
 
@@ -427,7 +427,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 		case sub := <-s.subscribeQueue:
 			future, err := client.SubscribeMultiple(sub.subscriptions)
 			if err != nil {
-				s.log("Subscribe Error: %v", err)
+				s.log(fmt.Sprintf("Subscribe Error: %v", err))
 
 				// cancel future
 				sub.future.cancel()
@@ -439,7 +439,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 		case unsub := <-s.unsubscribeQueue:
 			future, err := client.UnsubscribeMultiple(unsub.topics)
 			if err != nil {
-				s.log("Unsubscribe Error: %v", err)
+				s.log(fmt.Sprintf("Unsubscribe Error: %v", err))
 
 				// cancel future
 				unsub.future.cancel()
@@ -451,7 +451,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 		case msg := <-s.publishQueue:
 			future, err := client.Publish(msg.topic, msg.payload, msg.qos, msg.retain)
 			if err != nil {
-				s.log("Publish Error: %v", err)
+				s.log(fmt.Sprintf("Publish Error: %v", err))
 				return false
 			}
 
@@ -460,7 +460,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			// disconnect client on Stop
 			err := client.Disconnect(s.DisconnectTimeout)
 			if err != nil {
-				s.log("Disconnect Error: %v", err)
+				s.log(fmt.Sprintf("Disconnect Error: %v", err))
 			}
 
 			return true
@@ -471,8 +471,8 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 }
 
 // log a message
-func (s *Service) log(format string, a ...interface{}) {
+func (s *Service) log(str string) {
 	if s.Logger != nil {
-		s.Logger(fmt.Sprintf(format, a...))
+		s.Logger(str)
 	}
 }
