@@ -35,10 +35,9 @@ func ExampleClient() {
 		close(done)
 	}
 
-	options := NewOptions()
-	options.ClientID = "gomqtt/client"
+	options := NewOptionsWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/client")
 
-	connectFuture, err := c.Connect("mqtt://try:try@broker.shiftr.io", options)
+	connectFuture, err := c.Connect(options)
 	if err != nil {
 		panic(err)
 	}
@@ -83,8 +82,8 @@ func ExampleService() {
 	wait := make(chan struct{})
 	done := make(chan struct{})
 
-	options := NewOptions()
-	options.ClientID = "gomqtt/service"
+	options := NewOptionsWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/service")
+	options.CleanSession = false
 
 	s := NewService()
 
@@ -103,9 +102,12 @@ func ExampleService() {
 		close(wait)
 	}
 
-	ClearSession("mqtt://try:try@broker.shiftr.io", "gomqtt/service")
+	err := ClearSession(options)
+	if err != nil {
+		panic(err)
+	}
 
-	s.Start("mqtt://try:try@broker.shiftr.io", options)
+	s.Start(options)
 
 	s.Subscribe("test", 0).Wait()
 

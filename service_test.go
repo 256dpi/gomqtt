@@ -38,7 +38,8 @@ func TestClearSession(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	ClearSession(port.URL(), "test")
+	err := ClearSession(NewOptionsWithClientID(port.URL(), "test"))
+	assert.NoError(t, err)
 
 	<-done
 }
@@ -60,7 +61,8 @@ func TestClearRetainedMessage(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	ClearRetainedMessage(port.URL(), "test")
+	err := ClearRetainedMessage(NewOptions(port.URL()), "test")
+	assert.NoError(t, err)
 
 	<-done
 }
@@ -69,9 +71,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 	defer leaktest.Check(t)()
 
 	subscribe := packet.NewSubscribePacket()
-	subscribe.Subscriptions = []packet.Subscription{
-		{Topic: "test"},
-	}
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
@@ -117,7 +117,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 		close(message)
 	}
 
-	s.Start(port.URL(), nil)
+	s.Start(NewOptions(port.URL()))
 
 	<-online
 
@@ -136,9 +136,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 	defer leaktest.Check(t)()
 
 	subscribe := packet.NewSubscribePacket()
-	subscribe.Subscriptions = []packet.Subscription{
-		{Topic: "test"},
-	}
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.PacketID = 1
 
 	suback := packet.NewSubackPacket()
@@ -186,7 +184,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 		close(message)
 	}
 
-	s.Start(port.URL(), nil)
+	s.Start(NewOptions(port.URL()))
 
 	<-message
 
@@ -221,8 +219,8 @@ func TestStartStopVariations(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(port.URL(), nil)
-	s.Start(port.URL(), nil) // <- does nothing
+	s.Start(NewOptions(port.URL()))
+	s.Start(NewOptions(port.URL())) // <- does nothing
 
 	<-online
 
@@ -267,7 +265,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(port.URL(), nil)
+	s.Start(NewOptions(port.URL()))
 
 	<-online
 
@@ -318,7 +316,7 @@ func TestServiceReconnect(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(port.URL(), nil)
+	s.Start(NewOptions(port.URL()))
 
 	<-online
 
@@ -372,13 +370,12 @@ func TestServiceFutureSurvival(t *testing.T) {
 
 	done, port := fakeBroker(t, broker1, broker2)
 
-	options := NewOptions()
-	options.ClientID = "test"
+	options := NewOptionsWithClientID(port.URL(), "test")
 	options.CleanSession = false
 
 	s := NewService()
 
-	s.Start(port.URL(), options)
+	s.Start(options)
 
 	err := s.Publish("test", []byte("test"), 1, false).Wait()
 	assert.NoError(t, err)
@@ -402,7 +399,7 @@ func BenchmarkServicePublish(b *testing.B) {
 		close(done)
 	}
 
-	c.Start("mqtt://0.0.0.0", nil)
+	c.Start(NewOptions("mqtt://0.0.0.0"))
 
 	<-ready
 

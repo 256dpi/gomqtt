@@ -110,7 +110,11 @@ func New() *Client {
 // Connect opens the connection to the broker and sends a ConnectPacket. It will
 // return a ConnectFuture that gets completed once a ConnackPacket has been
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
-func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error) {
+func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
+	if opts == nil {
+		panic("No options specified")
+	}
+
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -120,14 +124,9 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	}
 
 	// parse url
-	urlParts, err := url.ParseRequestURI(urlString)
+	urlParts, err := url.ParseRequestURI(opts.BrokerURL)
 	if err != nil {
 		return nil, err
-	}
-
-	// save opts
-	if opts == nil {
-		opts = NewOptions()
 	}
 
 	// check client id
@@ -145,7 +144,7 @@ func (c *Client) Connect(urlString string, opts *Options) (*ConnectFuture, error
 	c.tracker = newTracker(keepAlive)
 
 	// dial broker
-	c.conn, err = transport.Dial(urlString)
+	c.conn, err = transport.Dial(opts.BrokerURL)
 	if err != nil {
 		return nil, err
 	}

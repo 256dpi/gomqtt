@@ -27,16 +27,21 @@ import (
 // ClearSession will connect/disconnect once with a clean session request to force
 // the broker to reset the clients session. This is useful in situations where
 // its not clear in what state the last session was left.
-func ClearSession(url string, clientID string) error {
+func ClearSession(opts *Options) error {
+	if opts == nil {
+		panic("No options specified")
+	}
+
 	client := New()
 
-	// prepare options
-	options := NewOptions()
-	options.ClientID = clientID
-	options.CleanSession = true
+	// copy options
+	o := &(*opts)
+
+	// ensure clean session is true
+	o.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(url, options)
+	future, err := client.Connect(o)
 	if err != nil {
 		return err
 	}
@@ -56,11 +61,11 @@ func ClearSession(url string, clientID string) error {
 // ClearRetainedMessage will connect/disconnect and send an empty retained message.
 // This is useful in situations where its not clear if a message has already been
 // retained.
-func ClearRetainedMessage(url string, topic string) error {
+func ClearRetainedMessage(opts *Options, topic string) error {
 	client := New()
 
 	// connect to broker
-	future, err := client.Connect(url, nil)
+	future, err := client.Connect(opts)
 	if err != nil {
 		return err
 	}
@@ -140,7 +145,6 @@ const (
 // Note: If clean session is false and there are packets in the store, messages
 // might get completed after starting without triggering any futures to complete.
 type Service struct {
-	broker  string
 	options *Options
 
 	state   *state
@@ -187,7 +191,7 @@ func NewService(queueSize ...int) *Service {
 
 // Start will start the service with the specified configuration. From now on
 // the service will automatically reconnect on any error until Stop is called.
-func (s *Service) Start(url string, opts *Options) {
+func (s *Service) Start(opts *Options) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -199,8 +203,7 @@ func (s *Service) Start(url string, opts *Options) {
 	// set state
 	s.state.set(serviceStarted)
 
-	// save configuration
-	s.broker = url
+	// save options
 	s.options = opts
 
 	// initialize backoff
@@ -405,7 +408,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		}
 	}
 
-	future, err := client.Connect(s.broker, s.options)
+	future, err := client.Connect(s.options)
 	if err != nil {
 		s.log(fmt.Sprintf("Connect Error: %v", err))
 		return nil, false

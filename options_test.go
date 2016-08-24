@@ -20,7 +20,8 @@ import (
 )
 
 func TestOptions(t *testing.T) {
-	opts := NewOptions()
+	opts := NewOptions("foo")
+	assert.Equal(t, "foo", opts.BrokerURL)
 	assert.Equal(t, "", opts.ClientID)
 	assert.True(t, opts.CleanSession)
 	assert.Equal(t, "30s", opts.KeepAlive)

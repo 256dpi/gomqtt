@@ -18,16 +18,25 @@ import "github.com/gomqtt/packet"
 
 // Options are passed to a Client on Connect.
 type Options struct {
+	BrokerURL    string
 	ClientID     string
 	CleanSession bool
 	KeepAlive    string
 	Will         *packet.Message
 }
 
-// NewOptions will initialize and return new Options.
-func NewOptions() *Options {
+// NewOptions will initialize and return a new Options struct.
+func NewOptions(url string) *Options {
 	return &Options{
+		BrokerURL:    url,
 		CleanSession: true,
 		KeepAlive:    "30s",
 	}
+}
+
+// NewOptionsWithClientID will initialize and return a new Options struct.
+func NewOptionsWithClientID(url string, id string) *Options {
+	opts := NewOptions(url)
+	opts.ClientID = id
+	return opts
 }
