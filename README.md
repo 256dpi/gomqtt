@@ -27,11 +27,6 @@ done := make(chan struct{})
 options := NewOptionsWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/service")
 options.CleanSession = false
 
-err := ClearSession(options)
-if err != nil {
-    return err
-}
-
 s := NewService()
 
 s.Online = func(resumed bool) {
@@ -47,6 +42,11 @@ s.Offline = func() {
 s.Message = func(msg *packet.Message) {
     fmt.Printf("message: %s - %s\n", msg.Topic, msg.Payload)
     close(wait)
+}
+
+err := ClearSession(options)
+if err != nil {
+    panic(err)
 }
 
 s.Start(options)
@@ -84,10 +84,9 @@ c.Callback = func(msg *packet.Message, err error) {
     close(done)
 }
 
-options := NewOptions()
-options.ClientID = "gomqtt/client"
+options := NewOptionsWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/client")
 
-connectFuture, err := c.Connect("mqtt://try:try@broker.shiftr.io", options)
+connectFuture, err := c.Connect(options)
 if err != nil {
     panic(err)
 }
