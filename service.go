@@ -107,9 +107,6 @@ type unsubscribe struct {
 	future *UnsubscribeFuture
 }
 
-// TODO: Calling a callback should be cheaper and maybe use one separate goroutine
-// that calls the callbacks in sequence.
-
 // Online is a function that is called when the service is connected.
 //
 // Note: Execution of the service is resumed after the callback returns. This
@@ -167,8 +164,15 @@ type Service struct {
 	tomb  *tomb.Tomb
 }
 
-// NewService allocates and returns a new service.
-func NewService() *Service {
+// NewService allocates and returns a new service. The optional parameter queueSize
+// specifies how many Subscribe, Unsubscribe and Publish commands can be queued
+// up before actually sending them on the wire. The default queueSize is 100.
+func NewService(queueSize ...int) *Service {
+	var qs = 100
+	if len(queueSize) > 0 {
+		qs = queueSize[0]
+	}
+
 	return &Service{
 		state:             newState(serviceInitialized),
 		Session:           NewMemorySession(),
@@ -176,7 +180,7 @@ func NewService() *Service {
 		MaxReconnectDelay: 32 * time.Second,
 		ConnectTimeout:    5 * time.Second,
 		DisconnectTimeout: 10 * time.Second,
-		commandQueue:      make(chan *command, 100),
+		commandQueue:      make(chan *command, qs),
 		futureStore:       newFutureStore(),
 	}
 }
@@ -469,7 +473,8 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 
 			// handle publish command
 			if cmd.publish != nil {
-				future, err := client.Publish(cmd.publish.topic, cmd.publish.payload, cmd.publish.qos, cmd.publish.retain)
+				future, err := client.Publish(cmd.publish.topic, cmd.publish.payload,
+					cmd.publish.qos, cmd.publish.retain)
 				if err != nil {
 					s.log(fmt.Sprintf("Publish Error: %v", err))
 					return false
