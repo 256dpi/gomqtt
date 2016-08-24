@@ -31,10 +31,10 @@ func Example() {
 	engine := NewEngine()
 	engine.Accept(server)
 
-	client := client.New()
+	c := client.New()
 	wait := make(chan struct{})
 
-	client.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) {
 		if err != nil {
 			panic(err)
 		}
@@ -43,21 +43,21 @@ func Example() {
 		close(wait)
 	}
 
-	cf, err := client.Connect("tcp://localhost:8080", nil)
+	cf, err := c.Connect(client.NewOptions("tcp://localhost:8080"))
 	if err != nil {
 		panic(err)
 	}
 
 	cf.Wait()
 
-	sf, err := client.Subscribe("test", 0)
+	sf, err := c.Subscribe("test", 0)
 	if err != nil {
 		panic(err)
 	}
 
 	sf.Wait()
 
-	pf, err := client.Publish("test", []byte("test"), 0, false)
+	pf, err := c.Publish("test", []byte("test"), 0, false)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func Example() {
 
 	<-wait
 
-	err = client.Disconnect()
+	err = c.Disconnect()
 	if err != nil {
 		panic(err)
 	}
