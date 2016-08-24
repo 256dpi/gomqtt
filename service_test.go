@@ -121,7 +121,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	<-online
 
-	s.Subscribe("test", 0, false).Wait()
+	s.Subscribe("test", 0).Wait()
 	s.Publish("test", []byte("test"), 0, false)
 
 	<-message
@@ -207,7 +207,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 
 	<-online
 
-	s.Unsubscribe("test", false).Wait()
+	s.Unsubscribe("test").Wait()
 
 	s.Stop(true)
 

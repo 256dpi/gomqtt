@@ -48,7 +48,7 @@ ClearSession("mqtt://try:try@broker.shiftr.io", "gomqtt/service")
 
 s.Start("mqtt://try:try@broker.shiftr.io", options)
 
-s.Subscribe("test", 0, false).Wait()
+s.Subscribe("test", 0).Wait()
 
 s.Publish("test", []byte("test"), 0, false)
 
