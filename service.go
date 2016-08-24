@@ -83,6 +83,12 @@ func ClearRetainedMessage(url string, topic string) error {
 	return client.Disconnect()
 }
 
+type command struct {
+	publish     *publish
+	subscribe   *subscribe
+	unsubscribe *unsubscribe
+}
+
 type publish struct {
 	topic   string
 	payload []byte
@@ -154,10 +160,8 @@ type Service struct {
 	ConnectTimeout    time.Duration
 	DisconnectTimeout time.Duration
 
-	subscribeQueue   chan *subscribe
-	unsubscribeQueue chan *unsubscribe
-	publishQueue     chan *publish
-	futureStore      *futureStore
+	commandQueue chan *command
+	futureStore  *futureStore
 
 	mutex sync.Mutex
 	tomb  *tomb.Tomb
@@ -172,9 +176,7 @@ func NewService() *Service {
 		MaxReconnectDelay: 32 * time.Second,
 		ConnectTimeout:    5 * time.Second,
 		DisconnectTimeout: 10 * time.Second,
-		subscribeQueue:    make(chan *subscribe, 100),
-		unsubscribeQueue:  make(chan *unsubscribe, 100),
-		publishQueue:      make(chan *publish, 100),
+		commandQueue:      make(chan *command, 100),
 		futureStore:       newFutureStore(),
 	}
 }
@@ -226,12 +228,14 @@ func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) 
 	future.initialize()
 
 	// queue publish
-	s.publishQueue <- &publish{
-		topic:   topic,
-		payload: payload,
-		qos:     qos,
-		retain:  retain,
-		future:  future,
+	s.commandQueue <- &command{
+		publish: &publish{
+			topic:   topic,
+			payload: payload,
+			qos:     qos,
+			retain:  retain,
+			future:  future,
+		},
 	}
 
 	return future
@@ -258,9 +262,11 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) *Subscr
 	future.initialize()
 
 	// queue subscribe
-	s.subscribeQueue <- &subscribe{
-		subscriptions: subscriptions,
-		future:        future,
+	s.commandQueue <- &command{
+		subscribe: &subscribe{
+			subscriptions: subscriptions,
+			future:        future,
+		},
 	}
 
 	return future
@@ -285,9 +291,11 @@ func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
 	future.initialize()
 
 	// queue unsubscribe
-	s.unsubscribeQueue <- &unsubscribe{
-		topics: topics,
-		future: future,
+	s.commandQueue <- &command{
+		unsubscribe: &unsubscribe{
+			topics: topics,
+			future: future,
+		},
 	}
 
 	return future
@@ -427,38 +435,48 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 	for {
 		select {
-		case sub := <-s.subscribeQueue:
-			future, err := client.SubscribeMultiple(sub.subscriptions)
-			if err != nil {
-				s.log(fmt.Sprintf("Subscribe Error: %v", err))
+		case cmd := <-s.commandQueue:
 
-				// cancel future
-				sub.future.cancel()
+			// handle subscribe command
+			if cmd.subscribe != nil {
+				future, err := client.SubscribeMultiple(cmd.subscribe.subscriptions)
+				if err != nil {
+					s.log(fmt.Sprintf("Subscribe Error: %v", err))
 
-				return false
+					// cancel future
+					cmd.subscribe.future.cancel()
+
+					return false
+				}
+
+				cmd.subscribe.future.bind(future)
 			}
 
-			sub.future.bind(future)
-		case unsub := <-s.unsubscribeQueue:
-			future, err := client.UnsubscribeMultiple(unsub.topics)
-			if err != nil {
-				s.log(fmt.Sprintf("Unsubscribe Error: %v", err))
+			// handle unsubscribe command
+			if cmd.unsubscribe != nil {
+				future, err := client.UnsubscribeMultiple(cmd.unsubscribe.topics)
+				if err != nil {
+					s.log(fmt.Sprintf("Unsubscribe Error: %v", err))
 
-				// cancel future
-				unsub.future.cancel()
+					// cancel future
+					cmd.unsubscribe.future.cancel()
 
-				return false
+					return false
+				}
+
+				cmd.unsubscribe.future.bind(future)
 			}
 
-			unsub.future.bind(future)
-		case msg := <-s.publishQueue:
-			future, err := client.Publish(msg.topic, msg.payload, msg.qos, msg.retain)
-			if err != nil {
-				s.log(fmt.Sprintf("Publish Error: %v", err))
-				return false
-			}
+			// handle publish command
+			if cmd.publish != nil {
+				future, err := client.Publish(cmd.publish.topic, cmd.publish.payload, cmd.publish.qos, cmd.publish.retain)
+				if err != nil {
+					s.log(fmt.Sprintf("Publish Error: %v", err))
+					return false
+				}
 
-			msg.future.bind(future)
+				cmd.publish.future.bind(future)
+			}
 		case <-s.tomb.Dying():
 			// disconnect client on Stop
 			err := client.Disconnect(s.DisconnectTimeout)
