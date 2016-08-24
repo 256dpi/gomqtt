@@ -54,6 +54,10 @@ var ErrClientUnexpectedClose = errors.New("client unexpected close")
 // ConnackPacket.
 var ErrClientExpectedConnack = errors.New("client expected connack")
 
+// ErrFailedSubscription is returned when a submitted subscription is marked as
+// failed. Options.ValidateSubs must be set to true.
+var ErrFailedSubscription = errors.New("failed subscription")
+
 // A Callback is a function called by the client upon received messages or
 // internal errors.
 type Callback func(msg *packet.Message, err error)
@@ -80,6 +84,7 @@ const (
 // Note: If clean session is false and there are packets in the store, messages
 // might get completed after connecting without triggering any futures to complete.
 type Client struct {
+	opts *Options
 	conn transport.Conn
 
 	Session  Session
@@ -117,6 +122,9 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
+
+	// save options
+	c.opts = opts
 
 	// check if already connecting
 	if c.state.get() >= clientConnecting {
@@ -179,7 +187,7 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 	}
 
 	// set will
-	connect.Will = opts.Will
+	connect.Will = opts.WillMessage
 
 	// create new ConnackFuture
 	c.connectFuture = &ConnectFuture{}
@@ -514,12 +522,22 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 		return nil // ignore a wrongly sent SubackPacket
 	}
 
+	// remove future from store
+	c.futureStore.del(suback.PacketID)
+
+	// validate subscriptions if requested
+	if c.opts.ValidateSubs {
+		for _, code := range suback.ReturnCodes {
+			if code == packet.QOSFailure {
+				subscribeFuture.cancel()
+				return ErrFailedSubscription
+			}
+		}
+	}
+
 	// complete future
 	subscribeFuture.ReturnCodes = suback.ReturnCodes
 	subscribeFuture.complete()
-
-	// remove future from store
-	c.futureStore.del(suback.PacketID)
 
 	return nil
 }

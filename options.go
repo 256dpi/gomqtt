@@ -22,7 +22,8 @@ type Options struct {
 	ClientID     string
 	CleanSession bool
 	KeepAlive    string
-	Will         *packet.Message
+	WillMessage  *packet.Message
+	ValidateSubs bool
 }
 
 // NewOptions will initialize and return a new Options struct.
@@ -31,6 +32,7 @@ func NewOptions(url string) *Options {
 		BrokerURL:    url,
 		CleanSession: true,
 		KeepAlive:    "30s",
+		ValidateSubs: true,
 	}
 }
 
