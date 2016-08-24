@@ -39,6 +39,7 @@ func ClearSession(opts *Options) error {
 		BrokerURL: opts.BrokerURL,
 		ClientID: opts.ClientID,
 		CleanSession: true,
+		KeepAlive: opts.KeepAlive,
 	})
 	if err != nil {
 		return err
@@ -65,6 +66,8 @@ func ClearRetainedMessage(opts *Options, topic string) error {
 	// connect to broker
 	future, err := client.Connect(&Options{
 		BrokerURL: opts.BrokerURL,
+		CleanSession: true,
+		KeepAlive: opts.KeepAlive,
 	})
 	if err != nil {
 		return err
