@@ -35,13 +35,13 @@ func ClearSession(opts *Options) error {
 	client := New()
 
 	// copy options
-	o := &(*opts)
+	o := *opts
 
 	// ensure clean session is true
 	o.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(o)
+	future, err := client.Connect(&o)
 	if err != nil {
 		return err
 	}
