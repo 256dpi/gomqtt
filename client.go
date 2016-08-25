@@ -32,7 +32,7 @@ const (
 
 // ErrExpectedConnect is returned when the first received packet is not a
 // ConnectPacket.
-var ErrExpectedConnect = errors.New("Expected a ConnectPacket as the first packet")
+var ErrExpectedConnect = errors.New("expected a ConnectPacket as the first packet")
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
