@@ -27,7 +27,7 @@ import (
 func TestIsConnectionCloseError(t *testing.T) {
 	assert.True(t, IsConnectionCloseError(newTransportError(ConnectionClose, nil)))
 	assert.False(t, IsConnectionCloseError(nil))
-	assert.False(t, IsConnectionCloseError(errors.New("Foo")))
+	assert.False(t, IsConnectionCloseError(errors.New("foo")))
 }
 
 func abstractConnConnectTest(t *testing.T, protocol string) {

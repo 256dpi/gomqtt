@@ -27,29 +27,29 @@ import (
 // couldn't infer the protocol from the URL.
 //
 // Note: this error is wrapped in an Error with a LaunchError or DialError code.
-var ErrUnsupportedProtocol = errors.New("Unsupported protocol found in URL")
+var ErrUnsupportedProtocol = errors.New("unsupported protocol found in url")
 
 // ErrDetectionOverflow can be returned during a Receive if the next packet
 // couldn't be detect from the initial header bytes.
 //
 // Note: this error is wrapped in an Error with a DetectionError code.
-var ErrDetectionOverflow = errors.New("Detection length overflow (>5)")
+var ErrDetectionOverflow = errors.New("detection length overflow (>5)")
 
 // ErrReadLimitExceeded can be returned during a Receive if the connection
 // exceeded its read limit.
 //
 // Note: this error is wrapped in an Error with a NetworkError code.
-var ErrReadLimitExceeded = errors.New("Read limit exceeded")
+var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
 // ErrReadTimeout can be returned by Receive if the connection did not Read
 // data in the by SetReadTimeout specified duration.
-var ErrReadTimeout = errors.New("Read timeout")
+var ErrReadTimeout = errors.New("read timeout")
 
 // ErrAcceptAfterClose can be returned by a WebSocketServer during Accept()
 // if the server has been already closed and the internal goroutine is dying.
 //
 // Note: this error is wrapped in an Error with NetworkError code.
-var ErrAcceptAfterClose = errors.New("Accept after close")
+var ErrAcceptAfterClose = errors.New("accept after close")
 
 // The ErrorCode provides a context to various errors.
 type ErrorCode int
