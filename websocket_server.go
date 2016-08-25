@@ -25,7 +25,7 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-var errManualClose = errors.New("manual close")
+var errManualClose = errors.New("Internal: manual close")
 
 // The WebSocketServer accepts websocket.Conn based connections.
 type WebSocketServer struct {

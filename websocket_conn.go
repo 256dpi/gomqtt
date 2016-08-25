@@ -34,7 +34,9 @@ type webSocketStream struct {
 	reader io.Reader
 }
 
-var errNotBinary = errors.New("not binary")
+// ErrNotBinary may be returned by WebSocket connection when a message is
+// received that is not binary.
+var ErrNotBinary = errors.New("Received WebSocket message is not binary")
 
 func (s *webSocketStream) Read(p []byte) (int, error) {
 	for {
@@ -47,7 +49,7 @@ func (s *webSocketStream) Read(p []byte) (int, error) {
 			} else if err != nil {
 				return 0, err
 			} else if messageType != websocket.BinaryMessage {
-				return 0, errNotBinary
+				return 0, ErrNotBinary
 			}
 
 			// set current reader
