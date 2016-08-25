@@ -86,7 +86,7 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+		return total, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", sp.Type(), total+2, len(src))
 	}
 
 	// read packet id
@@ -95,7 +95,7 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 
 	// check packet id
 	if sp.PacketID == 0 {
-		return total, fmt.Errorf("Packet id must be grater than zero")
+		return total, fmt.Errorf("[%s] Packet id must be grater than zero", sp.Type())
 	}
 
 	// reset subscriptions
@@ -106,7 +106,7 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 
 	for sl > 0 {
 		// read topic
-		t, n, err := readLPString(src[total:])
+		t, n, err := readLPString(src[total:], sp.Type())
 		total += n
 		if err != nil {
 			return total, err
@@ -114,7 +114,7 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 
 		// check buffer length
 		if len(src) < total+1 {
-			return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
+			return total, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", sp.Type(), total+1, len(src))
 		}
 
 		// read qos and add subscription
@@ -127,7 +127,7 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 
 	// check for empty subscription list
 	if len(sp.Subscriptions) == 0 {
-		return total, fmt.Errorf("Empty subscription list")
+		return total, fmt.Errorf("[%s] Empty subscription list", sp.Type())
 	}
 
 	return total, nil
@@ -141,7 +141,7 @@ func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
 
 	// check packet id
 	if sp.PacketID == 0 {
-		return total, fmt.Errorf("Packet id must be grater than zero")
+		return total, fmt.Errorf("[%s] Packet id must be grater than zero", sp.Type())
 	}
 
 	// encode header
@@ -157,7 +157,7 @@ func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
 
 	for _, t := range sp.Subscriptions {
 		// write topic
-		n, err := writeLPString(dst[total:], t.Topic)
+		n, err := writeLPString(dst[total:], t.Topic, sp.Type())
 		total += n
 		if err != nil {
 			return total, err

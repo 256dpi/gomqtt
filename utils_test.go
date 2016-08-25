@@ -41,7 +41,7 @@ func TestReadLPBytes(t *testing.T) {
 	total := 0
 
 	for _, str := range testStrings {
-		b, n, err := readLPBytes(testBytes[total:], true)
+		b, n, err := readLPBytes(testBytes[total:], true, CONNECT)
 
 		assert.NoError(t, err)
 		assert.Equal(t, []byte(str), b)
@@ -52,18 +52,18 @@ func TestReadLPBytes(t *testing.T) {
 }
 
 func TestReadLPBytesErrors(t *testing.T) {
-	_, _, err := readLPBytes([]byte{}, true)
+	_, _, err := readLPBytes([]byte{}, true, CONNECT)
 	assert.Error(t, err)
 
-	_, _, err = readLPBytes([]byte{0xff, 0xff, 0xff, 0xff}, true)
+	_, _, err = readLPBytes([]byte{0xff, 0xff, 0xff, 0xff}, true, CONNECT)
 	assert.Error(t, err)
 }
 
 func TestReadLPStringErrors(t *testing.T) {
-	_, _, err := readLPString([]byte{})
+	_, _, err := readLPString([]byte{}, CONNECT)
 	assert.Error(t, err)
 
-	_, _, err = readLPString([]byte{0xff, 0xff, 0xff, 0xff})
+	_, _, err = readLPString([]byte{0xff, 0xff, 0xff, 0xff}, CONNECT)
 	assert.Error(t, err)
 }
 
@@ -72,7 +72,7 @@ func TestWriteLPBytes(t *testing.T) {
 	buf := make([]byte, 127)
 
 	for _, str := range testStrings {
-		n, err := writeLPBytes(buf[total:], []byte(str))
+		n, err := writeLPBytes(buf[total:], []byte(str), CONNECT)
 
 		assert.NoError(t, err)
 		assert.Equal(t, 2+len(str), n)
@@ -84,9 +84,9 @@ func TestWriteLPBytes(t *testing.T) {
 }
 
 func TestWriteLPBytesErrors(t *testing.T) {
-	_, err := writeLPBytes([]byte{}, make([]byte, 65536))
+	_, err := writeLPBytes([]byte{}, make([]byte, 65536), CONNECT)
 	assert.Error(t, err)
 
-	_, err = writeLPBytes([]byte{}, make([]byte, 10))
+	_, err = writeLPBytes([]byte{}, make([]byte, 10), CONNECT)
 	assert.Error(t, err)
 }

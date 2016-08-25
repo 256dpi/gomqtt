@@ -71,7 +71,7 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+		return total, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", up.Type(), total+2, len(src))
 	}
 
 	// read packet id
@@ -80,7 +80,7 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 
 	// check packet id
 	if up.PacketID == 0 {
-		return total, fmt.Errorf("Packet id must be grater than zero")
+		return total, fmt.Errorf("[%s] Packet id must be grater than zero", up.Type())
 	}
 
 	// prepare counter
@@ -91,7 +91,7 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 
 	for tl > 0 {
 		// read topic
-		t, n, err := readLPString(src[total:])
+		t, n, err := readLPString(src[total:], up.Type())
 		total += n
 		if err != nil {
 			return total, err
@@ -106,7 +106,7 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 
 	// check for empty list
 	if len(up.Topics) == 0 {
-		return total, fmt.Errorf("Empty topic list")
+		return total, fmt.Errorf("[%s] Empty topic list", up.Type())
 	}
 
 	return total, nil
@@ -120,7 +120,7 @@ func (up *UnsubscribePacket) Encode(dst []byte) (int, error) {
 
 	// check packet id
 	if up.PacketID == 0 {
-		return total, fmt.Errorf("Packet id must be grater than zero")
+		return total, fmt.Errorf("[%s] Packet id must be grater than zero", up.Type())
 	}
 
 	// encode header
@@ -136,7 +136,7 @@ func (up *UnsubscribePacket) Encode(dst []byte) (int, error) {
 
 	for _, t := range up.Topics {
 		// write topic
-		n, err := writeLPString(dst[total:], t)
+		n, err := writeLPString(dst[total:], t, up.Type())
 		total += n
 		if err != nil {
 			return total, err

@@ -21,9 +21,9 @@ import (
 )
 
 func TestQOSCodes(t *testing.T) {
-	if QOSAtMostOnce != 0 || QOSAtLeastOnce != 1 || QOSExactlyOnce != 2 {
-		t.Errorf("QOS codes invalid")
-	}
+	assert.Equal(t, byte(0), QOSAtMostOnce)
+	assert.Equal(t, byte(1), QOSAtLeastOnce)
+	assert.Equal(t, byte(2), QOSExactlyOnce)
 }
 
 func TestFixedHeaderFlags(t *testing.T) {
@@ -51,11 +51,11 @@ func TestFixedHeaderFlags(t *testing.T) {
 
 	for m, d := range details {
 		if m.String() != d.name {
-			t.Errorf("Name mismatch. Expecting %s, got %s", d.name, m)
+			t.Errorf("Expected %s, got %s", d.name, m)
 		}
 
 		if m.defaultFlags() != d.flags {
-			t.Errorf("Flag mismatch for %s. Expecting %d, got %d", m, d.flags, m.defaultFlags())
+			t.Errorf("Expected %d, got %d", d.flags, m.defaultFlags())
 		}
 	}
 }

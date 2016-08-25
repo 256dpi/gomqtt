@@ -103,7 +103,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	}
 
 	// read protocol string
-	protoName, n, err := readLPBytes(src[total:], false)
+	protoName, n, err := readLPBytes(src[total:], false, cp.Type())
 	total += n
 	if err != nil {
 		return total, err
@@ -111,7 +111,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
+		return total, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", cp.Type(), total+1, len(src))
 	}
 
 	// read version
@@ -120,7 +120,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check protocol string and version
 	if versionByte != Version311 && versionByte != Version31 {
-		return total, fmt.Errorf("Protocol violation: Invalid protocol version (%d)", versionByte)
+		return total, fmt.Errorf("[%s] Invalid protocol version (%d)", cp.Type(), versionByte)
 	}
 
 	// set version
@@ -128,12 +128,12 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check protocol version string
 	if !bytes.Equal(protoName, version311Name) && !bytes.Equal(protoName, version31Name) {
-		return total, fmt.Errorf("Protocol violation: Invalid protocol version description (%s)", protoName)
+		return total, fmt.Errorf("[%s] Invalid protocol version description (%s)", cp.Type(), protoName)
 	}
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+1, len(src))
+		return total, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", cp.Type(), total+1, len(src))
 	}
 
 	// read connect flags
@@ -150,17 +150,17 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
-		return total, fmt.Errorf("Reserved bit 0 is not 0")
+		return total, fmt.Errorf("[%s] Reserved bit 0 is not 0", cp.Type())
 	}
 
 	// check will qos
 	if !validQOS(willQOS) {
-		return total, fmt.Errorf("Invalid QOS level (%d) for will message", willQOS)
+		return total, fmt.Errorf("[%s] Invalid QOS level (%d) for will message", cp.Type(), willQOS)
 	}
 
 	// check will flags
 	if !willFlag && (willRetain || willQOS != 0) {
-		return total, fmt.Errorf("Protocol violation: If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", willFlag, willQOS, willRetain)
+		return total, fmt.Errorf("[%s] If the Will Flag (%t) is set to 0 the Will QOS (%d) and Will Retain (%t) fields MUST be set to zero", cp.Type(), willFlag, willQOS, willRetain)
 	}
 
 	// create will if present
@@ -170,12 +170,12 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// check auth flags
 	if !usernameFlag && passwordFlag {
-		return total, fmt.Errorf("Password flag is set but Username flag is not set")
+		return total, fmt.Errorf("[%s] Password flag is set but Username flag is not set", cp.Type())
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", total+2, len(src))
+		return total, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", cp.Type(), total+2, len(src))
 	}
 
 	// read keep alive
@@ -183,7 +183,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 	total += 2
 
 	// read client id
-	cp.ClientID, n, err = readLPString(src[total:])
+	cp.ClientID, n, err = readLPString(src[total:], cp.Type())
 	total += n
 	if err != nil {
 		return total, err
@@ -191,18 +191,18 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// if the client supplies a zero-byte clientID, the client must also set CleanSession to 1
 	if len(cp.ClientID) == 0 && !cp.CleanSession {
-		return total, fmt.Errorf("Protocol violation: Clean session must be 1 if client id is zero length")
+		return total, fmt.Errorf("[%s] Clean session must be 1 if client id is zero length", cp.Type())
 	}
 
 	// read will topic and payload
 	if cp.Will != nil {
-		cp.Will.Topic, n, err = readLPString(src[total:])
+		cp.Will.Topic, n, err = readLPString(src[total:], cp.Type())
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		cp.Will.Payload, n, err = readLPBytes(src[total:], true)
+		cp.Will.Payload, n, err = readLPBytes(src[total:], true, cp.Type())
 		total += n
 		if err != nil {
 			return total, err
@@ -211,7 +211,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// read username
 	if usernameFlag {
-		cp.Username, n, err = readLPString(src[total:])
+		cp.Username, n, err = readLPString(src[total:], cp.Type())
 		total += n
 		if err != nil {
 			return total, err
@@ -220,7 +220,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 
 	// read password
 	if passwordFlag {
-		cp.Password, n, err = readLPString(src[total:])
+		cp.Password, n, err = readLPString(src[total:], cp.Type())
 		total += n
 		if err != nil {
 			return total, err
@@ -250,15 +250,15 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 
 	// check version byte
 	if cp.Version != Version311 && cp.Version != Version31 {
-		return total, fmt.Errorf("Unsupported protocol version %d", cp.Version)
+		return total, fmt.Errorf("[%s] Unsupported protocol version %d", cp.Type(), cp.Version)
 	}
 
 	// write version string, length has been checked beforehand
 	if cp.Version == Version311 {
-		n, _ = writeLPBytes(dst[total:], version311Name)
+		n, _ = writeLPBytes(dst[total:], version311Name, cp.Type())
 		total += n
 	} else if cp.Version == Version31 {
-		n, _ = writeLPBytes(dst[total:], version31Name)
+		n, _ = writeLPBytes(dst[total:], version31Name, cp.Type())
 		total += n
 	}
 
@@ -288,12 +288,12 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 
 		// check will topic length
 		if len(cp.Will.Topic) == 0 {
-			return total, fmt.Errorf("Will Topic is empty")
+			return total, fmt.Errorf("[%s] Will Topic is empty", cp.Type())
 		}
 
 		// check will qos
 		if !validQOS(cp.Will.QOS) {
-			return total, fmt.Errorf("Invalid Will QOS level %d", cp.Will.QOS)
+			return total, fmt.Errorf("[%s] Invalid Will QOS level %d", cp.Type(), cp.Will.QOS)
 		}
 
 		// set will qos flag
@@ -326,7 +326,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	total += 2
 
 	// write client id
-	n, err = writeLPString(dst[total:], cp.ClientID)
+	n, err = writeLPString(dst[total:], cp.ClientID, cp.Type())
 	total += n
 	if err != nil {
 		return total, err
@@ -334,13 +334,13 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 
 	// write will topic and payload
 	if cp.Will != nil {
-		n, err = writeLPString(dst[total:], cp.Will.Topic)
+		n, err = writeLPString(dst[total:], cp.Will.Topic, cp.Type())
 		total += n
 		if err != nil {
 			return total, err
 		}
 
-		n, err = writeLPBytes(dst[total:], cp.Will.Payload)
+		n, err = writeLPBytes(dst[total:], cp.Will.Payload, cp.Type())
 		total += n
 		if err != nil {
 			return total, err
@@ -348,12 +348,12 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 	}
 
 	if len(cp.Username) == 0 && len(cp.Password) > 0 {
-		return total, fmt.Errorf("Protocol violation: Password set without username")
+		return total, fmt.Errorf("[%s] Password set without username", cp.Type())
 	}
 
 	// write username
 	if len(cp.Username) > 0 {
-		n, err = writeLPString(dst[total:], cp.Username)
+		n, err = writeLPString(dst[total:], cp.Username, cp.Type())
 		total += n
 		if err != nil {
 			return total, err
@@ -362,7 +362,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 
 	// write password
 	if len(cp.Password) > 0 {
-		n, err = writeLPString(dst[total:], cp.Password)
+		n, err = writeLPString(dst[total:], cp.Password, cp.Type())
 		total += n
 		if err != nil {
 			return total, err

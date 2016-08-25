@@ -45,18 +45,18 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 
 	// check buffer length
 	if len(dst) < tl {
-		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", tl, len(dst))
+		return total, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", t, tl, len(dst))
 	}
 
 	// check remaining length
 	if rl > maxRemainingLength || rl < 0 {
-		return total, fmt.Errorf("remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
+		return total, fmt.Errorf("[%s] Remaining length (%d) out of bound (max %d, min 0)", t, rl, maxRemainingLength)
 	}
 
 	// check header length
 	hl := headerLen(rl)
 	if len(dst) < hl {
-		return total, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", hl, len(dst))
+		return total, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", t, hl, len(dst))
 	}
 
 	// write type and flags
@@ -78,7 +78,7 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 
 	// check buffer size
 	if len(src) < 2 {
-		return total, 0, 0, fmt.Errorf("Insufficient buffer size. Expecting %d, got %d", 2, len(src))
+		return total, 0, 0, fmt.Errorf("[%s] Insufficient buffer size, expected %d, got %d", t, 2, len(src))
 	}
 
 	// read type and flags
@@ -89,12 +89,12 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 
 	// check against static type
 	if decodedType != t {
-		return total, 0, 0, fmt.Errorf("Invalid type %d", decodedType)
+		return total, 0, 0, fmt.Errorf("[%s] Invalid type %d", t, decodedType)
 	}
 
 	// check flags except for publish packets
 	if t != PUBLISH && flags != t.defaultFlags() {
-		return total, 0, 0, fmt.Errorf("Invalid flags. Expecting %d, got %d", t.defaultFlags(), flags)
+		return total, 0, 0, fmt.Errorf("[%s] Invalid flags, expected %d, got %d", t, t.defaultFlags(), flags)
 	}
 
 	// read remaining length
@@ -104,12 +104,12 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 
 	// check resulting remaining length
 	if m <= 0 {
-		return total, 0, 0, fmt.Errorf("Error detecting remaining length")
+		return total, 0, 0, fmt.Errorf("[%s] Error reading remaining length", t)
 	}
 
 	// check remaining buffer
 	if rl > len(src[total:]) {
-		return total, 0, 0, fmt.Errorf("Remaining length (%d) is greater than remaining buffer (%d)", rl, len(src[total:]))
+		return total, 0, 0, fmt.Errorf("[%s] Remaining length (%d) is greater than remaining buffer (%d)", t, rl, len(src[total:]))
 	}
 
 	return total, flags, rl, nil

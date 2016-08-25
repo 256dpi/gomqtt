@@ -37,7 +37,7 @@ func identifiedPacketDecode(src []byte, t Type) (int, uint16, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, 0, fmt.Errorf("Expected remaining length to be 2")
+		return total, 0, fmt.Errorf("[%s] Expected remaining length to be 2", t)
 	}
 
 	// read packet id
@@ -46,23 +46,23 @@ func identifiedPacketDecode(src []byte, t Type) (int, uint16, error) {
 
 	// check packet id
 	if packetID == 0 {
-		return total, 0, fmt.Errorf("Packet id must be grater than zero")
+		return total, 0, fmt.Errorf("[%s] Packet id must be grater than zero", t)
 	}
 
 	return total, packetID, nil
 }
 
 // Encodes an identified packet.
-func identifiedPacketEncode(dst []byte, packetID uint16, mt Type) (int, error) {
+func identifiedPacketEncode(dst []byte, packetID uint16, t Type) (int, error) {
 	total := 0
 
 	// check packet id
 	if packetID == 0 {
-		return total, fmt.Errorf("Packet id must be grater than zero")
+		return total, fmt.Errorf("[%s] Packet id must be grater than zero", t)
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, 2, identifiedPacketLen(), mt)
+	n, err := headerEncode(dst[total:], 0, 2, identifiedPacketLen(), t)
 	total += n
 	if err != nil {
 		return total, err
