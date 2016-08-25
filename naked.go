@@ -28,7 +28,7 @@ func nakedPacketDecode(src []byte, t Type) (int, error) {
 
 	// check remaining length
 	if rl != 0 {
-		return hl, fmt.Errorf("[%s] Expected zero remaining length", t)
+		return hl, fmt.Errorf("[%s] expected zero remaining length", t)
 	}
 
 	return hl, err

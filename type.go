@@ -143,7 +143,7 @@ func (t Type) New() (Packet, error) {
 		return NewDisconnectPacket(), nil
 	}
 
-	return nil, fmt.Errorf("Invalid type %d", t)
+	return nil, fmt.Errorf("invalid type %d", t)
 }
 
 // Valid returns a boolean indicating whether the type is valid or not.
