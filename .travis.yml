@@ -5,10 +5,8 @@ go:
   - tip
 before_install:
   - go get github.com/mattn/goveralls
-  - go get golang.org/x/tools/cmd/cover
 script:
-  - go test -race -coverprofile=transport.coverprofile
-  - $HOME/gopath/bin/goveralls -coverprofile=transport.coverprofile -service=travis-ci
+  - $HOME/gopath/bin/goveralls -service=travis-ci
 matrix:
   allow_failures:
     - go: tip
