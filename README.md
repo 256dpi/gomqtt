@@ -1,10 +1,10 @@
 # gomqtt/broker
 
-[![Circle CI](https://img.shields.io/circleci/project/gomqtt/broker.svg)](https://circleci.com/gh/gomqtt/broker)
-[![Coverage Status](https://coveralls.io/repos/gomqtt/broker/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/broker?branch=master)
+[![Build Status](https://travis-ci.org/gomqtt/broker.svg?branch=master)](https://travis-ci.org/gomqtt/broker)
+[![Coverage Status](https://coveralls.io/repos/github/gomqtt/broker/badge.svg?branch=master)](https://coveralls.io/github/gomqtt/broker?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/broker?status.svg)](http://godoc.org/github.com/gomqtt/broker)
 [![Release](https://img.shields.io/github/release/gomqtt/broker.svg)](https://github.com/gomqtt/broker/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/broker)](http://goreportcard.com/report/gomqtt/broker)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/broker)](https://goreportcard.com/report/github.com/gomqtt/broker)
 
 **Package broker provides an extensible [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker implementation.**
 
