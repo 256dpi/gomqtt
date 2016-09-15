@@ -1,10 +1,10 @@
 # gomqtt/transport
 
-[![Circle CI](https://img.shields.io/circleci/project/gomqtt/transport.svg)](https://circleci.com/gh/gomqtt/transport)
-[![Coverage Status](https://coveralls.io/repos/gomqtt/transport/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/transport?branch=master)
+[![Build Status](https://travis-ci.org/gomqtt/transport.svg?branch=master)](https://travis-ci.org/gomqtt/transport)
+[![Coverage Status](https://coveralls.io/repos/github/gomqtt/transport/badge.svg?branch=master)](https://coveralls.io/github/gomqtt/transport?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/transport?status.svg)](http://godoc.org/github.com/gomqtt/transport)
 [![Release](https://img.shields.io/github/release/gomqtt/transport.svg)](https://github.com/gomqtt/transport/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/transport)](http://goreportcard.com/report/gomqtt/transport)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/transport)](https://goreportcard.com/report/github.com/gomqtt/transport)
 
 **Package transport implements functionality for handling [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) connections.**
 
