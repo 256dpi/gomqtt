@@ -1,10 +1,10 @@
 # gomqtt/packet
 
-[![Circle CI](https://img.shields.io/circleci/project/gomqtt/packet.svg)](https://circleci.com/gh/gomqtt/packet)
-[![Coverage Status](https://coveralls.io/repos/gomqtt/packet/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/packet?branch=master)
+[![Build Status](https://travis-ci.org/gomqtt/packet.svg?branch=master)](https://travis-ci.org/gomqtt/packet)
+[![Coverage Status](https://coveralls.io/repos/github/gomqtt/packet/badge.svg?branch=master)](https://coveralls.io/github/gomqtt/packet?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/packet?status.svg)](http://godoc.org/github.com/gomqtt/packet)
 [![Release](https://img.shields.io/github/release/gomqtt/packet.svg)](https://github.com/gomqtt/packet/releases)
-[![Go Report Card](https://goreportcard.com/badge/gomqtt/packet)](http://goreportcard.com/report/gomqtt/packet)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/packet)](https://goreportcard.com/report/github.com/gomqtt/packet)
 
 **Package packet implements functionality for encoding and decoding [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.**
 
