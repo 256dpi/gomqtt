@@ -1,10 +1,10 @@
 # gomqtt/router
 
-[![Circle CI](https://img.shields.io/circleci/project/gomqtt/router.svg)](https://circleci.com/gh/gomqtt/router)
-[![Coverage Status](https://coveralls.io/repos/gomqtt/router/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/router?branch=master)
+[![Build Status](https://travis-ci.org/gomqtt/router.svg?branch=master)](https://travis-ci.org/gomqtt/router)
+[![Coverage Status](https://coveralls.io/repos/github/gomqtt/router/badge.svg?branch=master)](https://coveralls.io/github/gomqtt/router?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/router?status.svg)](http://godoc.org/github.com/gomqtt/router)
 [![Release](https://img.shields.io/github/release/gomqtt/router.svg)](https://github.com/gomqtt/router/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/router)](http://goreportcard.com/report/gomqtt/router)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/router)](https://goreportcard.com/report/github.com/gomqtt/router)
 
 **This go package implements a basic [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) application router component.**
 
