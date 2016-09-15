@@ -1,10 +1,10 @@
 # gomqtt/client
 
-[![Circle CI](https://img.shields.io/circleci/project/gomqtt/client.svg)](https://circleci.com/gh/gomqtt/client)
-[![Coverage Status](https://coveralls.io/repos/gomqtt/client/badge.svg?branch=master&service=github)](https://coveralls.io/github/gomqtt/client?branch=master)
+[![Build Status](https://travis-ci.org/gomqtt/client.svg?branch=master)](https://travis-ci.org/gomqtt/client)
+[![Coverage Status](https://coveralls.io/repos/github/gomqtt/client/badge.svg?branch=master)](https://coveralls.io/github/gomqtt/client?branch=master)
 [![GoDoc](https://godoc.org/github.com/gomqtt/client?status.svg)](http://godoc.org/github.com/gomqtt/client)
 [![Release](https://img.shields.io/github/release/gomqtt/client.svg)](https://github.com/gomqtt/client/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/client)](http://goreportcard.com/report/gomqtt/client)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gomqtt/client)](https://goreportcard.com/report/github.com/gomqtt/client)
 
 **This go package implements functionality for communicating with a [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) broker.**
 
