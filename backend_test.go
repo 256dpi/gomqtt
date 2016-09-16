@@ -19,13 +19,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fortytw2/leaktest"
 	"github.com/gomqtt/spec"
 )
 
 func TestBrokerWithMemoryBackend(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	backend := NewMemoryBackend()
 	backend.Logins = map[string]string{
 		"allow": "allow",

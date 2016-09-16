@@ -18,14 +18,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fortytw2/leaktest"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConnectTimeout(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	engine := NewEngine()
 	engine.ConnectTimeout = 10 * time.Millisecond
 
