@@ -10,7 +10,7 @@ before_install:
   - sudo apt-get install mosquitto -y
   - go get github.com/mattn/goveralls
 script:
-  - $HOME/gopath/bin/goveralls -service=travis-ci
+  - $HOME/gopath/bin/goveralls -race -service=travis-ci
 matrix:
   allow_failures:
     - go: tip
