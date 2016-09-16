@@ -21,15 +21,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fortytw2/leaktest"
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestClientConnectError1(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	c := New()
 	c.Callback = errorCallback(t)
 
@@ -40,8 +37,6 @@ func TestClientConnectError1(t *testing.T) {
 }
 
 func TestClientConnectError2(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	c := New()
 	c.Callback = errorCallback(t)
 
@@ -56,8 +51,6 @@ func TestClientConnectError2(t *testing.T) {
 }
 
 func TestClientConnectError3(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	c := New()
 	c.Callback = errorCallback(t)
 
@@ -68,8 +61,6 @@ func TestClientConnectError3(t *testing.T) {
 }
 
 func TestClientConnectError4(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	c := New()
 	c.Callback = errorCallback(t)
 
@@ -80,8 +71,6 @@ func TestClientConnectError4(t *testing.T) {
 }
 
 func TestClientConnect(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	broker := tools.NewFlow().
 		Receive(connectPacket()).
 		Send(connackPacket()).
@@ -106,8 +95,6 @@ func TestClientConnect(t *testing.T) {
 }
 
 func TestClientConnectAfterConnect(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	broker := tools.NewFlow().
 		Receive(connectPacket()).
 		Send(connackPacket()).
@@ -136,8 +123,6 @@ func TestClientConnectAfterConnect(t *testing.T) {
 }
 
 func TestClientConnectWithCredentials(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	connect := connectPacket()
 	connect.Username = "test"
 	connect.Password = "test"
@@ -166,8 +151,6 @@ func TestClientConnectWithCredentials(t *testing.T) {
 }
 
 func TestClientNotConnected(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	c := New()
 	c.Callback = errorCallback(t)
 
@@ -191,8 +174,6 @@ func TestClientNotConnected(t *testing.T) {
 }
 
 func TestClientConnectionDenied(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	connack := connackPacket()
 	connack.ReturnCode = packet.ErrNotAuthorized
 
@@ -223,8 +204,6 @@ func TestClientConnectionDenied(t *testing.T) {
 }
 
 func TestClientExpectedConnack(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	broker := tools.NewFlow().
 		Receive(connectPacket()).
 		Send(packet.NewPingrespPacket()).
@@ -250,8 +229,6 @@ func TestClientExpectedConnack(t *testing.T) {
 }
 
 func TestClientKeepAlive(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	connect := connectPacket()
 	connect.KeepAlive = 0
 
@@ -305,8 +282,6 @@ func TestClientKeepAlive(t *testing.T) {
 }
 
 func TestClientKeepAliveTimeout(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	connect := connectPacket()
 	connect.KeepAlive = 0
 
@@ -343,8 +318,6 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 }
 
 func TestClientPublishSubscribeQOS0(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.PacketID = 1
@@ -413,8 +386,6 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 }
 
 func TestClientPublishSubscribeQOS1(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 1}}
 	subscribe.PacketID = 1
@@ -490,8 +461,6 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 }
 
 func TestClientPublishSubscribeQOS2(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 2}}
 	subscribe.PacketID = 1
@@ -577,8 +546,6 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 }
 
 func TestClientUnsubscribe(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	unsubscribe := packet.NewUnsubscribePacket()
 	unsubscribe.Topics = []string{"test"}
 	unsubscribe.PacketID = 1
@@ -616,8 +583,6 @@ func TestClientUnsubscribe(t *testing.T) {
 }
 
 func TestClientHardDisconnect(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	connect := connectPacket()
 	connect.ClientID = "test"
 	connect.CleanSession = false
@@ -667,8 +632,6 @@ func TestClientHardDisconnect(t *testing.T) {
 }
 
 func TestClientDisconnectWithTimeout(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
@@ -719,8 +682,6 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 }
 
 func TestClientClose(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	broker := tools.NewFlow().
 		Receive(connectPacket()).
 		Send(connackPacket()).
@@ -744,8 +705,6 @@ func TestClientClose(t *testing.T) {
 }
 
 func TestClientInvalidPackets(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	c := New()
 
 	// state not connecting
@@ -772,8 +731,6 @@ func TestClientInvalidPackets(t *testing.T) {
 }
 
 func TestClientSessionResumption(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	connect := connectPacket()
 	connect.ClientID = "test"
 	connect.CleanSession = false
@@ -825,8 +782,6 @@ func TestClientSessionResumption(t *testing.T) {
 }
 
 func TestClientUnexpectedClose(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	broker := tools.NewFlow().
 		Receive(connectPacket()).
 		Send(connackPacket()).
@@ -854,8 +809,6 @@ func TestClientUnexpectedClose(t *testing.T) {
 }
 
 func TestClientConnackFutureCancellation(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	broker := tools.NewFlow().
 		Receive(connectPacket()).
 		Close()
@@ -880,8 +833,6 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 }
 
 func TestClientFutureCancellation(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
@@ -916,8 +867,6 @@ func TestClientFutureCancellation(t *testing.T) {
 }
 
 func TestClientLogger(t *testing.T) {
-	defer leaktest.Check(t)()
-
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.PacketID = 1
