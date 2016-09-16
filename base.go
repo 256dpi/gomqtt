@@ -129,7 +129,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 
 	c.Callback = func(msg *packet.Message, err error) {
 		assert.NoError(t, err)
-		assert.Equal(t, topic + "/foo", msg.Topic)
+		assert.Equal(t, topic+"/foo", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
 		assert.False(t, msg.Retain)
@@ -143,12 +143,12 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
-	subscribeFuture, err := c.Subscribe(topic + "/#", 0)
+	subscribeFuture, err := c.Subscribe(topic+"/#", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
-	subscribeFuture, err = c.Subscribe(topic + "/+", 0)
+	subscribeFuture, err = c.Subscribe(topic+"/+", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait())
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
@@ -157,7 +157,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 	assert.NoError(t, err)
 	assert.NoError(t, unsubscribeFuture.Wait())
 
-	publishFuture, err := c.Publish(topic + "/foo", testPayload, 0, false)
+	publishFuture, err := c.Publish(topic+"/foo", testPayload, 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait())
 
