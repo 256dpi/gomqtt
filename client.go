@@ -87,9 +87,17 @@ type Client struct {
 	opts *Options
 	conn transport.Conn
 
-	Session  Session
+	// The session used by the client to store unacknowledged packets.
+	Session Session
+
+	// The callback to be called by the client upon receiving a message or
+	// encountering an error while processing incoming packets.
 	Callback Callback
-	Logger   Logger
+
+	// The logger that is used to log write low level information like packets
+	// that have ben successfully sent and received and details about the
+	// automatic keep alive handler.
+	Logger Logger
 
 	state   *state
 	tracker *tracker
@@ -419,7 +427,7 @@ func (c *Client) processor() error {
 			return c.die(err, false)
 		}
 
-		c.log("Received: %s", pkt.String())
+		c.log(fmt.Sprintf("Received: %s", pkt.String()))
 
 		if first {
 			// get connack
@@ -734,7 +742,7 @@ func (c *Client) send(pkt packet.Packet, buffered bool) error {
 		return err
 	}
 
-	c.log("Sent: %s", pkt.String())
+	c.log(fmt.Sprintf("Sent: %s", pkt.String()))
 
 	return nil
 }
@@ -747,9 +755,9 @@ func (c *Client) forward(packet *packet.PublishPacket) {
 }
 
 // log a message
-func (c *Client) log(format string, a ...interface{}) {
+func (c *Client) log(msg string) {
 	if c.Logger != nil {
-		c.Logger(fmt.Sprintf(format, a...))
+		c.Logger(msg)
 	}
 }
 
