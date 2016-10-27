@@ -232,6 +232,8 @@ func BenchmarkWebSocketConnBuffered(b *testing.B) {
 	<-done
 }
 
+/* TODO: We might still need this to test for receiving some king of notification.
+
 func TestWebSocketNotBinaryMessage(t *testing.T) {
 	pkt := packet.NewPublishPacket()
 	pkt.Message.Topic = "hello"
@@ -247,4 +249,4 @@ func TestWebSocketNotBinaryMessage(t *testing.T) {
 	assert.Nil(t, in)
 
 	<-done
-}
+}*/
