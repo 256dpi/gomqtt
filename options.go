@@ -30,6 +30,11 @@ type Options struct {
 	ValidateSubs bool
 }
 
+// Copy will make and return a copy.
+func (o Options) Copy() *Options {
+	return &o
+}
+
 // NewOptions will initialize and return a new Options struct.
 func NewOptions(url string) *Options {
 	return &Options{

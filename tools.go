@@ -12,13 +12,12 @@ func ClearSession(opts *Options) error {
 
 	client := New()
 
+	// copy options
+	opts = opts.Copy()
+	opts.CleanSession = true
+
 	// connect to broker
-	future, err := client.Connect(&Options{
-		BrokerURL:    opts.BrokerURL,
-		ClientID:     opts.ClientID,
-		CleanSession: true,
-		KeepAlive:    opts.KeepAlive,
-	})
+	future, err := client.Connect(opts)
 	if err != nil {
 		return err
 	}
@@ -41,12 +40,12 @@ func ClearSession(opts *Options) error {
 func ClearRetainedMessage(opts *Options, topic string) error {
 	client := New()
 
+	// copy options
+	opts = opts.Copy()
+	opts.CleanSession = true
+
 	// connect to broker
-	future, err := client.Connect(&Options{
-		BrokerURL:    opts.BrokerURL,
-		CleanSession: true,
-		KeepAlive:    opts.KeepAlive,
-	})
+	future, err := client.Connect(opts)
 	if err != nil {
 		return err
 	}
