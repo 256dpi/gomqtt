@@ -14,10 +14,14 @@
 
 package client
 
-import "github.com/gomqtt/packet"
+import (
+	"github.com/gomqtt/packet"
+	"github.com/gomqtt/transport"
+)
 
 // Options are passed to a Client on Connect.
 type Options struct {
+	Dialer       *transport.Dialer
 	BrokerURL    string
 	ClientID     string
 	CleanSession bool

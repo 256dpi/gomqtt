@@ -23,6 +23,7 @@ import (
 
 	"github.com/gomqtt/packet"
 	"github.com/gomqtt/tools"
+	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -83,6 +84,33 @@ func TestClientConnect(t *testing.T) {
 	c.Callback = errorCallback(t)
 
 	future, err := c.Connect(NewOptions(port.URL()))
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait())
+	assert.False(t, future.SessionPresent)
+	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	<-done
+}
+
+func TestClientConnectCustomDialer(t *testing.T) {
+	broker := tools.NewFlow().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	c := New()
+	c.Callback = errorCallback(t)
+
+	opts := NewOptions(port.URL())
+	opts.Dialer = transport.NewDialer()
+
+	future, err := c.Connect(opts)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)

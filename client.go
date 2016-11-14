@@ -159,10 +159,17 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 	// allocate and initialize tracker
 	c.tracker = newTracker(keepAlive)
 
-	// dial broker
-	c.conn, err = transport.Dial(opts.BrokerURL)
-	if err != nil {
-		return nil, err
+	// dial broker (with custom dialer if present)
+	if opts.Dialer != nil {
+		c.conn, err = opts.Dialer.Dial(opts.BrokerURL)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		c.conn, err = transport.Dial(opts.BrokerURL)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// set to connecting as from this point the client cannot be reused
