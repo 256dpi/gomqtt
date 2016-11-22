@@ -209,6 +209,10 @@ func Run(t *testing.T, config *Config) {
 		t.Run("RetainedWill", func(t *testing.T) {
 			RetainedWillTest(t, config, "retained/10")
 		})
+
+		t.Run("RetainedMessageResubscription", func(t *testing.T){
+			RetainedMessageResubscriptionTest(t, config, "retaine/11")
+		})
 	}
 
 	if config.StoredPackets {
