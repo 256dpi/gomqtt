@@ -49,18 +49,18 @@ func AllFeatures() *Config {
 }
 
 func (c *Config) usernamePassword() (string, string) {
-	url, err := url.Parse(c.URL)
+	uri, err := url.Parse(c.URL)
 	if err != nil {
 		panic(err)
 	}
 
-	if url.User == nil {
+	if uri.User == nil {
 		return "", ""
 	}
 
-	pw, _ := url.User.Password()
+	pw, _ := uri.User.Password()
 
-	return url.User.Username(), pw
+	return uri.User.Username(), pw
 }
 
 // Run will fully test a to support all specified features in the matrix.
@@ -202,7 +202,7 @@ func Run(t *testing.T, config *Config) {
 			DirectRetainedMessageTest(t, config, "retained/8")
 		})
 
-		t.Run("DirectClearRetained Message", func(t *testing.T) {
+		t.Run("DirectClearRetainedMessage", func(t *testing.T) {
 			DirectClearRetainedMessageTest(t, config, "retained/9")
 		})
 
