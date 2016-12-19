@@ -134,7 +134,7 @@ func TestDecoderDecodeError(t *testing.T) {
 	buf.Write([]byte{0x20, 0x02, 0x40, 0x00})
 
 	pkt, err := dec.Read()
-	assert.Equal(t, ErrReadLimitExceeded, err)
+	assert.Error(t, err)
 	assert.Nil(t, pkt)
 }
 
