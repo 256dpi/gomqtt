@@ -21,15 +21,13 @@ import (
 
 // ErrUnsupportedProtocol is returned if either the launcher or dialer
 // couldn't infer the protocol from the URL.
-//
-// Note: this error is wrapped in an Error with a LaunchError or DialError code.
-var ErrUnsupportedProtocol = errors.New("unsupported protocol found in url")
+var ErrUnsupportedProtocol = errors.New("unsupported protocol")
 
 // ErrDetectionOverflow can be returned during a Receive if the next packet
 // couldn't be detect from the initial header bytes.
 //
 // Note: this error is wrapped in an Error with a DetectionError code.
-var ErrDetectionOverflow = errors.New("detection length overflow (>5)")
+var ErrDetectionOverflow = errors.New("detection overflow")
 
 // ErrReadLimitExceeded can be returned during a Receive if the connection
 // exceeded its read limit.
@@ -55,12 +53,6 @@ type ErrorCode int
 const (
 	_ ErrorCode = iota
 
-	// DialError marks errors that came up during a Dial call.
-	DialError
-
-	// LaunchError marks errors that came up during a Launch call.
-	LaunchError
-
 	// EncodeError marks errors that came up within Send and are returned by the
 	// packets Encode functions.
 	EncodeError
@@ -84,10 +76,6 @@ type Error struct {
 
 func (err *Error) Error() string {
 	switch err.Code {
-	case DialError:
-		return fmt.Sprintf("dial error: %s", err.Err.Error())
-	case LaunchError:
-		return fmt.Sprintf("launch error: %s", err.Err.Error())
 	case EncodeError:
 		return fmt.Sprintf("encode error: %s", err.Err.Error())
 	case DecodeError:

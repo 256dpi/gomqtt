@@ -22,13 +22,7 @@ import (
 )
 
 func TestErrorStrings(t *testing.T) {
-	err := &Error{DialError, errors.New("foo")}
-	assert.Equal(t, "dial error: foo", err.Error())
-
-	err = &Error{LaunchError, errors.New("foo")}
-	assert.Equal(t, "launch error: foo", err.Error())
-
-	err = &Error{EncodeError, errors.New("foo")}
+	err := &Error{EncodeError, errors.New("foo")}
 	assert.Equal(t, "encode error: foo", err.Error())
 
 	err = &Error{DecodeError, errors.New("foo")}

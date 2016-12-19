@@ -35,12 +35,11 @@ func TestGlobalLaunch(t *testing.T) {
 func TestLauncherBadURL(t *testing.T) {
 	conn, err := Launch("foo")
 	assert.Nil(t, conn)
-	assert.Equal(t, LaunchError, toError(err).Code)
+	assert.Error(t, err)
 }
 
 func TestLauncherUnsupportedProtocol(t *testing.T) {
 	conn, err := Launch("foo://localhost")
 	assert.Nil(t, conn)
-	assert.Equal(t, LaunchError, toError(err).Code)
-	assert.Equal(t, ErrUnsupportedProtocol, toError(err).Err)
+	assert.Equal(t, ErrUnsupportedProtocol, err)
 }
