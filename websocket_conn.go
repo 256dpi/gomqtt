@@ -72,6 +72,9 @@ func (s *webSocketStream) Read(p []byte) (int, error) {
 // packets that are chunked over several WebSocket messages and packets that are
 // coalesced to one WebSocket message.
 type WebSocketConn struct {
+	writeCounter int64
+	readCounter  int64
+
 	conn   *websocket.Conn
 	reader *bufio.Reader
 	writer io.WriteCloser
@@ -82,10 +85,8 @@ type WebSocketConn struct {
 	sMutex sync.Mutex
 	rMutex sync.Mutex
 
-	writeCounter int64
-	readCounter  int64
-	readLimit    int64
-	readTimeout  time.Duration
+	readLimit   int64
+	readTimeout time.Duration
 
 	receiveBuffer bytes.Buffer
 	sendBuffer    bytes.Buffer
@@ -171,7 +172,7 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 	buf := c.sendBuffer.Bytes()[0:packetLength]
 
 	// encode packet
-	n, err := pkt.Encode(buf)
+	bytesRead, err := pkt.Encode(buf)
 	if err != nil {
 		c.end(false, websocket.CloseInternalServerErr)
 		return newTransportError(EncodeError, err)
@@ -196,7 +197,7 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 	}
 
 	// increment write counter
-	atomic.AddInt64(&c.writeCounter, int64(n))
+	atomic.AddInt64(&c.writeCounter, int64(bytesRead))
 
 	return nil
 }
