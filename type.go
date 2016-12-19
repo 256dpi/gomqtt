@@ -110,7 +110,7 @@ func (t Type) defaultFlags() byte {
 }
 
 // New creates a new packet based on the type. It is a shortcut to call one of
-// the New*Packet functions. If an error is returned then the type is invalid.
+// the New*Packet functions. An error is returned if the type is invalid.
 func (t Type) New() (Packet, error) {
 	switch t {
 	case CONNECT:
@@ -143,7 +143,7 @@ func (t Type) New() (Packet, error) {
 		return NewDisconnectPacket(), nil
 	}
 
-	return nil, fmt.Errorf("invalid type %d", t)
+	return nil, fmt.Errorf("[Unknown] invalid packet type %d", t)
 }
 
 // Valid returns a boolean indicating whether the type is valid or not.
