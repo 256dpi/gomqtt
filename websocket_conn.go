@@ -72,6 +72,9 @@ func (s *webSocketStream) Read(p []byte) (int, error) {
 // packets that are chunked over several WebSocket messages and packets that are
 // coalesced to one WebSocket message.
 type WebSocketConn struct {
+	writeCounter int64
+	readCounter  int64
+
 	conn   *websocket.Conn
 	reader *bufio.Reader
 	writer io.WriteCloser
@@ -82,10 +85,8 @@ type WebSocketConn struct {
 	sMutex sync.Mutex
 	rMutex sync.Mutex
 
-	writeCounter int64
-	readCounter  int64
-	readLimit    int64
-	readTimeout  time.Duration
+	readLimit   int64
+	readTimeout time.Duration
 
 	receiveBuffer bytes.Buffer
 	sendBuffer    bytes.Buffer
@@ -171,7 +172,7 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 	buf := c.sendBuffer.Bytes()[0:packetLength]
 
 	// encode packet
-	n, err := pkt.Encode(buf)
+	bytesRead, err := pkt.Encode(buf)
 	if err != nil {
 		c.end(false, websocket.CloseInternalServerErr)
 		return newTransportError(EncodeError, err)
@@ -190,15 +191,13 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 
 	// write packet to writer
 	_, err = c.writer.Write(buf)
-	if isCloseError(err) {
-		return newTransportError(ConnectionClose, err)
-	} else if err != nil {
+	if err != nil {
 		c.end(false, websocket.CloseInternalServerErr)
 		return newTransportError(NetworkError, err)
 	}
 
 	// increment write counter
-	atomic.AddInt64(&c.writeCounter, int64(n))
+	atomic.AddInt64(&c.writeCounter, int64(bytesRead))
 
 	return nil
 }
@@ -207,9 +206,7 @@ func (c *WebSocketConn) flush() error {
 	// close writer if available
 	if c.writer != nil {
 		err := c.writer.Close()
-		if isCloseError(err) {
-			return newTransportError(ConnectionClose, err)
-		} else if err != nil {
+		if err != nil {
 			c.conn.Close()
 			return newTransportError(NetworkError, err)
 		}
@@ -252,10 +249,10 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 
 		// try read detection bytes
 		header, err := c.reader.Peek(detectionLength)
-		if isCloseError(err) && len(header) == 0 {
+		if err == io.EOF && len(header) == 0 {
 			// only if Peek returned no bytes the close is expected
 			c.conn.Close()
-			return nil, newTransportError(ConnectionClose, err)
+			return nil, newTransportError(NetworkError, err)
 		} else if err != nil && strings.Contains(err.Error(), "i/o timeout") {
 			// the read timed out
 			c.end(true, websocket.CloseGoingAway)

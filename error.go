@@ -17,10 +17,6 @@ package transport
 import (
 	"errors"
 	"fmt"
-	"io"
-	"net"
-	"os"
-	"syscall"
 )
 
 // ErrUnsupportedProtocol is returned if either the launcher or dialer
@@ -43,6 +39,8 @@ var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
 // ErrReadTimeout can be returned by Receive if the connection did not Read
 // data in the by SetReadTimeout specified duration.
+//
+// Note: this error is wrapped in an Error with a NetworkError code.
 var ErrReadTimeout = errors.New("read timeout")
 
 // ErrAcceptAfterClose can be returned by a WebSocketServer during Accept()
@@ -56,14 +54,6 @@ type ErrorCode int
 
 const (
 	_ ErrorCode = iota
-
-	// ConnectionClose marks errors that symbolizes the close of a connection.
-	//
-	// Note: If this error code is returned during Receive it means that the
-	// connection ended smoothly between sending whole packets. If the error is
-	// returned during Send or BufferedSend it could mean that it happened
-	// before, during or after submitting the packet.
-	ConnectionClose
 
 	// DialError marks errors that came up during a Dial call.
 	DialError
@@ -97,16 +87,6 @@ type Error interface {
 	Err() error
 }
 
-// IsConnectionCloseError returns true if the supplied error is a ConnectionClose
-// transport error.
-func IsConnectionCloseError(value interface{}) bool {
-	if err, ok := value.(*transportError); ok {
-		return err.code == ConnectionClose
-	}
-
-	return false
-}
-
 type transportError struct {
 	code ErrorCode
 	err  error
@@ -121,8 +101,6 @@ func newTransportError(code ErrorCode, err error) *transportError {
 
 func (err *transportError) Error() string {
 	switch err.code {
-	case ConnectionClose:
-		return fmt.Sprintf("connection close: %s", err.err.Error())
 	case DialError:
 		return fmt.Sprintf("dial error: %s", err.err.Error())
 	case LaunchError:
@@ -146,26 +124,4 @@ func (err *transportError) Code() ErrorCode {
 
 func (err *transportError) Err() error {
 	return err.err
-}
-
-func isCloseError(err error) bool {
-	// EOF is considered a connection close
-	if err == io.EOF {
-		return true
-	}
-
-	// a broken pipe and connection reset is considered a connection close
-	opErr, ok := err.(*net.OpError)
-	if ok {
-		if opErr.Err == syscall.EPIPE || opErr.Err == syscall.ECONNRESET {
-			return true
-		}
-
-		sysErr, ok := opErr.Err.(*os.SyscallError)
-		if ok && (sysErr.Err == syscall.EPIPE || sysErr.Err == syscall.ECONNRESET) {
-			return true
-		}
-	}
-
-	return false
 }

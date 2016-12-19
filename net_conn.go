@@ -28,6 +28,9 @@ import (
 
 // A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
+	writeCounter int64
+	readCounter  int64
+
 	conn   net.Conn
 	reader *bufio.Reader
 	writer *bufio.Writer
@@ -38,10 +41,8 @@ type NetConn struct {
 	sMutex sync.Mutex
 	rMutex sync.Mutex
 
-	writeCounter int64
-	readCounter  int64
-	readLimit    int64
-	readTimeout  time.Duration
+	readLimit   int64
+	readTimeout time.Duration
 
 	receiveBuffer bytes.Buffer
 	sendBuffer    bytes.Buffer
@@ -134,9 +135,7 @@ func (c *NetConn) write(pkt packet.Packet) error {
 
 	// write buffer
 	bytesWritten, err := c.writer.Write(buf)
-	if isCloseError(err) {
-		return newTransportError(ConnectionClose, err)
-	} else if err != nil {
+	if err != nil {
 		c.conn.Close()
 		return newTransportError(NetworkError, err)
 	}
@@ -149,9 +148,7 @@ func (c *NetConn) write(pkt packet.Packet) error {
 
 func (c *NetConn) flush() error {
 	err := c.writer.Flush()
-	if isCloseError(err) {
-		return newTransportError(ConnectionClose, err)
-	} else if err != nil {
+	if err != nil {
 		c.conn.Close()
 		return newTransportError(NetworkError, err)
 	}
@@ -191,10 +188,10 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 
 		// try read detection bytes
 		header, err := c.reader.Peek(detectionLength)
-		if isCloseError(err) && len(header) == 0 {
+		if err == io.EOF && len(header) == 0 {
 			// only if Peek returned no bytes the close is expected
 			c.conn.Close()
-			return nil, newTransportError(ConnectionClose, err)
+			return nil, newTransportError(NetworkError, err)
 		} else if opError, ok := err.(*net.OpError); ok && opError.Timeout() {
 			// the read timed out
 			c.conn.Close()

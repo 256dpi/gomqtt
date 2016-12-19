@@ -38,9 +38,7 @@ type Conn interface {
 	// BufferedSend will write the packet to an internal buffer. It will flush
 	// the internal buffer automatically when it gets stale. Encoding errors are
 	// directly returned as in Send, but any network errors caught while flushing
-	// the buffer at a later time will be returned on the next call. If
-	// BufferedSend ist not supported by the underlying connection it will
-	// fallback to a normal Send.
+	// the buffer at a later time will be returned on the next call.
 	//
 	// Note: Only one goroutine can call BufferedSend at the same time.
 	BufferedSend(pkt packet.Packet) error
