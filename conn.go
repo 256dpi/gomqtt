@@ -55,14 +55,6 @@ type Conn interface {
 	// connection.
 	Close() error
 
-	// BytesWritten will return the number of bytes successfully written to
-	// the underlying connection.
-	BytesWritten() int64
-
-	// BytesRead will return the number of bytes successfully read from the
-	// underlying connection.
-	BytesRead() int64
-
 	// SetReadLimit sets the maximum size of a packet that can be received.
 	// If the limit is greater than zero, Receive will close the connection and
 	// return an Error if receiving the next packet will exceed the limit.

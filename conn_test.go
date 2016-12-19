@@ -212,34 +212,6 @@ func abstractConnSendAndCloseTest(t *testing.T, protocol string) {
 	<-done
 }
 
-func abstractConnCountersTest(t *testing.T, protocol string) {
-	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		pkt, err := conn1.Receive()
-		assert.NoError(t, err)
-		assert.Equal(t, int64(pkt.Len()), conn1.BytesRead())
-
-		pkt2 := packet.NewConnackPacket()
-		conn1.Send(pkt2)
-		assert.Equal(t, int64(pkt2.Len()), conn1.BytesWritten())
-
-		err = conn1.Close()
-		assert.NoError(t, err)
-	})
-
-	pkt := packet.NewConnectPacket()
-	conn2.Send(pkt)
-	assert.Equal(t, int64(pkt.Len()), conn2.BytesWritten())
-
-	pkt2, err := conn2.Receive()
-	assert.NoError(t, err)
-	assert.Equal(t, int64(pkt2.Len()), conn2.BytesRead())
-
-	err = conn2.Close()
-	assert.NoError(t, err)
-
-	<-done
-}
-
 func abstractConnReadLimitTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		conn1.SetReadLimit(1)

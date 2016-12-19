@@ -58,10 +58,6 @@ func TestNetConnSendAndCloseTest(t *testing.T) {
 	abstractConnSendAndCloseTest(t, "tcp")
 }
 
-func TestNetConnCounters(t *testing.T) {
-	abstractConnCountersTest(t, "tcp")
-}
-
 func TestNetConnReadLimit(t *testing.T) {
 	abstractConnReadLimitTest(t, "tcp")
 }

@@ -20,7 +20,6 @@ import (
 	"io"
 	"net"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/gomqtt/packet"
@@ -28,9 +27,6 @@ import (
 
 // A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
-	writeCounter int64
-	readCounter  int64
-
 	conn   net.Conn
 	reader *bufio.Reader
 	writer *bufio.Writer
@@ -134,14 +130,11 @@ func (c *NetConn) write(pkt packet.Packet) error {
 	}
 
 	// write buffer
-	bytesWritten, err := c.writer.Write(buf)
+	_, err = c.writer.Write(buf)
 	if err != nil {
 		c.conn.Close()
 		return &Error{NetworkError, err}
 	}
-
-	// increment write counter
-	atomic.AddInt64(&c.writeCounter, int64(bytesWritten))
 
 	return nil
 }
@@ -230,7 +223,7 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 		buf := c.receiveBuffer.Bytes()[0:packetLength]
 
 		// read whole packet
-		bytesRead, err := io.ReadFull(c.reader, buf)
+		_, err = io.ReadFull(c.reader, buf)
 		if opError, ok := err.(*net.OpError); ok && opError.Timeout() {
 			// the read timed out
 			c.conn.Close()
@@ -248,9 +241,6 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 			c.conn.Close()
 			return nil, &Error{DecodeError, err}
 		}
-
-		// increment counter
-		atomic.AddInt64(&c.readCounter, int64(bytesRead))
 
 		// reset timeout
 		c.resetTimeout()
@@ -272,18 +262,6 @@ func (c *NetConn) Close() error {
 	}
 
 	return nil
-}
-
-// BytesWritten will return the number of bytes successfully written to
-// the underlying connection.
-func (c *NetConn) BytesWritten() int64 {
-	return c.writeCounter
-}
-
-// BytesRead will return the number of bytes successfully read from the
-// underlying connection.
-func (c *NetConn) BytesRead() int64 {
-	return c.readCounter
 }
 
 // SetReadLimit sets the maximum size of a packet that can be received.

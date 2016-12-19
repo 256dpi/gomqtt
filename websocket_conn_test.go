@@ -58,10 +58,6 @@ func TestWebSocketSendAndCloseTest(t *testing.T) {
 	abstractConnSendAndCloseTest(t, "ws")
 }
 
-func TestWebSocketConnCounters(t *testing.T) {
-	abstractConnCountersTest(t, "ws")
-}
-
 func TestWebSocketConnReadLimit(t *testing.T) {
 	abstractConnReadLimitTest(t, "ws")
 }

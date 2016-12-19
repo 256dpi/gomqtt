@@ -22,7 +22,6 @@ import (
 	"net"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/gomqtt/packet"
@@ -72,9 +71,6 @@ func (s *webSocketStream) Read(p []byte) (int, error) {
 // packets that are chunked over several WebSocket messages and packets that are
 // coalesced to one WebSocket message.
 type WebSocketConn struct {
-	writeCounter int64
-	readCounter  int64
-
 	conn   *websocket.Conn
 	reader *bufio.Reader
 	writer io.WriteCloser
@@ -172,7 +168,7 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 	buf := c.sendBuffer.Bytes()[0:packetLength]
 
 	// encode packet
-	bytesRead, err := pkt.Encode(buf)
+	_, err := pkt.Encode(buf)
 	if err != nil {
 		c.end(false, websocket.CloseInternalServerErr)
 		return &Error{EncodeError, err}
@@ -195,9 +191,6 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 		c.end(false, websocket.CloseInternalServerErr)
 		return &Error{NetworkError, err}
 	}
-
-	// increment write counter
-	atomic.AddInt64(&c.writeCounter, int64(bytesRead))
 
 	return nil
 }
@@ -291,7 +284,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 		buf := c.receiveBuffer.Bytes()[0:packetLength]
 
 		// read whole packet
-		bytesRead, err := io.ReadFull(c.reader, buf)
+		_, err = io.ReadFull(c.reader, buf)
 		if err != nil && strings.Contains(err.Error(), "i/o timeout") {
 			// the read timed out
 			c.end(true, websocket.CloseGoingAway)
@@ -309,9 +302,6 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 			c.end(true, websocket.CloseInvalidFramePayloadData)
 			return nil, &Error{DecodeError, err}
 		}
-
-		// increment counter
-		atomic.AddInt64(&c.readCounter, int64(bytesRead))
 
 		// reset timeout
 		c.resetTimeout()
@@ -344,18 +334,6 @@ func (c *WebSocketConn) end(lock bool, closeCode int) error {
 // connection.
 func (c *WebSocketConn) Close() error {
 	return c.end(true, websocket.CloseNormalClosure)
-}
-
-// BytesWritten will return the number of bytes successfully written to
-// the underlying connection.
-func (c *WebSocketConn) BytesWritten() int64 {
-	return c.writeCounter
-}
-
-// BytesRead will return the number of bytes successfully read from the
-// underlying connection.
-func (c *WebSocketConn) BytesRead() int64 {
-	return c.readCounter
 }
 
 // SetReadLimit sets the maximum size of a packet that can be received.
