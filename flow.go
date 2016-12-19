@@ -15,6 +15,7 @@
 package tools
 
 import (
+	"io"
 	"testing"
 	"time"
 
@@ -49,7 +50,7 @@ func (conn *Pipe) Send(pkt packet.Packet) error {
 	case conn.pipe <- pkt:
 		return nil
 	case <-conn.close:
-		return nil
+		return io.EOF
 	}
 }
 
@@ -59,7 +60,7 @@ func (conn *Pipe) Receive() (packet.Packet, error) {
 	case pkt := <-conn.pipe:
 		return pkt, nil
 	case <-conn.close:
-		return nil, nil
+		return nil, io.EOF
 	}
 }
 
