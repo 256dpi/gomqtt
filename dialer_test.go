@@ -36,7 +36,7 @@ func TestGlobalDial(t *testing.T) {
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, ConnectionClose, toError(err).Code())
+		assert.Equal(t, NetworkError, toError(err).Code())
 
 		close(wait)
 	}()
@@ -102,7 +102,7 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, ConnectionClose, toError(err).Code())
+		assert.Equal(t, NetworkError, toError(err).Code())
 	}()
 
 	dialer := NewDialer()

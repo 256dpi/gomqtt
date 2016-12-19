@@ -15,34 +15,31 @@
 package transport
 
 import (
-	"fmt"
 	"testing"
+	"errors"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestErrorStrings(t *testing.T) {
-	err := newTransportError(ConnectionClose, fmt.Errorf("foo"))
-	assert.Equal(t, "connection close: foo", err.Error())
-
-	err = newTransportError(DialError, fmt.Errorf("foo"))
+	err := newTransportError(DialError, errors.New("foo"))
 	assert.Equal(t, "dial error: foo", err.Error())
 
-	err = newTransportError(LaunchError, fmt.Errorf("foo"))
+	err = newTransportError(LaunchError, errors.New("foo"))
 	assert.Equal(t, "launch error: foo", err.Error())
 
-	err = newTransportError(EncodeError, fmt.Errorf("foo"))
+	err = newTransportError(EncodeError, errors.New("foo"))
 	assert.Equal(t, "encode error: foo", err.Error())
 
-	err = newTransportError(DecodeError, fmt.Errorf("foo"))
+	err = newTransportError(DecodeError, errors.New("foo"))
 	assert.Equal(t, "decode error: foo", err.Error())
 
-	err = newTransportError(DetectionError, fmt.Errorf("foo"))
+	err = newTransportError(DetectionError, errors.New("foo"))
 	assert.Equal(t, "detection error: foo", err.Error())
 
-	err = newTransportError(NetworkError, fmt.Errorf("foo"))
+	err = newTransportError(NetworkError, errors.New("foo"))
 	assert.Equal(t, "network error: foo", err.Error())
 
-	err = newTransportError(0, fmt.Errorf("foo"))
+	err = newTransportError(0, errors.New("foo"))
 	assert.Equal(t, "unknown error: foo", err.Error())
 }
