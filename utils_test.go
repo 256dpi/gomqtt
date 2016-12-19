@@ -1,9 +1,33 @@
 package packet
 
-import "errors"
+import (
+	"errors"
+	"io"
+)
 
-type errorWriter struct{}
+type errorWriter struct {
+	writer io.Writer
+	after  int
+}
 
 func (w *errorWriter) Write(p []byte) (int, error) {
-	return 0, errors.New("foo")
+	if w.after == 0 {
+		return 0, errors.New("foo")
+	}
+
+	return w.writer.Write(p)
+}
+
+type errorReader struct {
+	reader io.Reader
+	after  int
+}
+
+func (r *errorReader) Read(p []byte) (int, error) {
+	if r.after == 0 {
+		return 0, errors.New("foo")
+	}
+
+	r.after--
+	return r.reader.Read(p)
 }
