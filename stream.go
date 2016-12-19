@@ -1,18 +1,23 @@
 package transport
 
 import (
-	"time"
-	"sync"
 	"io"
+	"sync"
+	"time"
 
 	"github.com/gomqtt/packet"
 )
 
+// TODO: Expose conn and stream?
+
+type carrier interface {
+	io.ReadWriteCloser
+
+	SetReadDeadline(time.Time) error
+}
+
 type Stream struct {
-	conn interface {
-		io.ReadWriteCloser
-		SetReadDeadline(time.Time) error
-	}
+	carrier carrier
 
 	stream *packet.Stream
 
@@ -86,7 +91,7 @@ func (s *Stream) write(pkt packet.Packet) error {
 	err := s.stream.Write(pkt)
 	if err != nil {
 		// ensure connection gets closed
-		s.conn.Close()
+		s.carrier.Close()
 
 		return err
 	}
@@ -98,7 +103,7 @@ func (s *Stream) flush() error {
 	err := s.stream.Flush()
 	if err != nil {
 		// ensure connection gets closed
-		s.conn.Close()
+		s.carrier.Close()
 
 		return err
 	}
@@ -129,7 +134,7 @@ func (s *Stream) Receive() (packet.Packet, error) {
 	// read next packet
 	pkt, err := s.stream.Read()
 	if err != nil {
-		s.conn.Close()
+		s.carrier.Close()
 		return nil, err
 	}
 
@@ -146,7 +151,7 @@ func (s *Stream) Close() error {
 	s.sMutex.Lock()
 	defer s.sMutex.Unlock()
 
-	err := s.conn.Close()
+	err := s.carrier.Close()
 	if err != nil {
 		return err
 	}
@@ -171,8 +176,8 @@ func (s *Stream) SetReadTimeout(timeout time.Duration) {
 
 func (s *Stream) resetTimeout() {
 	if s.readTimeout > 0 {
-		s.conn.SetReadDeadline(time.Now().Add(s.readTimeout))
+		s.carrier.SetReadDeadline(time.Now().Add(s.readTimeout))
 	} else {
-		s.conn.SetReadDeadline(time.Time{})
+		s.carrier.SetReadDeadline(time.Time{})
 	}
 }

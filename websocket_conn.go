@@ -121,7 +121,7 @@ var closeMessage = websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""
 type WebSocketConn struct {
 	Stream
 
-	conn   *websocket.Conn
+	conn *websocket.Conn
 }
 
 // NewWebSocketConn returns a new WebSocketConn.
@@ -132,12 +132,14 @@ func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 
 	return &WebSocketConn{
 		Stream: Stream{
-			conn: s,
-			stream: packet.NewStream(s, s),
+			carrier: s,
+			stream:  packet.NewStream(s, s),
 		},
 		conn: conn,
 	}
 }
+
+// TODO: Move LocalAddr and RemoteAddr to Stream?
 
 // LocalAddr returns the local network address.
 func (c *WebSocketConn) LocalAddr() net.Addr {

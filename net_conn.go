@@ -31,12 +31,14 @@ type NetConn struct {
 func NewNetConn(conn net.Conn) *NetConn {
 	return &NetConn{
 		Stream: Stream{
-			conn: conn,
-			stream: packet.NewStream(conn, conn),
+			carrier: conn,
+			stream:  packet.NewStream(conn, conn),
 		},
 		conn: conn,
 	}
 }
+
+// TODO: Move LocalAddr and RemoteAddr to Stream?
 
 // LocalAddr returns the local network address.
 func (c *NetConn) LocalAddr() net.Addr {
