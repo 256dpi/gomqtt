@@ -21,6 +21,28 @@ func TestEncoder(t *testing.T) {
 	assert.Len(t, buf.Bytes(), 14)
 }
 
+func TestEncoderError1(t *testing.T) {
+	buf := new(bytes.Buffer)
+	enc := NewEncoder(buf)
+
+	pkt := NewConnackPacket()
+	pkt.ReturnCode = 11 // <- invalid return code
+
+	err := enc.Write(pkt)
+	assert.Error(t, err)
+}
+
+func TestEncoderError2(t *testing.T) {
+	enc := NewEncoder(&errorWriter{})
+
+	pkt := NewPublishPacket()
+	pkt.Message.Topic = "foo"
+	pkt.Message.Payload = make([]byte, 4096)
+
+	err := enc.Write(pkt)
+	assert.Error(t, err)
+}
+
 func TestDecoder(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
