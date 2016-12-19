@@ -119,12 +119,9 @@ func (d *Decoder) Read() (Packet, error) {
 		d.buffer.Grow(packetLength)
 		buf := d.buffer.Bytes()[0:packetLength]
 
-		// read whole packet
+		// read whole packet (will not return EOF)
 		_, err = io.ReadFull(d.reader, buf)
-		if err == io.EOF {
-			// any EOF is now unexpected
-			return nil, io.ErrUnexpectedEOF
-		} else if err != nil {
+		if err != nil {
 			return nil, err
 		}
 

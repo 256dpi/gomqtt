@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"testing"
 
@@ -33,7 +34,9 @@ func TestEncoderEncodeError(t *testing.T) {
 }
 
 func TestEncoderWriterError(t *testing.T) {
-	enc := NewEncoder(&errorWriter{})
+	enc := NewEncoder(&errorWriter{
+		err: errors.New("foo"),
+	})
 
 	pkt := NewPublishPacket()
 	pkt.Message.Topic = "foo"
@@ -68,7 +71,7 @@ func TestDecoderDetectionOverflowError(t *testing.T) {
 	assert.Nil(t, pkt)
 }
 
-func TestDecoderUnexpectedEOFError(t *testing.T) {
+func TestDecoderPeekUnexpectedEOFError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
 
@@ -79,8 +82,10 @@ func TestDecoderUnexpectedEOFError(t *testing.T) {
 	assert.Nil(t, pkt)
 }
 
-func TestDecoderPeekReadError(t *testing.T) {
-	dec := NewDecoder(&errorReader{})
+func TestDecoderPeekError(t *testing.T) {
+	dec := NewDecoder(&errorReader{
+		err: errors.New("foo"),
+	})
 
 	pkt, err := dec.Read()
 	assert.Error(t, err)
@@ -95,6 +100,41 @@ func TestDecoderInvalidTypeError(t *testing.T) {
 
 	pkt, err := dec.Read()
 	assert.Contains(t, err.Error(), "invalid packet type")
+	assert.Nil(t, pkt)
+}
+
+func TestDecoderReadLimitError(t *testing.T) {
+	buf := new(bytes.Buffer)
+	dec := NewDecoder(buf)
+	dec.Limit = 1
+
+	buf.Write([]byte{0x00, 0x00})
+
+	pkt, err := dec.Read()
+	assert.Equal(t, ErrReadLimitExceeded, err)
+	assert.Nil(t, pkt)
+}
+
+func TestDecoderReadError(t *testing.T) {
+	dec := NewDecoder(&errorReader{
+		reader: bytes.NewBuffer([]byte{0x10, 0xc, 0x0, 0x4}),
+		after:  1,
+		err:    errors.New("foo"),
+	})
+
+	pkt, err := dec.Read()
+	assert.Error(t, err)
+	assert.Nil(t, pkt)
+}
+
+func TestDecoderDecodeError(t *testing.T) {
+	buf := new(bytes.Buffer)
+	dec := NewDecoder(buf)
+
+	buf.Write([]byte{0x20, 0x02, 0x40, 0x00})
+
+	pkt, err := dec.Read()
+	assert.Equal(t, ErrReadLimitExceeded, err)
 	assert.Nil(t, pkt)
 }
 
