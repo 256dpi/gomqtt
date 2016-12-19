@@ -119,7 +119,7 @@ var closeMessage = websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""
 // packets that are chunked over several WebSocket messages and packets that are
 // coalesced to one WebSocket message.
 type WebSocketConn struct {
-	Stream
+	BaseConn
 
 	conn *websocket.Conn
 }
@@ -131,7 +131,7 @@ func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 	}
 
 	return &WebSocketConn{
-		Stream: Stream{
+		BaseConn: BaseConn{
 			carrier: s,
 			stream:  packet.NewStream(s, s),
 		},

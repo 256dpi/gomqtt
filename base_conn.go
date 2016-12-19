@@ -16,7 +16,7 @@ type carrier interface {
 	SetReadDeadline(time.Time) error
 }
 
-type Stream struct {
+type BaseConn struct {
 	carrier carrier
 
 	stream *packet.Stream
@@ -35,23 +35,23 @@ type Stream struct {
 // underlying connection.
 //
 // Note: Only one goroutine can Send at the same time.
-func (s *Stream) Send(pkt packet.Packet) error {
-	s.sMutex.Lock()
-	defer s.sMutex.Unlock()
+func (c *BaseConn) Send(pkt packet.Packet) error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
 
 	// write packet
-	err := s.write(pkt)
+	err := c.write(pkt)
 	if err != nil {
 		return err
 	}
 
 	// stop the timer if existing
-	if s.flushTimer != nil {
-		s.flushTimer.Stop()
+	if c.flushTimer != nil {
+		c.flushTimer.Stop()
 	}
 
 	// flush buffer
-	return s.flush()
+	return c.flush()
 }
 
 // BufferedSend will write the packet to an internal buffer. It will flush
@@ -60,38 +60,38 @@ func (s *Stream) Send(pkt packet.Packet) error {
 // the buffer at a later time will be returned on the next call.
 //
 // Note: Only one goroutine can call BufferedSend at the same time.
-func (s *Stream) BufferedSend(pkt packet.Packet) error {
-	s.sMutex.Lock()
-	defer s.sMutex.Unlock()
+func (c *BaseConn) BufferedSend(pkt packet.Packet) error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
 
 	// create the timer if missing
-	if s.flushTimer == nil {
-		s.flushTimer = time.AfterFunc(flushTimeout, s.asyncFlush)
-		s.flushTimer.Stop()
+	if c.flushTimer == nil {
+		c.flushTimer = time.AfterFunc(flushTimeout, c.asyncFlush)
+		c.flushTimer.Stop()
 	}
 
 	// return any error from asyncFlush
-	if s.flushError != nil {
-		return s.flushError
+	if c.flushError != nil {
+		return c.flushError
 	}
 
 	// write packet
-	err := s.write(pkt)
+	err := c.write(pkt)
 	if err != nil {
 		return err
 	}
 
 	// queue asyncFlush
-	s.flushTimer.Reset(flushTimeout)
+	c.flushTimer.Reset(flushTimeout)
 
 	return nil
 }
 
-func (s *Stream) write(pkt packet.Packet) error {
-	err := s.stream.Write(pkt)
+func (c *BaseConn) write(pkt packet.Packet) error {
+	err := c.stream.Write(pkt)
 	if err != nil {
 		// ensure connection gets closed
-		s.carrier.Close()
+		c.carrier.Close()
 
 		return err
 	}
@@ -99,11 +99,11 @@ func (s *Stream) write(pkt packet.Packet) error {
 	return nil
 }
 
-func (s *Stream) flush() error {
-	err := s.stream.Flush()
+func (c *BaseConn) flush() error {
+	err := c.stream.Flush()
 	if err != nil {
 		// ensure connection gets closed
-		s.carrier.Close()
+		c.carrier.Close()
 
 		return err
 	}
@@ -111,14 +111,14 @@ func (s *Stream) flush() error {
 	return nil
 }
 
-func (s *Stream) asyncFlush() {
-	s.sMutex.Lock()
-	defer s.sMutex.Unlock()
+func (c *BaseConn) asyncFlush() {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
 
 	// flush buffer and save an eventual error
-	err := s.flush()
+	err := c.flush()
 	if err != nil {
-		s.flushError = err
+		c.flushError = err
 	}
 }
 
@@ -127,19 +127,19 @@ func (s *Stream) asyncFlush() {
 // reading from the underlying connection.
 //
 // Note: Only one goroutine can Receive at the same time.
-func (s *Stream) Receive() (packet.Packet, error) {
-	s.rMutex.Lock()
-	defer s.rMutex.Unlock()
+func (c *BaseConn) Receive() (packet.Packet, error) {
+	c.rMutex.Lock()
+	defer c.rMutex.Unlock()
 
 	// read next packet
-	pkt, err := s.stream.Read()
+	pkt, err := c.stream.Read()
 	if err != nil {
-		s.carrier.Close()
+		c.carrier.Close()
 		return nil, err
 	}
 
 	// reset timeout
-	s.resetTimeout()
+	c.resetTimeout()
 
 	return pkt, nil
 }
@@ -147,11 +147,11 @@ func (s *Stream) Receive() (packet.Packet, error) {
 // Close will close the underlying connection and cleanup resources. It will
 // return an Error if there was an error while closing the underlying
 // connection.
-func (s *Stream) Close() error {
-	s.sMutex.Lock()
-	defer s.sMutex.Unlock()
+func (c *BaseConn) Close() error {
+	c.sMutex.Lock()
+	defer c.sMutex.Unlock()
 
-	err := s.carrier.Close()
+	err := c.carrier.Close()
 	if err != nil {
 		return err
 	}
@@ -162,22 +162,22 @@ func (s *Stream) Close() error {
 // SetReadLimit sets the maximum size of a packet that can be received.
 // If the limit is greater than zero, Receive will close the connection and
 // return an Error if receiving the next packet will exceed the limit.
-func (s *Stream) SetReadLimit(limit int64) {
-	s.stream.Decoder.Limit = limit
+func (c *BaseConn) SetReadLimit(limit int64) {
+	c.stream.Decoder.Limit = limit
 }
 
 // SetReadTimeout sets the maximum time that can pass between reads.
 // If no data is received in the set duration the connection will be closed
 // and Read returns an error.
-func (s *Stream) SetReadTimeout(timeout time.Duration) {
-	s.readTimeout = timeout
-	s.resetTimeout()
+func (c *BaseConn) SetReadTimeout(timeout time.Duration) {
+	c.readTimeout = timeout
+	c.resetTimeout()
 }
 
-func (s *Stream) resetTimeout() {
-	if s.readTimeout > 0 {
-		s.carrier.SetReadDeadline(time.Now().Add(s.readTimeout))
+func (c *BaseConn) resetTimeout() {
+	if c.readTimeout > 0 {
+		c.carrier.SetReadDeadline(time.Now().Add(c.readTimeout))
 	} else {
-		s.carrier.SetReadDeadline(time.Time{})
+		c.carrier.SetReadDeadline(time.Time{})
 	}
 }
