@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package transport implements functionality for handling MQTT 3.1.1
-// (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) connections.
 package transport
 
 import (

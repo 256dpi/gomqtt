@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"io"
 	"testing"
 
 	"github.com/gomqtt/packet"
@@ -98,12 +99,12 @@ func TestWebSocketBadFrameError(t *testing.T) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -125,7 +126,7 @@ func TestWebSocketChunkedMessage(t *testing.T) {
 
 		in, err := conn1.Receive()
 		assert.Nil(t, in)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	})
 
 	in, err := conn2.Receive()
@@ -134,10 +135,6 @@ func TestWebSocketChunkedMessage(t *testing.T) {
 
 	err = conn2.Close()
 	assert.NoError(t, err)
-
-	in, err = conn2.Receive()
-	assert.Nil(t, in)
-	assert.Equal(t, NetworkError, toError(err).Code)
 
 	<-done
 }
@@ -157,7 +154,7 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 
 		in, err := conn1.Receive()
 		assert.Nil(t, in)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	})
 
 	in, err := conn2.Receive()
@@ -170,10 +167,6 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 
 	err = conn2.Close()
 	assert.NoError(t, err)
-
-	in, err = conn2.Receive()
-	assert.Nil(t, in)
-	assert.Equal(t, NetworkError, toError(err).Code)
 
 	<-done
 }
@@ -239,7 +232,7 @@ func TestWebSocketNotBinaryMessage(t *testing.T) {
 	})
 
 	in, err := conn2.Receive()
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 	assert.Nil(t, in)
 
 	<-done

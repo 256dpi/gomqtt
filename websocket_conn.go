@@ -171,7 +171,7 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 	_, err := pkt.Encode(buf)
 	if err != nil {
 		c.end(false, websocket.CloseInternalServerErr)
-		return &Error{EncodeError, err}
+		return err
 	}
 
 	// create writer if missing
@@ -179,7 +179,7 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 		writer, err := c.conn.NextWriter(websocket.BinaryMessage)
 		if err != nil {
 			c.end(false, websocket.CloseInternalServerErr)
-			return &Error{NetworkError, err}
+			return err
 		}
 
 		c.writer = writer
@@ -189,7 +189,7 @@ func (c *WebSocketConn) write(pkt packet.Packet) error {
 	_, err = c.writer.Write(buf)
 	if err != nil {
 		c.end(false, websocket.CloseInternalServerErr)
-		return &Error{NetworkError, err}
+		return err
 	}
 
 	return nil
@@ -201,7 +201,7 @@ func (c *WebSocketConn) flush() error {
 		err := c.writer.Close()
 		if err != nil {
 			c.conn.Close()
-			return &Error{NetworkError, err}
+			return err
 		}
 
 		c.writer = nil
@@ -237,7 +237,7 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 		// check length
 		if detectionLength > 5 {
 			c.end(true, websocket.CloseInvalidFramePayloadData)
-			return nil, &Error{DetectionError, ErrDetectionOverflow}
+			return nil, ErrDetectionOverflow
 		}
 
 		// try read detection bytes
@@ -245,14 +245,14 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 		if err == io.EOF && len(header) == 0 {
 			// only if Peek returned no bytes the close is expected
 			c.conn.Close()
-			return nil, &Error{NetworkError, err}
+			return nil, err
 		} else if err != nil && strings.Contains(err.Error(), "i/o timeout") {
 			// the read timed out
 			c.end(true, websocket.CloseGoingAway)
-			return nil, &Error{NetworkError, ErrReadTimeout}
+			return nil, ErrReadTimeout
 		} else if err != nil {
 			c.end(true, websocket.CloseAbnormalClosure)
-			return nil, &Error{NetworkError, err}
+			return nil, err
 		}
 
 		// detect packet
@@ -268,14 +268,14 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 		// check read limit
 		if c.readLimit > 0 && int64(packetLength) > c.readLimit {
 			c.end(true, websocket.CloseMessageTooBig)
-			return nil, &Error{NetworkError, ErrReadLimitExceeded}
+			return nil, ErrReadLimitExceeded
 		}
 
 		// create packet
 		pkt, err := packetType.New()
 		if err != nil {
 			c.end(true, websocket.CloseInvalidFramePayloadData)
-			return nil, &Error{DetectionError, err}
+			return nil, err
 		}
 
 		// reset and eventually grow buffer
@@ -288,19 +288,19 @@ func (c *WebSocketConn) Receive() (packet.Packet, error) {
 		if err != nil && strings.Contains(err.Error(), "i/o timeout") {
 			// the read timed out
 			c.end(true, websocket.CloseGoingAway)
-			return nil, &Error{NetworkError, ErrReadTimeout}
+			return nil, ErrReadTimeout
 		} else if err != nil {
 			c.end(true, websocket.CloseAbnormalClosure)
 
 			// even if EOF is returned we consider it an network error
-			return nil, &Error{NetworkError, err}
+			return nil, err
 		}
 
 		// decode buffer
 		_, err = pkt.Decode(buf)
 		if err != nil {
 			c.end(true, websocket.CloseInvalidFramePayloadData)
-			return nil, &Error{DecodeError, err}
+			return nil, err
 		}
 
 		// reset timeout
@@ -320,7 +320,7 @@ func (c *WebSocketConn) end(lock bool, closeCode int) error {
 
 	err := c.conn.WriteMessage(websocket.CloseMessage, msg)
 	if err != nil {
-		return &Error{NetworkError, err}
+		return err
 	}
 
 	// ignore error as it would be raised by WriteMessage anyway

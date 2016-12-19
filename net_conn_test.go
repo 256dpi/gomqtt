@@ -103,7 +103,7 @@ func TestNetConnCloseWhileReadError(t *testing.T) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -125,7 +125,7 @@ func TestNetConnCloseWhileDetectError(t *testing.T) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -146,8 +146,7 @@ func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
-	assert.Equal(t, ErrReadTimeout, toError(err).Err)
+	assert.Equal(t, err, ErrReadTimeout)
 
 	<-done
 }

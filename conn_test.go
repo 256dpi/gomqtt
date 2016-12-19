@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"io"
 	"testing"
 	"time"
 
@@ -34,7 +35,7 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 
 		pkt, err = conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	})
 
 	err := conn2.Send(packet.NewConnectPacket())
@@ -58,7 +59,7 @@ func abstractConnCloseTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Equal(t, io.EOF, err)
 
 	<-done
 }
@@ -69,12 +70,12 @@ func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
 		pkt.ReturnCode = 11 // <- invalid return code
 
 		err := conn1.Send(pkt)
-		assert.Equal(t, EncodeError, toError(err).Code)
+		assert.Error(t, err)
 	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Equal(t, io.EOF, err)
 
 	<-done
 }
@@ -91,12 +92,12 @@ func abstractConnDecodeError1Test(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, DetectionError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -113,12 +114,12 @@ func abstractConnDecodeError2Test(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, DetectionError, toError(err).Code)
+	assert.Equal(t, err, ErrDetectionOverflow)
 
 	<-done
 }
@@ -135,12 +136,12 @@ func abstractConnDecodeError3Test(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, DecodeError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -153,10 +154,10 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Equal(t, io.EOF, err)
 
 	err = conn2.Send(packet.NewConnectPacket())
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -178,7 +179,7 @@ func abstractConnCloseWhileSendTest(t *testing.T, protocol string) {
 		// keep writing
 		err := conn2.Send(packet.NewConnectPacket())
 		if err != nil {
-			assert.Equal(t, NetworkError, toError(err).Code)
+			assert.Error(t, err)
 			break
 		}
 	}
@@ -207,7 +208,7 @@ func abstractConnSendAndCloseTest(t *testing.T, protocol string) {
 
 	pkt, err = conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Equal(t, io.EOF, err)
 
 	<-done
 }
@@ -218,8 +219,8 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
-		assert.Equal(t, ErrReadLimitExceeded, toError(err).Err)
+		assert.Error(t, err)
+		assert.Equal(t, ErrReadLimitExceeded, err)
 	})
 
 	err := conn2.Send(packet.NewConnectPacket())
@@ -227,7 +228,7 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Equal(t, io.EOF, err)
 
 	<-done
 }
@@ -238,13 +239,13 @@ func abstractConnReadTimeoutTest(t *testing.T, protocol string) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
-		assert.Equal(t, ErrReadTimeout, toError(err).Err)
+		assert.Error(t, err)
+		assert.Equal(t, err, ErrReadTimeout)
 	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -255,12 +256,12 @@ func abstractConnCloseAfterCloseTest(t *testing.T, protocol string) {
 		assert.NoError(t, err)
 
 		err = conn1.Close()
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Error(t, err)
 	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Equal(t, io.EOF, err)
 
 	<-done
 }
@@ -279,7 +280,7 @@ func abstractConnAddrTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -295,7 +296,7 @@ func abstractConnBufferedSendTest(t *testing.T, protocol string) {
 
 		pkt, err = conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	})
 
 	err := conn2.BufferedSend(packet.NewConnectPacket())
@@ -319,7 +320,7 @@ func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Equal(t, io.EOF, err)
 
 	// the websocket library returns an error immediately
 	if protocol != "ws" {
@@ -330,7 +331,7 @@ func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	<-time.After(2 * flushTimeout)
 
 	err = conn2.BufferedSend(packet.NewConnectPacket())
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }
@@ -343,14 +344,14 @@ func abstractConnBigBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Equal(t, io.EOF, err)
 
 	pub := packet.NewPublishPacket()
 	pub.Message.Topic = "hello"
 	pub.Message.Payload = make([]byte, 6400) // <- bigger than write buffer
 
 	err = conn2.BufferedSend(pub)
-	assert.Equal(t, NetworkError, toError(err).Code)
+	assert.Error(t, err)
 
 	<-done
 }

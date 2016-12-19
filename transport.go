@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package transport implements functionality for handling MQTT 3.1.1
+// (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) connections.
 package transport
 
-import (
-	"errors"
-	"fmt"
-)
+import "errors"
 
 // ErrUnsupportedProtocol is returned if either the launcher or dialer
 // couldn't infer the protocol from the URL.
@@ -46,45 +45,3 @@ var ErrReadTimeout = errors.New("read timeout")
 //
 // Note: this error is wrapped in an Error with NetworkError code.
 var ErrAcceptAfterClose = errors.New("accept after close")
-
-// The ErrorCode provides a context to various errors.
-type ErrorCode int
-
-const (
-	_ ErrorCode = iota
-
-	// EncodeError marks errors that came up within Send and are returned by the
-	// packets Encode functions.
-	EncodeError
-
-	// DecodeError marks errors that came up within Receive and are returned by
-	// the packets Decode functions.
-	DecodeError
-
-	// DetectionError marks errors that cam up within Receive.
-	DetectionError
-
-	// NetworkError marks errors that are returned by the underlying connection.
-	NetworkError
-)
-
-// An Error a wraps underlying errors and provides additional context information.
-type Error struct {
-	Code ErrorCode
-	Err  error
-}
-
-func (err *Error) Error() string {
-	switch err.Code {
-	case EncodeError:
-		return fmt.Sprintf("encode error: %s", err.Err.Error())
-	case DecodeError:
-		return fmt.Sprintf("decode error: %s", err.Err.Error())
-	case DetectionError:
-		return fmt.Sprintf("detection error: %s", err.Err.Error())
-	case NetworkError:
-		return fmt.Sprintf("network error: %s", err.Err.Error())
-	}
-
-	return fmt.Sprintf("unknown error: %s", err.Err.Error())
-}

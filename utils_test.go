@@ -42,15 +42,6 @@ func init() {
 	testLauncher.TLSConfig = serverTLSConfig
 }
 
-// type cast the error to an Error
-func toError(err error) *Error {
-	if terr, ok := err.(*Error); ok {
-		return terr
-	}
-
-	return nil
-}
-
 // returns a client-ish and server-ish pair of connections
 func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 	done := make(chan struct{})

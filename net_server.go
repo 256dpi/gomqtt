@@ -28,7 +28,7 @@ type NetServer struct {
 func NewNetServer(address string) (*NetServer, error) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		return nil, &Error{NetworkError, err}
+		return nil, err
 	}
 
 	return &NetServer{
@@ -40,7 +40,7 @@ func NewNetServer(address string) (*NetServer, error) {
 func NewSecureNetServer(address string, config *tls.Config) (*NetServer, error) {
 	listener, err := tls.Listen("tcp", address, config)
 	if err != nil {
-		return nil, &Error{NetworkError, err}
+		return nil, err
 	}
 
 	return &NetServer{
@@ -53,7 +53,7 @@ func NewSecureNetServer(address string, config *tls.Config) (*NetServer, error) 
 func (s *NetServer) Accept() (Conn, error) {
 	conn, err := s.listener.Accept()
 	if err != nil {
-		return nil, &Error{NetworkError, err}
+		return nil, err
 	}
 
 	return NewNetConn(conn), nil
@@ -64,7 +64,7 @@ func (s *NetServer) Accept() (Conn, error) {
 func (s *NetServer) Close() error {
 	err := s.listener.Close()
 	if err != nil {
-		return &Error{NetworkError, err}
+		return err
 	}
 
 	return nil

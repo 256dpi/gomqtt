@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"io"
 	"testing"
 
 	"github.com/gomqtt/tools"
@@ -36,7 +37,7 @@ func TestGlobalDial(t *testing.T) {
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 
 		close(wait)
 	}()
@@ -101,7 +102,7 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code)
+		assert.Equal(t, io.EOF, err)
 	}()
 
 	dialer := NewDialer()
