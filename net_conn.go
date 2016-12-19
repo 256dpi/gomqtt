@@ -24,7 +24,8 @@ import (
 type NetConn struct {
 	BaseConn
 
-	conn net.Conn
+	// The underlying net.Conn.
+	Conn net.Conn
 }
 
 // NewNetConn returns a new NetConn.
@@ -33,24 +34,8 @@ func NewNetConn(conn net.Conn) *NetConn {
 		BaseConn: BaseConn{
 			carrier: conn,
 			stream:  packet.NewStream(conn, conn),
+			conn:    conn,
 		},
-		conn: conn,
+		Conn: conn,
 	}
-}
-
-// TODO: Move LocalAddr and RemoteAddr to Stream?
-
-// LocalAddr returns the local network address.
-func (c *NetConn) LocalAddr() net.Addr {
-	return c.conn.LocalAddr()
-}
-
-// RemoteAddr returns the remote network address.
-func (c *NetConn) RemoteAddr() net.Addr {
-	return c.conn.RemoteAddr()
-}
-
-// UnderlyingConn returns the underlying net.Conn.
-func (c *NetConn) UnderlyingConn() net.Conn {
-	return c.conn
 }

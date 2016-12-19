@@ -85,9 +85,9 @@ func abstractConnDecodeErrorTest(t *testing.T, protocol string) {
 		buf := []byte{0x00, 0x00} // <- too small
 
 		if netConn, ok := conn1.(*NetConn); ok {
-			netConn.conn.Write(buf)
+			netConn.Conn.Write(buf)
 		} else if webSocketConn, ok := conn1.(*WebSocketConn); ok {
-			webSocketConn.conn.WriteMessage(websocket.BinaryMessage, buf)
+			webSocketConn.Conn.WriteMessage(websocket.BinaryMessage, buf)
 		}
 
 		pkt, err := conn1.Receive()
