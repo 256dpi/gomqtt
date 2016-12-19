@@ -822,7 +822,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 	c := New()
 	c.Callback = func(msg *packet.Message, err error) {
 		assert.Nil(t, msg)
-		assert.Equal(t, ErrClientUnexpectedClose, err)
+		assert.Error(t, err)
 		close(wait)
 	}
 
@@ -848,7 +848,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 	c := New()
 	c.Callback = func(msg *packet.Message, err error) {
 		assert.Nil(t, msg)
-		assert.Equal(t, ErrClientUnexpectedClose, err)
+		assert.Error(t, err)
 		close(wait)
 	}
 
@@ -878,7 +878,7 @@ func TestClientFutureCancellation(t *testing.T) {
 	c := New()
 	c.Callback = func(msg *packet.Message, err error) {
 		assert.Nil(t, msg)
-		assert.Equal(t, ErrClientUnexpectedClose, err)
+		assert.Error(t, err)
 	}
 
 	connectFuture, err := c.Connect(NewOptions(port.URL()))

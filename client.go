@@ -46,10 +46,6 @@ var ErrClientConnectionDenied = errors.New("client connection denied")
 // in time to a PingreqPacket.
 var ErrClientMissingPong = errors.New("client missing pong")
 
-// ErrClientUnexpectedClose is returned in the Callback if the broker closed the
-// connection without receiving a DisconnectPacket from the client.
-var ErrClientUnexpectedClose = errors.New("client unexpected close")
-
 // ErrClientExpectedConnack is returned when the first received packet is not a
 // ConnackPacket.
 var ErrClientExpectedConnack = errors.New("client expected connack")
@@ -423,11 +419,6 @@ func (c *Client) processor() error {
 			// if we are disconnecting we can ignore the error
 			if c.state.get() >= clientDisconnecting {
 				return nil
-			}
-
-			// check if the connection has been closed by the server
-			if transport.IsConnectionCloseError(err) {
-				return c.die(ErrClientUnexpectedClose, false)
 			}
 
 			// die on any other error
