@@ -69,6 +69,11 @@ func (c *NetConn) Send(pkt packet.Packet) error {
 		return err
 	}
 
+	// stop the timer if existing
+	if c.flushTimer != nil {
+		c.flushTimer.Stop()
+	}
+
 	// flush buffer
 	return c.flush()
 }
