@@ -21,9 +21,9 @@ import (
 )
 
 // The supported MQTT versions.
-const(
+const (
 	Version311 byte = 4
-	Version31 byte = 3
+	Version31  byte = 3
 )
 
 var version311Name = []byte("MQTT")
@@ -379,16 +379,16 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 func (cp *ConnectPacket) len() int {
 	total := 0
 
-	if cp.Version == Version311 {
-		// 2 bytes protocol name length
-		// 4 bytes protocol name
-		// 1 byte protocol version
-		total += 2 + 4 + 1
-	} else if cp.Version == Version31 {
+	if cp.Version == Version31 {
 		// 2 bytes protocol name length
 		// 6 bytes protocol name
 		// 1 byte protocol version
 		total += 2 + 6 + 1
+	} else {
+		// 2 bytes protocol name length
+		// 4 bytes protocol name
+		// 1 byte protocol version
+		total += 2 + 4 + 1
 	}
 
 	// 1 byte connect flags

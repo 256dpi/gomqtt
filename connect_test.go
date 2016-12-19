@@ -513,6 +513,34 @@ func TestConnectPacketEncode2(t *testing.T) {
 	assert.Equal(t, pktBytes, dst[:n])
 }
 
+func TestConnectPacketEncode3(t *testing.T) {
+	pktBytes := []byte{
+		byte(CONNECT << 4),
+		12,
+		0, // Protocol String MSB
+		4, // Protocol String LSB
+		'M', 'Q', 'T', 'T',
+		4,  // Protocol level 4
+		2,  // Connect Flags
+		0,  // Keep Alive MSB
+		10, // Keep Alive LSB
+		0,  // Client ID MSB
+		0,  // Client ID LSB
+	}
+
+	pkt := NewConnectPacket()
+	pkt.CleanSession = true
+	pkt.KeepAlive = 10
+	pkt.Version = 0
+
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
+
+	assert.NoError(t, err)
+	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, pktBytes, dst[:n])
+}
+
 func TestConnectPacketEncodeError1(t *testing.T) {
 	pkt := NewConnectPacket()
 
@@ -620,6 +648,17 @@ func TestConnectPacketEncodeError9(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 9, n)
+}
+
+func TestConnectPacketEncodeError10(t *testing.T) {
+	pkt := NewConnectPacket()
+	pkt.Version = 255
+
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
+
+	assert.Error(t, err)
+	assert.Equal(t, 2, n)
 }
 
 func TestConnectEqualDecodeEncode(t *testing.T) {
