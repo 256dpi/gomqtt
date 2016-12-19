@@ -76,7 +76,7 @@ func TestWebSocketServerAcceptAfterError(t *testing.T) {
 
 	conn, err := server.Accept()
 	require.Nil(t, conn)
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 }
 
 func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
@@ -93,7 +93,7 @@ func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
 
 	pkt, err := conn.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 }
 
 func TestWebSocketFallback(t *testing.T) {

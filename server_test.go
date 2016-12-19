@@ -42,7 +42,7 @@ func abstractServerTest(t *testing.T, protocol string) {
 
 		pkt, err = conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code())
+		assert.Equal(t, NetworkError, toError(err).Code)
 	}()
 
 	conn2, err := testDialer.Dial(port.URL(protocol))
@@ -66,7 +66,7 @@ func abstractServerLaunchErrorTest(t *testing.T, protocol string) {
 	port := tools.Port(1) // <- no permissions
 
 	server, err := testLauncher.Launch(port.URL(protocol))
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 	assert.Nil(t, server)
 }
 
@@ -81,7 +81,7 @@ func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
 
 	conn, err := server.Accept()
 	assert.Nil(t, conn)
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 }
 
 func abstractServerCloseAfterClose(t *testing.T, protocol string) {
@@ -94,5 +94,5 @@ func abstractServerCloseAfterClose(t *testing.T, protocol string) {
 	assert.NoError(t, err)
 
 	err = server.Close()
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 }

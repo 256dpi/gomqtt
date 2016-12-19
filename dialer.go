@@ -66,7 +66,7 @@ func Dial(urlString string) (Conn, error) {
 func (d *Dialer) Dial(urlString string) (Conn, error) {
 	urlParts, err := url.ParseRequestURI(urlString)
 	if err != nil {
-		return nil, newTransportError(DialError, err)
+		return nil, &Error{DialError, err}
 	}
 
 	host, port, err := net.SplitHostPort(urlParts.Host)
@@ -83,7 +83,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 
 		conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
 		if err != nil {
-			return nil, newTransportError(DialError, err)
+			return nil, &Error{DialError, err}
 		}
 
 		return NewNetConn(conn), nil
@@ -94,7 +94,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 
 		conn, err := tls.Dial("tcp", net.JoinHostPort(host, port), d.TLSConfig)
 		if err != nil {
-			return nil, newTransportError(DialError, err)
+			return nil, &Error{DialError, err}
 		}
 
 		return NewNetConn(conn), nil
@@ -107,7 +107,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 
 		conn, _, err := d.webSocketDialer.Dial(url, d.RequestHeader)
 		if err != nil {
-			return nil, newTransportError(DialError, err)
+			return nil, &Error{DialError, err}
 		}
 
 		return NewWebSocketConn(conn), nil
@@ -121,11 +121,11 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 		d.webSocketDialer.TLSClientConfig = d.TLSConfig
 		conn, _, err := d.webSocketDialer.Dial(url, d.RequestHeader)
 		if err != nil {
-			return nil, newTransportError(DialError, err)
+			return nil, &Error{DialError, err}
 		}
 
 		return NewWebSocketConn(conn), nil
 	}
 
-	return nil, newTransportError(DialError, ErrUnsupportedProtocol)
+	return nil, &Error{DialError, ErrUnsupportedProtocol}
 }

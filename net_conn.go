@@ -130,14 +130,14 @@ func (c *NetConn) write(pkt packet.Packet) error {
 	_, err := pkt.Encode(buf)
 	if err != nil {
 		c.conn.Close()
-		return newTransportError(EncodeError, err)
+		return &Error{EncodeError, err}
 	}
 
 	// write buffer
 	bytesWritten, err := c.writer.Write(buf)
 	if err != nil {
 		c.conn.Close()
-		return newTransportError(NetworkError, err)
+		return &Error{NetworkError, err}
 	}
 
 	// increment write counter
@@ -150,7 +150,7 @@ func (c *NetConn) flush() error {
 	err := c.writer.Flush()
 	if err != nil {
 		c.conn.Close()
-		return newTransportError(NetworkError, err)
+		return &Error{NetworkError, err}
 	}
 
 	return nil
@@ -183,7 +183,7 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 		// check length
 		if detectionLength > 5 {
 			c.conn.Close()
-			return nil, newTransportError(DetectionError, ErrDetectionOverflow)
+			return nil, &Error{DetectionError, ErrDetectionOverflow}
 		}
 
 		// try read detection bytes
@@ -191,14 +191,14 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 		if err == io.EOF && len(header) == 0 {
 			// only if Peek returned no bytes the close is expected
 			c.conn.Close()
-			return nil, newTransportError(NetworkError, err)
+			return nil, &Error{NetworkError, err}
 		} else if opError, ok := err.(*net.OpError); ok && opError.Timeout() {
 			// the read timed out
 			c.conn.Close()
-			return nil, newTransportError(NetworkError, ErrReadTimeout)
+			return nil, &Error{NetworkError, ErrReadTimeout}
 		} else if err != nil {
 			c.conn.Close()
-			return nil, newTransportError(NetworkError, err)
+			return nil, &Error{NetworkError, err}
 		}
 
 		// detect packet
@@ -214,14 +214,14 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 		// check read limit
 		if c.readLimit > 0 && int64(packetLength) > c.readLimit {
 			c.conn.Close()
-			return nil, newTransportError(NetworkError, ErrReadLimitExceeded)
+			return nil, &Error{NetworkError, ErrReadLimitExceeded}
 		}
 
 		// create packet
 		pkt, err := packetType.New()
 		if err != nil {
 			c.conn.Close()
-			return nil, newTransportError(DetectionError, err)
+			return nil, &Error{DetectionError, err}
 		}
 
 		// reset and eventually grow buffer
@@ -234,19 +234,19 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 		if opError, ok := err.(*net.OpError); ok && opError.Timeout() {
 			// the read timed out
 			c.conn.Close()
-			return nil, newTransportError(NetworkError, ErrReadTimeout)
+			return nil, &Error{NetworkError, ErrReadTimeout}
 		} else if err != nil {
 			c.conn.Close()
 
 			// even if EOF is returned we consider it an network error
-			return nil, newTransportError(NetworkError, err)
+			return nil, &Error{NetworkError, err}
 		}
 
 		// decode buffer
 		_, err = pkt.Decode(buf)
 		if err != nil {
 			c.conn.Close()
-			return nil, newTransportError(DecodeError, err)
+			return nil, &Error{DecodeError, err}
 		}
 
 		// increment counter
@@ -268,7 +268,7 @@ func (c *NetConn) Close() error {
 
 	err := c.conn.Close()
 	if err != nil {
-		return newTransportError(NetworkError, err)
+		return &Error{NetworkError, err}
 	}
 
 	return nil

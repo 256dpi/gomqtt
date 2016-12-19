@@ -22,24 +22,24 @@ import (
 )
 
 func TestErrorStrings(t *testing.T) {
-	err := newTransportError(DialError, errors.New("foo"))
+	err := &Error{DialError, errors.New("foo")}
 	assert.Equal(t, "dial error: foo", err.Error())
 
-	err = newTransportError(LaunchError, errors.New("foo"))
+	err = &Error{LaunchError, errors.New("foo")}
 	assert.Equal(t, "launch error: foo", err.Error())
 
-	err = newTransportError(EncodeError, errors.New("foo"))
+	err = &Error{EncodeError, errors.New("foo")}
 	assert.Equal(t, "encode error: foo", err.Error())
 
-	err = newTransportError(DecodeError, errors.New("foo"))
+	err = &Error{DecodeError, errors.New("foo")}
 	assert.Equal(t, "decode error: foo", err.Error())
 
-	err = newTransportError(DetectionError, errors.New("foo"))
+	err = &Error{DetectionError, errors.New("foo")}
 	assert.Equal(t, "detection error: foo", err.Error())
 
-	err = newTransportError(NetworkError, errors.New("foo"))
+	err = &Error{NetworkError, errors.New("foo")}
 	assert.Equal(t, "network error: foo", err.Error())
 
-	err = newTransportError(0, errors.New("foo"))
+	err = &Error{0, errors.New("foo")}
 	assert.Equal(t, "unknown error: foo", err.Error())
 }

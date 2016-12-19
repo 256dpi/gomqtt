@@ -43,8 +43,8 @@ func init() {
 }
 
 // type cast the error to an Error
-func toError(err error) Error {
-	if terr, ok := err.(Error); ok {
+func toError(err error) *Error {
+	if terr, ok := err.(*Error); ok {
 		return terr
 	}
 

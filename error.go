@@ -76,52 +76,27 @@ const (
 	NetworkError
 )
 
-// An Error a wraps standard errors and provides additional context information.
-type Error interface {
-	error
-
-	// Code will return the corresponding error code.
-	Code() ErrorCode
-
-	// Err will return the original error.
-	Err() error
+// An Error a wraps underlying errors and provides additional context information.
+type Error struct {
+	Code ErrorCode
+	Err  error
 }
 
-type transportError struct {
-	code ErrorCode
-	err  error
-}
-
-func newTransportError(code ErrorCode, err error) *transportError {
-	return &transportError{
-		code: code,
-		err:  err,
-	}
-}
-
-func (err *transportError) Error() string {
-	switch err.code {
+func (err *Error) Error() string {
+	switch err.Code {
 	case DialError:
-		return fmt.Sprintf("dial error: %s", err.err.Error())
+		return fmt.Sprintf("dial error: %s", err.Err.Error())
 	case LaunchError:
-		return fmt.Sprintf("launch error: %s", err.err.Error())
+		return fmt.Sprintf("launch error: %s", err.Err.Error())
 	case EncodeError:
-		return fmt.Sprintf("encode error: %s", err.err.Error())
+		return fmt.Sprintf("encode error: %s", err.Err.Error())
 	case DecodeError:
-		return fmt.Sprintf("decode error: %s", err.err.Error())
+		return fmt.Sprintf("decode error: %s", err.Err.Error())
 	case DetectionError:
-		return fmt.Sprintf("detection error: %s", err.err.Error())
+		return fmt.Sprintf("detection error: %s", err.Err.Error())
 	case NetworkError:
-		return fmt.Sprintf("network error: %s", err.err.Error())
+		return fmt.Sprintf("network error: %s", err.Err.Error())
 	}
 
-	return fmt.Sprintf("unknown error: %s", err.err.Error())
-}
-
-func (err *transportError) Code() ErrorCode {
-	return err.code
-}
-
-func (err *transportError) Err() error {
-	return err.err
+	return fmt.Sprintf("unknown error: %s", err.Err.Error())
 }

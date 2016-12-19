@@ -65,7 +65,7 @@ func newWebSocketServer(listener net.Listener) *WebSocketServer {
 func NewWebSocketServer(address string) (*WebSocketServer, error) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		return nil, newTransportError(NetworkError, err)
+		return nil, &Error{NetworkError, err}
 	}
 
 	s := newWebSocketServer(listener)
@@ -79,7 +79,7 @@ func NewWebSocketServer(address string) (*WebSocketServer, error) {
 func NewSecureWebSocketServer(address string, config *tls.Config) (*WebSocketServer, error) {
 	listener, err := tls.Listen("tcp", address, config)
 	if err != nil {
-		return nil, newTransportError(NetworkError, err)
+		return nil, &Error{NetworkError, err}
 	}
 
 	s := newWebSocketServer(listener)
@@ -100,7 +100,7 @@ func (s *WebSocketServer) serveHTTP() {
 		err := h.Serve(s.listener)
 
 		// Server will always return an error
-		return newTransportError(NetworkError, err)
+		return &Error{NetworkError, err}
 	})
 }
 
@@ -147,7 +147,7 @@ func (s *WebSocketServer) Accept() (Conn, error) {
 	case <-s.tomb.Dying():
 		if s.tomb.Err() == errManualClose {
 			// server has been closed manually
-			return nil, newTransportError(NetworkError, ErrAcceptAfterClose)
+			return nil, &Error{NetworkError, ErrAcceptAfterClose}
 		}
 
 		// return the previously caught error
@@ -166,7 +166,7 @@ func (s *WebSocketServer) Close() error {
 	s.tomb.Wait()
 
 	if err != nil {
-		return newTransportError(NetworkError, err)
+		return &Error{NetworkError, err}
 	}
 
 	return nil

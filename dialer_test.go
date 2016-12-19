@@ -36,7 +36,7 @@ func TestGlobalDial(t *testing.T) {
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code())
+		assert.Equal(t, NetworkError, toError(err).Code)
 
 		close(wait)
 	}()
@@ -56,38 +56,38 @@ func TestGlobalDial(t *testing.T) {
 func TestDialerBadURL(t *testing.T) {
 	conn, err := Dial("foo")
 	assert.Nil(t, conn)
-	assert.Equal(t, DialError, toError(err).Code())
+	assert.Equal(t, DialError, toError(err).Code)
 }
 
 func TestDialerUnsupportedProtocol(t *testing.T) {
 	conn, err := Dial("foo://localhost")
 	assert.Nil(t, conn)
-	assert.Equal(t, DialError, toError(err).Code())
-	assert.Equal(t, ErrUnsupportedProtocol, toError(err).Err())
+	assert.Equal(t, DialError, toError(err).Code)
+	assert.Equal(t, ErrUnsupportedProtocol, toError(err).Err)
 }
 
 func TestDialerTCPError(t *testing.T) {
 	conn, err := Dial("tcp://localhost:1234567")
 	assert.Nil(t, conn)
-	assert.Equal(t, DialError, toError(err).Code())
+	assert.Equal(t, DialError, toError(err).Code)
 }
 
 func TestDialerTLSError(t *testing.T) {
 	conn, err := Dial("tls://localhost:1234567")
 	assert.Nil(t, conn)
-	assert.Equal(t, DialError, toError(err).Code())
+	assert.Equal(t, DialError, toError(err).Code)
 }
 
 func TestDialerWSError(t *testing.T) {
 	conn, err := Dial("ws://localhost:1234567")
 	assert.Nil(t, conn)
-	assert.Equal(t, DialError, toError(err).Code())
+	assert.Equal(t, DialError, toError(err).Code)
 }
 
 func TestDialerWSSError(t *testing.T) {
 	conn, err := Dial("wss://localhost:1234567")
 	assert.Nil(t, conn)
-	assert.Equal(t, DialError, toError(err).Code())
+	assert.Equal(t, DialError, toError(err).Code)
 }
 
 func abstractDefaultPortTest(t *testing.T, protocol string) {
@@ -102,7 +102,7 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code())
+		assert.Equal(t, NetworkError, toError(err).Code)
 	}()
 
 	dialer := NewDialer()

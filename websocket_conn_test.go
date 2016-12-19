@@ -102,12 +102,12 @@ func TestWebSocketBadFrameError(t *testing.T) {
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
-		assert.Equal(t, NetworkError, toError(err).Code())
+		assert.Equal(t, NetworkError, toError(err).Code)
 	})
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 
 	<-done
 }
@@ -129,7 +129,7 @@ func TestWebSocketChunkedMessage(t *testing.T) {
 
 		in, err := conn1.Receive()
 		assert.Nil(t, in)
-		assert.Equal(t, NetworkError, toError(err).Code())
+		assert.Equal(t, NetworkError, toError(err).Code)
 	})
 
 	in, err := conn2.Receive()
@@ -141,7 +141,7 @@ func TestWebSocketChunkedMessage(t *testing.T) {
 
 	in, err = conn2.Receive()
 	assert.Nil(t, in)
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 
 	<-done
 }
@@ -161,7 +161,7 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 
 		in, err := conn1.Receive()
 		assert.Nil(t, in)
-		assert.Equal(t, NetworkError, toError(err).Code())
+		assert.Equal(t, NetworkError, toError(err).Code)
 	})
 
 	in, err := conn2.Receive()
@@ -177,7 +177,7 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 
 	in, err = conn2.Receive()
 	assert.Nil(t, in)
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 
 	<-done
 }
@@ -243,7 +243,7 @@ func TestWebSocketNotBinaryMessage(t *testing.T) {
 	})
 
 	in, err := conn2.Receive()
-	assert.Equal(t, NetworkError, toError(err).Code())
+	assert.Equal(t, NetworkError, toError(err).Code)
 	assert.Nil(t, in)
 
 	<-done

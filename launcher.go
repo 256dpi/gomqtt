@@ -44,7 +44,7 @@ func Launch(urlString string) (Server, error) {
 func (l *Launcher) Launch(urlString string) (Server, error) {
 	urlParts, err := url.ParseRequestURI(urlString)
 	if err != nil {
-		return nil, newTransportError(LaunchError, err)
+		return nil, &Error{LaunchError, err}
 	}
 
 	switch urlParts.Scheme {
@@ -58,5 +58,5 @@ func (l *Launcher) Launch(urlString string) (Server, error) {
 		return NewSecureWebSocketServer(urlParts.Host, l.TLSConfig)
 	}
 
-	return nil, newTransportError(LaunchError, ErrUnsupportedProtocol)
+	return nil, &Error{LaunchError, ErrUnsupportedProtocol}
 }
