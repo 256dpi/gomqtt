@@ -141,7 +141,7 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 	m.clients[id] = client
 
 	// retrieve stored session
-	sess, ok := m.sessions[id]
+	s, ok := m.sessions[id]
 
 	// when found
 	if ok {
@@ -151,40 +151,40 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 		}
 
 		// clear offline subscriptions
-		m.offlineQueue.Clear(sess)
+		m.offlineQueue.Clear(s)
 
-		return sess, true, nil
+		return s, true, nil
 	}
 
 	// create fresh session
-	sess = NewMemorySession()
+	s = NewMemorySession()
 
 	// save session if not clean
 	if !client.CleanSession() {
-		m.sessions[id] = sess
+		m.sessions[id] = s
 	}
 
-	return sess, false, nil
+	return s, false, nil
 }
 
 // QueueOffline will begin with forwarding all missed messages in a separate
 // goroutine.
 func (m *MemoryBackend) QueueOffline(client *Client) error {
 	// get client session
-	sess := client.Session().(*MemorySession)
+	s := client.Session().(*MemorySession)
 
 	// send all missed messages in another goroutine
 	go func() {
 		for {
 			// get next missed message
-			msg := sess.nextMissed()
+			msg := s.nextMissed()
 			if msg == nil {
 				return
 			}
 
 			// publish or add back to queue
 			if !client.Publish(msg) {
-				sess.queue(msg)
+				s.queue(msg)
 				return
 			}
 		}

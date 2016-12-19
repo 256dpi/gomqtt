@@ -212,21 +212,21 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.clientID = pkt.ClientID
 
 	// retrieve session
-	sess, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID)
+	s, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID)
 	if err != nil {
 		return c.die(BackendError, err, true)
 	}
 
 	// reset the session if clean is requested
 	if pkt.CleanSession {
-		sess.Reset()
+		s.Reset()
 	}
 
 	// set session present
 	connack.SessionPresent = !pkt.CleanSession && resumed
 
 	// assign session
-	c.session = sess
+	c.session = s
 
 	// save will if present
 	if pkt.Will != nil {
@@ -268,7 +268,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// attempt to restore client if not clean
 	if !pkt.CleanSession {
 		// get stored subscriptions
-		subs, err := sess.AllSubscriptions()
+		subs, err := s.AllSubscriptions()
 		if err != nil {
 			return c.die(SessionError, err, true)
 		}
@@ -629,7 +629,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 	return event, err
 }
 
-// used for closing and cleaning up from inside internal goroutines
+// used for closing and cleaning up from internal goroutines
 func (c *Client) die(event LogEvent, err error, close bool) error {
 	c.finish.Do(func() {
 		event, err = c.cleanup(event, err, close)
