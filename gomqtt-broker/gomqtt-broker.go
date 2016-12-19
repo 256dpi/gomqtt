@@ -31,7 +31,7 @@ import (
 	"github.com/gomqtt/transport"
 )
 
-var url = flag.String("url", "tcp://0.0.0.0:1884", "broker url")
+var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 
 func main() {
 	flag.Parse()
