@@ -17,7 +17,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"os/signal"
@@ -147,11 +146,7 @@ func consumer(id string) {
 		}
 
 		_, err := conn.Receive()
-		if tErr, ok := err.(transport.Error); ok && tErr.Err() == io.EOF {
-			fmt.Printf("Lost: %s\n", name)
-			wg.Done()
-			return
-		} else if err != nil {
+		if err != nil {
 			panic(err)
 		}
 
