@@ -21,7 +21,7 @@ func TestEncoder(t *testing.T) {
 	assert.Len(t, buf.Bytes(), 14)
 }
 
-func TestEncoderError1(t *testing.T) {
+func TestEncoderEncodeError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
 
@@ -32,7 +32,7 @@ func TestEncoderError1(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestEncoderError2(t *testing.T) {
+func TestEncoderWriterError(t *testing.T) {
 	enc := NewEncoder(&errorWriter{})
 
 	pkt := NewPublishPacket()
