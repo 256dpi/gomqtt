@@ -15,7 +15,6 @@
 package tools
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -50,7 +49,7 @@ func (conn *Pipe) Send(pkt packet.Packet) error {
 	case conn.pipe <- pkt:
 		return nil
 	case <-conn.close:
-		return fmt.Errorf("connection close")
+		return nil
 	}
 }
 
@@ -60,7 +59,7 @@ func (conn *Pipe) Receive() (packet.Packet, error) {
 	case pkt := <-conn.pipe:
 		return pkt, nil
 	case <-conn.close:
-		return nil, fmt.Errorf("connection close")
+		return nil, nil
 	}
 }
 
@@ -209,7 +208,9 @@ func (f *Flow) Test(t *testing.T, conn Conn) {
 			assert.NoError(t, err)
 		case actionEnd:
 			_, err := conn.Receive()
-			assert.Contains(t, err.Error(), "connection close")
+			if err != nil {
+				assert.Contains(t, err.Error(), "EOF")
+			}
 		}
 	}
 }
