@@ -20,8 +20,11 @@ import (
 	"fmt"
 )
 
-const Version311 byte = 4
-const Version31 byte = 3
+// The supported MQTT versions.
+const(
+	Version311 byte = 4
+	Version31 byte = 3
+)
 
 var version311Name = []byte("MQTT")
 var version31Name = []byte("MQIsdp")
