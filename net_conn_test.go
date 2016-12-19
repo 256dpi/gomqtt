@@ -34,16 +34,8 @@ func TestNetConnEncodeError(t *testing.T) {
 	abstractConnEncodeErrorTest(t, "tcp")
 }
 
-func TestNetConnDecode1Error(t *testing.T) {
-	abstractConnDecodeError1Test(t, "tcp")
-}
-
-func TestNetConnDecode2Error(t *testing.T) {
-	abstractConnDecodeError2Test(t, "tcp")
-}
-
-func TestNetConnDecode3Error(t *testing.T) {
-	abstractConnDecodeError3Test(t, "tcp")
+func TestNetConnDecodeError(t *testing.T) {
+	abstractConnDecodeErrorTest(t, "tcp")
 }
 
 func TestNetConnSendAfterClose(t *testing.T) {
@@ -146,7 +138,7 @@ func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 
 	pkt, err := conn2.Receive()
 	assert.Nil(t, pkt)
-	assert.Equal(t, err, ErrReadTimeout)
+	assert.Error(t, err)
 
 	<-done
 }

@@ -15,9 +15,6 @@
 package transport
 
 import (
-	"bufio"
-	"bytes"
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -28,8 +25,7 @@ import (
 // A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
 	conn   net.Conn
-	reader *bufio.Reader
-	writer *bufio.Writer
+	stream *packet.Stream
 
 	flushTimer *time.Timer
 	flushError error
@@ -37,19 +33,14 @@ type NetConn struct {
 	sMutex sync.Mutex
 	rMutex sync.Mutex
 
-	readLimit   int64
 	readTimeout time.Duration
-
-	receiveBuffer bytes.Buffer
-	sendBuffer    bytes.Buffer
 }
 
 // NewNetConn returns a new NetConn.
 func NewNetConn(conn net.Conn) *NetConn {
 	return &NetConn{
 		conn:   conn,
-		reader: bufio.NewReader(conn),
-		writer: bufio.NewWriter(conn),
+		stream: packet.NewStream(conn, conn),
 	}
 }
 
@@ -116,23 +107,11 @@ func (c *NetConn) BufferedSend(pkt packet.Packet) error {
 }
 
 func (c *NetConn) write(pkt packet.Packet) error {
-	// reset and eventually grow buffer
-	packetLength := pkt.Len()
-	c.sendBuffer.Reset()
-	c.sendBuffer.Grow(packetLength)
-	buf := c.sendBuffer.Bytes()[0:packetLength]
-
-	// encode packet
-	_, err := pkt.Encode(buf)
+	err := c.stream.Write(pkt)
 	if err != nil {
+		// ensure connection gets closed
 		c.conn.Close()
-		return err
-	}
 
-	// write buffer
-	_, err = c.writer.Write(buf)
-	if err != nil {
-		c.conn.Close()
 		return err
 	}
 
@@ -140,9 +119,11 @@ func (c *NetConn) write(pkt packet.Packet) error {
 }
 
 func (c *NetConn) flush() error {
-	err := c.writer.Flush()
+	err := c.stream.Flush()
 	if err != nil {
+		// ensure connection gets closed
 		c.conn.Close()
+
 		return err
 	}
 
@@ -169,84 +150,17 @@ func (c *NetConn) Receive() (packet.Packet, error) {
 	c.rMutex.Lock()
 	defer c.rMutex.Unlock()
 
-	// initial detection length
-	detectionLength := 2
-
-	for {
-		// check length
-		if detectionLength > 5 {
-			c.conn.Close()
-			return nil, ErrDetectionOverflow
-		}
-
-		// try read detection bytes
-		header, err := c.reader.Peek(detectionLength)
-		if err == io.EOF && len(header) == 0 {
-			// only if Peek returned no bytes the close is expected
-			c.conn.Close()
-			return nil, err
-		} else if opError, ok := err.(*net.OpError); ok && opError.Timeout() {
-			// the read timed out
-			c.conn.Close()
-			return nil, ErrReadTimeout
-		} else if err != nil {
-			c.conn.Close()
-			return nil, err
-		}
-
-		// detect packet
-		packetLength, packetType := packet.DetectPacket(header)
-
-		// on zero packet length:
-		// increment detection length and try again
-		if packetLength <= 0 {
-			detectionLength++
-			continue
-		}
-
-		// check read limit
-		if c.readLimit > 0 && int64(packetLength) > c.readLimit {
-			c.conn.Close()
-			return nil, ErrReadLimitExceeded
-		}
-
-		// create packet
-		pkt, err := packetType.New()
-		if err != nil {
-			c.conn.Close()
-			return nil, err
-		}
-
-		// reset and eventually grow buffer
-		c.receiveBuffer.Reset()
-		c.receiveBuffer.Grow(packetLength)
-		buf := c.receiveBuffer.Bytes()[0:packetLength]
-
-		// read whole packet
-		_, err = io.ReadFull(c.reader, buf)
-		if opError, ok := err.(*net.OpError); ok && opError.Timeout() {
-			// the read timed out
-			c.conn.Close()
-			return nil, ErrReadTimeout
-		} else if err != nil {
-			c.conn.Close()
-
-			// even if EOF is returned we consider it an network error
-			return nil, err
-		}
-
-		// decode buffer
-		_, err = pkt.Decode(buf)
-		if err != nil {
-			c.conn.Close()
-			return nil, err
-		}
-
-		// reset timeout
-		c.resetTimeout()
-
-		return pkt, nil
+	// read next packet
+	pkt, err := c.stream.Read()
+	if err != nil {
+		c.conn.Close()
+		return nil, err
 	}
+
+	// reset timeout
+	c.resetTimeout()
+
+	return pkt, nil
 }
 
 // Close will close the underlying connection and cleanup resources. It will
@@ -268,7 +182,7 @@ func (c *NetConn) Close() error {
 // If the limit is greater than zero, Receive will close the connection and
 // return an Error if receiving the next packet will exceed the limit.
 func (c *NetConn) SetReadLimit(limit int64) {
-	c.readLimit = limit
+	c.stream.Decoder.Limit = limit
 }
 
 // SetReadTimeout sets the maximum time that can pass between reads.

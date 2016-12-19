@@ -35,16 +35,8 @@ func TestWebSocketConnEncodeError(t *testing.T) {
 	abstractConnEncodeErrorTest(t, "ws")
 }
 
-func TestWebSocketConnDecode1Error(t *testing.T) {
-	abstractConnDecodeError1Test(t, "ws")
-}
-
-func TestWebSocketConnDecode2Error(t *testing.T) {
-	abstractConnDecodeError2Test(t, "ws")
-}
-
-func TestWebSocketConnDecode3Error(t *testing.T) {
-	abstractConnDecodeError3Test(t, "ws")
+func TestWebSocketConnDecodeError(t *testing.T) {
+	abstractConnDecodeErrorTest(t, "ws")
 }
 
 func TestWebSocketConnSendAfterClose(t *testing.T) {
@@ -91,11 +83,7 @@ func TestWebSocketBadFrameError(t *testing.T) {
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // <- bad frame
 
-		if webSocketConn, ok := conn1.(*WebSocketConn); ok {
-			webSocketConn.UnderlyingConn().UnderlyingConn().Write(buf)
-		} else {
-			panic("not a websocket conn")
-		}
+		conn1.(*WebSocketConn).UnderlyingConn().UnderlyingConn().Write(buf)
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)

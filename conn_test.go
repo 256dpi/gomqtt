@@ -80,53 +80,9 @@ func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
 	<-done
 }
 
-func abstractConnDecodeError1Test(t *testing.T, protocol string) {
+func abstractConnDecodeErrorTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		buf := []byte{0x00, 0x00} // <- too small
-
-		if netConn, ok := conn1.(*NetConn); ok {
-			netConn.conn.Write(buf)
-		} else if webSocketConn, ok := conn1.(*WebSocketConn); ok {
-			webSocketConn.conn.WriteMessage(websocket.BinaryMessage, buf)
-		}
-
-		pkt, err := conn1.Receive()
-		assert.Nil(t, pkt)
-		assert.Equal(t, io.EOF, err)
-	})
-
-	pkt, err := conn2.Receive()
-	assert.Nil(t, pkt)
-	assert.Error(t, err)
-
-	<-done
-}
-
-func abstractConnDecodeError2Test(t *testing.T, protocol string) {
-	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		buf := []byte{0x10, 0xff, 0xff, 0xff, 0x80} // <- too long
-
-		if netConn, ok := conn1.(*NetConn); ok {
-			netConn.conn.Write(buf)
-		} else if webSocketConn, ok := conn1.(*WebSocketConn); ok {
-			webSocketConn.conn.WriteMessage(websocket.BinaryMessage, buf)
-		}
-
-		pkt, err := conn1.Receive()
-		assert.Nil(t, pkt)
-		assert.Equal(t, io.EOF, err)
-	})
-
-	pkt, err := conn2.Receive()
-	assert.Nil(t, pkt)
-	assert.Equal(t, err, ErrDetectionOverflow)
-
-	<-done
-}
-
-func abstractConnDecodeError3Test(t *testing.T, protocol string) {
-	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		buf := []byte{0x20, 0x02, 0x00, 0x06} // <- invalid packet
 
 		if netConn, ok := conn1.(*NetConn); ok {
 			netConn.conn.Write(buf)
@@ -220,7 +176,7 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
 		assert.Error(t, err)
-		assert.Equal(t, ErrReadLimitExceeded, err)
+		assert.Equal(t, packet.ErrReadLimitExceeded, err)
 	})
 
 	err := conn2.Send(packet.NewConnectPacket())
@@ -240,7 +196,6 @@ func abstractConnReadTimeoutTest(t *testing.T, protocol string) {
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
 		assert.Error(t, err)
-		assert.Equal(t, err, ErrReadTimeout)
 	})
 
 	pkt, err := conn2.Receive()
@@ -322,11 +277,8 @@ func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	assert.Nil(t, pkt)
 	assert.Equal(t, io.EOF, err)
 
-	// the websocket library returns an error immediately
-	if protocol != "ws" {
-		err = conn2.BufferedSend(packet.NewConnectPacket())
-		assert.NoError(t, err)
-	}
+	err = conn2.BufferedSend(packet.NewConnectPacket())
+	assert.NoError(t, err)
 
 	<-time.After(2 * flushTimeout)
 
