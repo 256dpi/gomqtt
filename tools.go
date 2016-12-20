@@ -141,11 +141,11 @@ func ReceiveMessage(opts *Options, topic string, qos byte) (*packet.Message, err
 	}
 
 	// wait
-	select{
-	case msg := <- msgCh:
+	select {
+	case msg := <-msgCh:
 		// disconnect
 		return msg, client.Disconnect()
-	case err := <- errCh:
+	case err := <-errCh:
 		return nil, err
 	}
 }

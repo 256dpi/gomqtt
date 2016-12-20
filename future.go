@@ -30,11 +30,14 @@ var ErrFutureCanceled = errors.New("future canceled")
 // A Future represents information that might become available in the future.
 type Future interface {
 	// Wait will block until the future is completed or canceled. It will return
-	// ErrCanceled  if the future gets canceled. If a timeout is specified it
+	// ErrCanceled if the future gets canceled. If a timeout is specified it
 	// might return a ErrTimeoutExceeded.
+	//
+	// Note: Wait will not return an Client related errors.
 	Wait(timeout ...time.Duration) error
 
-	// Call calls the supplied callback in a separate goroutine when Wait returns.
+	// Call calls the supplied callback in a separate goroutine with the error
+	// returned by Wait.
 	Call(func(err error), ...time.Duration)
 
 	complete()
@@ -104,6 +107,20 @@ type ConnectFuture struct {
 	ReturnCode     packet.ConnackCode
 }
 
+func (f *ConnectFuture) bind(future *ConnectFuture) {
+	future.Call(func(err error) {
+		if err != nil {
+			f.cancel()
+			return
+		}
+
+		f.SessionPresent = future.SessionPresent
+		f.ReturnCode = future.ReturnCode
+
+		f.complete()
+	})
+}
+
 // The PublishFuture is returned by the Client on Publish.
 type PublishFuture struct {
 	abstractFuture
@@ -124,6 +141,7 @@ func (f *SubscribeFuture) bind(future *SubscribeFuture) {
 		}
 
 		f.ReturnCodes = future.ReturnCodes
+
 		f.complete()
 	})
 }

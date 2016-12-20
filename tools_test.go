@@ -50,9 +50,9 @@ func TestClearRetainedMessage(t *testing.T) {
 func TestPublishMessage(t *testing.T) {
 	publish := packet.NewPublishPacket()
 	publish.Message = packet.Message{
-		Topic: "test",
+		Topic:   "test",
 		Payload: []byte("test"),
-		Retain: true,
+		Retain:  true,
 	}
 
 	broker := tools.NewFlow().
@@ -74,7 +74,7 @@ func TestReceiveMessage(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.PacketID = 1
 	subscribe.Subscriptions = []packet.Subscription{
-		{ Topic: "test" },
+		{Topic: "test"},
 	}
 
 	suback := packet.NewSubackPacket()
@@ -83,9 +83,9 @@ func TestReceiveMessage(t *testing.T) {
 
 	publish := packet.NewPublishPacket()
 	publish.Message = packet.Message{
-		Topic: "test",
+		Topic:   "test",
 		Payload: []byte("test"),
-		Retain: true,
+		Retain:  true,
 	}
 
 	broker := tools.NewFlow().
