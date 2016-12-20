@@ -54,16 +54,16 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	s := NewService()
 
-	s.Online = func(resumed bool) {
+	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
 		close(online)
 	}
 
-	s.Offline = func() {
+	s.OfflineCallback = func() {
 		close(offline)
 	}
 
-	s.Message = func(msg *packet.Message) {
+	s.MessageCallback = func(msg *packet.Message) {
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
@@ -116,18 +116,18 @@ func TestServiceCommandsInCallback(t *testing.T) {
 
 	s := NewService()
 
-	s.Online = func(resumed bool) {
+	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
 
 		s.Subscribe("test", 0)
 		s.Publish("test", []byte("test"), 0, false)
 	}
 
-	s.Offline = func() {
+	s.OfflineCallback = func() {
 		close(offline)
 	}
 
-	s.Message = func(msg *packet.Message) {
+	s.MessageCallback = func(msg *packet.Message) {
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
@@ -160,12 +160,12 @@ func TestStartStopVariations(t *testing.T) {
 
 	s := NewService()
 
-	s.Online = func(resumed bool) {
+	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
 		close(online)
 	}
 
-	s.Offline = func() {
+	s.OfflineCallback = func() {
 		close(offline)
 	}
 
@@ -204,12 +204,12 @@ func TestServiceUnsubscribe(t *testing.T) {
 
 	s := NewService()
 
-	s.Online = func(resumed bool) {
+	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
 		close(online)
 	}
 
-	s.Offline = func() {
+	s.OfflineCallback = func() {
 		close(offline)
 	}
 
@@ -253,12 +253,12 @@ func TestServiceReconnect(t *testing.T) {
 		}
 	}
 
-	s.Online = func(resumed bool) {
+	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
 		close(online)
 	}
 
-	s.Offline = func() {
+	s.OfflineCallback = func() {
 		close(offline)
 	}
 
@@ -335,11 +335,11 @@ func BenchmarkServicePublish(b *testing.B) {
 
 	c := NewService()
 
-	c.Online = func(_ bool) {
+	c.OnlineCallback = func(_ bool) {
 		close(ready)
 	}
 
-	c.Offline = func() {
+	c.OfflineCallback = func() {
 		close(done)
 	}
 

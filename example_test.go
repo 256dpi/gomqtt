@@ -87,17 +87,17 @@ func ExampleService() {
 
 	s := NewService()
 
-	s.Online = func(resumed bool) {
+	s.OnlineCallback = func(resumed bool) {
 		fmt.Println("online!")
 		fmt.Printf("resumed: %v\n", resumed)
 	}
 
-	s.Offline = func() {
+	s.OfflineCallback = func() {
 		fmt.Println("offline!")
 		close(done)
 	}
 
-	s.Message = func(msg *packet.Message) {
+	s.MessageCallback = func(msg *packet.Message) {
 		fmt.Printf("message: %s - %s\n", msg.Topic, msg.Payload)
 		close(wait)
 	}

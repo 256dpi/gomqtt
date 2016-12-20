@@ -48,23 +48,29 @@ type unsubscribe struct {
 	future *UnsubscribeFuture
 }
 
-// Online is a function that is called when the service is connected.
+// An OnlineCallback is a function that is called when the service is connected.
 //
 // Note: Execution of the service is resumed after the callback returns. This
 // means that waiting on a future will actually deadlock the service.
-type Online func(resumed bool)
+type OnlineCallback func(resumed bool)
 
-// Message is a function that is called when a message is received.
+// A MessageCallback is a function that is called when a message is received.
 //
 // Note: Execution of the service is resumed after the callback returns. This
 // means that waiting on a future will actually deadlock the service.
-type Message func(msg *packet.Message)
+type MessageCallback func(*packet.Message)
 
-// Offline is a function that is called when the service is disconnected.
+// An ErrorCallback is a function that is called when an error occurred.
 //
 // Note: Execution of the service is resumed after the callback returns. This
 // means that waiting on a future will actually deadlock the service.
-type Offline func()
+type ErrorCallback func(error)
+
+// An OfflineCallback is a function that is called when the service is disconnected.
+//
+// Note: Execution of the service is resumed after the callback returns. This
+// means that waiting on a future will actually deadlock the service.
+type OfflineCallback func()
 
 const (
 	serviceStarted byte = iota
@@ -85,15 +91,40 @@ type Service struct {
 	state   *state
 	backoff *backoff.Backoff
 
+	// The session used by the client to store unacknowledged packets.
 	Session Session
-	Online  Online
-	Message Message
-	Offline Offline
-	Logger  Logger
 
+	// The callback that is used to notify that the service is online.
+	OnlineCallback OnlineCallback
+
+	// The callback to be called by the service upon receiving a message.
+	MessageCallback MessageCallback
+
+	// The callback to be called by the service upon encountering an error.
+	ErrorCallback ErrorCallback
+
+	// The callback that is used to notify that the service is offline.
+	OfflineCallback OfflineCallback
+
+	// The logger that is used to log write low level information like packets
+	// that have ben successfully sent and received and details about the
+	// automatic keep alive handler.
+	Logger Logger
+
+	// The minimum delay between reconnects.
+	//
+	// Note: The value must be changed before calling Start.
 	MinReconnectDelay time.Duration
+
+	// The maximum delay between reconnects.
+	//
+	// Note: The value must be changed before calling Start.
 	MaxReconnectDelay time.Duration
-	ConnectTimeout    time.Duration
+
+	// The allowed timeout until a connection attempt is canceled.
+	ConnectTimeout time.Duration
+
+	// The allowed timeout until a connection is forcefully closed.
 	DisconnectTimeout time.Duration
 
 	commandQueue chan *command
@@ -308,16 +339,16 @@ func (s *Service) supervisor() error {
 		}
 
 		// run callback
-		if s.Online != nil {
-			s.Online(resumed)
+		if s.OnlineCallback != nil {
+			s.OnlineCallback(resumed)
 		}
 
 		// run dispatcher on client
 		dying := s.dispatcher(client, fail)
 
 		// run callback
-		if s.Offline != nil {
-			s.Offline()
+		if s.OfflineCallback != nil {
+			s.OfflineCallback()
 		}
 
 		// return goroutine if dying
@@ -342,8 +373,8 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		}
 
 		// call the handler
-		if s.Message != nil {
-			s.Message(msg)
+		if s.MessageCallback != nil {
+			s.MessageCallback(msg)
 		}
 	}
 
