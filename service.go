@@ -128,6 +128,10 @@ func NewService(queueSize ...int) *Service {
 // Start will start the service with the specified configuration. From now on
 // the service will automatically reconnect on any error until Stop is called.
 func (s *Service) Start(config *Config) {
+	if config == nil {
+		panic("No config specified")
+	}
+
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -139,7 +143,7 @@ func (s *Service) Start(config *Config) {
 	// set state
 	s.state.set(serviceStarted)
 
-	// save options
+	// save config
 	s.config = config
 
 	// initialize backoff

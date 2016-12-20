@@ -24,8 +24,8 @@ $ go get github.com/gomqtt/client
 wait := make(chan struct{})
 done := make(chan struct{})
 
-options := NewOptionsWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/service")
-options.CleanSession = false
+config := NewConfigWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/service")
+config.CleanSession = false
 
 s := NewService()
 
@@ -44,12 +44,12 @@ s.Message = func(msg *packet.Message) {
     close(wait)
 }
 
-err := ClearSession(options)
+err := ClearSession(config)
 if err != nil {
     panic(err)
 }
 
-s.Start(options)
+s.Start(config)
 
 s.Subscribe("test", 0).Wait()
 
@@ -84,9 +84,9 @@ c.Callback = func(msg *packet.Message, err error) {
     close(done)
 }
 
-options := NewOptionsWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/client")
+config := NewConfigWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/client")
 
-connectFuture, err := c.Connect(options)
+connectFuture, err := c.Connect(config)
 if err != nil {
     panic(err)
 }

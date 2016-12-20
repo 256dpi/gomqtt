@@ -314,12 +314,12 @@ func TestServiceFutureSurvival(t *testing.T) {
 
 	done, port := fakeBroker(t, broker1, broker2)
 
-	options := NewConfigWithClientID(port.URL(), "test")
-	options.CleanSession = false
+	config := NewConfigWithClientID(port.URL(), "test")
+	config.CleanSession = false
 
 	s := NewService()
 
-	s.Start(options)
+	s.Start(config)
 
 	err := s.Publish("test", []byte("test"), 1, false).Wait()
 	assert.NoError(t, err)

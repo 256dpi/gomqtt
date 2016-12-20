@@ -35,7 +35,7 @@ var ErrClientAlreadyConnecting = errors.New("client already connecting")
 var ErrClientNotConnected = errors.New("client not connected")
 
 // ErrClientMissingID is returned by Connect if no ClientID has been provided in
-// the options while requesting to resume a session.
+// the config while requesting to resume a session.
 var ErrClientMissingID = errors.New("client missing id")
 
 // ErrClientConnectionDenied is returned in the Callback if the connection has
@@ -51,7 +51,7 @@ var ErrClientMissingPong = errors.New("client missing pong")
 var ErrClientExpectedConnack = errors.New("client expected connack")
 
 // ErrFailedSubscription is returned when a submitted subscription is marked as
-// failed. Options.ValidateSubs must be set to true.
+// failed when Config.ValidateSubs must be set to true.
 var ErrFailedSubscription = errors.New("failed subscription")
 
 // A Callback is a function called by the client upon received messages or
@@ -121,13 +121,13 @@ func New() *Client {
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
 func (c *Client) Connect(config *Config) (*ConnectFuture, error) {
 	if config == nil {
-		panic("No options specified")
+		panic("No config specified")
 	}
 
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	// save options
+	// save config
 	c.config = config
 
 	// check if already connecting

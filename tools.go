@@ -7,12 +7,12 @@ import "github.com/gomqtt/packet"
 // its not clear in what state the last session was left.
 func ClearSession(config *Config) error {
 	if config == nil {
-		panic("No options specified")
+		panic("No config specified")
 	}
 
 	client := New()
 
-	// copy options
+	// copy config
 	config2 := *config
 	config2.CleanSession = true
 
@@ -38,9 +38,13 @@ func ClearSession(config *Config) error {
 // This is useful in situations where its not clear if a message has already been
 // retained.
 func ClearRetainedMessage(config *Config, topic string) error {
+	if config == nil {
+		panic("No config specified")
+	}
+
 	client := New()
 
-	// copy options
+	// copy config
 	config2 := *config
 	config2.CleanSession = true
 
@@ -69,9 +73,13 @@ func ClearRetainedMessage(config *Config, topic string) error {
 }
 
 func PublishMessage(config *Config, msg *packet.Message) error {
+	if config == nil {
+		panic("No config specified")
+	}
+
 	client := New()
 
-	// copy options
+	// copy config
 	config2 := *config
 	config2.CleanSession = true
 
@@ -100,9 +108,13 @@ func PublishMessage(config *Config, msg *packet.Message) error {
 }
 
 func ReceiveMessage(config *Config, topic string, qos byte) (*packet.Message, error) {
+	if config == nil {
+		panic("No config specified")
+	}
+
 	client := New()
 
-	// copy options
+	// copy config
 	config2 := *config
 	config2.CleanSession = true
 
