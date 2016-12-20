@@ -8,16 +8,17 @@ import (
 	"github.com/gomqtt/packet"
 )
 
-// TODO: Expose conn and stream?
-
-type carrier interface {
+// A Carrier is a generalized stream that can be used with BaseConn.
+type Carrier interface {
 	io.ReadWriteCloser
 
 	SetReadDeadline(time.Time) error
 }
 
+// A BaseConn manages the low-level plumbing between the Carrier and the packet
+// Stream.
 type BaseConn struct {
-	carrier carrier
+	carrier Carrier
 
 	stream *packet.Stream
 
@@ -30,7 +31,8 @@ type BaseConn struct {
 	readTimeout time.Duration
 }
 
-func NewBaseConn(c carrier) *BaseConn {
+// NewBaseConn creates a new BaseConn using the specified Carrier.
+func NewBaseConn(c Carrier) *BaseConn {
 	return &BaseConn{
 		carrier: c,
 		stream:  packet.NewStream(c, c),
