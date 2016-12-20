@@ -94,7 +94,16 @@ func (s *futureStore) clear() {
 	}
 
 	for _, future := range s.store {
-		future.cancel()
+		switch f := future.(type) {
+		case *ConnectFuture:
+			f.cancel()
+		case *PublishFuture:
+			f.cancel()
+		case *SubscribeFuture:
+			f.cancel()
+		case *UnsubscribeFuture:
+			f.cancel()
+		}
 	}
 
 	s.store = make(map[uint16]Future)
