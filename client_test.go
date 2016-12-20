@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClientConnectError1(t *testing.T) {
+func TestClientConnectWrongURL(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
@@ -37,7 +37,7 @@ func TestClientConnectError1(t *testing.T) {
 	assert.Nil(t, future)
 }
 
-func TestClientConnectError2(t *testing.T) {
+func TestClientConnectWrongKeepAlive(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
@@ -51,7 +51,7 @@ func TestClientConnectError2(t *testing.T) {
 	assert.Nil(t, future)
 }
 
-func TestClientConnectError3(t *testing.T) {
+func TestClientConnectErrorWrongPort(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
@@ -61,7 +61,7 @@ func TestClientConnectError3(t *testing.T) {
 	assert.Nil(t, future)
 }
 
-func TestClientConnectError4(t *testing.T) {
+func TestClientConnectErrorMissingClientID(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
