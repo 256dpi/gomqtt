@@ -14,7 +14,7 @@ import (
 // PublishResendQOS1Test tests the broker for properly retrying QOS1 publish
 // packets.
 func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
+	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id)))
 
 	username, password := config.usernamePassword()
 
@@ -79,7 +79,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 // PublishResendQOS2Test tests the broker for properly retrying QOS2 Publish
 // packets.
 func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
+	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id)))
 
 	username, password := config.usernamePassword()
 
@@ -156,7 +156,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 // PubrelResendQOS2Test tests the broker for properly retrying QOS2 Pubrel
 // packets.
 func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
+	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id)))
 
 	username, password := config.usernamePassword()
 
@@ -235,7 +235,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 // StoredSubscriptionsTest tests the broker for properly handling stored
 // subscriptions.
 func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos uint8) {
-	options := client.NewOptionsWithClientID(config.URL, id)
+	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
 	assert.NoError(t, client.ClearSession(options))
@@ -291,7 +291,7 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 // CleanStoredSubscriptionsTest tests the broker for properly clearing stored
 // subscriptions.
 func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string) {
-	options := client.NewOptionsWithClientID(config.URL, id)
+	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
 	assert.NoError(t, client.ClearSession(options))
@@ -338,7 +338,7 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 // RemoveStoredSubscriptionTest tests the broker for properly removing stored
 // subscriptions.
 func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string) {
-	options := client.NewOptionsWithClientID(config.URL, id)
+	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
 	assert.NoError(t, client.ClearSession(options))
@@ -368,7 +368,7 @@ func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string
 		assert.Fail(t, "should not be called")
 	}
 
-	connectFuture, err = nonReceiver.Connect(client.NewOptions(config.URL))
+	connectFuture, err = nonReceiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)

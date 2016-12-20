@@ -28,7 +28,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -66,7 +66,7 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -111,7 +111,7 @@ func UnsubscribeNotExistingSubscriptionTest(t *testing.T, config *Config, topic 
 		assert.Fail(t, "should not be called")
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -143,7 +143,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -190,7 +190,7 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -232,7 +232,7 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -276,7 +276,7 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -321,7 +321,7 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -364,7 +364,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -403,7 +403,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	clientWithWill := client.New()
 
-	opts := client.NewOptions(config.URL)
+	opts := client.NewConfig(config.URL)
 	opts.WillMessage = &packet.Message{
 		Topic:   topic,
 		Payload: testPayload,
@@ -429,7 +429,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 		close(wait)
 	}
 
-	connectFuture, err = clientReceivingWill.Connect(client.NewOptions(config.URL))
+	connectFuture, err = clientReceivingWill.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -456,7 +456,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 func CleanWillTest(t *testing.T, config *Config, topic string) {
 	clientWithWill := client.New()
 
-	opts := client.NewOptions(config.URL)
+	opts := client.NewConfig(config.URL)
 	opts.WillMessage = &packet.Message{
 		Topic:   topic,
 		Payload: testPayload,
@@ -475,7 +475,7 @@ func CleanWillTest(t *testing.T, config *Config, topic string) {
 		assert.Fail(t, "should not be called")
 	}
 
-	connectFuture, err = nonReceiver.Connect(client.NewOptions(config.URL))
+	connectFuture, err = nonReceiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -497,7 +497,7 @@ func CleanWillTest(t *testing.T, config *Config, topic string) {
 
 // KeepAliveTest tests the broker for proper keep alive support.
 func KeepAliveTest(t *testing.T, config *Config) {
-	opts := client.NewOptions(config.URL)
+	opts := client.NewConfig(config.URL)
 	opts.KeepAlive = "2s" // mosquitto fails with a keep alive of 1s
 
 	c := client.New()

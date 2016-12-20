@@ -16,7 +16,7 @@ func AuthenticationTest(t *testing.T, config *Config) {
 		assert.Equal(t, client.ErrClientConnectionDenied, err)
 	}
 
-	connectFuture, err := deniedClient.Connect(client.NewOptions(config.DenyURL))
+	connectFuture, err := deniedClient.Connect(client.NewConfig(config.DenyURL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture.ReturnCode)
@@ -24,7 +24,7 @@ func AuthenticationTest(t *testing.T, config *Config) {
 
 	allowedClient := client.New()
 
-	connectFuture, err = allowedClient.Connect(client.NewOptions(config.URL))
+	connectFuture, err = allowedClient.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -36,7 +36,7 @@ func AuthenticationTest(t *testing.T, config *Config) {
 
 // UniqueClientIDTest tests the broker for enforcing unique client ids.
 func UniqueClientIDTest(t *testing.T, config *Config, id string) {
-	options := client.NewOptionsWithClientID(config.URL, id)
+	options := client.NewConfigWithClientID(config.URL, id)
 
 	assert.NoError(t, client.ClearSession(options))
 
@@ -84,7 +84,7 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 		close(wait)
 	}
 
-	connectFuture, err := c.Connect(client.NewOptions(config.URL))
+	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)

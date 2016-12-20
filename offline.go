@@ -12,7 +12,7 @@ import (
 // OfflineSubscriptionTest tests the broker for properly handling offline
 // subscritions.
 func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos uint8) {
-	options := client.NewOptionsWithClientID(config.URL, id)
+	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
 	assert.NoError(t, client.ClearSession(options))
@@ -35,7 +35,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 
 	publisher := client.New()
 
-	connectFuture, err = publisher.Connect(client.NewOptions(config.URL))
+	connectFuture, err = publisher.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
@@ -78,7 +78,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 // OfflineSubscriptionRetainedTest tests the broker for properly handling
 // retained messages and offline subscriptions.
 func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic string, qos uint8) {
-	options := client.NewOptionsWithClientID(config.URL, id)
+	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
 	assert.NoError(t, client.ClearSession(options))
@@ -104,7 +104,7 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 
 	publisher := client.New()
 
-	connectFuture, err = publisher.Connect(client.NewOptions(config.URL))
+	connectFuture, err = publisher.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
