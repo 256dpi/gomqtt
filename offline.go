@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// OfflineSubscriptionTest tests the broker for properly handling offline
+// subscritions.
 func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos uint8) {
 	options := client.NewOptionsWithClientID(config.URL, id)
 	options.CleanSession = false
@@ -73,6 +75,8 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 	assert.NoError(t, err)
 }
 
+// OfflineSubscriptionRetainedTest tests the broker for properly handling
+// retained messages and offline subscriptions.
 func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic string, qos uint8) {
 	options := client.NewOptionsWithClientID(config.URL, id)
 	options.CleanSession = false

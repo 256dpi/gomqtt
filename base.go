@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// PublishSubscribeTest tests the broker for basic pub sub support.
 func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS, pubQOS uint8) {
 	c := client.New()
 	wait := make(chan struct{})
@@ -50,6 +51,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 	assert.NoError(t, err)
 }
 
+// UnsubscribeTest tests the broker for unsubscribe support.
 func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 	c := client.New()
 	wait := make(chan struct{})
@@ -100,6 +102,8 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 	assert.NoError(t, err)
 }
 
+// UnsubscribeNotExistingSubscriptionTest tests the broker for allowing
+// unsubscribing not existing topics.
 func UnsubscribeNotExistingSubscriptionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 
@@ -123,6 +127,8 @@ func UnsubscribeNotExistingSubscriptionTest(t *testing.T, config *Config, topic 
 	assert.NoError(t, err)
 }
 
+// UnsubscribeOverlappingSubscriptions tests the broker for properly unsubscribing
+// overlapping topics.
 func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
@@ -169,6 +175,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 	assert.NoError(t, err)
 }
 
+// SubscriptionUpgradeTest tests the broker for properly upgrading subscriptions,
 func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, to uint8) {
 	c := client.New()
 	wait := make(chan struct{})
@@ -209,6 +216,8 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 	assert.NoError(t, err)
 }
 
+// OverlappingSubscriptionsTest tests the broker for properly handling overlapping
+// subscriptions.
 func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string) {
 	c := client.New()
 	wait := make(chan struct{})
@@ -251,6 +260,8 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 	assert.NoError(t, err)
 }
 
+// MultipleSubscriptionTest tests the broker for properly handling multiple
+// subscriptions.
 func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
@@ -294,6 +305,8 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// DuplicateSubscriptionTest tests the broker for properly hanlding duplicate
+// subscriptions.
 func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
@@ -336,6 +349,7 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// IsolatedSubscriptionTest tests the broker for properly isolating subscriptions.
 func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
@@ -385,6 +399,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// WillTest tests the broker for supporting will messages.
 func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	clientWithWill := client.New()
 
@@ -436,6 +451,8 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	assert.NoError(t, err)
 }
 
+// CleanWillTest tests the broker for properly handling will messages on a clean
+// disconnect.
 func CleanWillTest(t *testing.T, config *Config, topic string) {
 	clientWithWill := client.New()
 
@@ -478,6 +495,7 @@ func CleanWillTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// KeepAliveTest tests the broker for proper keep alive support.
 func KeepAliveTest(t *testing.T, config *Config) {
 	opts := client.NewOptions(config.URL)
 	opts.KeepAlive = "2s" // mosquitto fails with a keep alive of 1s
@@ -510,6 +528,8 @@ func KeepAliveTest(t *testing.T, config *Config) {
 	assert.Equal(t, int32(2), atomic.LoadInt32(&respCounter))
 }
 
+// KeepAliveTimeoutTest tests the broker for proper keep alive timeout detection
+// support.
 func KeepAliveTimeoutTest(t *testing.T, config *Config) {
 	username, password := config.usernamePassword()
 

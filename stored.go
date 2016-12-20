@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// PublishResendQOS1Test tests the broker for properly retrying QOS1 publish
+// packets.
 func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
 
@@ -74,6 +76,8 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 		Test(t, conn2)
 }
 
+// PublishResendQOS2Test tests the broker for properly retrying QOS2 Publish
+// packets.
 func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
 
@@ -149,6 +153,8 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 		Test(t, conn2)
 }
 
+// PubrelResendQOS2Test tests the broker for properly retrying QOS2 Pubrel
+// packets.
 func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, client.ClearSession(client.NewOptionsWithClientID(config.URL, id)))
 
@@ -226,6 +232,8 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 		Test(t, conn2)
 }
 
+// StoredSubscriptionsTest tests the broker for properly handling stored
+// subscriptions.
 func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos uint8) {
 	options := client.NewOptionsWithClientID(config.URL, id)
 	options.CleanSession = false
@@ -280,6 +288,8 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 	assert.NoError(t, err)
 }
 
+// CleanStoredSubscriptionsTest tests the broker for properly clearing stored
+// subscriptions.
 func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string) {
 	options := client.NewOptionsWithClientID(config.URL, id)
 	options.CleanSession = false
@@ -325,6 +335,8 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 	assert.NoError(t, err)
 }
 
+// RemoveStoredSubscriptionTest tests the broker for properly removing stored
+// subscriptions.
 func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string) {
 	options := client.NewOptionsWithClientID(config.URL, id)
 	options.CleanSession = false

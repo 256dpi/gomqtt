@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// AuthenticationTest tests the broker for valid and invalid authentication.
 func AuthenticationTest(t *testing.T, config *Config) {
 	deniedClient := client.New()
 	deniedClient.Callback = func(msg *packet.Message, err error) {
@@ -33,6 +34,7 @@ func AuthenticationTest(t *testing.T, config *Config) {
 	assert.NoError(t, err)
 }
 
+// UniqueClientIDTest tests the broker for enforcing unique client ids.
 func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 	options := client.NewOptionsWithClientID(config.URL, id)
 
@@ -66,6 +68,8 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 	assert.NoError(t, err)
 }
 
+// RootSlashDistinctionTest tests the broker for supporting the root slash
+// distinction.
 func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})

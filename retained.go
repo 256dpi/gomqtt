@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// RetainedMessageTest tests the broker for properly handling retained messages.
 func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub uint8) {
 	assert.NoError(t, client.ClearRetainedMessage(client.NewOptions(config.URL), out))
 
@@ -64,6 +65,8 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 	assert.NoError(t, err)
 }
 
+// RetainedMessageReplaceTest tests the broker for replacing existing retained
+// messages.
 func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(client.NewOptions(config.URL), topic))
 
@@ -125,6 +128,7 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// ClearRetainedMessageTest tests the broker for clearing retained messages.
 func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(client.NewOptions(config.URL), topic))
 
@@ -212,6 +216,8 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// DirectRetainedMessageTest tests the broker for properly handling subscriptions
+// with retained messages.
 func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(client.NewOptions(config.URL), topic))
 
@@ -253,6 +259,8 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// DirectClearRetainedMessageTest tests the broker for properly dispatching a
+// messages intended to clear a retained message.
 func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(client.NewOptions(config.URL), topic))
 
@@ -294,6 +302,7 @@ func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) 
 	assert.NoError(t, err)
 }
 
+// RetainedWillTest tests the broker for support of retained will messages.
 func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(client.NewOptions(config.URL), topic))
 
@@ -352,6 +361,8 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// RetainedMessageResubscriptionTest tests the broker for properly dispatching
+// retained messages on resubscription.
 func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, client.ClearRetainedMessage(client.NewOptions(config.URL), topic))
 
