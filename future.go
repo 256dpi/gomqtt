@@ -88,17 +88,6 @@ func (f *abstractFuture) cancel() {
 	close(f.cancelChannel)
 }
 
-func (f *abstractFuture) bind(future Future) {
-	future.Call(func(err error) {
-		if err != nil {
-			f.cancel()
-			return
-		}
-
-		f.complete()
-	})
-}
-
 // The ConnectFuture is returned by the Client on Connect.
 type ConnectFuture struct {
 	abstractFuture
@@ -107,23 +96,20 @@ type ConnectFuture struct {
 	ReturnCode     packet.ConnackCode
 }
 
-func (f *ConnectFuture) bind(future *ConnectFuture) {
+// The PublishFuture is returned by the Client on Publish.
+type PublishFuture struct {
+	abstractFuture
+}
+
+func (f *PublishFuture) bind(future Future) {
 	future.Call(func(err error) {
 		if err != nil {
 			f.cancel()
 			return
 		}
 
-		f.SessionPresent = future.SessionPresent
-		f.ReturnCode = future.ReturnCode
-
 		f.complete()
 	})
-}
-
-// The PublishFuture is returned by the Client on Publish.
-type PublishFuture struct {
-	abstractFuture
 }
 
 // The SubscribeFuture is returned by the Client on Subscribe.
@@ -149,4 +135,15 @@ func (f *SubscribeFuture) bind(future *SubscribeFuture) {
 // UnsubscribeFuture is returned by the Client on Unsubscribe.
 type UnsubscribeFuture struct {
 	abstractFuture
+}
+
+func (f *UnsubscribeFuture) bind(future Future) {
+	future.Call(func(err error) {
+		if err != nil {
+			f.cancel()
+			return
+		}
+
+		f.complete()
+	})
 }

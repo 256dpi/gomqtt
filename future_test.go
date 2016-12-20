@@ -118,13 +118,13 @@ func TestAbstractFutureCall(t *testing.T) {
 	<-done
 }
 
-func TestAbstractFutureBind(t *testing.T) {
+func TestPublishFutureBind(t *testing.T) {
 	done := make(chan struct{})
 
-	f := &abstractFuture{}
+	f := &PublishFuture{}
 	f.initialize()
 
-	ff := &abstractFuture{}
+	ff := &PublishFuture{}
 	ff.initialize()
 
 	ff.bind(f)
@@ -146,6 +146,27 @@ func TestSubscribeFutureBind(t *testing.T) {
 	f.initialize()
 
 	ff := &SubscribeFuture{}
+	ff.initialize()
+
+	ff.bind(f)
+
+	ff.Call(func(err error) {
+		assert.Equal(t, ErrFutureCanceled, err)
+		close(done)
+	})
+
+	f.cancel()
+
+	<-done
+}
+
+func TestUnsubscribeFutureBind(t *testing.T) {
+	done := make(chan struct{})
+
+	f := &UnsubscribeFuture{}
+	f.initialize()
+
+	ff := &UnsubscribeFuture{}
 	ff.initialize()
 
 	ff.bind(f)
