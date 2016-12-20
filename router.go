@@ -34,11 +34,11 @@ func (r *Router) Handle(filter string, handler Handler) {
 }
 
 // Start will start the routers underlying service.
-func (r *Router) Start(opts *client.Options) {
-	r.srv = client.NewService(1)
-	r.srv.Online = r.online
-	r.srv.Message = r.message
-	r.srv.Offline = r.offline
+func (r *Router) Start(opts *client.Config) {
+	r.srv = client.NewService()
+	r.srv.OnlineCallback = r.online
+	r.srv.MessageCallback = r.message
+	r.srv.OfflineCallback = r.offline
 	r.srv.Start(opts)
 }
 

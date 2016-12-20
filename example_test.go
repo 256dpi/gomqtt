@@ -21,7 +21,7 @@ func Example() {
 		close(done)
 	})
 
-	r.Start(client.NewOptions("mqtt://try:try@broker.shiftr.io"))
+	r.Start(client.NewConfig("mqtt://try:try@broker.shiftr.io"))
 
 	time.Sleep(2 * time.Second)
 
