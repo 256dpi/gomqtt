@@ -56,6 +56,9 @@ var ErrFailedSubscription = errors.New("failed subscription")
 
 // A Callback is a function called by the client upon received messages or
 // internal errors.
+//
+// Note: Execution of the client is resumed after the callback returns. This
+// means that waiting on a future will actually deadlock the client.
 type Callback func(msg *packet.Message, err error)
 
 // A Logger is a function called by the client to log activity.
