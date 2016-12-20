@@ -43,7 +43,7 @@ func Example() {
 		close(wait)
 	}
 
-	cf, err := c.Connect(client.NewOptions("tcp://localhost:8080"))
+	cf, err := c.Connect(client.NewConfig("tcp://localhost:8080"))
 	if err != nil {
 		panic(err)
 	}
