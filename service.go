@@ -67,8 +67,7 @@ type Message func(msg *packet.Message)
 type Offline func()
 
 const (
-	serviceInitialized byte = iota
-	serviceStarted
+	serviceStarted byte = iota
 	serviceStopped
 )
 
@@ -114,7 +113,7 @@ func NewService(queueSize ...int) *Service {
 	}
 
 	return &Service{
-		state:             newState(serviceInitialized),
+		state:             newState(serviceStopped),
 		Session:           NewMemorySession(),
 		MinReconnectDelay: 1 * time.Second,
 		MaxReconnectDelay: 32 * time.Second,
