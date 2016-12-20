@@ -72,13 +72,14 @@ const (
 
 // A Client connects to a broker and handles the transmission of packets. It will
 // automatically send PingreqPackets to keep the connection alive. Outgoing
-// publish related packets will be stored in session and resend when the
+// publish related packets will be stored in session and resent when the
 // connection gets closed abruptly. All methods return Futures that get completed
 // when the packets get acknowledged by the broker. Once the connection is closed
 // all waiting futures get canceled.
 //
-// Note: If clean session is false and there are packets in the store, messages
-// might get completed after connecting without triggering any futures to complete.
+// Note: If clean session is set to false and there are packets in the session,
+// messages might get completed after connecting without triggering any futures
+// to complete.
 type Client struct {
 	config *Config
 	conn   transport.Conn
@@ -277,7 +278,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 		return nil, c.cleanup(err, false, false)
 	}
 
-	// complete and remove qos 1 future
+	// complete and remove qos 0 future
 	if msg.QOS == 0 {
 		future.complete()
 		c.futureStore.del(publish.PacketID)
@@ -369,6 +370,10 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 }
 
 // Disconnect will send a DisconnectPacket and close the connection.
+//
+// If a timeout is specified, the client will wait the specified amount of time
+// for all queued futures to complete or cancel. If no timeout is specified it
+// will not wait at all.
 func (c *Client) Disconnect(timeout ...time.Duration) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -425,7 +430,10 @@ func (c *Client) processor() error {
 			return c.die(err, false)
 		}
 
-		c.log(fmt.Sprintf("Received: %s", pkt.String()))
+		// log received message
+		if c.Logger != nil {
+			c.Logger(fmt.Sprintf("Received: %s", pkt.String()))
+		}
 
 		if first {
 			// get connack
@@ -437,6 +445,9 @@ func (c *Client) processor() error {
 			// process connack
 			err = c.processConnack(connack)
 			first = false
+
+			// move on
+			continue
 		}
 
 		// call handlers for packet types and ignore other packets
@@ -501,12 +512,14 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 
 	// resend stored packets
 	for _, pkt := range packets {
+		// check for publish packets
 		publish, ok := pkt.(*packet.PublishPacket)
 		if ok {
 			// set the dup flag on a publish packet
 			publish.Dup = true
 		}
 
+		// resend packet
 		err = c.send(pkt, true)
 		if err != nil {
 			return c.die(err, false)
@@ -576,6 +589,7 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 // handle an incoming PublishPacket
 func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	if publish.Message.QOS == 1 {
+		// prepare puback packet
 		puback := packet.NewPubackPacket()
 		puback.PacketID = publish.PacketID
 
@@ -593,10 +607,11 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 			return c.die(err, true)
 		}
 
+		// prepare pubrec packet
 		pubrec := packet.NewPubrecPacket()
 		pubrec.PacketID = publish.PacketID
 
-		// signal qos 2 publish
+		// acknowledge qos 2 publish
 		err = c.send(pubrec, true)
 		if err != nil {
 			return c.die(err, false)
@@ -605,7 +620,9 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 	if publish.Message.QOS <= 1 {
 		// call callback
-		c.forward(publish)
+		if c.Callback != nil {
+			c.Callback(&publish.Message, nil)
+		}
 	}
 
 	return nil
@@ -636,7 +653,7 @@ func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 
 // handle an incoming PubrecPacket
 func (c *Client) processPubrec(packetID uint16) error {
-	// allocate packet
+	// prepare pubrel packet
 	pubrel := packet.NewPubrelPacket()
 	pubrel.PacketID = packetID
 
@@ -646,7 +663,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 		return c.die(err, true)
 	}
 
-	// send packet and
+	// send packet
 	err = c.send(pubrel, true)
 	if err != nil {
 		return c.die(err, false)
@@ -669,6 +686,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 		return nil // ignore a wrongly sent PubrelPacket
 	}
 
+	// prepare pubcomp packet
 	pubcomp := packet.NewPubcompPacket()
 	pubcomp.PacketID = publish.PacketID
 
@@ -685,7 +703,9 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// call callback
-	c.forward(publish)
+	if c.Callback != nil {
+		c.Callback(&publish.Message, nil)
+	}
 
 	return nil
 }
@@ -695,21 +715,29 @@ func (c *Client) processPubrel(packetID uint16) error {
 // manages the sending of ping packets to keep the connection alive
 func (c *Client) pinger() error {
 	for {
+		// get current window
 		window := c.tracker.window()
 
+		// check if ping is due
 		if window < 0 {
+			// check if a pong has already been sent
 			if c.tracker.pending() {
 				return c.die(ErrClientMissingPong, true)
 			}
 
+			// send pingreq packet
 			err := c.send(packet.NewPingreqPacket(), true)
 			if err != nil {
 				return c.die(err, false)
 			}
 
+			// save ping attempt
 			c.tracker.ping()
 		} else {
-			c.log(fmt.Sprintf("Delay KeepAlive by %s", window.String()))
+			// log keep alive delay
+			if c.Logger != nil {
+				c.Logger(fmt.Sprintf("Delay KeepAlive by %s", window.String()))
+			}
 		}
 
 		select {
@@ -725,6 +753,7 @@ func (c *Client) pinger() error {
 
 // sends packet and updates lastSend
 func (c *Client) send(pkt packet.Packet, buffered bool) error {
+	// reset keep alive tracker
 	c.tracker.reset()
 
 	// prepare error
@@ -742,23 +771,12 @@ func (c *Client) send(pkt packet.Packet, buffered bool) error {
 		return err
 	}
 
-	c.log(fmt.Sprintf("Sent: %s", pkt.String()))
+	// log sent packet
+	if c.Logger != nil {
+		c.Logger(fmt.Sprintf("Sent: %s", pkt.String()))
+	}
 
 	return nil
-}
-
-// calls the callback with a new message
-func (c *Client) forward(packet *packet.PublishPacket) {
-	if c.Callback != nil {
-		c.Callback(&packet.Message, nil)
-	}
-}
-
-// log a message
-func (c *Client) log(msg string) {
-	if c.Logger != nil {
-		c.Logger(msg)
-	}
 }
 
 // will try to cleanup as many resources as possible
