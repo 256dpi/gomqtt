@@ -30,6 +30,13 @@ type BaseConn struct {
 	readTimeout time.Duration
 }
 
+func NewBaseConn(c carrier) *BaseConn {
+	return &BaseConn{
+		carrier: c,
+		stream:  packet.NewStream(c, c),
+	}
+}
+
 // Send will write the packet to the underlying connection. It will return
 // an Error if there was an error while encoding or writing to the
 // underlying connection.

@@ -20,7 +20,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/gomqtt/packet"
 	"github.com/gorilla/websocket"
 )
 
@@ -30,12 +29,12 @@ var ErrNotBinary = errors.New("received web socket message is not binary")
 
 var closeMessage = websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
 
-type webSocketStream struct {
+type wsStream struct {
 	conn   *websocket.Conn
 	reader io.Reader
 }
 
-func (s *webSocketStream) Read(p []byte) (int, error) {
+func (s *wsStream) Read(p []byte) (int, error) {
 	total := 0
 	buf := p
 
@@ -79,7 +78,7 @@ func (s *webSocketStream) Read(p []byte) (int, error) {
 	}
 }
 
-func (s *webSocketStream) Write(p []byte) (n int, err error) {
+func (s *wsStream) Write(p []byte) (n int, err error) {
 	// create writer if missing
 	writer, err := s.conn.NextWriter(websocket.BinaryMessage)
 	if err != nil {
@@ -101,7 +100,7 @@ func (s *webSocketStream) Write(p []byte) (n int, err error) {
 	return n, nil
 }
 
-func (s *webSocketStream) Close() error {
+func (s *wsStream) Close() error {
 	// write close message
 	err := s.conn.WriteMessage(websocket.CloseMessage, closeMessage)
 	if err != nil {
@@ -111,7 +110,7 @@ func (s *webSocketStream) Close() error {
 	return s.conn.Close()
 }
 
-func (s *webSocketStream) SetReadDeadline(t time.Time) error {
+func (s *wsStream) SetReadDeadline(t time.Time) error {
 	return s.conn.SetReadDeadline(t)
 }
 
@@ -126,20 +125,11 @@ type WebSocketConn struct {
 
 // NewWebSocketConn returns a new WebSocketConn.
 func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
-	s := &webSocketStream{
-		conn: conn,
-	}
-
 	return &WebSocketConn{
-		BaseConn: BaseConn{
-			carrier: s,
-			stream:  packet.NewStream(s, s),
-		},
-		conn: conn,
+		BaseConn: *NewBaseConn(&wsStream{conn: conn}),
+		conn:     conn,
 	}
 }
-
-// TODO: Move LocalAddr and RemoteAddr to Stream?
 
 // LocalAddr returns the local network address.
 func (c *WebSocketConn) LocalAddr() net.Addr {

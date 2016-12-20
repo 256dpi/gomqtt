@@ -14,11 +14,7 @@
 
 package transport
 
-import (
-	"net"
-
-	"github.com/gomqtt/packet"
-)
+import "net"
 
 // A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
@@ -30,15 +26,10 @@ type NetConn struct {
 // NewNetConn returns a new NetConn.
 func NewNetConn(conn net.Conn) *NetConn {
 	return &NetConn{
-		BaseConn: BaseConn{
-			carrier: conn,
-			stream:  packet.NewStream(conn, conn),
-		},
-		conn: conn,
+		BaseConn: *NewBaseConn(conn),
+		conn:     conn,
 	}
 }
-
-// TODO: Move LocalAddr and RemoteAddr to Stream?
 
 // LocalAddr returns the local network address.
 func (c *NetConn) LocalAddr() net.Addr {
