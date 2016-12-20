@@ -159,6 +159,23 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 	<-done
 }
 
+func TestWebSocketNotBinaryMessage(t *testing.T) {
+	pkt := packet.NewPublishPacket()
+	pkt.Message.Topic = "hello"
+	pkt.Message.Payload = []byte("world")
+
+	conn2, done := connectionPair("ws", func(conn1 Conn) {
+		err := conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.TextMessage, []byte("hello"))
+		assert.NoError(t, err)
+	})
+
+	in, err := conn2.Receive()
+	assert.Error(t, err)
+	assert.Nil(t, in)
+
+	<-done
+}
+
 func BenchmarkWebSocketConn(b *testing.B) {
 	pkt := packet.NewPublishPacket()
 	pkt.Message.Topic = "foo/bar/baz"
@@ -205,23 +222,6 @@ func BenchmarkWebSocketConnBuffered(b *testing.B) {
 	}
 
 	b.SetBytes(int64(pkt.Len() * 2))
-
-	<-done
-}
-
-func TestWebSocketNotBinaryMessage(t *testing.T) {
-	pkt := packet.NewPublishPacket()
-	pkt.Message.Topic = "hello"
-	pkt.Message.Payload = []byte("world")
-
-	conn2, done := connectionPair("ws", func(conn1 Conn) {
-		err := conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.TextMessage, []byte("hello"))
-		assert.NoError(t, err)
-	})
-
-	in, err := conn2.Receive()
-	assert.Error(t, err)
-	assert.Nil(t, in)
 
 	<-done
 }
