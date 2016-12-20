@@ -107,8 +107,8 @@ type Service struct {
 	OfflineCallback OfflineCallback
 
 	// The logger that is used to log write low level information like packets
-	// that have ben successfully sent and received and details about the
-	// automatic keep alive handler.
+	// that have ben successfully sent and received, details about the
+	// automatic keep alive handler, reconnection and occurring errors.
 	Logger Logger
 
 	// The minimum delay between reconnects.
@@ -360,11 +360,13 @@ func (s *Service) supervisor() error {
 
 // will try to connect one client to the broker
 func (s *Service) connect(fail chan struct{}) (*Client, bool) {
+	// prepare new client
 	client := New()
 	client.Session = s.Session
 	client.Logger = s.Logger
 	client.futureStore = s.futureStore
 
+	// set callback
 	client.Callback = func(msg *packet.Message, err error) {
 		if err != nil {
 			s.err("Client", err)
@@ -378,19 +380,23 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		}
 	}
 
+	// attempt to connect
 	future, err := client.Connect(s.config)
 	if err != nil {
 		s.err("Connect", err)
 		return nil, false
 	}
 
+	// wait for connack
 	err = future.Wait(s.ConnectTimeout)
 
+	// check if future has been canceled
 	if err == ErrFutureCanceled {
 		s.err("Connect", err)
 		return nil, false
 	}
 
+	// check if future has timed out
 	if err == ErrFutureTimeout {
 		client.Close()
 
@@ -398,6 +404,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		return nil, false
 	}
 
+	// check return code
 	if future.ReturnCode != packet.ConnectionAccepted {
 		client.Close()
 
