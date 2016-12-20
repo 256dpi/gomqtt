@@ -367,7 +367,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 	client.Callback = func(msg *packet.Message, err error) {
 		if err != nil {
-			s.log(fmt.Sprintf("Error: %v", err))
+			s.err("Client", err)
 			close(fail)
 			return
 		}
@@ -380,28 +380,28 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 	future, err := client.Connect(s.config)
 	if err != nil {
-		s.log(fmt.Sprintf("Connect Error: %v", err))
+		s.err("Connect", err)
 		return nil, false
 	}
 
 	err = future.Wait(s.ConnectTimeout)
 
 	if err == ErrFutureCanceled {
-		s.log(fmt.Sprintf("Connack: %v", err))
+		s.err("Connect", err)
 		return nil, false
 	}
 
 	if err == ErrFutureTimeout {
 		client.Close()
 
-		s.log(fmt.Sprintf("Connack: %v", err))
+		s.err("Connect", err)
 		return nil, false
 	}
 
 	if future.ReturnCode != packet.ConnectionAccepted {
 		client.Close()
 
-		s.log(fmt.Sprintf("Connack: %s", future.ReturnCode.Error()))
+		s.err("Connect", future.ReturnCode)
 		return nil, false
 	}
 
@@ -418,7 +418,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			if cmd.subscribe != nil {
 				future, err := client.SubscribeMultiple(cmd.subscribe.subscriptions)
 				if err != nil {
-					s.log(fmt.Sprintf("Subscribe Error: %v", err))
+					s.err("Subscribe", err)
 
 					// cancel future
 					cmd.subscribe.future.cancel()
@@ -433,7 +433,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			if cmd.unsubscribe != nil {
 				future, err := client.UnsubscribeMultiple(cmd.unsubscribe.topics)
 				if err != nil {
-					s.log(fmt.Sprintf("Unsubscribe Error: %v", err))
+					s.err("Unsubscribe", err)
 
 					// cancel future
 					cmd.unsubscribe.future.cancel()
@@ -449,7 +449,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 				future, err := client.Publish(cmd.publish.topic, cmd.publish.payload,
 					cmd.publish.qos, cmd.publish.retain)
 				if err != nil {
-					s.log(fmt.Sprintf("Publish Error: %v", err))
+					s.err("Publish", err)
 					return false
 				}
 
@@ -459,7 +459,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			// disconnect client on Stop
 			err := client.Disconnect(s.DisconnectTimeout)
 			if err != nil {
-				s.log(fmt.Sprintf("Disconnect Error: %v", err))
+				s.err("Disconnect", err)
 			}
 
 			return true
@@ -469,7 +469,14 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 	}
 }
 
-// log a message
+func (s *Service) err(sys string, err error) {
+	s.log(fmt.Sprintf("%s Error: %s", sys, err.Error()))
+
+	if s.ErrorCallback != nil {
+		s.ErrorCallback(err)
+	}
+}
+
 func (s *Service) log(str string) {
 	if s.Logger != nil {
 		s.Logger(str)
