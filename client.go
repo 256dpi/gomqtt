@@ -473,13 +473,15 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 		return nil // ignore wrongly sent ConnackPacket
 	}
 
+	// set state
+	c.state.set(clientConnacked)
+
 	// fill future
 	c.connectFuture.SessionPresent = connack.SessionPresent
 	c.connectFuture.ReturnCode = connack.ReturnCode
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
-		c.state.set(clientConnacked)
 		err := c.die(ErrClientConnectionDenied, true)
 		c.connectFuture.complete()
 		return err
