@@ -13,11 +13,11 @@ func ClearSession(opts *Options) error {
 	client := New()
 
 	// copy options
-	opts = opts.Copy()
-	opts.CleanSession = true
+	opts2 := *opts
+	opts2.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(opts)
+	future, err := client.Connect(&opts2)
 	if err != nil {
 		return err
 	}
@@ -41,11 +41,11 @@ func ClearRetainedMessage(opts *Options, topic string) error {
 	client := New()
 
 	// copy options
-	opts = opts.Copy()
-	opts.CleanSession = true
+	opts2 := *opts
+	opts2.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(opts)
+	future, err := client.Connect(&opts2)
 	if err != nil {
 		return err
 	}
@@ -72,11 +72,11 @@ func PublishMessage(opts *Options, msg *packet.Message) error {
 	client := New()
 
 	// copy options
-	opts = opts.Copy()
-	opts.CleanSession = true
+	opts2 := *opts
+	opts2.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(opts)
+	future, err := client.Connect(&opts2)
 	if err != nil {
 		return err
 	}
@@ -103,11 +103,11 @@ func ReceiveMessage(opts *Options, topic string, qos byte) (*packet.Message, err
 	client := New()
 
 	// copy options
-	opts = opts.Copy()
-	opts.CleanSession = true
+	opts2 := *opts
+	opts2.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(opts)
+	future, err := client.Connect(&opts2)
 	if err != nil {
 		return nil, err
 	}

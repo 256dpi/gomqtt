@@ -26,11 +26,3 @@ func TestOptions(t *testing.T) {
 	assert.True(t, opts.CleanSession)
 	assert.Equal(t, "30s", opts.KeepAlive)
 }
-
-func TestOptionsCopy(t *testing.T) {
-	opts := NewOptions("foo")
-	cpy := opts.Copy()
-
-	assert.False(t, opts == cpy)
-	assert.Equal(t, opts, cpy)
-}
