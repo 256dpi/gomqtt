@@ -67,3 +67,34 @@ func ClearRetainedMessage(opts *Options, topic string) error {
 	// disconnect
 	return client.Disconnect()
 }
+
+func PublishMessage(opts *Options, msg *packet.Message) error {
+	client := New()
+
+	// copy options
+	opts = opts.Copy()
+	opts.CleanSession = true
+
+	// connect to broker
+	future, err := client.Connect(opts)
+	if err != nil {
+		return err
+	}
+
+	// wait for connack
+	future.Wait()
+
+	// check if connection has been accepted
+	if future.ReturnCode != packet.ConnectionAccepted {
+		return ErrClientConnectionDenied
+	}
+
+	// clear retained message
+	_, err = client.PublishMessage(msg)
+	if err != nil {
+		return err
+	}
+
+	// disconnect
+	return client.Disconnect()
+}

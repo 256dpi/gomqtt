@@ -46,3 +46,26 @@ func TestClearRetainedMessage(t *testing.T) {
 
 	<-done
 }
+
+func TestPublishMessage(t *testing.T) {
+	publish := packet.NewPublishPacket()
+	publish.Message = packet.Message{
+		Topic: "test",
+		Payload: []byte("foo"),
+		Retain: true,
+	}
+
+	broker := tools.NewFlow().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	err := PublishMessage(NewOptions(port.URL()), &publish.Message)
+	assert.NoError(t, err)
+
+	<-done
+}
