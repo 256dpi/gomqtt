@@ -23,14 +23,16 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// ErrNotBinary may be returned by WebSocket connection when a message is
+// received that is not binary.
+var ErrNotBinary = errors.New("received web socket message is not binary")
+
+var closeMessage = websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
+
 type webSocketStream struct {
 	conn   *websocket.Conn
 	reader io.Reader
 }
-
-// ErrNotBinary may be returned by WebSocket connection when a message is
-// received that is not binary.
-var ErrNotBinary = errors.New("received web socket message is not binary")
 
 func (s *webSocketStream) Read(p []byte) (int, error) {
 	total := 0
@@ -112,11 +114,9 @@ func (s *webSocketStream) SetReadDeadline(t time.Time) error {
 	return s.conn.SetReadDeadline(t)
 }
 
-var closeMessage = websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
-
-// The WebSocketConn wraps a gorilla WebSocket.Conn. The implementation supports
-// packets that are chunked over several WebSocket messages and packets that are
-// coalesced to one WebSocket message.
+// The WebSocketConn wraps a websocket.Conn. The implementation supports packets
+// that are chunked over several WebSocket messages and packets that are coalesced
+// to one WebSocket message.
 type WebSocketConn struct {
 	BaseConn
 
