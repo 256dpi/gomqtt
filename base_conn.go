@@ -2,7 +2,6 @@ package transport
 
 import (
 	"io"
-	"net"
 	"sync"
 	"time"
 
@@ -21,7 +20,6 @@ type BaseConn struct {
 	carrier carrier
 
 	stream *packet.Stream
-	conn   net.Conn
 
 	flushTimer *time.Timer
 	flushError error
@@ -182,14 +180,4 @@ func (c *BaseConn) resetTimeout() {
 	} else {
 		c.carrier.SetReadDeadline(time.Time{})
 	}
-}
-
-// LocalAddr returns the local network address.
-func (c *BaseConn) LocalAddr() net.Addr {
-	return c.conn.LocalAddr()
-}
-
-// RemoteAddr returns the remote network address.
-func (c *BaseConn) RemoteAddr() net.Addr {
-	return c.conn.RemoteAddr()
 }

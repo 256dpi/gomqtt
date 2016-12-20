@@ -17,6 +17,7 @@ package transport
 import (
 	"errors"
 	"io"
+	"net"
 	"time"
 
 	"github.com/gomqtt/packet"
@@ -120,8 +121,7 @@ func (s *webSocketStream) SetReadDeadline(t time.Time) error {
 type WebSocketConn struct {
 	BaseConn
 
-	// The underlying websocket.Conn.
-	Conn *websocket.Conn
+	conn *websocket.Conn
 }
 
 // NewWebSocketConn returns a new WebSocketConn.
@@ -134,8 +134,24 @@ func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 		BaseConn: BaseConn{
 			carrier: s,
 			stream:  packet.NewStream(s, s),
-			conn:    conn.UnderlyingConn(),
 		},
-		Conn: conn,
+		conn: conn,
 	}
+}
+
+// TODO: Move LocalAddr and RemoteAddr to Stream?
+
+// LocalAddr returns the local network address.
+func (c *WebSocketConn) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+
+// RemoteAddr returns the remote network address.
+func (c *WebSocketConn) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+
+// UnderlyingConn returns the underlying websocket.Conn.
+func (c *WebSocketConn) UnderlyingConn() *websocket.Conn {
+	return c.conn
 }
