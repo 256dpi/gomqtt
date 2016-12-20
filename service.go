@@ -81,7 +81,7 @@ const (
 // Note: If clean session is false and there are packets in the store, messages
 // might get completed after starting without triggering any futures to complete.
 type Service struct {
-	options *Options
+	config *Config
 
 	state   *state
 	backoff *backoff.Backoff
@@ -127,7 +127,7 @@ func NewService(queueSize ...int) *Service {
 
 // Start will start the service with the specified configuration. From now on
 // the service will automatically reconnect on any error until Stop is called.
-func (s *Service) Start(opts *Options) {
+func (s *Service) Start(config *Config) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -140,7 +140,7 @@ func (s *Service) Start(opts *Options) {
 	s.state.set(serviceStarted)
 
 	// save options
-	s.options = opts
+	s.config = config
 
 	// initialize backoff
 	s.backoff = &backoff.Backoff{
@@ -344,7 +344,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		}
 	}
 
-	future, err := client.Connect(s.options)
+	future, err := client.Connect(s.config)
 	if err != nil {
 		s.log(fmt.Sprintf("Connect Error: %v", err))
 		return nil, false

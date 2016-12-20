@@ -20,7 +20,7 @@ func TestClearSession(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	err := ClearSession(NewOptionsWithClientID(port.URL(), "test"))
+	err := ClearSession(NewConfigWithClientID(port.URL(), "test"))
 	assert.NoError(t, err)
 
 	<-done
@@ -41,7 +41,7 @@ func TestClearRetainedMessage(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	err := ClearRetainedMessage(NewOptions(port.URL()), "test")
+	err := ClearRetainedMessage(NewConfig(port.URL()), "test")
 	assert.NoError(t, err)
 
 	<-done
@@ -64,7 +64,7 @@ func TestPublishMessage(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	err := PublishMessage(NewOptions(port.URL()), &publish.Message)
+	err := PublishMessage(NewConfig(port.URL()), &publish.Message)
 	assert.NoError(t, err)
 
 	<-done
@@ -99,7 +99,7 @@ func TestReceiveMessage(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	msg, err := ReceiveMessage(NewOptions(port.URL()), "test", 0)
+	msg, err := ReceiveMessage(NewConfig(port.URL()), "test", 0)
 	assert.NoError(t, err)
 	assert.Equal(t, publish.Message.String(), msg.String())
 

@@ -19,10 +19,10 @@ import (
 	"testing"
 )
 
-func TestOptions(t *testing.T) {
-	opts := NewOptions("foo")
-	assert.Equal(t, "foo", opts.BrokerURL)
-	assert.Equal(t, "", opts.ClientID)
-	assert.True(t, opts.CleanSession)
-	assert.Equal(t, "30s", opts.KeepAlive)
+func TestConfig(t *testing.T) {
+	config := NewConfig("foo")
+	assert.Equal(t, "foo", config.BrokerURL)
+	assert.Equal(t, "", config.ClientID)
+	assert.True(t, config.CleanSession)
+	assert.Equal(t, "30s", config.KeepAlive)
 }

@@ -19,8 +19,8 @@ import (
 	"github.com/gomqtt/transport"
 )
 
-// Options are passed to a Client on Connect.
-type Options struct {
+// A Config holds information about establishing a connection to a broker.
+type Config struct {
 	Dialer       *transport.Dialer
 	BrokerURL    string
 	ClientID     string
@@ -30,9 +30,9 @@ type Options struct {
 	ValidateSubs bool
 }
 
-// NewOptions will initialize and return a new Options struct.
-func NewOptions(url string) *Options {
-	return &Options{
+// NewConfig creates a new Config using the specified URL.
+func NewConfig(url string) *Config {
+	return &Config{
 		BrokerURL:    url,
 		CleanSession: true,
 		KeepAlive:    "30s",
@@ -40,9 +40,9 @@ func NewOptions(url string) *Options {
 	}
 }
 
-// NewOptionsWithClientID will initialize and return a new Options struct.
-func NewOptionsWithClientID(url string, id string) *Options {
-	opts := NewOptions(url)
-	opts.ClientID = id
-	return opts
+// NewConfigWithClientID creates a new Config using the specified URL and client ID.
+func NewConfigWithClientID(url, id string) *Config {
+	config := NewConfig(url)
+	config.ClientID = id
+	return config
 }

@@ -71,7 +71,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 		close(message)
 	}
 
-	s.Start(NewOptions(port.URL()))
+	s.Start(NewConfig(port.URL()))
 
 	<-online
 
@@ -136,7 +136,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 		close(message)
 	}
 
-	s.Start(NewOptions(port.URL()))
+	s.Start(NewConfig(port.URL()))
 
 	<-message
 
@@ -169,8 +169,8 @@ func TestStartStopVariations(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(NewOptions(port.URL()))
-	s.Start(NewOptions(port.URL())) // <- does nothing
+	s.Start(NewConfig(port.URL()))
+	s.Start(NewConfig(port.URL())) // <- does nothing
 
 	<-online
 
@@ -213,7 +213,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(NewOptions(port.URL()))
+	s.Start(NewConfig(port.URL()))
 
 	<-online
 
@@ -262,7 +262,7 @@ func TestServiceReconnect(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(NewOptions(port.URL()))
+	s.Start(NewConfig(port.URL()))
 
 	<-online
 
@@ -314,7 +314,7 @@ func TestServiceFutureSurvival(t *testing.T) {
 
 	done, port := fakeBroker(t, broker1, broker2)
 
-	options := NewOptionsWithClientID(port.URL(), "test")
+	options := NewConfigWithClientID(port.URL(), "test")
 	options.CleanSession = false
 
 	s := NewService()
@@ -343,7 +343,7 @@ func BenchmarkServicePublish(b *testing.B) {
 		close(done)
 	}
 
-	c.Start(NewOptions("mqtt://0.0.0.0"))
+	c.Start(NewConfig("mqtt://0.0.0.0"))
 
 	<-ready
 

@@ -32,7 +32,7 @@ func TestClientConnectError1(t *testing.T) {
 	c.Callback = errorCallback(t)
 
 	// wrong url
-	future, err := c.Connect(NewOptions("foo"))
+	future, err := c.Connect(NewConfig("foo"))
 	assert.Error(t, err)
 	assert.Nil(t, future)
 }
@@ -42,7 +42,7 @@ func TestClientConnectError2(t *testing.T) {
 	c.Callback = errorCallback(t)
 
 	// wrong keep alive
-	future, err := c.Connect(&Options{
+	future, err := c.Connect(&Config{
 		BrokerURL:    "mqtt://localhost:1234",
 		KeepAlive:    "foo",
 		CleanSession: true,
@@ -56,7 +56,7 @@ func TestClientConnectError3(t *testing.T) {
 	c.Callback = errorCallback(t)
 
 	// wrong port
-	future, err := c.Connect(NewOptions("mqtt://localhost:1234"))
+	future, err := c.Connect(NewConfig("mqtt://localhost:1234"))
 	assert.Error(t, err)
 	assert.Nil(t, future)
 }
@@ -66,7 +66,7 @@ func TestClientConnectError4(t *testing.T) {
 	c.Callback = errorCallback(t)
 
 	// missing clientID when clean=false
-	future, err := c.Connect(NewOptions("mqtt://localhost:1234"))
+	future, err := c.Connect(NewConfig("mqtt://localhost:1234"))
 	assert.Error(t, err)
 	assert.Nil(t, future)
 }
@@ -83,7 +83,7 @@ func TestClientConnect(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -107,10 +107,10 @@ func TestClientConnectCustomDialer(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	opts := NewOptions(port.URL())
-	opts.Dialer = transport.NewDialer()
+	config := NewConfig(port.URL())
+	config.Dialer = transport.NewDialer()
 
-	future, err := c.Connect(opts)
+	future, err := c.Connect(config)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -134,13 +134,13 @@ func TestClientConnectAfterConnect(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
-	future, err = c.Connect(NewOptions(port.URL()))
+	future, err = c.Connect(NewConfig(port.URL()))
 	assert.Equal(t, ErrClientAlreadyConnecting, err)
 	assert.Nil(t, future)
 
@@ -166,7 +166,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(NewOptions(fmt.Sprintf("tcp://test:test@localhost:%s/", port.Port())))
+	future, err := c.Connect(NewConfig(fmt.Sprintf("tcp://test:test@localhost:%s/", port.Port())))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -221,7 +221,7 @@ func TestClientConnectionDenied(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -248,7 +248,7 @@ func TestClientExpectedConnack(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.Equal(t, ErrFutureCanceled, future.Wait())
 
@@ -289,10 +289,10 @@ func TestClientKeepAlive(t *testing.T) {
 		}
 	}
 
-	opts := NewOptions(port.URL())
-	opts.KeepAlive = "100ms"
+	config := NewConfig(port.URL())
+	config.KeepAlive = "100ms"
 
-	future, err := c.Connect(opts)
+	future, err := c.Connect(config)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -332,10 +332,10 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 		close(wait)
 	}
 
-	opts := NewOptions(port.URL())
-	opts.KeepAlive = "5ms"
+	config := NewConfig(port.URL())
+	config.KeepAlive = "5ms"
 
-	future, err := c.Connect(opts)
+	future, err := c.Connect(config)
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -382,7 +382,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -457,7 +457,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -542,7 +542,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -594,7 +594,7 @@ func TestClientUnsubscribe(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -633,11 +633,11 @@ func TestClientHardDisconnect(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	opts := NewOptions(port.URL())
-	opts.ClientID = "test"
-	opts.CleanSession = false
+	config := NewConfig(port.URL())
+	config.ClientID = "test"
+	config.CleanSession = false
 
-	connectFuture, err := c.Connect(opts)
+	connectFuture, err := c.Connect(config)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -687,7 +687,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	connectFuture, err := c.Connect(NewOptions(port.URL()))
+	connectFuture, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -720,7 +720,7 @@ func TestClientClose(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	connectFuture, err := c.Connect(NewOptions(port.URL()))
+	connectFuture, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -787,11 +787,11 @@ func TestClientSessionResumption(t *testing.T) {
 	c.Session.PacketID()
 	c.Callback = errorCallback(t)
 
-	opts := NewOptions(port.URL())
-	opts.ClientID = "test"
-	opts.CleanSession = false
+	config := NewConfig(port.URL())
+	config.ClientID = "test"
+	config.CleanSession = false
 
-	connectFuture, err := c.Connect(opts)
+	connectFuture, err := c.Connect(config)
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -826,7 +826,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -852,7 +852,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewOptions(port.URL()))
+	future, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.Equal(t, ErrFutureCanceled, future.Wait())
 
@@ -881,7 +881,7 @@ func TestClientFutureCancellation(t *testing.T) {
 		assert.Error(t, err)
 	}
 
-	connectFuture, err := c.Connect(NewOptions(port.URL()))
+	connectFuture, err := c.Connect(NewConfig(port.URL()))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -931,7 +931,7 @@ func TestClientLogger(t *testing.T) {
 		atomic.AddUint32(&counter, 1)
 	}
 
-	future, _ := c.Connect(NewOptions(port.URL()))
+	future, _ := c.Connect(NewConfig(port.URL()))
 	future.Wait()
 
 	subscribeFuture, _ := c.Subscribe("test", 0)
@@ -952,7 +952,7 @@ func TestClientLogger(t *testing.T) {
 func BenchmarkClientPublish(b *testing.B) {
 	c := New()
 
-	connectFuture, err := c.Connect(NewOptions("mqtt://0.0.0.0"))
+	connectFuture, err := c.Connect(NewConfig("mqtt://0.0.0.0"))
 	if err != nil {
 		panic(err)
 	}

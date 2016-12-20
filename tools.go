@@ -5,19 +5,19 @@ import "github.com/gomqtt/packet"
 // ClearSession will connect/disconnect once with a clean session request to force
 // the broker to reset the clients session. This is useful in situations where
 // its not clear in what state the last session was left.
-func ClearSession(opts *Options) error {
-	if opts == nil {
+func ClearSession(config *Config) error {
+	if config == nil {
 		panic("No options specified")
 	}
 
 	client := New()
 
 	// copy options
-	opts2 := *opts
-	opts2.CleanSession = true
+	config2 := *config
+	config2.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(&opts2)
+	future, err := client.Connect(&config2)
 	if err != nil {
 		return err
 	}
@@ -37,15 +37,15 @@ func ClearSession(opts *Options) error {
 // ClearRetainedMessage will connect/disconnect and send an empty retained message.
 // This is useful in situations where its not clear if a message has already been
 // retained.
-func ClearRetainedMessage(opts *Options, topic string) error {
+func ClearRetainedMessage(config *Config, topic string) error {
 	client := New()
 
 	// copy options
-	opts2 := *opts
-	opts2.CleanSession = true
+	config2 := *config
+	config2.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(&opts2)
+	future, err := client.Connect(&config2)
 	if err != nil {
 		return err
 	}
@@ -68,15 +68,15 @@ func ClearRetainedMessage(opts *Options, topic string) error {
 	return client.Disconnect()
 }
 
-func PublishMessage(opts *Options, msg *packet.Message) error {
+func PublishMessage(config *Config, msg *packet.Message) error {
 	client := New()
 
 	// copy options
-	opts2 := *opts
-	opts2.CleanSession = true
+	config2 := *config
+	config2.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(&opts2)
+	future, err := client.Connect(&config2)
 	if err != nil {
 		return err
 	}
@@ -99,15 +99,15 @@ func PublishMessage(opts *Options, msg *packet.Message) error {
 	return client.Disconnect()
 }
 
-func ReceiveMessage(opts *Options, topic string, qos byte) (*packet.Message, error) {
+func ReceiveMessage(config *Config, topic string, qos byte) (*packet.Message, error) {
 	client := New()
 
 	// copy options
-	opts2 := *opts
-	opts2.CleanSession = true
+	config2 := *config
+	config2.CleanSession = true
 
 	// connect to broker
-	future, err := client.Connect(&opts2)
+	future, err := client.Connect(&config2)
 	if err != nil {
 		return nil, err
 	}

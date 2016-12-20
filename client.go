@@ -80,8 +80,8 @@ const (
 // Note: If clean session is false and there are packets in the store, messages
 // might get completed after connecting without triggering any futures to complete.
 type Client struct {
-	opts *Options
-	conn transport.Conn
+	config *Config
+	conn   transport.Conn
 
 	// The session used by the client to store unacknowledged packets.
 	Session Session
@@ -119,8 +119,8 @@ func New() *Client {
 // Connect opens the connection to the broker and sends a ConnectPacket. It will
 // return a ConnectFuture that gets completed once a ConnackPacket has been
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
-func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
-	if opts == nil {
+func (c *Client) Connect(config *Config) (*ConnectFuture, error) {
+	if config == nil {
 		panic("No options specified")
 	}
 
@@ -128,7 +128,7 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 	defer c.mutex.Unlock()
 
 	// save options
-	c.opts = opts
+	c.config = config
 
 	// check if already connecting
 	if c.state.get() >= clientConnecting {
@@ -136,18 +136,18 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 	}
 
 	// parse url
-	urlParts, err := url.ParseRequestURI(opts.BrokerURL)
+	urlParts, err := url.ParseRequestURI(config.BrokerURL)
 	if err != nil {
 		return nil, err
 	}
 
 	// check client id
-	if !opts.CleanSession && opts.ClientID == "" {
+	if !config.CleanSession && config.ClientID == "" {
 		return nil, ErrClientMissingID
 	}
 
 	// parse keep alive
-	keepAlive, err := time.ParseDuration(opts.KeepAlive)
+	keepAlive, err := time.ParseDuration(config.KeepAlive)
 	if err != nil {
 		return nil, err
 	}
@@ -156,13 +156,13 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 	c.tracker = newTracker(keepAlive)
 
 	// dial broker (with custom dialer if present)
-	if opts.Dialer != nil {
-		c.conn, err = opts.Dialer.Dial(opts.BrokerURL)
+	if config.Dialer != nil {
+		c.conn, err = config.Dialer.Dial(config.BrokerURL)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		c.conn, err = transport.Dial(opts.BrokerURL)
+		c.conn, err = transport.Dial(config.BrokerURL)
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +175,7 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 	// connection and cleanup on any subsequent error
 
 	// save clean
-	c.clean = opts.CleanSession
+	c.clean = config.CleanSession
 
 	// reset store
 	if c.clean {
@@ -187,9 +187,9 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 
 	// allocate packet
 	connect := packet.NewConnectPacket()
-	connect.ClientID = opts.ClientID
+	connect.ClientID = config.ClientID
 	connect.KeepAlive = uint16(keepAlive.Seconds())
-	connect.CleanSession = opts.CleanSession
+	connect.CleanSession = config.CleanSession
 
 	// check for credentials
 	if urlParts.User != nil {
@@ -198,7 +198,7 @@ func (c *Client) Connect(opts *Options) (*ConnectFuture, error) {
 	}
 
 	// set will
-	connect.Will = opts.WillMessage
+	connect.Will = config.WillMessage
 
 	// create new ConnackFuture
 	c.connectFuture = &ConnectFuture{}
@@ -532,7 +532,7 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	c.futureStore.del(suback.PacketID)
 
 	// validate subscriptions if requested
-	if c.opts.ValidateSubs {
+	if c.config.ValidateSubs {
 		for _, code := range suback.ReturnCodes {
 			if code == packet.QOSFailure {
 				subscribeFuture.cancel()
