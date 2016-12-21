@@ -19,10 +19,17 @@ type Router struct {
 }
 
 // New will create and return a new Router.
-func New() *Router {
-	return &Router{
+func New(queueSize ...int) *Router {
+	r := &Router{
 		tree: NewTree(),
+		srv: client.NewService(queueSize...),
 	}
+
+	r.srv.OnlineCallback = r.onlineCallback
+	r.srv.MessageCallback = r.messageCallback
+	r.srv.OfflineCallback = r.offlineCallback
+
+	return r
 }
 
 // Handle will register the passed handler for the given filter. A matching
@@ -35,40 +42,31 @@ func (r *Router) Handle(filter string, handler Handler) {
 
 // Start will start the routers underlying service.
 func (r *Router) Start(opts *client.Config) {
-	r.srv = client.NewService()
-	r.srv.OnlineCallback = r.online
-	r.srv.MessageCallback = r.message
-	r.srv.OfflineCallback = r.offline
 	r.srv.Start(opts)
 }
 
 // Publish will use the underlying service to publish the message.
 func (r *Router) Publish(topic string, payload []byte, qos byte, retain bool) {
-	if r.srv == nil {
-		panic("router not started")
-	}
-
 	r.srv.Publish(topic, payload, qos, retain)
 }
 
 // Stop will stop the routers underlying service.
 func (r *Router) Stop() {
 	r.srv.Stop(true)
-	r.srv = nil
 }
 
-func (r *Router) online(_ bool) {
+func (r *Router) onlineCallback(_ bool) {
 	r.ctrl = new(tomb.Tomb)
 	r.ch = make(chan *packet.Message)
 
 	r.ctrl.Go(r.router)
 }
 
-func (r *Router) message(msg *packet.Message) {
+func (r *Router) messageCallback(msg *packet.Message) {
 	r.ch <- msg
 }
 
-func (r *Router) offline() {
+func (r *Router) offlineCallback() {
 	close(r.ch)
 	r.ctrl.Kill(nil)
 	r.ctrl.Wait()
