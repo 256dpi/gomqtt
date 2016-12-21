@@ -31,11 +31,8 @@ type command struct {
 }
 
 type publish struct {
-	topic   string
-	payload []byte
-	qos     uint8
-	retain  bool
-	future  *PublishFuture
+	msg    *packet.Message
+	future *PublishFuture
 }
 
 type subscribe struct {
@@ -197,6 +194,20 @@ func (s *Service) Start(config *Config) {
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) *PublishFuture {
+	msg := &packet.Message{
+		Topic:   topic,
+		Payload: payload,
+		QOS:     qos,
+		Retain:  retain,
+	}
+
+	return s.PublishMessage(msg)
+}
+
+// PublishMessage will send a PublishPacket containing the passed message. It will
+// return a PublishFuture that gets completed once the quality of service flow
+// has been completed.
+func (s *Service) PublishMessage(msg *packet.Message) *PublishFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -207,11 +218,8 @@ func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) 
 	// queue publish
 	s.commandQueue <- &command{
 		publish: &publish{
-			topic:   topic,
-			payload: payload,
-			qos:     qos,
-			retain:  retain,
-			future:  future,
+			msg:    msg,
+			future: future,
 		},
 	}
 
@@ -453,8 +461,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 
 			// handle publish command
 			if cmd.publish != nil {
-				future, err := client.Publish(cmd.publish.topic, cmd.publish.payload,
-					cmd.publish.qos, cmd.publish.retain)
+				future, err := client.PublishMessage(cmd.publish.msg)
 				if err != nil {
 					s.err("Publish", err)
 					return false
