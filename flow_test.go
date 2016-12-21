@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gomqtt/packet"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFlow(t *testing.T) {
@@ -60,4 +61,12 @@ func TestFlow(t *testing.T) {
 
 	go server.Test(t, pipe)
 	client.Test(t, pipe)
+}
+
+func TestAlreadyClosedError(t *testing.T) {
+	pipe := NewPipe()
+	pipe.Close()
+
+	err := pipe.Send(nil)
+	assert.Error(t, err)
 }

@@ -15,6 +15,7 @@
 package tools
 
 import (
+	"errors"
 	"io"
 	"testing"
 	"time"
@@ -50,7 +51,7 @@ func (conn *Pipe) Send(pkt packet.Packet) error {
 	case conn.pipe <- pkt:
 		return nil
 	case <-conn.close:
-		return io.EOF
+		return errors.New("already closed")
 	}
 }
 
