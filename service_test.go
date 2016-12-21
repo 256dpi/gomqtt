@@ -71,7 +71,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 		close(message)
 	}
 
-	s.Start(NewConfig(port.URL()))
+	s.Start(NewConfig("tcp://localhost:" + port))
 
 	<-online
 
@@ -136,7 +136,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 		close(message)
 	}
 
-	s.Start(NewConfig(port.URL()))
+	s.Start(NewConfig("tcp://localhost:" + port))
 
 	<-message
 
@@ -169,8 +169,8 @@ func TestStartStopVariations(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(NewConfig(port.URL()))
-	s.Start(NewConfig(port.URL())) // <- does nothing
+	s.Start(NewConfig("tcp://localhost:" + port))
+	s.Start(NewConfig("tcp://localhost:" + port)) // <- does nothing
 
 	<-online
 
@@ -213,7 +213,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(NewConfig(port.URL()))
+	s.Start(NewConfig("tcp://localhost:" + port))
 
 	<-online
 
@@ -262,7 +262,7 @@ func TestServiceReconnect(t *testing.T) {
 		close(offline)
 	}
 
-	s.Start(NewConfig(port.URL()))
+	s.Start(NewConfig("tcp://localhost:" + port))
 
 	<-online
 
@@ -314,7 +314,7 @@ func TestServiceFutureSurvival(t *testing.T) {
 
 	done, port := fakeBroker(t, broker1, broker2)
 
-	config := NewConfigWithClientID(port.URL(), "test")
+	config := NewConfigWithClientID("tcp://localhost:"+port, "test")
 	config.CleanSession = false
 
 	s := NewService()

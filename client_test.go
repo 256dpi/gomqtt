@@ -83,7 +83,7 @@ func TestClientConnect(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -107,7 +107,7 @@ func TestClientConnectCustomDialer(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	config := NewConfig(port.URL())
+	config := NewConfig("tcp://localhost:" + port)
 	config.Dialer = transport.NewDialer()
 
 	future, err := c.Connect(config)
@@ -134,13 +134,13 @@ func TestClientConnectAfterConnect(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
-	future, err = c.Connect(NewConfig(port.URL()))
+	future, err = c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.Equal(t, ErrClientAlreadyConnecting, err)
 	assert.Nil(t, future)
 
@@ -166,7 +166,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(NewConfig(fmt.Sprintf("tcp://test:test@localhost:%s/", port.Port())))
+	future, err := c.Connect(NewConfig(fmt.Sprintf("tcp://test:test@localhost:%s/", port)))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -221,7 +221,7 @@ func TestClientConnectionDenied(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -248,7 +248,7 @@ func TestClientExpectedConnack(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.Equal(t, ErrFutureCanceled, future.Wait())
 
@@ -289,7 +289,7 @@ func TestClientKeepAlive(t *testing.T) {
 		}
 	}
 
-	config := NewConfig(port.URL())
+	config := NewConfig("tcp://localhost:" + port)
 	config.KeepAlive = "100ms"
 
 	future, err := c.Connect(config)
@@ -332,7 +332,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 		close(wait)
 	}
 
-	config := NewConfig(port.URL())
+	config := NewConfig("tcp://localhost:" + port)
 	config.KeepAlive = "5ms"
 
 	future, err := c.Connect(config)
@@ -382,7 +382,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -457,7 +457,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -542,7 +542,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -594,7 +594,7 @@ func TestClientUnsubscribe(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -633,7 +633,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	config := NewConfig(port.URL())
+	config := NewConfig("tcp://localhost:" + port)
 	config.ClientID = "test"
 	config.CleanSession = false
 
@@ -687,7 +687,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	connectFuture, err := c.Connect(NewConfig(port.URL()))
+	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -720,7 +720,7 @@ func TestClientClose(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
-	connectFuture, err := c.Connect(NewConfig(port.URL()))
+	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -787,7 +787,7 @@ func TestClientSessionResumption(t *testing.T) {
 	c.Session.PacketID()
 	c.Callback = errorCallback(t)
 
-	config := NewConfig(port.URL())
+	config := NewConfig("tcp://localhost:" + port)
 	config.ClientID = "test"
 	config.CleanSession = false
 
@@ -826,7 +826,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, future.Wait())
 	assert.False(t, future.SessionPresent)
@@ -852,7 +852,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 		close(wait)
 	}
 
-	future, err := c.Connect(NewConfig(port.URL()))
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.Equal(t, ErrFutureCanceled, future.Wait())
 
@@ -881,7 +881,7 @@ func TestClientFutureCancellation(t *testing.T) {
 		assert.Error(t, err)
 	}
 
-	connectFuture, err := c.Connect(NewConfig(port.URL()))
+	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
 	assert.NoError(t, connectFuture.Wait())
 	assert.False(t, connectFuture.SessionPresent)
@@ -931,7 +931,7 @@ func TestClientLogger(t *testing.T) {
 		atomic.AddUint32(&counter, 1)
 	}
 
-	future, _ := c.Connect(NewConfig(port.URL()))
+	future, _ := c.Connect(NewConfig("tcp://localhost:" + port))
 	future.Wait()
 
 	subscribeFuture, _ := c.Subscribe("test", 0)

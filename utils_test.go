@@ -34,7 +34,7 @@ func errorCallback(t *testing.T) func(*packet.Message, error) {
 	}
 }
 
-func fakeBroker(t *testing.T, testFlows ...*tools.Flow) (chan struct{}, *tools.Port) {
+func fakeBroker(t *testing.T, testFlows ...*tools.Flow) (chan struct{}, string) {
 	done := make(chan struct{})
 
 	server, err := transport.Launch("tcp://localhost:0")
