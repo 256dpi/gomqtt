@@ -15,11 +15,11 @@
 package broker
 
 import (
+	"net"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/gomqtt/tools"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,10 +27,8 @@ import (
 // Run runs the passed broker on a random available port and returns a channel
 // that can be closed to shutdown the broker. This method is intended to be used
 // in testing scenarios.
-func Run(t *testing.T, engine *Engine, protocol string) (*tools.Port, chan struct{}, chan struct{}) {
-	port := tools.NewPort()
-
-	server, err := transport.Launch(port.URL(protocol))
+func Run(t *testing.T, engine *Engine, protocol string) (string, chan struct{}, chan struct{}) {
+	server, err := transport.Launch(protocol + "://localhost:0")
 	assert.NoError(t, err)
 
 	quit := make(chan struct{})
@@ -56,6 +54,8 @@ func Run(t *testing.T, engine *Engine, protocol string) (*tools.Port, chan struc
 
 		close(done)
 	}()
+
+	_, port, _ := net.SplitHostPort(server.Addr().String())
 
 	return port, quit, done
 }

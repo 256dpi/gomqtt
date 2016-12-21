@@ -15,7 +15,6 @@
 package broker
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -31,8 +30,8 @@ func TestBrokerWithMemoryBackend(t *testing.T) {
 	port, quit, done := Run(t, NewEngineWithBackend(backend), "tcp")
 
 	config := spec.AllFeatures()
-	config.URL = fmt.Sprintf("tcp://allow:allow@localhost:%s", port.Port())
-	config.DenyURL = fmt.Sprintf("tcp://deny:deny@localhost:%s", port.Port())
+	config.URL = "tcp://allow:allow@localhost:" + port
+	config.DenyURL = "tcp://deny:deny@localhost:" + port
 	config.ProcessWait = 5 * time.Millisecond
 	config.NoMessageWait = 50 * time.Millisecond
 	config.MessageRetainWait = 50 * time.Millisecond

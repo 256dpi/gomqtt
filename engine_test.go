@@ -28,7 +28,7 @@ func TestConnectTimeout(t *testing.T) {
 
 	port, quit, done := Run(t, engine, "tcp")
 
-	conn, err := transport.Dial(port.URL())
+	conn, err := transport.Dial("tcp://localhost:" + port)
 	assert.NoError(t, err)
 
 	pkt, err := conn.Receive()
