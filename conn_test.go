@@ -267,6 +267,40 @@ func abstractConnBufferedSendTest(t *testing.T, protocol string) {
 	<-done
 }
 
+func abstractConnSendAfterBufferedSendTest(t *testing.T, protocol string) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
+		pkt, err := conn1.Receive()
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
+		assert.NoError(t, err)
+
+		err = conn1.BufferedSend(packet.NewConnackPacket())
+		assert.NoError(t, err)
+
+		err = conn1.Send(packet.NewConnackPacket())
+		assert.NoError(t, err)
+
+		pkt, err = conn1.Receive()
+		assert.Nil(t, pkt)
+		assert.Equal(t, io.EOF, err)
+	})
+
+	err := conn2.BufferedSend(packet.NewConnectPacket())
+	assert.NoError(t, err)
+
+	pkt, err := conn2.Receive()
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
+	assert.NoError(t, err)
+
+	pkt, err = conn2.Receive()
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
+	assert.NoError(t, err)
+
+	err = conn2.Close()
+	assert.NoError(t, err)
+
+	<-done
+}
+
 func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		err := conn1.Close()

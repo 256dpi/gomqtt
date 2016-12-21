@@ -71,6 +71,10 @@ func TestWebSocketConnBufferedSend(t *testing.T) {
 	abstractConnBufferedSendTest(t, "ws")
 }
 
+func TestWebSocketConnSendAfterBufferedSend(t *testing.T) {
+	abstractConnSendAfterBufferedSendTest(t, "ws")
+}
+
 func TestWebSocketConnBufferedSendAfterClose(t *testing.T) {
 	abstractConnBufferedSendAfterCloseTest(t, "ws")
 }
