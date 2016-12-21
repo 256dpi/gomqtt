@@ -69,11 +69,6 @@ func (s *wsStream) Read(p []byte) (int, error) {
 			continue
 		}
 
-		// handle other errors
-		if err != nil {
-			return total, err
-		}
-
 		return total, err
 	}
 }
