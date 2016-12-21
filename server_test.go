@@ -20,15 +20,12 @@ import (
 	"testing"
 
 	"github.com/gomqtt/packet"
-	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func abstractServerTest(t *testing.T, protocol string) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL(protocol))
+	server, err := testLauncher.Launch(protocol + "://localhost:0")
 	require.NoError(t, err)
 
 	go func() {
@@ -47,7 +44,7 @@ func abstractServerTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	}()
 
-	conn2, err := testDialer.Dial(port.URL(protocol))
+	conn2, err := testDialer.Dial(getURL(server, protocol))
 	require.NoError(t, err)
 
 	err = conn2.Send(packet.NewConnectPacket())
@@ -65,17 +62,13 @@ func abstractServerTest(t *testing.T, protocol string) {
 }
 
 func abstractServerLaunchErrorTest(t *testing.T, protocol string) {
-	port := tools.Port(1) // <- no permissions
-
-	server, err := testLauncher.Launch(port.URL(protocol))
+	server, err := testLauncher.Launch(protocol + "://localhost:1")
 	assert.Error(t, err)
 	assert.Nil(t, server)
 }
 
 func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL(protocol))
+	server, err := testLauncher.Launch(protocol + "://localhost:0")
 	require.NoError(t, err)
 
 	err = server.Close()
@@ -87,9 +80,7 @@ func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
 }
 
 func abstractServerCloseAfterCloseTest(t *testing.T, protocol string) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL(protocol))
+	server, err := testLauncher.Launch(protocol + "://localhost:0")
 	require.NoError(t, err)
 
 	err = server.Close()
@@ -100,12 +91,10 @@ func abstractServerCloseAfterCloseTest(t *testing.T, protocol string) {
 }
 
 func abstractServerAddrTest(t *testing.T, protocol string) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL(protocol))
+	server, err := testLauncher.Launch(protocol + "://localhost:0")
 	require.NoError(t, err)
 
-	assert.Equal(t, fmt.Sprintf("127.0.0.1:%s", port.Port()), server.Addr().String())
+	assert.Equal(t, fmt.Sprintf("127.0.0.1:%s", getPort(server)), server.Addr().String())
 
 	err = server.Close()
 	assert.NoError(t, err)

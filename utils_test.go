@@ -16,8 +16,8 @@ package transport
 
 import (
 	"crypto/tls"
-
-	"github.com/gomqtt/tools"
+	"fmt"
+	"net"
 )
 
 var serverTLSConfig *tls.Config
@@ -45,9 +45,8 @@ func init() {
 // returns a client-ish and server-ish pair of connections
 func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 	done := make(chan struct{})
-	port := tools.NewPort()
 
-	server, err := testLauncher.Launch(port.URL(protocol))
+	server, err := testLauncher.Launch(protocol + "://localhost:0")
 	if err != nil {
 		panic(err)
 	}
@@ -64,10 +63,19 @@ func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 		close(done)
 	}()
 
-	conn, err := testDialer.Dial(port.URL(protocol))
+	conn, err := testDialer.Dial(getURL(server, protocol))
 	if err != nil {
 		panic(err)
 	}
 
 	return conn, done
+}
+
+func getPort(s Server) string {
+	_, port, _ := net.SplitHostPort(s.Addr().String())
+	return port
+}
+
+func getURL(s Server, protocol string) string {
+	return fmt.Sprintf("%s://%s", protocol, s.Addr().String())
 }

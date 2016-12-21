@@ -20,7 +20,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,12 +53,10 @@ func TestWebSocketServerAddr(t *testing.T) {
 }
 
 func TestWebSocketServerInvalidUpgrade(t *testing.T) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL("ws"))
+	server, err := testLauncher.Launch("ws://localhost:0")
 	require.NoError(t, err)
 
-	resp, err := http.PostForm(port.URL("http"), url.Values{"foo": {"bar"}})
+	resp, err := http.PostForm(getURL(server, "http"), url.Values{"foo": {"bar"}})
 	assert.Equal(t, "405 Method Not Allowed", resp.Status)
 	assert.NoError(t, err)
 
@@ -68,9 +65,7 @@ func TestWebSocketServerInvalidUpgrade(t *testing.T) {
 }
 
 func TestWebSocketServerAcceptAfterError(t *testing.T) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL("ws"))
+	server, err := testLauncher.Launch("ws://localhost:0")
 	require.NoError(t, err)
 
 	webSocketServer := server.(*WebSocketServer)
@@ -84,12 +79,10 @@ func TestWebSocketServerAcceptAfterError(t *testing.T) {
 }
 
 func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL("ws"))
+	server, err := testLauncher.Launch("ws://localhost:0")
 	require.NoError(t, err)
 
-	conn, err := testDialer.Dial(port.URL("ws"))
+	conn, err := testDialer.Dial(getURL(server, "ws"))
 	require.NoError(t, err)
 
 	err = server.Close()
@@ -101,9 +94,7 @@ func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
 }
 
 func TestWebSocketFallback(t *testing.T) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL("ws"))
+	server, err := testLauncher.Launch("ws://localhost:0")
 	require.NoError(t, err)
 
 	ws := server.(*WebSocketServer)
@@ -115,7 +106,7 @@ func TestWebSocketFallback(t *testing.T) {
 
 	ws.SetFallback(mux)
 
-	resp, err := http.Get(port.URL("http") + "/test")
+	resp, err := http.Get(getURL(server, "http") + "/test")
 	assert.NoError(t, err)
 	assert.Equal(t, "200 OK", resp.Status)
 	bytes, err := ioutil.ReadAll(resp.Body)
@@ -127,9 +118,7 @@ func TestWebSocketFallback(t *testing.T) {
 }
 
 func TestWebSocketOriginChecker(t *testing.T) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL("ws"))
+	server, err := testLauncher.Launch("ws://localhost:0")
 	require.NoError(t, err)
 
 	ws := server.(*WebSocketServer)
@@ -137,7 +126,7 @@ func TestWebSocketOriginChecker(t *testing.T) {
 		return false
 	})
 
-	conn, err := testDialer.Dial(port.URL("ws"))
+	conn, err := testDialer.Dial(getURL(server, "ws"))
 	require.Error(t, err)
 	require.Nil(t, conn)
 }

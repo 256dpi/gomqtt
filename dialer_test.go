@@ -18,15 +18,12 @@ import (
 	"io"
 	"testing"
 
-	"github.com/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGlobalDial(t *testing.T) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL("tcp"))
+	server, err := testLauncher.Launch("tcp://localhost:0")
 	require.NoError(t, err)
 
 	wait := make(chan struct{})
@@ -42,7 +39,7 @@ func TestGlobalDial(t *testing.T) {
 		close(wait)
 	}()
 
-	conn, err := Dial(port.URL("tcp"))
+	conn, err := Dial(getURL(server, "tcp"))
 	require.NoError(t, err)
 
 	err = conn.Close()
@@ -91,9 +88,7 @@ func TestDialerWSSError(t *testing.T) {
 }
 
 func abstractDefaultPortTest(t *testing.T, protocol string) {
-	port := tools.NewPort()
-
-	server, err := testLauncher.Launch(port.URL(protocol))
+	server, err := testLauncher.Launch(protocol + "://localhost:0")
 	require.NoError(t, err)
 
 	go func() {
@@ -107,10 +102,10 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 
 	dialer := NewDialer()
 	dialer.TLSConfig = clientTLSConfig
-	dialer.DefaultTCPPort = port.Port()
-	dialer.DefaultTLSPort = port.Port()
-	dialer.DefaultWSPort = port.Port()
-	dialer.DefaultWSSPort = port.Port()
+	dialer.DefaultTCPPort = getPort(server)
+	dialer.DefaultTLSPort = getPort(server)
+	dialer.DefaultWSPort = getPort(server)
+	dialer.DefaultWSSPort = getPort(server)
 
 	conn, err := dialer.Dial(protocol + "://localhost")
 	require.NoError(t, err)
