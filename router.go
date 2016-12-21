@@ -6,13 +6,13 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// A Request holds the incoming routed message and some meta data.
+// A Request holds the incoming routed message and the parsed params.
 type Request struct {
 	Message *packet.Message
 	Params  map[string]string
 }
 
-// A ResponseWriter is used to convey messages to the broker.
+// A ResponseWriter is used to publish messages to the broker.
 type ResponseWriter interface {
 	Publish(*packet.Message)
 }
@@ -30,6 +30,8 @@ type Router struct {
 }
 
 // New will create and return a new Router.
+//
+// See: client.NewService.
 func New(queueSize ...int) *Router {
 	r := &Router{
 		tree: NewTree(),
@@ -56,7 +58,7 @@ func (r *Router) Start(opts *client.Config) {
 	r.srv.Start(opts)
 }
 
-// Publish will use the underlying service to publish the message.
+// Publish will use the underlying service to publish the specified message.
 func (r *Router) Publish(msg *packet.Message) {
 	r.srv.PublishMessage(msg)
 }
@@ -99,6 +101,7 @@ func (r *Router) router() error {
 		case msg := <-r.ch:
 			value, params := r.tree.Route(msg.Topic)
 			if value != nil {
+				// TODO: Intercept published messages and manage the futures?
 				value.(Handler)(r, &Request{
 					Message: msg,
 					Params:  params,
