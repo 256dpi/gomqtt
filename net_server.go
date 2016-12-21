@@ -69,3 +69,8 @@ func (s *NetServer) Close() error {
 
 	return nil
 }
+
+// Addr returns the server's network address.
+func (s *NetServer) Addr() net.Addr {
+	return s.listener.Addr()
+}

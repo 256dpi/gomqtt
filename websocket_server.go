@@ -171,3 +171,8 @@ func (s *WebSocketServer) Close() error {
 
 	return nil
 }
+
+// Addr returns the server's network address.
+func (s *WebSocketServer) Addr() net.Addr {
+	return s.listener.Addr()
+}

@@ -46,7 +46,11 @@ func TestWebSocketServerAcceptAfterClose(t *testing.T) {
 }
 
 func TestWebSocketServerCloseAfterClose(t *testing.T) {
-	abstractServerCloseAfterClose(t, "ws")
+	abstractServerCloseAfterCloseTest(t, "ws")
+}
+
+func TestWebSocketServerAddr(t *testing.T) {
+	abstractServerAddrTest(t, "ws")
 }
 
 func TestWebSocketServerInvalidUpgrade(t *testing.T) {

@@ -15,6 +15,7 @@
 package transport
 
 import (
+	"fmt"
 	"io"
 	"testing"
 
@@ -85,7 +86,7 @@ func abstractServerAcceptAfterCloseTest(t *testing.T, protocol string) {
 	assert.Error(t, err)
 }
 
-func abstractServerCloseAfterClose(t *testing.T, protocol string) {
+func abstractServerCloseAfterCloseTest(t *testing.T, protocol string) {
 	port := tools.NewPort()
 
 	server, err := testLauncher.Launch(port.URL(protocol))
@@ -96,4 +97,16 @@ func abstractServerCloseAfterClose(t *testing.T, protocol string) {
 
 	err = server.Close()
 	assert.Error(t, err)
+}
+
+func abstractServerAddrTest(t *testing.T, protocol string) {
+	port := tools.NewPort()
+
+	server, err := testLauncher.Launch(port.URL(protocol))
+	require.NoError(t, err)
+
+	assert.Equal(t, fmt.Sprintf("127.0.0.1:%s", port.Port()), server.Addr().String())
+
+	err = server.Close()
+	assert.NoError(t, err)
 }

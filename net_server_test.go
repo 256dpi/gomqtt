@@ -39,5 +39,9 @@ func TestNetServerAcceptAfterClose(t *testing.T) {
 }
 
 func TestNetServerCloseAfterClose(t *testing.T) {
-	abstractServerCloseAfterClose(t, "tcp")
+	abstractServerCloseAfterCloseTest(t, "tcp")
+}
+
+func TestNetServerAddr(t *testing.T) {
+	abstractServerAddrTest(t, "tcp")
 }
