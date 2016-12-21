@@ -15,6 +15,7 @@
 package client
 
 import (
+	"net"
 	"testing"
 
 	"github.com/gomqtt/packet"
@@ -34,10 +35,9 @@ func errorCallback(t *testing.T) func(*packet.Message, error) {
 }
 
 func fakeBroker(t *testing.T, testFlows ...*tools.Flow) (chan struct{}, *tools.Port) {
-	port := tools.NewPort()
 	done := make(chan struct{})
 
-	server, err := transport.Launch(port.URL())
+	server, err := transport.Launch("tcp://localhost:0")
 	assert.NoError(t, err)
 
 	go func() {
@@ -53,6 +53,8 @@ func fakeBroker(t *testing.T, testFlows ...*tools.Flow) (chan struct{}, *tools.P
 
 		close(done)
 	}()
+
+	_, port, _ := net.SplitHostPort(server.Addr().String())
 
 	return done, port
 }
