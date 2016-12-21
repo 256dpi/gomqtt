@@ -8,8 +8,6 @@
 
 **This go package implements a basic [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) application router component.**
 
-_This package is WIP and may introduce breaking changes._
-
 ## Installation
 
 Get it using go's standard toolset:
@@ -25,26 +23,34 @@ r := New()
 
 done := make(chan struct{})
 
-r.Handle("device/+id/#sensor", func(msg *packet.Message, params map[string]string) {
-    fmt.Println(params["id"])
-    fmt.Println(params["sensor"])
-    fmt.Println(string(msg.Payload))
+r.Handle("device/+id/#sensor", Logger(func(w ResponseWriter, r *Request) {
+    w.Publish(&packet.Message{
+        Topic:   "finish/data",
+        Payload: []byte("7"),
+    })
+}))
 
+r.Handle("finish/data", Logger(func(w ResponseWriter, r *Request) {
     close(done)
-})
+}))
 
-r.Start(client.NewConfig("mqtt://try:try@broker.shiftr.io"))
+config := client.NewConfig("mqtt://try:try@broker.shiftr.io")
+
+r.Start(config)
 
 time.Sleep(2 * time.Second)
 
-r.Publish("device/foo/bar/baz", []byte("42"), 0, false)
+r.Publish(&packet.Message{
+    Topic:   "device/foo/bar/baz",
+    Payload: []byte("42"),
+})
 
 <-done
 
 r.Stop()
 
 // Output:
-// foo
-// bar/baz
-// 42
+// New Request: &{<Message Topic="device/foo/bar/baz" QOS=0 Retain=false Payload=[52 50]> map[id:foo sensor:bar/baz]}
+// Publishing: <Message Topic="finish/data" QOS=0 Retain=false Payload=[55]>
+// New Request: &{<Message Topic="finish/data" QOS=0 Retain=false Payload=[55]> map[]}
 ```
