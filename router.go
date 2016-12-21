@@ -9,11 +9,16 @@ import (
 // A Request holds the incoming routed message and some meta data.
 type Request struct {
 	Message *packet.Message
-	Params map[string]string
+	Params  map[string]string
+}
+
+// A ResponseWriter is used to convey messages to the broker.
+type ResponseWriter interface {
+	Publish(topic string, payload []byte, qos byte, retain bool)
 }
 
 // A Handler receives incoming requests.
-type Handler func(*Request)
+type Handler func(ResponseWriter, *Request)
 
 // A Router wraps a service and provides routing of incoming messages.
 type Router struct {
@@ -28,7 +33,7 @@ type Router struct {
 func New(queueSize ...int) *Router {
 	r := &Router{
 		tree: NewTree(),
-		srv: client.NewService(queueSize...),
+		srv:  client.NewService(queueSize...),
 	}
 
 	r.srv.OnlineCallback = r.onlineCallback
@@ -73,32 +78,34 @@ func (r *Router) messageCallback(msg *packet.Message) {
 }
 
 func (r *Router) offlineCallback() {
-	close(r.ch)
 	r.ctrl.Kill(nil)
 	r.ctrl.Wait()
+
+	close(r.ch)
 	r.ctrl = nil
 }
 
 func (r *Router) router() error {
 	for _, route := range r.routes {
+		// TODO: Use timeout.
 		err := r.srv.Subscribe(route.RealFilter, 0).Wait()
 		if err != nil {
 			return err
 		}
 	}
 
-	select {
-	case msg := <-r.ch:
-		value, params := r.tree.Route(msg.Topic)
-		if value != nil {
-			value.(Handler)(&Request{
-				Message: msg,
-				Params: params,
-			})
+	for {
+		select {
+		case msg := <-r.ch:
+			value, params := r.tree.Route(msg.Topic)
+			if value != nil {
+				value.(Handler)(r, &Request{
+					Message: msg,
+					Params:  params,
+				})
+			}
+		case <-r.ctrl.Dying():
+			return tomb.ErrDying
 		}
-	case <-r.ctrl.Dying():
-		return tomb.ErrDying
 	}
-
-	return nil
 }
