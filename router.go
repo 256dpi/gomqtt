@@ -6,8 +6,14 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// A Handler receives incoming messages.
-type Handler func(msg *packet.Message, params map[string]string)
+// A Request holds the incoming routed message and some meta data.
+type Request struct {
+	Message *packet.Message
+	Params map[string]string
+}
+
+// A Handler receives incoming requests.
+type Handler func(*Request)
 
 // A Router wraps a service and provides routing of incoming messages.
 type Router struct {
@@ -85,7 +91,10 @@ func (r *Router) router() error {
 	case msg := <-r.ch:
 		value, params := r.tree.Route(msg.Topic)
 		if value != nil {
-			value.(Handler)(msg, params)
+			value.(Handler)(&Request{
+				Message: msg,
+				Params: params,
+			})
 		}
 	case <-r.ctrl.Dying():
 		return tomb.ErrDying

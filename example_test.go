@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gomqtt/packet"
 	"github.com/gomqtt/client"
 )
 
@@ -13,10 +12,10 @@ func Example() {
 
 	done := make(chan struct{})
 
-	r.Handle("device/+id/#sensor", func(msg *packet.Message, params map[string]string) {
-		fmt.Println(params["id"])
-		fmt.Println(params["sensor"])
-		fmt.Println(string(msg.Payload))
+	r.Handle("device/+id/#sensor", func(r *Request) {
+		fmt.Println(r.Params["id"])
+		fmt.Println(r.Params["sensor"])
+		fmt.Println(string(r.Message.Payload))
 
 		close(done)
 	})
