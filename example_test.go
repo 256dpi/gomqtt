@@ -1,10 +1,10 @@
 package router
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gomqtt/client"
+	"github.com/gomqtt/packet"
 )
 
 func Example() {
@@ -12,19 +12,16 @@ func Example() {
 
 	done := make(chan struct{})
 
-	r.Handle("device/+id/#sensor", func(w ResponseWriter, r *Request) {
-		fmt.Println(r.Params["id"])
-		fmt.Println(r.Params["sensor"])
-		fmt.Println(string(r.Message.Payload))
+	r.Handle("device/+id/#sensor", Logger(func(w ResponseWriter, r *Request) {
+		w.Publish(&packet.Message{
+			Topic:   "finish/data",
+			Payload: []byte("7"),
+		})
+	}))
 
-		w.Publish("finish/data", []byte("7"), 0, false)
-	})
-
-	r.Handle("finish/data", func(w ResponseWriter, r *Request) {
-		fmt.Println(string(r.Message.Payload))
-
+	r.Handle("finish/data", Logger(func(w ResponseWriter, r *Request) {
 		close(done)
-	})
+	}))
 
 	config := client.NewConfig("mqtt://try:try@broker.shiftr.io")
 
@@ -32,15 +29,17 @@ func Example() {
 
 	time.Sleep(2 * time.Second)
 
-	r.Publish("device/foo/bar/baz", []byte("42"), 0, false)
+	r.Publish(&packet.Message{
+		Topic:   "device/foo/bar/baz",
+		Payload: []byte("42"),
+	})
 
 	<-done
 
 	r.Stop()
 
 	// Output:
-	// foo
-	// bar/baz
-	// 42
-	// 7
+	// New Request: &{<Message Topic="device/foo/bar/baz" QOS=0 Retain=false Payload=[52 50]> map[id:foo sensor:bar/baz]}
+	// Publishing: <Message Topic="finish/data" QOS=0 Retain=false Payload=[55]>
+	// New Request: &{<Message Topic="finish/data" QOS=0 Retain=false Payload=[55]> map[]}
 }

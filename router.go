@@ -14,7 +14,7 @@ type Request struct {
 
 // A ResponseWriter is used to convey messages to the broker.
 type ResponseWriter interface {
-	Publish(topic string, payload []byte, qos byte, retain bool)
+	Publish(*packet.Message)
 }
 
 // A Handler receives incoming requests.
@@ -57,8 +57,8 @@ func (r *Router) Start(opts *client.Config) {
 }
 
 // Publish will use the underlying service to publish the message.
-func (r *Router) Publish(topic string, payload []byte, qos byte, retain bool) {
-	r.srv.Publish(topic, payload, qos, retain)
+func (r *Router) Publish(msg *packet.Message) {
+	r.srv.PublishMessage(msg)
 }
 
 // Stop will stop the routers underlying service.
