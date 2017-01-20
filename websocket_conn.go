@@ -27,8 +27,6 @@ import (
 // received that is not binary.
 var ErrNotBinary = errors.New("received web socket message is not binary")
 
-var closeMessage = websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
-
 type wsStream struct {
 	conn   *websocket.Conn
 	reader io.Reader
@@ -96,11 +94,11 @@ func (s *wsStream) Write(p []byte) (n int, err error) {
 }
 
 func (s *wsStream) Close() error {
-	// write close message
-	err := s.conn.WriteMessage(websocket.CloseMessage, closeMessage)
-	if err != nil {
-		return err
-	}
+	// Close can be called during read and write, therefore we cannot write a
+	// close message to the client without risking a concurrent write on the
+	// websocket conn. The MQTT spec anyway requires clients to terminate the
+	// connection, therefore we don't have to really care about announcing a
+	// server-side connection close.
 
 	return s.conn.Close()
 }
