@@ -143,7 +143,9 @@ func (c *BaseConn) Receive() (packet.Packet, error) {
 	// read next packet
 	pkt, err := c.stream.Read()
 	if err != nil {
+		// ensure connection gets closed
 		c.carrier.Close()
+
 		return nil, err
 	}
 
