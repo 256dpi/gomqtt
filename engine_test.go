@@ -18,6 +18,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gomqtt/client"
+	"github.com/gomqtt/packet"
 	"github.com/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,6 +37,29 @@ func TestConnectTimeout(t *testing.T) {
 	assert.Nil(t, pkt)
 	assert.Error(t, err)
 
+	close(quit)
+	<-done
+}
+
+func TestDefaultReadLimit(t *testing.T) {
+	engine := NewEngine()
+	engine.DefaultReadLimit = 1
+
+	port, quit, done := Run(t, engine, "tcp")
+
+	c := client.New()
+	wait := make(chan struct{})
+
+	c.Callback = func(msg *packet.Message, err error) {
+		assert.Error(t, err)
+		close(wait)
+	}
+
+	cf, err := c.Connect(client.NewConfig("tcp://localhost:" + port))
+	assert.NoError(t, err)
+	assert.Error(t, cf.Wait())
+
+	<-wait
 	close(quit)
 	<-done
 }

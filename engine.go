@@ -66,7 +66,8 @@ type Engine struct {
 	Backend Backend
 	Logger  Logger
 
-	ConnectTimeout time.Duration
+	ConnectTimeout   time.Duration
+	DefaultReadLimit int64
 
 	closing   bool
 	clients   []*Client
@@ -116,6 +117,9 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 	if conn == nil {
 		panic("passed conn is nil")
 	}
+
+	// set default read limit
+	conn.SetReadLimit(e.DefaultReadLimit)
 
 	// close conn immediately when closing
 	if e.closing {
