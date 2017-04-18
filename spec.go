@@ -109,7 +109,7 @@ func Run(t *testing.T, config *Config) {
 		UnsubscribeTest(t, config, "unsub/3", 2)
 	})
 
-	t.Run("UnsubscribeNotExisting Subscription", func(t *testing.T) {
+	t.Run("UnsubscribeNotExistingSubscription", func(t *testing.T) {
 		UnsubscribeNotExistingSubscriptionTest(t, config, "unsub/4")
 	})
 
