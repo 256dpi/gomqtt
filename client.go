@@ -16,6 +16,7 @@ package broker
 
 import (
 	"errors"
+	"net"
 	"sync"
 	"time"
 
@@ -82,6 +83,12 @@ func (c *Client) CleanSession() bool {
 // ClientID returns the supplied client id during connect.
 func (c *Client) ClientID() string {
 	return c.clientID
+}
+
+// RemoteAddr returns the client's remote net address from the
+// underlying connection.
+func (c *Client) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
 }
 
 // Publish will send a Message to the client and initiate QOS flows.
