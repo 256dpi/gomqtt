@@ -102,7 +102,7 @@ func (c *Client) Publish(msg *packet.Message) bool {
 }
 
 // Close will immediately close the connection. When clean=true the client
-// will be marked as cleanly disconnected, and the will messages will not
+// will be marked as cleanly disconnected, and the will message will not
 // get dispatched.
 func (c *Client) Close(clean bool) {
 	if clean {
