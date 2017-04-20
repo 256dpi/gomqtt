@@ -2,6 +2,7 @@ sudo: true
 language: go
 go:
   - 1.7
+  - 1.8
   - tip
 before_install:
   - sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa -y
