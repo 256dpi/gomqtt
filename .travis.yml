@@ -7,7 +7,7 @@ go:
 before_install:
   - go get github.com/mattn/goveralls
 script:
-  - $HOME/gopath/bin/goveralls -package . -service=travis-ci
+  - $HOME/gopath/bin/goveralls -package . -service=travis-ci -v
 matrix:
   allow_failures:
     - go: tip

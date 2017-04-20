@@ -32,7 +32,7 @@ func TestBrokerWithMemoryBackend(t *testing.T) {
 	config := spec.AllFeatures()
 	config.URL = "tcp://allow:allow@localhost:" + port
 	config.DenyURL = "tcp://deny:deny@localhost:" + port
-	config.ProcessWait = 5 * time.Millisecond
+	config.ProcessWait = 20 * time.Millisecond
 	config.NoMessageWait = 50 * time.Millisecond
 	config.MessageRetainWait = 50 * time.Millisecond
 
