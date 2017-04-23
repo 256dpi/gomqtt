@@ -211,7 +211,7 @@ func Run(t *testing.T, config *Config) {
 		})
 
 		t.Run("RetainedMessageResubscription", func(t *testing.T) {
-			RetainedMessageResubscriptionTest(t, config, "retaine/11")
+			RetainedMessageResubscriptionTest(t, config, "retained/11")
 		})
 	}
 
