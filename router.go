@@ -1,6 +1,8 @@
 package router
 
 import (
+	"time"
+
 	"github.com/gomqtt/client"
 	"github.com/gomqtt/packet"
 	"gopkg.in/tomb.v2"
@@ -22,6 +24,8 @@ type Handler func(ResponseWriter, *Request)
 
 // A Router wraps a service and provides routing of incoming messages.
 type Router struct {
+	SubscribeTimeout time.Duration
+
 	tree   *Tree
 	routes []*Route
 	srv    *client.Service
@@ -34,6 +38,8 @@ type Router struct {
 // See: client.NewService.
 func New(queueSize ...int) *Router {
 	r := &Router{
+		SubscribeTimeout: 1 * time.Second,
+
 		tree: NewTree(),
 		srv:  client.NewService(queueSize...),
 	}
@@ -89,8 +95,7 @@ func (r *Router) offlineCallback() {
 
 func (r *Router) router() error {
 	for _, route := range r.routes {
-		// TODO: Use timeout.
-		err := r.srv.Subscribe(route.RealFilter, 0).Wait()
+		err := r.srv.Subscribe(route.RealFilter, 0).Wait(r.SubscribeTimeout)
 		if err != nil {
 			return err
 		}
