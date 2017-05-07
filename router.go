@@ -106,7 +106,6 @@ func (r *Router) router() error {
 		case msg := <-r.ch:
 			value, params := r.tree.Route(msg.Topic)
 			if value != nil {
-				// TODO: Intercept published messages and manage the futures?
 				value.(Handler)(r, &Request{
 					Message: msg,
 					Params:  params,
