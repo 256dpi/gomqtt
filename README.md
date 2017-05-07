@@ -10,7 +10,7 @@
 Get it using go's standard toolset:
 
 ```bash
-$ go intall github.com/gomqtt/cmd/gomqtt-benchmark
-$ go intall github.com/gomqtt/cmd/gomqtt-membroker
-$ go intall github.com/gomqtt/cmd/gomqtt-speedtest
+$ go get github.com/gomqtt/cmd/gomqtt-benchmark
+$ go get github.com/gomqtt/cmd/gomqtt-membroker
+$ go get github.com/gomqtt/cmd/gomqtt-speedtest
 ```
