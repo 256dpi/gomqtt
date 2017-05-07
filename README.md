@@ -13,4 +13,5 @@ Get it using go's standard toolset:
 $ go get github.com/gomqtt/cmd/gomqtt-benchmark
 $ go get github.com/gomqtt/cmd/gomqtt-membroker
 $ go get github.com/gomqtt/cmd/gomqtt-speedtest
+$ go get github.com/gomqtt/cmd/gomqtt-burst
 ```
