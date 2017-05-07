@@ -91,7 +91,7 @@ func main() {
 		q90 := time.Duration(q.Query(0.90)) * time.Millisecond
 		q99 := time.Duration(q.Query(0.99)) * time.Millisecond
 
-		fmt.Printf("[%d] 0.50: %s, 0.90: %s , 0.99: %s \n", q.Count(), q50, q90, q99)
+		fmt.Printf("[%d] 0.50: %s, 0.90: %s, 0.99: %s \n", q.Count(), q50, q90, q99)
 
 		time.Sleep(time.Duration(*wait) * time.Millisecond)
 	}
