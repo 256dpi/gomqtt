@@ -39,7 +39,7 @@ func Example() {
 	r.Stop()
 
 	// Output:
-	// New Request: &{<Message Topic="device/foo/bar/baz" QOS=0 Retain=false Payload=[52 50]> map[id:foo sensor:bar/baz]}
+	// New Request: <Message Topic="device/foo/bar/baz" QOS=0 Retain=false Payload=[52 50]>
 	// Publishing: <Message Topic="finish/data" QOS=0 Retain=false Payload=[55]>
-	// New Request: &{<Message Topic="finish/data" QOS=0 Retain=false Payload=[55]> map[]}
+	// New Request: <Message Topic="finish/data" QOS=0 Retain=false Payload=[55]>
 }
