@@ -322,6 +322,26 @@ func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	<-done
 }
 
+func abstractConnCloseAfterBufferedSendTest(t *testing.T, protocol string) {
+	conn2, done := connectionPair(protocol, func(conn1 Conn) {
+		pkt, err := conn1.Receive()
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
+		assert.NoError(t, err)
+
+		pkt, err = conn1.Receive()
+		assert.Nil(t, pkt)
+		assert.Equal(t, io.EOF, err)
+	})
+
+	err := conn2.BufferedSend(packet.NewConnectPacket())
+	assert.NoError(t, err)
+
+	err = conn2.Close()
+	assert.NoError(t, err)
+
+	<-done
+}
+
 func abstractConnBigBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		err := conn1.Close()

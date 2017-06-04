@@ -78,6 +78,10 @@ func TestNetConnBufferedSendAfterClose(t *testing.T) {
 	abstractConnBufferedSendAfterCloseTest(t, "tcp")
 }
 
+func TestNetConnCloseAfterBufferedSend(t *testing.T) {
+	abstractConnCloseAfterBufferedSendTest(t, "tcp")
+}
+
 func TestNetConnBigBufferedSendAfterClose(t *testing.T) {
 	abstractConnBigBufferedSendAfterCloseTest(t, "tcp")
 }

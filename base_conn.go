@@ -162,7 +162,14 @@ func (c *BaseConn) Close() error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
-	err := c.carrier.Close()
+	// flush any cached writes
+	err := c.flush()
+	if err != nil {
+		return err
+	}
+
+	// close carrier
+	err = c.carrier.Close()
 	if err != nil {
 		return err
 	}
