@@ -18,7 +18,7 @@ func AuthenticationTest(t *testing.T, config *Config) {
 
 	connectFuture, err := deniedClient.Connect(client.NewConfig(config.DenyURL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.Error(t, connectFuture.Wait())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
