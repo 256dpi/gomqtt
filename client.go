@@ -204,7 +204,7 @@ func (c *Client) Connect(config *Config) (*ConnectFuture, error) {
 	// set will
 	connect.Will = config.WillMessage
 
-	// create new ConnackFuture
+	// create new ConnectFuture
 	c.connectFuture = &ConnectFuture{}
 	c.connectFuture.initialize()
 
@@ -497,7 +497,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
 		err := c.die(ErrClientConnectionDenied, true)
-		c.connectFuture.complete()
+		c.connectFuture.cancel()
 		return err
 	}
 

@@ -223,7 +223,7 @@ func TestClientConnectionDenied(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.Error(t, future.Wait())
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ErrNotAuthorized, future.ReturnCode)
 
