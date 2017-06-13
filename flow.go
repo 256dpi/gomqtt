@@ -188,12 +188,12 @@ func (f *Flow) Test(conn Conn) error {
 		case actionSend:
 			err := conn.Send(action.packet)
 			if err != nil {
-				return err
+				return fmt.Errorf("error sending packet: %v", err)
 			}
 		case actionReceive:
 			pkt, err := conn.Receive()
 			if err != nil {
-				return err
+				return fmt.Errorf("expected to receive a packet but got error: %v", err)
 			}
 
 			if want, got := action.packet.String(), pkt.String(); want != got {
@@ -202,7 +202,7 @@ func (f *Flow) Test(conn Conn) error {
 		case actionSkip:
 			_, err := conn.Receive()
 			if err != nil {
-				return err
+				return fmt.Errorf("expected to skip over a received packet but got error: %v", err)
 			}
 		case actionWait:
 			<-action.ch
@@ -213,7 +213,7 @@ func (f *Flow) Test(conn Conn) error {
 		case actionClose:
 			err := conn.Close()
 			if err != nil {
-				return err
+				return fmt.Errorf("expected connection to close successfully but got error: %v", err)
 			}
 		case actionEnd:
 			_, err := conn.Receive()
