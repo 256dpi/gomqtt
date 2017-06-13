@@ -59,8 +59,13 @@ func TestFlow(t *testing.T) {
 
 	pipe := NewPipe()
 
-	go server.Test(t, pipe)
-	client.Test(t, pipe)
+	errCh := server.TestAsync(pipe, 100*time.Millisecond)
+
+	err := client.Test(pipe)
+	assert.NoError(t, err)
+
+	err = <-errCh
+	assert.NoError(t, err)
 }
 
 func TestAlreadyClosedError(t *testing.T) {

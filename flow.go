@@ -16,12 +16,12 @@ package tools
 
 import (
 	"errors"
+	"fmt"
 	"io"
-	"testing"
+	"strings"
 	"time"
 
 	"github.com/gomqtt/packet"
-	"github.com/stretchr/testify/assert"
 )
 
 // A Conn defines an abstract interface for connections used with a Flow.
@@ -182,23 +182,28 @@ func (f *Flow) End() *Flow {
 }
 
 // Test starts the flow on the given Conn and reports to the specified test.
-func (f *Flow) Test(t *testing.T, conn Conn) {
+func (f *Flow) Test(conn Conn) error {
 	for _, action := range f.actions {
 		switch action.kind {
 		case actionSend:
 			err := conn.Send(action.packet)
-			assert.NoError(t, err)
+			if err != nil {
+				return fmt.Errorf("error sending packet: %v", err)
+			}
 		case actionReceive:
 			pkt, err := conn.Receive()
-			assert.NoError(t, err)
-			assert.NotNil(t, pkt)
+			if err != nil {
+				return fmt.Errorf("expected to receive a packet but got error: %v", err)
+			}
 
-			if pkt != nil {
-				assert.Equal(t, action.packet.String(), pkt.String())
+			if want, got := action.packet.String(), pkt.String(); want != got {
+				return fmt.Errorf("expected packet of %q but got %q", want, got)
 			}
 		case actionSkip:
 			_, err := conn.Receive()
-			assert.NoError(t, err)
+			if err != nil {
+				return fmt.Errorf("expected to skip over a received packet but got error: %v", err)
+			}
 		case actionWait:
 			<-action.ch
 		case actionRun:
@@ -207,14 +212,31 @@ func (f *Flow) Test(t *testing.T, conn Conn) {
 			time.Sleep(action.duration)
 		case actionClose:
 			err := conn.Close()
-			assert.NoError(t, err)
+			if err != nil {
+				return fmt.Errorf("expected connection to close successfully but got error: %v", err)
+			}
 		case actionEnd:
 			_, err := conn.Receive()
-			if err != nil {
-				assert.Contains(t, err.Error(), "EOF")
+			if err != nil && !strings.Contains(err.Error(), "EOF") {
+				return fmt.Errorf("expected EOF but got %v", err)
 			}
 		}
 	}
+
+	return nil
+}
+
+func (f *Flow) TestAsync(conn Conn, timeout time.Duration) <-chan error {
+	errCh := make(chan error, 1)
+	go func() {
+		select {
+		case <-time.After(timeout):
+			errCh <- errors.New("timed out waiting for flow to complete")
+		case errCh <- f.Test(conn):
+		}
+	}()
+
+	return errCh
 }
 
 // add will add the specified action.
