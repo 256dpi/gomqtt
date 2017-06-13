@@ -59,20 +59,13 @@ func TestFlow(t *testing.T) {
 
 	pipe := NewPipe()
 
-	errCh := make(chan error, 1)
-	go func() {
-		errCh <- server.Test(pipe)
-	}()
+	errCh := server.TestAsync(pipe, 100*time.Millisecond)
 
 	err := client.Test(pipe)
 	assert.NoError(t, err)
 
-	select {
-	case err := <-errCh:
-		assert.NoError(t, err)
-	case <-time.After(500 * time.Millisecond):
-		assert.Fail(t, "timed out waiting for server flow to complete")
-	}
+	err = <-errCh
+	assert.NoError(t, err)
 }
 
 func TestAlreadyClosedError(t *testing.T) {

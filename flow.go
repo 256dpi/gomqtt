@@ -226,6 +226,19 @@ func (f *Flow) Test(conn Conn) error {
 	return nil
 }
 
+func (f *Flow) TestAsync(conn Conn, timeout time.Duration) <-chan error {
+	errCh := make(chan error, 1)
+	go func() {
+		select {
+		case <-time.After(timeout):
+			errCh <- errors.New("timed out waiting for flow to complete")
+		case errCh <- f.Test(conn):
+		}
+	}()
+
+	return errCh
+}
+
 // add will add the specified action.
 func (f *Flow) add(action *action) {
 	f.actions = append(f.actions, action)
