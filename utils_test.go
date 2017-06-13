@@ -45,7 +45,8 @@ func fakeBroker(t *testing.T, testFlows ...*tools.Flow) (chan struct{}, string) 
 			conn, err := server.Accept()
 			assert.NoError(t, err)
 
-			flow.Test(t, conn)
+			err = flow.Test(conn)
+			assert.NoError(t, err)
 		}
 
 		err = server.Close()
