@@ -549,5 +549,6 @@ func KeepAliveTimeoutTest(t *testing.T, config *Config) {
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 
-	c.Test(t, conn)
+	err = c.Test(conn)
+	assert.NoError(t, err)
 }

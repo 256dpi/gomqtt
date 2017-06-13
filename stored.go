@@ -49,7 +49,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
-	tools.NewFlow().
+	err = tools.NewFlow().
 		Send(connect).
 		Skip(). // connack
 		Send(subscribe).
@@ -58,7 +58,8 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 		Skip(). // puback
 		Receive(publishIn).
 		Close().
-		Test(t, conn1)
+		Test(conn1)
+	assert.NoError(t, err)
 
 	conn2, err := transport.Dial(config.URL)
 	assert.NoError(t, err)
@@ -66,14 +67,15 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 
 	publishIn.Dup = true
 
-	tools.NewFlow().
+	err = tools.NewFlow().
 		Send(connect).
 		Skip(). // connack
 		Receive(publishIn).
 		Send(pubackIn).
 		Send(disconnect).
 		Close().
-		Test(t, conn2)
+		Test(conn2)
+	assert.NoError(t, err)
 }
 
 // PublishResendQOS2Test tests the broker for properly retrying QOS2 Publish
@@ -120,7 +122,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
-	tools.NewFlow().
+	err = tools.NewFlow().
 		Send(connect).
 		Skip(). // connack
 		Send(subscribe).
@@ -131,7 +133,8 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 		Skip(). // pubcomp
 		Receive(publishIn).
 		Close().
-		Test(t, conn1)
+		Test(conn1)
+	assert.NoError(t, err)
 
 	time.Sleep(config.ProcessWait)
 
@@ -141,7 +144,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 	publishIn.Dup = true
 
-	tools.NewFlow().
+	err = tools.NewFlow().
 		Send(connect).
 		Skip(). // connack
 		Receive(publishIn).
@@ -150,7 +153,8 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 		Send(pubcompIn).
 		Send(disconnect).
 		Close().
-		Test(t, conn2)
+		Test(conn2)
+	assert.NoError(t, err)
 }
 
 // PubrelResendQOS2Test tests the broker for properly retrying QOS2 Pubrel
@@ -200,7 +204,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
-	tools.NewFlow().
+	err = tools.NewFlow().
 		Send(connect).
 		Skip(). // connack
 		Send(subscribe).
@@ -212,7 +216,8 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 		Receive(publishIn).
 		Send(pubrecIn).
 		Close().
-		Test(t, conn1)
+		Test(conn1)
+	assert.NoError(t, err)
 
 	time.Sleep(config.ProcessWait)
 
@@ -222,14 +227,15 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 	publishIn.Dup = true
 
-	tools.NewFlow().
+	err = tools.NewFlow().
 		Send(connect).
 		Skip(). // connack
 		Receive(pubrelIn).
 		Send(pubcompIn).
 		Send(disconnect).
 		Close().
-		Test(t, conn2)
+		Test(conn2)
+	assert.NoError(t, err)
 }
 
 // StoredSubscriptionsTest tests the broker for properly handling stored
