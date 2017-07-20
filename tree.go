@@ -149,7 +149,7 @@ func (t *Tree) set(value interface{}, i int, segments []string, node *node) {
 	t.set(value, i+1, segments, child)
 }
 
-// Remove unregisters the value from the supplied topic. This function will
+// Remove un-registers the value from the supplied topic. This function will
 // automatically shrink the tree.
 func (t *Tree) Remove(topic string, value interface{}) {
 	t.mutex.Lock()
@@ -346,6 +346,25 @@ func (t *Tree) clean(values []interface{}) []interface{} {
 	}
 
 	return result
+}
+
+// Count will count all stored values in the tree. It will not filter out
+// duplicate values and thus might return a different result to `len(All())`.
+func (t *Tree) Count() int {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
+	return t.count(0, t.root)
+}
+
+func (t *Tree) count(counter int, node *node) int {
+	// add children to results
+	for _, child := range node.children {
+		counter += t.count(counter, child)
+	}
+
+	// add values to result
+	return counter + len(node.values)
 }
 
 // All will return all stored values in the tree.

@@ -245,6 +245,17 @@ func TestTreeSearchFirstNone(t *testing.T) {
 	assert.Nil(t, tree.SearchFirst("baz/qux"))
 }
 
+func TestTreeCount(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo", 1)
+	tree.Add("foo/bar", 2)
+	tree.Add("foo/bar/baz", 3)
+	tree.Add("foo/bar/baz", 4)
+
+	assert.Equal(t, 4, tree.Count())
+}
+
 func TestTreeAll(t *testing.T) {
 	tree := NewTree()
 
@@ -252,7 +263,7 @@ func TestTreeAll(t *testing.T) {
 	tree.Add("foo/bar", 2)
 	tree.Add("foo/bar/baz", 3)
 
-	assert.Equal(t, 3, len(tree.All()))
+	assert.Equal(t, 4, len(tree.All()))
 }
 
 func TestTreeAllNoDuplicates(t *testing.T) {
