@@ -263,7 +263,7 @@ func TestTreeAll(t *testing.T) {
 	tree.Add("foo/bar", 2)
 	tree.Add("foo/bar/baz", 3)
 
-	assert.Equal(t, 4, len(tree.All()))
+	assert.Equal(t, 3, len(tree.All()))
 }
 
 func TestTreeAllNoDuplicates(t *testing.T) {
