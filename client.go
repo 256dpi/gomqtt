@@ -608,7 +608,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 		}
 
 		// reset the session if clean is requested
-		if c.cleanSession {
+		if c.session != nil && c.cleanSession {
 			_err := c.session.Reset()
 			if err == nil {
 				event = SessionError
