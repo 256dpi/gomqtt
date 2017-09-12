@@ -76,7 +76,7 @@ const (
 
 // Service is an abstraction for Client that provides a stable interface to the
 // application, while it automatically connects and reconnects clients in the
-// background. Errors are not returned but logged using the Logger callback.
+// background. Errors are not returned but emitted using the ErrorCallback.
 // All methods return Futures that get completed once the acknowledgements are
 // received. Once the services is stopped all waiting futures get canceled.
 //
