@@ -27,6 +27,8 @@ var testDialer *Dialer
 var testLauncher *Launcher
 
 func init() {
+	// TODO: Provide key and certificate from memory.
+
 	cer, err := tls.LoadX509KeyPair("test/server.pem", "test/server.key")
 	if err != nil {
 		panic(err)
