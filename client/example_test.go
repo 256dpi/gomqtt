@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 )
 
 func ExampleClient() {

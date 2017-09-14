@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 )
 
 // A Conn defines an abstract interface for connections used with a Flow.

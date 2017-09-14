@@ -17,9 +17,9 @@ package broker
 import (
 	"fmt"
 
-	"github.com/gomqtt/client"
-	"github.com/gomqtt/packet"
-	"github.com/gomqtt/transport"
+	"github.com/256dpi/gomqtt/client"
+	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/transport"
 )
 
 func Example() {

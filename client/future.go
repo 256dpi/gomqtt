@@ -18,7 +18,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 )
 
 // ErrFutureTimeout is returned by Wait if the specified timeout is exceeded.

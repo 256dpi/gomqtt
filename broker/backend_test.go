@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gomqtt/spec"
+	"github.com/256dpi/gomqtt/spec"
 )
 
 func TestBrokerWithMemoryBackend(t *testing.T) {

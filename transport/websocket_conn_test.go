@@ -18,7 +18,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )

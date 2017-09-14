@@ -15,8 +15,8 @@
 package client
 
 import (
-	"github.com/gomqtt/packet"
-	"github.com/gomqtt/transport"
+	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/transport"
 )
 
 // A Config holds information about establishing a connection to a broker.

@@ -3,7 +3,7 @@ package tools
 import (
 	"testing"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
 )
 

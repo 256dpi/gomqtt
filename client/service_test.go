@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gomqtt/packet"
-	"github.com/gomqtt/tools"
+	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 )
 

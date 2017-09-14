@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 )
 
 // A Carrier is a generalized stream that can be used with BaseConn.

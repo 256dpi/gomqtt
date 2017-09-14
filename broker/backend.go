@@ -17,8 +17,8 @@ package broker
 import (
 	"sync"
 
-	"github.com/gomqtt/packet"
-	"github.com/gomqtt/tools"
+	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/tools"
 )
 
 // A Backend provides effective queuing functionality to a Broker and its Clients.

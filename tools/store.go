@@ -4,7 +4,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 )
 
 // The Store is a thread-safe packet store.

@@ -17,8 +17,8 @@ package main
 import (
 	"flag"
 
-	"github.com/gomqtt/client"
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/client"
+	"github.com/256dpi/gomqtt/packet"
 )
 
 var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")

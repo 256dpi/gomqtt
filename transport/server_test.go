@@ -19,7 +19,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -3,7 +3,7 @@ package router
 import (
 	"strings"
 
-	"github.com/gomqtt/tools"
+	"github.com/256dpi/gomqtt/tools"
 )
 
 // A Route is single route added to the Tree.

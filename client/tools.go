@@ -1,6 +1,6 @@
 package client
 
-import "github.com/gomqtt/packet"
+import "github.com/256dpi/gomqtt/packet"
 
 // ClearSession will connect/disconnect once with a clean session request to force
 // the broker to reset the clients session. This is useful in situations where

@@ -17,7 +17,7 @@ package tools
 import (
 	"sync"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 )
 
 // NewQueue returns a new Queue. If maxSize is greater than zero the queue will

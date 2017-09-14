@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gomqtt/packet"
+	"github.com/256dpi/gomqtt/packet"
 	"github.com/jpillora/backoff"
 	"gopkg.in/tomb.v2"
 )

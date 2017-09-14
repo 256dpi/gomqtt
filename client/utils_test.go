@@ -18,9 +18,9 @@ import (
 	"net"
 	"testing"
 
-	"github.com/gomqtt/packet"
-	"github.com/gomqtt/tools"
-	"github.com/gomqtt/transport"
+	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/tools"
+	"github.com/256dpi/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
 
