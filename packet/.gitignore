@@ -1,7 +1,0 @@
-*.pprof
-*.prof
-*.test
-*.out
-
-fuzz/
-*fuzz.zip

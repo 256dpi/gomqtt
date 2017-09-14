@@ -1,6 +1,0 @@
-*.pprof
-*.prof
-*.test
-*.out
-.vagrant/
-profile/
