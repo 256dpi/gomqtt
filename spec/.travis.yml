@@ -1,0 +1,16 @@
+sudo: true
+language: go
+go:
+  - 1.8
+  - 1.9
+  - tip
+before_install:
+  - sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa -y
+  - sudo apt-get update -y
+  - sudo apt-get install mosquitto -y
+  - go get github.com/mattn/goveralls
+script:
+  - $HOME/gopath/bin/goveralls -service=travis-ci
+matrix:
+  allow_failures:
+    - go: tip
