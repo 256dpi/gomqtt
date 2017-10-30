@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beorn7/perks/quantile"
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/beorn7/perks/quantile"
 )
 
 var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
