@@ -75,7 +75,7 @@ func TestWebSocketConnBigBufferedSendAfterClose(t *testing.T) {
 
 func TestWebSocketBadFrameError(t *testing.T) {
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
-		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // <- bad frame
+		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // < bad frame
 
 		conn1.(*WebSocketConn).UnderlyingConn().UnderlyingConn().Write(buf)
 
@@ -88,7 +88,7 @@ func TestWebSocketBadFrameError(t *testing.T) {
 	assert.Nil(t, pkt)
 	assert.Error(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestWebSocketChunkedMessage(t *testing.T) {
@@ -118,7 +118,7 @@ func TestWebSocketChunkedMessage(t *testing.T) {
 	err = conn2.Close()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestWebSocketCoalescedMessage(t *testing.T) {
@@ -150,7 +150,7 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 	err = conn2.Close()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestWebSocketNotBinaryMessage(t *testing.T) {
@@ -167,7 +167,7 @@ func TestWebSocketNotBinaryMessage(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, in)
 
-	<-done
+	safeReceive(done)
 }
 
 func BenchmarkWebSocketConn(b *testing.B) {
@@ -192,7 +192,7 @@ func BenchmarkWebSocketConn(b *testing.B) {
 
 	b.SetBytes(int64(pkt.Len() * 2))
 
-	<-done
+	safeReceive(done)
 }
 
 func BenchmarkWebSocketConnBuffered(b *testing.B) {
@@ -217,5 +217,5 @@ func BenchmarkWebSocketConnBuffered(b *testing.B) {
 
 	b.SetBytes(int64(pkt.Len() * 2))
 
-	<-done
+	safeReceive(done)
 }

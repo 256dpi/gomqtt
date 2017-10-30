@@ -58,7 +58,7 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes())
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -122,7 +122,7 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -184,7 +184,7 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -256,7 +256,7 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -300,7 +300,7 @@ func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) 
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -360,7 +360,7 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -418,14 +418,14 @@ func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic strin
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
 
-	<-wait
+	safeReceive(wait)
 
 	subscribeFuture, err = receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 

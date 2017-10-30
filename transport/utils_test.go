@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"time"
 )
 
 var serverTLSConfig *tls.Config
@@ -117,4 +118,12 @@ func getPort(s Server) string {
 
 func getURL(s Server, protocol string) string {
 	return fmt.Sprintf("%s://%s", protocol, s.Addr().String())
+}
+
+func safeReceive(ch chan struct{}) {
+	select {
+	case <-time.After(1 * time.Minute):
+		panic("nothing received")
+	case <-ch:
+	}
 }

@@ -24,7 +24,7 @@ func TestConnectTimeout(t *testing.T) {
 	assert.Error(t, err)
 
 	close(quit)
-	<-done
+	safeReceive(done)
 }
 
 func TestDefaultReadLimit(t *testing.T) {
@@ -46,7 +46,7 @@ func TestDefaultReadLimit(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Error(t, cf.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 	close(quit)
-	<-done
+	safeReceive(done)
 }

@@ -68,7 +68,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 	assert.True(t, connectFuture.SessionPresent())
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -138,7 +138,7 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 	assert.True(t, connectFuture.SessionPresent())
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 

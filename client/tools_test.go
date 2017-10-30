@@ -24,7 +24,7 @@ func TestClearSession(t *testing.T) {
 	err := ClearSession(NewConfigWithClientID("tcp://localhost:"+port, "test"), 1*time.Second)
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClearRetainedMessage(t *testing.T) {
@@ -45,7 +45,7 @@ func TestClearRetainedMessage(t *testing.T) {
 	err := ClearRetainedMessage(NewConfig("tcp://localhost:"+port), "test", 1*time.Second)
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestPublishMessage(t *testing.T) {
@@ -68,7 +68,7 @@ func TestPublishMessage(t *testing.T) {
 	err := PublishMessage(NewConfig("tcp://localhost:"+port), &publish.Message, 1*time.Second)
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestReceiveMessage(t *testing.T) {
@@ -104,5 +104,5 @@ func TestReceiveMessage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, publish.Message.String(), msg.String())
 
-	<-done
+	safeReceive(done)
 }

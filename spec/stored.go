@@ -287,7 +287,7 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 

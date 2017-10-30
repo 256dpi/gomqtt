@@ -31,7 +31,7 @@ func TestGlobalDial(t *testing.T) {
 	err = conn.Close()
 	assert.NoError(t, err)
 
-	<-wait
+	safeReceive(wait)
 
 	err = server.Close()
 	assert.NoError(t, err)

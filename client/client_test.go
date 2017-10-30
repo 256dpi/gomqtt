@@ -81,7 +81,7 @@ func TestClientConnect(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientConnectCustomDialer(t *testing.T) {
@@ -108,7 +108,7 @@ func TestClientConnectCustomDialer(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientConnectAfterConnect(t *testing.T) {
@@ -136,7 +136,7 @@ func TestClientConnectAfterConnect(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientConnectWithCredentials(t *testing.T) {
@@ -164,7 +164,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientNotConnected(t *testing.T) {
@@ -217,8 +217,8 @@ func TestClientConnectionDenied(t *testing.T) {
 	assert.False(t, connectFuture.SessionPresent())
 	assert.Equal(t, packet.ErrNotAuthorized, connectFuture.ReturnCode())
 
-	<-done
-	<-wait
+	safeReceive(done)
+	safeReceive(wait)
 }
 
 func TestClientExpectedConnack(t *testing.T) {
@@ -243,8 +243,8 @@ func TestClientExpectedConnack(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, future.ErrCanceled, connectFuture.Wait(1*time.Second))
 
-	<-done
-	<-wait
+	safeReceive(done)
+	safeReceive(wait)
 }
 
 func TestClientKeepAlive(t *testing.T) {
@@ -297,7 +297,7 @@ func TestClientKeepAlive(t *testing.T) {
 	assert.Equal(t, int32(2), atomic.LoadInt32(&reqCounter))
 	assert.Equal(t, int32(2), atomic.LoadInt32(&respCounter))
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientKeepAliveTimeout(t *testing.T) {
@@ -333,8 +333,8 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	assert.False(t, connectFuture.SessionPresent())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 
-	<-wait
-	<-done
+	safeReceive(wait)
+	safeReceive(done)
 }
 
 func TestClientPublishSubscribeQOS0(t *testing.T) {
@@ -390,12 +390,12 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 
 	in, err := c.Session.AllPackets(session.Incoming)
 	assert.NoError(t, err)
@@ -466,12 +466,12 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 
 	in, err := c.Session.AllPackets(session.Incoming)
 	assert.NoError(t, err)
@@ -552,12 +552,12 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 
 	in, err := c.Session.AllPackets(session.Incoming)
 	assert.NoError(t, err)
@@ -602,7 +602,7 @@ func TestClientUnsubscribe(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientHardDisconnect(t *testing.T) {
@@ -647,7 +647,7 @@ func TestClientHardDisconnect(t *testing.T) {
 
 	assert.Equal(t, future.ErrCanceled, publishFuture.Wait(1*time.Second))
 
-	<-done
+	safeReceive(done)
 
 	list, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
@@ -695,7 +695,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	err = c.Disconnect(10 * time.Second)
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 
 	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
@@ -724,7 +724,7 @@ func TestClientClose(t *testing.T) {
 	err = c.Close()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientInvalidPackets(t *testing.T) {
@@ -797,7 +797,7 @@ func TestClientSessionResumption(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	<-done
+	safeReceive(done)
 
 	pkts, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
@@ -828,8 +828,8 @@ func TestClientUnexpectedClose(t *testing.T) {
 	assert.False(t, connectFuture.SessionPresent())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 
-	<-wait
-	<-done
+	safeReceive(wait)
+	safeReceive(done)
 }
 
 func TestClientConnackFutureCancellation(t *testing.T) {
@@ -853,8 +853,8 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, future.ErrCanceled, connectFuture.Wait(1*time.Second))
 
-	<-wait
-	<-done
+	safeReceive(wait)
+	safeReceive(done)
 }
 
 func TestClientFutureCancellation(t *testing.T) {
@@ -889,7 +889,7 @@ func TestClientFutureCancellation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, future.ErrCanceled, publishFuture.Wait(1*time.Second))
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientErrorCallback(t *testing.T) {
@@ -920,7 +920,7 @@ func TestClientErrorCallback(t *testing.T) {
 	assert.False(t, connectFuture.SessionPresent())
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 
-	<-done
+	safeReceive(done)
 }
 
 func TestClientLogger(t *testing.T) {
@@ -973,11 +973,11 @@ func TestClientLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	assert.NoError(t, c.Disconnect())
 
-	<-done
+	safeReceive(done)
 
 	assert.Equal(t, uint32(8), counter)
 }

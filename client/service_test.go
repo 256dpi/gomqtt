@@ -60,17 +60,17 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	s.Start(NewConfig("tcp://localhost:" + port))
 
-	<-online
+	safeReceive(online)
 
 	assert.NoError(t, s.Subscribe("test", 0).Wait(1*time.Second))
 	assert.NoError(t, s.Publish("test", []byte("test"), 0, false).Wait(1*time.Second))
 
-	<-message
+	safeReceive(message)
 
 	s.Stop(true)
 
-	<-offline
-	<-done
+	safeReceive(offline)
+	safeReceive(done)
 }
 
 func TestServiceCommandsInCallback(t *testing.T) {
@@ -126,12 +126,12 @@ func TestServiceCommandsInCallback(t *testing.T) {
 
 	s.Start(NewConfig("tcp://localhost:" + port))
 
-	<-message
+	safeReceive(message)
 
 	s.Stop(true)
 
-	<-offline
-	<-done
+	safeReceive(offline)
+	safeReceive(done)
 }
 
 func TestStartStopVariations(t *testing.T) {
@@ -158,15 +158,15 @@ func TestStartStopVariations(t *testing.T) {
 	}
 
 	s.Start(NewConfig("tcp://localhost:" + port))
-	s.Start(NewConfig("tcp://localhost:" + port)) // <- does nothing
+	s.Start(NewConfig("tcp://localhost:" + port)) // does nothing
 
-	<-online
+	safeReceive(online)
 
 	s.Stop(true)
-	s.Stop(true) // <- does nothing
+	s.Stop(true) // does nothing
 
-	<-offline
-	<-done
+	safeReceive(offline)
+	safeReceive(done)
 }
 
 func TestServiceUnsubscribe(t *testing.T) {
@@ -203,14 +203,14 @@ func TestServiceUnsubscribe(t *testing.T) {
 
 	s.Start(NewConfig("tcp://localhost:" + port))
 
-	<-online
+	safeReceive(online)
 
 	assert.NoError(t, s.Unsubscribe("test").Wait(1*time.Second))
 
 	s.Stop(true)
 
-	<-offline
-	<-done
+	safeReceive(offline)
+	safeReceive(done)
 }
 
 func TestServiceReconnect(t *testing.T) {
@@ -252,12 +252,12 @@ func TestServiceReconnect(t *testing.T) {
 
 	s.Start(NewConfig("tcp://localhost:" + port))
 
-	<-online
+	safeReceive(online)
 
 	s.Stop(true)
 
-	<-offline
-	<-done
+	safeReceive(offline)
+	safeReceive(done)
 
 	assert.Equal(t, 4, i)
 }
@@ -313,7 +313,7 @@ func TestServiceFutureSurvival(t *testing.T) {
 
 	s.Stop(true)
 
-	<-done
+	safeReceive(done)
 }
 
 func BenchmarkServicePublish(b *testing.B) {
@@ -332,7 +332,7 @@ func BenchmarkServicePublish(b *testing.B) {
 
 	c.Start(NewConfig("mqtt://0.0.0.0"))
 
-	<-ready
+	safeReceive(ready)
 
 	for i := 0; i < b.N; i++ {
 		c.Publish("test", []byte("test"), 0, false)
@@ -340,5 +340,5 @@ func BenchmarkServicePublish(b *testing.B) {
 
 	c.Stop(true)
 
-	<-done
+	safeReceive(done)
 }

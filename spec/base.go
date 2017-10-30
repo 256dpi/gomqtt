@@ -44,7 +44,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -96,7 +96,7 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -171,7 +171,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -215,7 +215,7 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
@@ -258,7 +258,7 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -304,7 +304,7 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -349,7 +349,7 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -400,7 +400,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
@@ -453,7 +453,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	err = clientWithWill.Close()
 	assert.NoError(t, err)
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 

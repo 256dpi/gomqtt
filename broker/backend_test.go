@@ -26,5 +26,5 @@ func TestBrokerWithMemoryBackend(t *testing.T) {
 
 	close(quit)
 
-	<-done
+	safeReceive(done)
 }

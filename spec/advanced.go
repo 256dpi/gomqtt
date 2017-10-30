@@ -64,7 +64,7 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 	assert.False(t, connectFuture.SessionPresent())
 
-	<-wait
+	safeReceive(wait)
 
 	err = secondClient.Disconnect()
 	assert.NoError(t, err)
@@ -107,7 +107,7 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
-	<-wait
+	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 

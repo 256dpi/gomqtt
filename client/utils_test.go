@@ -3,12 +3,21 @@ package client
 import (
 	"net"
 	"testing"
+	"time"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/tools"
 	"github.com/256dpi/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
 )
+
+func safeReceive(ch chan struct{}) {
+	select {
+	case <-time.After(1 * time.Minute):
+		panic("nothing received")
+	case <-ch:
+	}
+}
 
 func errorCallback(t *testing.T) func(*packet.Message, error) error {
 	return func(msg *packet.Message, err error) error {
