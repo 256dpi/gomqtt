@@ -15,6 +15,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -899,6 +900,37 @@ func TestClientFutureCancellation(t *testing.T) {
 	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
 	assert.NoError(t, err)
 	assert.Equal(t, tools.ErrFutureCanceled, publishFuture.Wait(1*time.Second))
+
+	<-done
+}
+
+func TestClientErrorCallback(t *testing.T) {
+	publish := packet.NewPublishPacket()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 1
+	publish.PacketID = 1
+
+	broker := tools.NewFlow().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Send(publish).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	c := New()
+	c.Callback = func(msg *packet.Message, err error) error {
+		assert.NotNil(t, msg)
+		assert.NoError(t, err)
+		return errors.New("some error")
+	}
+
+	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
+	assert.False(t, connectFuture.SessionPresent())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 
 	<-done
 }
