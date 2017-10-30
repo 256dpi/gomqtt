@@ -21,7 +21,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFuture(t *testing.T) {
+func TestFutureCompleteBefore(t *testing.T) {
+	f := NewFuture()
+	f.Complete()
+	assert.NoError(t, f.Wait(10*time.Millisecond))
+}
+
+func TestFutureCompleteAfter(t *testing.T) {
 	done := make(chan struct{})
 
 	f := NewFuture()
@@ -36,7 +42,13 @@ func TestFuture(t *testing.T) {
 	<-done
 }
 
-func TestFutureCancel(t *testing.T) {
+func TestFutureCancelBefore(t *testing.T) {
+	f := NewFuture()
+	f.Cancel()
+	assert.Equal(t, ErrFutureCanceled, f.Wait(10*time.Millisecond))
+}
+
+func TestFutureCancelAfter(t *testing.T) {
 	done := make(chan struct{})
 
 	f := NewFuture()
@@ -53,24 +65,7 @@ func TestFutureCancel(t *testing.T) {
 
 func TestFutureTimeout(t *testing.T) {
 	f := NewFuture()
-
-	assert.Equal(t, ErrFutureTimeout, f.Wait(10*time.Millisecond))
-}
-
-func TestFutureCall(t *testing.T) {
-	done := make(chan struct{})
-
-	f := NewFuture()
-
-	go func() {
-		err := f.Wait(10 * time.Millisecond)
-		assert.NoError(t, err)
-		close(done)
-	}()
-
-	f.Complete()
-
-	<-done
+	assert.Equal(t, ErrFutureTimeout, f.Wait(1*time.Millisecond))
 }
 
 func TestFutureBindBefore(t *testing.T) {

@@ -23,37 +23,23 @@ import (
 )
 
 func TestGenericFutureBind(t *testing.T) {
-	done := make(chan struct{})
+	f1 := newGenericFuture()
+	f1.Cancel()
 
-	f := newGenericFuture()
-	f.Cancel()
+	f2 := newGenericFuture()
+	go f2.Bind(f1)
 
-	ff := newGenericFuture()
-	go ff.Bind(f)
-
-	go func() {
-		err := ff.Wait(10 * time.Millisecond)
-		assert.Equal(t, tools.ErrFutureCanceled, err)
-		close(done)
-	}()
-
-	<-done
+	err := f2.Wait(10 * time.Millisecond)
+	assert.Equal(t, tools.ErrFutureCanceled, err)
 }
 
 func TestSubscribeFutureBind(t *testing.T) {
-	done := make(chan struct{})
+	f1 := newSubscribeFuture()
+	f1.Cancel()
 
-	f := newSubscribeFuture()
-	f.Cancel()
+	f2 := newSubscribeFuture()
+	go f2.Bind(f1)
 
-	ff := newSubscribeFuture()
-	go ff.Bind(f)
-
-	go func() {
-		err := ff.Wait(10 * time.Millisecond)
-		assert.Equal(t, tools.ErrFutureCanceled, err)
-		close(done)
-	}()
-
-	<-done
+	err := f2.Wait(10 * time.Millisecond)
+	assert.Equal(t, tools.ErrFutureCanceled, err)
 }
