@@ -70,3 +70,11 @@ func (q *MessageQueue) All() []*packet.Message {
 	q.list = nil
 	return cache
 }
+
+// Reset returns and removes all messages from the queue.
+func (q *MessageQueue) Reset() {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+
+	q.list = nil
+}

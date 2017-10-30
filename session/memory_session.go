@@ -140,6 +140,7 @@ func (s *MemorySession) Reset() error {
 	s.incStore.Reset()
 	s.outStore.Reset()
 	s.subscriptions.Reset()
+	s.offlineStore.Reset()
 	s.ClearWill()
 
 	return nil
