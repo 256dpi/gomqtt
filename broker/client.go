@@ -587,7 +587,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 	if c.session != nil && c.state.get() == clientConnected {
 		// get will
 		will, willErr := c.session.LookupWill()
-		if err == nil && willErr != nil {
+		if willErr != nil && err == nil {
 			event = SessionError
 			err = willErr
 		}
@@ -595,7 +595,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 		// publish will message
 		if will != nil {
 			willErr = c.handleMessage(will)
-			if err == nil {
+			if willErr != nil && err == nil {
 				event = BackendError
 				err = willErr
 			}
@@ -605,7 +605,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 	// remove client from the queue
 	if c.state.get() > clientConnecting {
 		termErr := c.engine.Backend.Terminate(c)
-		if err == nil && termErr != nil {
+		if termErr != nil && err == nil {
 			event = BackendError
 			err = termErr
 		}
@@ -613,7 +613,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 		// reset the session if clean is requested
 		if c.session != nil && c.cleanSession {
 			resetErr := c.session.Reset()
-			if err == nil && resetErr != nil {
+			if resetErr != nil && err == nil {
 				event = SessionError
 				err = resetErr
 			}
@@ -623,7 +623,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 	// ensure that the connection gets closed
 	if close {
 		closeErr := c.conn.Close()
-		if err == nil && closeErr != nil {
+		if closeErr != nil && err == nil {
 			event = TransportError
 			err = closeErr
 		}

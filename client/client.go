@@ -795,7 +795,7 @@ func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	// ensure that the connection gets closed
 	if doClose {
 		connErr := c.conn.Close()
-		if err == nil && !possiblyClosed {
+		if connErr != nil && err == nil && !possiblyClosed {
 			err = connErr
 		}
 	}
@@ -803,7 +803,7 @@ func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	// reset store
 	if c.clean {
 		sessErr := c.Session.Reset()
-		if err == nil {
+		if sessErr != nil && err == nil {
 			err = sessErr
 		}
 	}
