@@ -386,3 +386,13 @@ func (t *Tree) String() string {
 
 	return fmt.Sprintf("topic.Tree:%s", t.root.string(0))
 }
+
+func contains(list []interface{}, value interface{}) bool {
+	for _, v := range list {
+		if v == value {
+			return true
+		}
+	}
+
+	return false
+}
