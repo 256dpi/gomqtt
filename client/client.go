@@ -96,8 +96,8 @@ type Client struct {
 	// encountering an error while processing incoming packets.
 	Callback Callback
 
-	// The logger that is used to log write low level information like packets
-	// that have ben successfully sent and received and details about the
+	// The logger that is used to log low level information about packets
+	// that have been successfully sent and received and details about the
 	// automatic keep alive handler.
 	Logger Logger
 
@@ -765,17 +765,13 @@ func (c *Client) send(pkt packet.Packet, buffered bool) error {
 	// reset keep alive tracker
 	c.tracker.reset()
 
-	// prepare error
-	var err error
-
 	// send packet
+	var err error
 	if buffered {
 		err = c.conn.BufferedSend(pkt)
 	} else {
 		err = c.conn.Send(pkt)
 	}
-
-	// check error
 	if err != nil {
 		return err
 	}
@@ -820,7 +816,7 @@ func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	return err
 }
 
-// used for closing and cleaning up from inside internal goroutines
+// used for closing and cleaning up from internal goroutines
 func (c *Client) die(err error, close bool) error {
 	c.finish.Do(func() {
 		err = c.cleanup(err, close, false)
