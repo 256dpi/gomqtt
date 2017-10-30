@@ -61,6 +61,8 @@ var ErrFailedSubscription = errors.New("failed subscription")
 // means that waiting on a future will actually deadlock the client.
 type Callback func(msg *packet.Message, err error)
 
+// TODO: Allow callback to return an error to allow control of the ack process.
+
 // A Logger is a function called by the client to log activity.
 type Logger func(msg string)
 
@@ -587,6 +589,14 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 
 // handle an incoming PublishPacket
 func (c *Client) processPublish(publish *packet.PublishPacket) error {
+	// call callback for unacknowledged and directly acknowledged messages
+	if publish.Message.QOS <= 1 {
+		if c.Callback != nil {
+			c.Callback(&publish.Message, nil)
+		}
+	}
+
+	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		// prepare puback packet
 		puback := packet.NewPubackPacket()
@@ -599,6 +609,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 	}
 
+	// handle qos 2 flow
 	if publish.Message.QOS == 2 {
 		// store packet
 		err := c.Session.SavePacket(incoming, publish)
@@ -614,13 +625,6 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		err = c.send(pubrec, true)
 		if err != nil {
 			return c.die(err, false)
-		}
-	}
-
-	if publish.Message.QOS <= 1 {
-		// call callback
-		if c.Callback != nil {
-			c.Callback(&publish.Message, nil)
 		}
 	}
 
@@ -685,6 +689,11 @@ func (c *Client) processPubrel(packetID uint16) error {
 		return nil // ignore a wrongly sent PubrelPacket
 	}
 
+	// call callback
+	if c.Callback != nil {
+		c.Callback(&publish.Message, nil)
+	}
+
 	// prepare pubcomp packet
 	pubcomp := packet.NewPubcompPacket()
 	pubcomp.PacketID = publish.PacketID
@@ -699,11 +708,6 @@ func (c *Client) processPubrel(packetID uint16) error {
 	err = c.Session.DeletePacket(incoming, packetID)
 	if err != nil {
 		return c.die(err, true)
-	}
-
-	// call callback
-	if c.Callback != nil {
-		c.Callback(&publish.Message, nil)
 	}
 
 	return nil
