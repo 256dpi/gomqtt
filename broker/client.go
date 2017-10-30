@@ -378,6 +378,15 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 
 // handle an incoming PublishPacket
 func (c *Client) processPublish(publish *packet.PublishPacket) error {
+	// handle unacknowledged and directly acknowledged messages
+	if publish.Message.QOS <= 1 {
+		err := c.handleMessage(&publish.Message)
+		if err != nil {
+			return c.die(BackendError, err, true)
+		}
+	}
+
+	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		puback := packet.NewPubackPacket()
 		puback.PacketID = publish.PacketID
@@ -389,6 +398,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 	}
 
+	// handle qos 2 flow
 	if publish.Message.QOS == 2 {
 		// store packet
 		err := c.session.SavePacket(incoming, publish)
@@ -403,14 +413,6 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		err = c.send(pubrec, true)
 		if err != nil {
 			return c.die(TransportError, err, false)
-		}
-	}
-
-	if publish.Message.QOS <= 1 {
-		// publish packet to others
-		err := c.finishPublish(&publish.Message)
-		if err != nil {
-			return c.die(BackendError, err, true)
 		}
 	}
 
@@ -460,6 +462,13 @@ func (c *Client) processPubrel(packetID uint16) error {
 		return nil // ignore a wrongly sent PubrelPacket
 	}
 
+	// publish packet to others
+	err = c.handleMessage(&publish.Message)
+	if err != nil {
+		return c.die(BackendError, err, true)
+	}
+
+	// prepare pubcomp packet
 	pubcomp := packet.NewPubcompPacket()
 	pubcomp.PacketID = publish.PacketID
 
@@ -473,12 +482,6 @@ func (c *Client) processPubrel(packetID uint16) error {
 	err = c.session.DeletePacket(incoming, packetID)
 	if err != nil {
 		return c.die(SessionError, err, true)
-	}
-
-	// publish packet to others
-	err = c.finishPublish(&publish.Message)
-	if err != nil {
-		return c.die(BackendError, err, true)
 	}
 
 	return nil
@@ -548,7 +551,7 @@ func (c *Client) sender() error {
 
 /* helpers */
 
-func (c *Client) finishPublish(msg *packet.Message) error {
+func (c *Client) handleMessage(msg *packet.Message) error {
 	// check retain flag
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
