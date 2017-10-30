@@ -9,14 +9,13 @@ import (
 
 // A MemorySession stores packets in memory.
 type MemorySession struct {
-	counter  *IDCounter
-	incStore *PacketStore
-	outStore *PacketStore
-
+	counter       *IDCounter
+	incStore      *PacketStore
+	outStore      *PacketStore
 	subscriptions *tools.Tree
-
-	will      *packet.Message
-	willMutex sync.Mutex
+	offlineStore  *tools.Queue
+	willMessage   *packet.Message
+	willMutex     sync.Mutex
 }
 
 // NewMemorySession returns a new MemorySession.
@@ -26,6 +25,7 @@ func NewMemorySession() *MemorySession {
 		incStore:      NewPacketStore(),
 		outStore:      NewPacketStore(),
 		subscriptions: tools.NewTree(),
+		offlineStore:  tools.NewQueue(100),
 	}
 }
 
@@ -101,7 +101,7 @@ func (s *MemorySession) SaveWill(newWill *packet.Message) error {
 	s.willMutex.Lock()
 	defer s.willMutex.Unlock()
 
-	s.will = newWill
+	s.willMessage = newWill
 
 	return nil
 }
@@ -111,7 +111,7 @@ func (s *MemorySession) LookupWill() (*packet.Message, error) {
 	s.willMutex.Lock()
 	defer s.willMutex.Unlock()
 
-	return s.will, nil
+	return s.willMessage, nil
 }
 
 // ClearWill will remove the will message from the store.
@@ -119,9 +119,19 @@ func (s *MemorySession) ClearWill() error {
 	s.willMutex.Lock()
 	defer s.willMutex.Unlock()
 
-	s.will = nil
+	s.willMessage = nil
 
 	return nil
+}
+
+// Queue will enqueue a offline message.
+func (s *MemorySession) Queue(msg *packet.Message) {
+	s.offlineStore.Push(msg)
+}
+
+// Dequeue will dequeue the next offline message.
+func (s *MemorySession) Dequeue() *packet.Message {
+	return s.offlineStore.Pop()
 }
 
 // Reset will completely reset the session.

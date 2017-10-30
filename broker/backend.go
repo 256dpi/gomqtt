@@ -4,8 +4,67 @@ import (
 	"sync"
 
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/tools"
 )
+
+// A Session is used to persist incoming/outgoing packets, subscriptions and the
+// will.
+type Session interface {
+	// NextID should return the next id for outgoing packets.
+	NextID() packet.ID
+
+	// SavePacket should store a packet in the session. An eventual existing
+	// packet with the same id should be quietly overwritten.
+	SavePacket(session.Direction, packet.GenericPacket) error
+
+	// LookupPacket should retrieve a packet from the session using the packet id.
+	LookupPacket(session.Direction, packet.ID) (packet.GenericPacket, error)
+
+	// DeletePacket should remove a packet from the session. The method should
+	// not return an error if no packet with the specified id does exists.
+	DeletePacket(session.Direction, packet.ID) error
+
+	// AllPackets should return all packets currently saved in the session. This
+	// method is used to resend stored packets when the session is resumed.
+	AllPackets(session.Direction) ([]packet.GenericPacket, error)
+
+	// SaveSubscription should store the subscription in the session. An eventual
+	// subscription with the same topic should be quietly overwritten.
+	SaveSubscription(*packet.Subscription) error
+
+	// LookupSubscription should match a topic against the stored subscriptions
+	// and eventually return the first found subscription.
+	LookupSubscription(topic string) (*packet.Subscription, error)
+
+	// DeleteSubscription should remove the subscription from the session. The
+	// method should not return an error if no subscription with the specified
+	// topic does exist.
+	DeleteSubscription(topic string) error
+
+	// AllSubscriptions should return all subscriptions currently saved in the
+	// session. This method is used to restore a clients subscriptions when the
+	// session is resumed.
+	AllSubscriptions() ([]*packet.Subscription, error)
+
+	// SaveWill should store the will message.
+	SaveWill(msg *packet.Message) error
+
+	// LookupWill should retrieve the will message.
+	LookupWill() (*packet.Message, error)
+
+	// ClearWill should remove the will message from the store.
+	ClearWill() error
+
+	// Queue should enqueue the specified offline message.
+	Queue(msg *packet.Message)
+
+	// Dequeue should dequeue the next offline message.
+	Dequeue() *packet.Message
+
+	// Reset should completely reset the session.
+	Reset() error
+}
 
 // A Backend provides effective queuing functionality to a Broker and its Clients.
 type Backend interface {
@@ -71,7 +130,7 @@ type MemoryBackend struct {
 	retained     *tools.Tree
 	offlineQueue *tools.Tree
 
-	sessions      map[string]*MemorySession
+	sessions      map[string]Session
 	sessionsMutex sync.Mutex
 
 	clients map[string]*Client
@@ -83,7 +142,7 @@ func NewMemoryBackend() *MemoryBackend {
 		queue:        tools.NewTree(),
 		retained:     tools.NewTree(),
 		offlineQueue: tools.NewTree(),
-		sessions:     make(map[string]*MemorySession),
+		sessions:     make(map[string]Session),
 		clients:      make(map[string]*Client),
 	}
 }
@@ -114,7 +173,7 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
-		return NewMemorySession(), false, nil
+		return session.NewMemorySession(), false, nil
 	}
 
 	// close existing client
@@ -143,7 +202,7 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 	}
 
 	// create fresh session
-	s = NewMemorySession()
+	s = session.NewMemorySession()
 
 	// save session if not clean
 	if !client.CleanSession() {
@@ -156,21 +215,18 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 // QueueOffline will begin with forwarding all missed messages in a separate
 // goroutine.
 func (m *MemoryBackend) QueueOffline(client *Client) error {
-	// get client session
-	s := client.Session().(*MemorySession)
-
 	// send all missed messages in another goroutine
 	go func() {
 		for {
 			// get next missed message
-			msg := s.nextMissed()
+			msg := client.session.Dequeue()
 			if msg == nil {
 				return
 			}
 
 			// publish or add back to queue
 			if !client.Publish(msg) {
-				s.queue(msg)
+				client.session.Queue(msg)
 				return
 			}
 		}
@@ -236,7 +292,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 
 	// queue for offline clients
 	for _, v := range m.offlineQueue.Match(msg.Topic) {
-		v.(*MemorySession).queue(msg)
+		v.(Session).Queue(msg)
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-// Package implements session objects to be used with MQTT clients.
+// Package session implements session objects to be used with MQTT clients.
 package session
 
 // Direction denotes a packets direction.
