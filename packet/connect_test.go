@@ -105,7 +105,7 @@ func TestConnectPacketDecode2(t *testing.T) {
 func TestConnectPacketDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),
-		60, // <- wrong remaining length
+		60, // < wrong remaining length
 		0,  // Protocol String MSB
 		5,  // Protocol String LSB
 		'M', 'Q', 'T', 'T',
@@ -122,7 +122,7 @@ func TestConnectPacketDecodeError2(t *testing.T) {
 		byte(CONNECT << 4),
 		6,
 		0, // Protocol String MSB
-		5, // Protocol String LSB <- invalid size
+		5, // Protocol String LSB < invalid size
 		'M', 'Q', 'T', 'T',
 	}
 
@@ -139,7 +139,7 @@ func TestConnectPacketDecodeError3(t *testing.T) {
 		0, // Protocol String MSB
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
-		// Protocol Level <- missing
+		// Protocol Level < missing
 	}
 
 	pkt := NewConnectPacket()
@@ -154,7 +154,7 @@ func TestConnectPacketDecodeError4(t *testing.T) {
 		8,
 		0,                       // Protocol String MSB
 		5,                       // Protocol String LSB
-		'M', 'Q', 'T', 'T', 'X', // <- wrong protocol string
+		'M', 'Q', 'T', 'T', 'X', // < wrong protocol string
 		4,
 	}
 
@@ -171,7 +171,7 @@ func TestConnectPacketDecodeError5(t *testing.T) {
 		0, // Protocol String MSB
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
-		5, // Protocol Level <- wrong id
+		5, // Protocol Level < wrong id
 	}
 
 	pkt := NewConnectPacket()
@@ -188,7 +188,7 @@ func TestConnectPacketDecodeError6(t *testing.T) {
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4, // Protocol Level
-		// Connect Flags <- missing
+		// Connect Flags < missing
 	}
 
 	pkt := NewConnectPacket()
@@ -205,7 +205,7 @@ func TestConnectPacketDecodeError7(t *testing.T) {
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4, // Protocol Level
-		1, // Connect Flags <- reserved bit set to one
+		1, // Connect Flags < reserved bit set to one
 	}
 
 	pkt := NewConnectPacket()
@@ -222,7 +222,7 @@ func TestConnectPacketDecodeError8(t *testing.T) {
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4,  // Protocol Level
-		24, // Connect Flags <- invalid qos
+		24, // Connect Flags < invalid qos
 	}
 
 	pkt := NewConnectPacket()
@@ -239,7 +239,7 @@ func TestConnectPacketDecodeError9(t *testing.T) {
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4, // Protocol Level
-		8, // Connect Flags <- will flag set to zero but others not
+		8, // Connect Flags < will flag set to zero but others not
 	}
 
 	pkt := NewConnectPacket()
@@ -256,7 +256,7 @@ func TestConnectPacketDecodeError10(t *testing.T) {
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4,  // Protocol Level
-		64, // Connect Flags <- password flag set but not username
+		64, // Connect Flags < password flag set but not username
 	}
 
 	pkt := NewConnectPacket()
@@ -274,8 +274,8 @@ func TestConnectPacketDecodeError11(t *testing.T) {
 		'M', 'Q', 'T', 'T',
 		4, // Protocol Level
 		0, // Connect Flags
-		0, // Keep Alive MSB <- missing
-		// Keep Alive LSB <- missing
+		0, // Keep Alive MSB < missing
+		// Keep Alive LSB < missing
 	}
 
 	pkt := NewConnectPacket()
@@ -296,7 +296,7 @@ func TestConnectPacketDecodeError12(t *testing.T) {
 		0, // Keep Alive MSB
 		1, // Keep Alive LSB
 		0, // Client ID MSB
-		2, // Client ID LSB <- wrong size
+		2, // Client ID LSB < wrong size
 		'x',
 	}
 
@@ -314,7 +314,7 @@ func TestConnectPacketDecodeError13(t *testing.T) {
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
 		4, // Protocol Level
-		0, // Connect Flags <- clean session false
+		0, // Connect Flags < clean session false
 		0, // Keep Alive MSB
 		1, // Keep Alive LSB
 		0, // Client ID MSB
@@ -341,7 +341,7 @@ func TestConnectPacketDecodeError14(t *testing.T) {
 		0, // Client ID MSB
 		0, // Client ID LSB
 		0, // Will Topic MSB
-		1, // Will Topic LSB <- wrong size
+		1, // Will Topic LSB < wrong size
 	}
 
 	pkt := NewConnectPacket()
@@ -366,7 +366,7 @@ func TestConnectPacketDecodeError15(t *testing.T) {
 		0, // Will Topic MSB
 		0, // Will Topic LSB
 		0, // Will Payload MSB
-		1, // Will Payload LSB <- wrong size
+		1, // Will Payload LSB < wrong size
 	}
 
 	pkt := NewConnectPacket()
@@ -389,7 +389,7 @@ func TestConnectPacketDecodeError16(t *testing.T) {
 		0,   // Client ID MSB
 		0,   // Client ID LSB
 		0,   // Username MSB
-		1,   // Username LSB <- wrong size
+		1,   // Username LSB < wrong size
 	}
 
 	pkt := NewConnectPacket()
@@ -414,7 +414,7 @@ func TestConnectPacketDecodeError17(t *testing.T) {
 		0,   // Username MSB
 		0,   // Username LSB
 		0,   // Password MSB
-		1,   // Password LSB <- wrong size
+		1,   // Password LSB < wrong size
 	}
 
 	pkt := NewConnectPacket()
@@ -530,7 +530,7 @@ func TestConnectPacketEncode3(t *testing.T) {
 func TestConnectPacketEncodeError1(t *testing.T) {
 	pkt := NewConnectPacket()
 
-	dst := make([]byte, 4) // <- too small buffer
+	dst := make([]byte, 4) // < too small buffer
 	n, err := pkt.Encode(dst)
 
 	assert.Error(t, err)
@@ -541,7 +541,7 @@ func TestConnectPacketEncodeError2(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
 		Topic: "t",
-		QOS:   3, // <- wrong qos
+		QOS:   3, // < wrong qos
 	}
 
 	dst := make([]byte, pkt.Len())
@@ -553,7 +553,7 @@ func TestConnectPacketEncodeError2(t *testing.T) {
 
 func TestConnectPacketEncodeError3(t *testing.T) {
 	pkt := NewConnectPacket()
-	pkt.ClientID = string(make([]byte, 65536)) // <- too big
+	pkt.ClientID = string(make([]byte, 65536)) // < too big
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -565,7 +565,7 @@ func TestConnectPacketEncodeError3(t *testing.T) {
 func TestConnectPacketEncodeError4(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
-		Topic: string(make([]byte, 65536)), // <- too big
+		Topic: string(make([]byte, 65536)), // < too big
 	}
 
 	dst := make([]byte, pkt.Len())
@@ -579,7 +579,7 @@ func TestConnectPacketEncodeError5(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
 		Topic:   "t",
-		Payload: make([]byte, 65536), // <- too big
+		Payload: make([]byte, 65536), // < too big
 	}
 
 	dst := make([]byte, pkt.Len())
@@ -591,7 +591,7 @@ func TestConnectPacketEncodeError5(t *testing.T) {
 
 func TestConnectPacketEncodeError6(t *testing.T) {
 	pkt := NewConnectPacket()
-	pkt.Username = string(make([]byte, 65536)) // <- too big
+	pkt.Username = string(make([]byte, 65536)) // < too big
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -602,7 +602,7 @@ func TestConnectPacketEncodeError6(t *testing.T) {
 
 func TestConnectPacketEncodeError7(t *testing.T) {
 	pkt := NewConnectPacket()
-	pkt.Password = "p" // <- missing username
+	pkt.Password = "p" // < missing username
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -614,7 +614,7 @@ func TestConnectPacketEncodeError7(t *testing.T) {
 func TestConnectPacketEncodeError8(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Username = "u"
-	pkt.Password = string(make([]byte, 65536)) // <- too big
+	pkt.Password = string(make([]byte, 65536)) // < too big
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -626,7 +626,7 @@ func TestConnectPacketEncodeError8(t *testing.T) {
 func TestConnectPacketEncodeError9(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
-	// <- missing topic
+	// < missing topic
 	}
 
 	dst := make([]byte, pkt.Len())

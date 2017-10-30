@@ -24,7 +24,7 @@ func TestIdentifiedPacketDecode(t *testing.T) {
 func TestIdentifiedPacketDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
-		1, // <- wrong remaining length
+		1, // < wrong remaining length
 		0, // packet ID MSB
 		7, // packet ID LSB
 	}
@@ -40,7 +40,7 @@ func TestIdentifiedPacketDecodeError2(t *testing.T) {
 		byte(PUBACK << 4),
 		2,
 		7, // packet ID LSB
-		// <- insufficient bytes
+		// < insufficient bytes
 	}
 
 	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
@@ -54,7 +54,7 @@ func TestIdentifiedPacketDecodeError3(t *testing.T) {
 		byte(PUBACK << 4),
 		2,
 		0, // packet ID LSB
-		0, // packet ID MSB <- zero id
+		0, // packet ID MSB < zero id
 	}
 
 	n, pid, err := identifiedPacketDecode(pktBytes, PUBACK)
@@ -80,7 +80,7 @@ func TestIdentifiedPacketEncode(t *testing.T) {
 }
 
 func TestIdentifiedPacketEncodeError1(t *testing.T) {
-	dst := make([]byte, 3) // <- insufficient buffer
+	dst := make([]byte, 3) // < insufficient buffer
 	n, err := identifiedPacketEncode(dst, 7, PUBACK)
 
 	assert.Error(t, err)
@@ -89,7 +89,7 @@ func TestIdentifiedPacketEncodeError1(t *testing.T) {
 
 func TestIdentifiedPacketEncodeError2(t *testing.T) {
 	dst := make([]byte, identifiedPacketLen())
-	n, err := identifiedPacketEncode(dst, 0, PUBACK) // <- zero id
+	n, err := identifiedPacketEncode(dst, 0, PUBACK) // < zero id
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)

@@ -7,7 +7,7 @@ import (
 )
 
 func TestPacketHeaderDecodeError1(t *testing.T) {
-	buf := []byte{0x6f, 193, 2} // <- not enough bytes
+	buf := []byte{0x6f, 193, 2} // < not enough bytes
 
 	_, _, _, err := headerDecode(buf, 0)
 	assert.Error(t, err)
@@ -22,7 +22,7 @@ func TestPacketHeaderDecodeError2(t *testing.T) {
 }
 
 func TestPacketHeaderDecodeError3(t *testing.T) {
-	buf := []byte{0x62, 0xff} // <- invalid packet type
+	buf := []byte{0x62, 0xff} // < invalid packet type
 
 	_, _, _, err := headerDecode(buf, 0)
 	assert.Error(t, err)
@@ -39,7 +39,7 @@ func TestPacketHeaderDecodeError4(t *testing.T) {
 }
 
 func TestPacketHeaderDecodeError5(t *testing.T) {
-	buf := []byte{0x66, 0x00, 0x01} // <- wrong flags
+	buf := []byte{0x66, 0x00, 0x01} // < wrong flags
 
 	n, _, _, err := headerDecode(buf, 6)
 	assert.Error(t, err)
@@ -71,7 +71,7 @@ func TestPacketHeaderEncode2(t *testing.T) {
 func TestPacketHeaderEncodeError1(t *testing.T) {
 	headerBytes := []byte{0x00}
 
-	buf := make([]byte, 1) // <- wrong buffer size
+	buf := make([]byte, 1) // < wrong buffer size
 	n, err := headerEncode(buf, 0, 0, 2, PUBREL)
 
 	assert.Error(t, err)

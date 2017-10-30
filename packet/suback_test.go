@@ -37,7 +37,7 @@ func TestSubackPacketDecode(t *testing.T) {
 func TestSubackPacketDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBACK << 4),
-		1, // <- wrong remaining length
+		1, // < wrong remaining length
 		0, // packet ID MSB
 		7, // packet ID LSB
 		0, // return code 1
@@ -58,7 +58,7 @@ func TestSubackPacketDecodeError2(t *testing.T) {
 		0,    // return code 1
 		1,    // return code 2
 		2,    // return code 3
-		0x81, // <- wrong return code
+		0x81, // < wrong return code
 	}
 
 	pkt := NewSubackPacket()
@@ -70,7 +70,7 @@ func TestSubackPacketDecodeError2(t *testing.T) {
 func TestSubackPacketDecodeError3(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBACK << 4),
-		1, // <- wrong remaining length
+		1, // < wrong remaining length
 		0, // packet ID MSB
 	}
 
@@ -82,7 +82,7 @@ func TestSubackPacketDecodeError3(t *testing.T) {
 
 func TestSubackPacketDecodeError4(t *testing.T) {
 	pktBytes := []byte{
-		byte(PUBCOMP << 4), // <- wrong packet type
+		byte(PUBCOMP << 4), // < wrong packet type
 		3,
 		0, // packet ID MSB
 		7, // packet ID LSB
@@ -100,7 +100,7 @@ func TestSubackPacketDecodeError5(t *testing.T) {
 		byte(SUBACK << 4),
 		3,
 		0, // packet ID MSB
-		0, // packet ID LSB <- zero packet id
+		0, // packet ID LSB < zero packet id
 		0,
 	}
 
@@ -160,7 +160,7 @@ func TestSubackPacketEncodeError2(t *testing.T) {
 
 func TestSubackPacketEncodeError3(t *testing.T) {
 	pkt := NewSubackPacket()
-	pkt.ID = 0 // <- zero packet id
+	pkt.ID = 0 // < zero packet id
 	pkt.ReturnCodes = []byte{0x80}
 
 	dst := make([]byte, pkt.Len()-1)

@@ -22,7 +22,7 @@ func TestNakedPacketDecode(t *testing.T) {
 func TestNakedPacketDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(DISCONNECT << 4),
-		1, // <- wrong remaining length
+		1, // < wrong remaining length
 		0,
 	}
 

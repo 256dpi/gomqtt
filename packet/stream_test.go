@@ -27,7 +27,7 @@ func TestEncoderEncodeError(t *testing.T) {
 	enc := NewEncoder(buf)
 
 	pkt := NewConnackPacket()
-	pkt.ReturnCode = 11 // <- invalid return code
+	pkt.ReturnCode = 11 // < invalid return code
 
 	err := enc.Write(pkt)
 	assert.Error(t, err)
