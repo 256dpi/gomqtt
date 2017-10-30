@@ -24,6 +24,8 @@ const (
 	incoming = "in"
 )
 
+// TODO: Direction should be an enum.
+
 // A Session is used to persist incoming and outgoing packets.
 type Session interface {
 	// PacketID will return the next id for outgoing packets.
