@@ -7,9 +7,15 @@ import (
 	"github.com/256dpi/gomqtt/tools"
 )
 
+// Direction denotes a packets direction.
+type Direction int
+
 const (
-	outgoing = "out"
-	incoming = "in"
+	// Outgoing packets are being be sent.
+	Outgoing Direction = iota
+
+	// Incoming packets are being received.
+	Incoming
 )
 
 // A Session is used to persist incoming/outgoing packets, subscriptions and the
@@ -20,18 +26,18 @@ type Session interface {
 
 	// SavePacket should store a packet in the session. An eventual existing
 	// packet with the same id should be quietly overwritten.
-	SavePacket(direction string, pkt packet.GenericPacket) error
+	SavePacket(dir Direction, pkt packet.GenericPacket) error
 
 	// LookupPacket should retrieve a packet from the session using the packet id.
-	LookupPacket(direction string, id uint16) (packet.GenericPacket, error)
+	LookupPacket(dir Direction, id uint16) (packet.GenericPacket, error)
 
 	// DeletePacket should remove a packet from the session. The method should
 	// not return an error if no packet with the specified id does exists.
-	DeletePacket(direction string, id uint16) error
+	DeletePacket(dir Direction, id uint16) error
 
 	// AllPackets should return all packets currently saved in the session. This
 	// method is used to resend stored packets when the session is resumed.
-	AllPackets(direction string) ([]packet.GenericPacket, error)
+	AllPackets(dir Direction) ([]packet.GenericPacket, error)
 
 	// SaveSubscription should store the subscription in the session. An eventual
 	// subscription with the same topic should be quietly overwritten.
@@ -67,7 +73,8 @@ type Session interface {
 // A MemorySession stores packets, subscriptions and the will in memory.
 type MemorySession struct {
 	counter       *tools.Counter
-	store         *tools.Store
+	incStore      *tools.Store
+	outStore      *tools.Store
 	subscriptions *tools.Tree
 	offlineStore  *tools.Queue
 
@@ -79,7 +86,8 @@ type MemorySession struct {
 func NewMemorySession() *MemorySession {
 	return &MemorySession{
 		counter:       tools.NewCounter(),
-		store:         tools.NewStore(),
+		incStore:      tools.NewStore(),
+		outStore:      tools.NewStore(),
 		subscriptions: tools.NewTree(),
 		offlineStore:  tools.NewQueue(100),
 	}
@@ -92,26 +100,26 @@ func (s *MemorySession) PacketID() uint16 {
 
 // SavePacket will store a packet in the session. An eventual existing
 // packet with the same id gets quietly overwritten.
-func (s *MemorySession) SavePacket(direction string, pkt packet.GenericPacket) error {
-	s.store.Save(direction, pkt)
+func (s *MemorySession) SavePacket(dir Direction, pkt packet.GenericPacket) error {
+	s.storeForDirection(dir).Save(pkt)
 	return nil
 }
 
 // LookupPacket will retrieve a packet from the session using a packet id.
-func (s *MemorySession) LookupPacket(direction string, id uint16) (packet.GenericPacket, error) {
-	return s.store.Lookup(direction, id), nil
+func (s *MemorySession) LookupPacket(dir Direction, id uint16) (packet.GenericPacket, error) {
+	return s.storeForDirection(dir).Lookup(id), nil
 }
 
 // DeletePacket will remove a packet from the session. The method will not
 // return an error if no packet with the specified id exists.
-func (s *MemorySession) DeletePacket(direction string, id uint16) error {
-	s.store.Delete(direction, id)
+func (s *MemorySession) DeletePacket(dir Direction, id uint16) error {
+	s.storeForDirection(dir).Delete(id)
 	return nil
 }
 
 // AllPackets will return all packets currently saved in the session.
-func (s *MemorySession) AllPackets(direction string) ([]packet.GenericPacket, error) {
-	return s.store.All(direction), nil
+func (s *MemorySession) AllPackets(dir Direction) ([]packet.GenericPacket, error) {
+	return s.storeForDirection(dir).All(), nil
 }
 
 // SaveSubscription will store the subscription in the session. An eventual
@@ -183,7 +191,8 @@ func (s *MemorySession) ClearWill() error {
 // Reset will completely reset the session.
 func (s *MemorySession) Reset() error {
 	s.counter.Reset()
-	s.store.Reset()
+	s.incStore.Reset()
+	s.outStore.Reset()
 	s.subscriptions.Reset()
 	s.ClearWill()
 
@@ -198,4 +207,14 @@ func (s *MemorySession) queue(msg *packet.Message) {
 // called by the backend to retrieve all offline messages
 func (s *MemorySession) nextMissed() *packet.Message {
 	return s.offlineStore.Pop()
+}
+
+func (s *MemorySession) storeForDirection(dir Direction) *tools.Store {
+	if dir == Incoming {
+		return s.incStore
+	} else if dir == Outgoing {
+		return s.outStore
+	}
+
+	panic("unknown direction")
 }

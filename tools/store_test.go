@@ -13,32 +13,22 @@ func TestStore(t *testing.T) {
 	publish := packet.NewPublishPacket()
 	publish.PacketID = 1
 
-	pkt := store.Lookup("in", 1)
+	pkt := store.Lookup(1)
 	assert.Nil(t, pkt)
 
-	store.Save("in", publish)
+	store.Save(publish)
 
-	pkt = store.Lookup("in", 1)
+	pkt = store.Lookup(1)
 	assert.Equal(t, publish, pkt)
 
-	pkts := store.All("in")
+	pkts := store.All()
 	assert.Equal(t, 1, len(pkts))
 
-	store.Delete("in", 1)
+	store.Delete(1)
 
-	pkt = store.Lookup("in", 1)
+	pkt = store.Lookup(1)
 	assert.Nil(t, pkt)
 
-	pkts = store.All("in")
-	assert.Equal(t, 0, len(pkts))
-
-	store.Save("out", publish)
-
-	pkts = store.All("out")
-	assert.Equal(t, 1, len(pkts))
-
-	store.Reset()
-
-	pkts = store.All("out")
+	pkts = store.All()
 	assert.Equal(t, 0, len(pkts))
 }

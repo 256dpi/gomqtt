@@ -255,7 +255,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 
 	// store packet if at least qos 1
 	if msg.QOS > 0 {
-		err := c.Session.SavePacket(outgoing, publish)
+		err := c.Session.SavePacket(Outgoing, publish)
 		if err != nil {
 			return nil, c.cleanup(err, true, false)
 		}
@@ -492,7 +492,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	c.connectFuture.Complete()
 
 	// retrieve stored packets
-	packets, err := c.Session.AllPackets(outgoing)
+	packets, err := c.Session.AllPackets(Outgoing)
 	if err != nil {
 		return c.die(err, true, false)
 	}
@@ -519,7 +519,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 // handle an incoming SubackPacket
 func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(outgoing, suback.PacketID)
+	err := c.Session.DeletePacket(Outgoing, suback.PacketID)
 	if err != nil {
 		return err
 	}
@@ -553,7 +553,7 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 // handle an incoming UnsubackPacket
 func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(outgoing, unsuback.PacketID)
+	err := c.Session.DeletePacket(Outgoing, unsuback.PacketID)
 	if err != nil {
 		return err
 	}
@@ -601,7 +601,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// handle qos 2 flow
 	if publish.Message.QOS == 2 {
 		// store packet
-		err := c.Session.SavePacket(incoming, publish)
+		err := c.Session.SavePacket(Incoming, publish)
 		if err != nil {
 			return c.die(err, true, false)
 		}
@@ -623,7 +623,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(outgoing, packetID)
+	err := c.Session.DeletePacket(Outgoing, packetID)
 	if err != nil {
 		return err
 	}
@@ -650,7 +650,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 	pubrel.PacketID = packetID
 
 	// overwrite stored PublishPacket with PubrelPacket
-	err := c.Session.SavePacket(outgoing, pubrel)
+	err := c.Session.SavePacket(Outgoing, pubrel)
 	if err != nil {
 		return c.die(err, true, false)
 	}
@@ -667,7 +667,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
-	pkt, err := c.Session.LookupPacket(incoming, packetID)
+	pkt, err := c.Session.LookupPacket(Incoming, packetID)
 	if err != nil {
 		return c.die(err, true, false)
 	}
@@ -697,7 +697,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// remove packet from store
-	err = c.Session.DeletePacket(incoming, packetID)
+	err = c.Session.DeletePacket(Incoming, packetID)
 	if err != nil {
 		return c.die(err, true, false)
 	}

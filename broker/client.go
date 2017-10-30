@@ -239,7 +239,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.tomb.Go(c.sender)
 
 	// retrieve stored packets
-	packets, err := c.session.AllPackets(outgoing)
+	packets, err := c.session.AllPackets(Outgoing)
 	if err != nil {
 		return c.die(SessionError, err, true)
 	}
@@ -387,7 +387,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// handle qos 2 flow
 	if publish.Message.QOS == 2 {
 		// store packet
-		err := c.session.SavePacket(incoming, publish)
+		err := c.session.SavePacket(Incoming, publish)
 		if err != nil {
 			return c.die(SessionError, err, true)
 		}
@@ -408,7 +408,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	// remove packet from store
-	c.session.DeletePacket(outgoing, packetID)
+	c.session.DeletePacket(Outgoing, packetID)
 
 	return nil
 }
@@ -420,7 +420,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 	pubrel.PacketID = packetID
 
 	// overwrite stored PublishPacket with PubrelPacket
-	err := c.session.SavePacket(outgoing, pubrel)
+	err := c.session.SavePacket(Outgoing, pubrel)
 	if err != nil {
 		return c.die(SessionError, err, true)
 	}
@@ -437,7 +437,7 @@ func (c *Client) processPubrec(packetID uint16) error {
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
-	pkt, err := c.session.LookupPacket(incoming, packetID)
+	pkt, err := c.session.LookupPacket(Incoming, packetID)
 	if err != nil {
 		return c.die(SessionError, err, true)
 	}
@@ -465,7 +465,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// remove packet from store
-	err = c.session.DeletePacket(incoming, packetID)
+	err = c.session.DeletePacket(Incoming, packetID)
 	if err != nil {
 		return c.die(SessionError, err, true)
 	}
@@ -518,7 +518,7 @@ func (c *Client) sender() error {
 
 			// store packet if at least qos 1
 			if publish.Message.QOS > 0 {
-				err := c.session.SavePacket(outgoing, publish)
+				err := c.session.SavePacket(Outgoing, publish)
 				if err != nil {
 					return c.die(SessionError, err, true)
 				}

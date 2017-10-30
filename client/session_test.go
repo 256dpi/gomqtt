@@ -33,43 +33,43 @@ func TestMemorySessionPacketStore(t *testing.T) {
 	publish := packet.NewPublishPacket()
 	publish.PacketID = 1
 
-	pkt, err := session.LookupPacket(incoming, 1)
+	pkt, err := session.LookupPacket(Incoming, 1)
 	assert.NoError(t, err)
 	assert.Nil(t, pkt)
 
-	err = session.SavePacket(incoming, publish)
+	err = session.SavePacket(Incoming, publish)
 	assert.NoError(t, err)
 
-	pkt, err = session.LookupPacket(incoming, 1)
+	pkt, err = session.LookupPacket(Incoming, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, publish, pkt)
 
-	list, err := session.AllPackets(incoming)
+	list, err := session.AllPackets(Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(list))
 
-	err = session.DeletePacket(incoming, 1)
+	err = session.DeletePacket(Incoming, 1)
 	assert.NoError(t, err)
 
-	pkt, err = session.LookupPacket(incoming, 1)
+	pkt, err = session.LookupPacket(Incoming, 1)
 	assert.NoError(t, err)
 	assert.Nil(t, pkt)
 
-	list, err = session.AllPackets(incoming)
+	list, err = session.AllPackets(Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(list))
 
-	err = session.SavePacket(outgoing, publish)
+	err = session.SavePacket(Outgoing, publish)
 	assert.NoError(t, err)
 
-	list, err = session.AllPackets(outgoing)
+	list, err = session.AllPackets(Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(list))
 
 	err = session.Reset()
 	assert.NoError(t, err)
 
-	list, err = session.AllPackets(outgoing)
+	list, err = session.AllPackets(Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(list))
 }

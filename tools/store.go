@@ -1,7 +1,6 @@
 package tools
 
 import (
-	"strings"
 	"sync"
 
 	"github.com/256dpi/gomqtt/packet"
@@ -9,56 +8,54 @@ import (
 
 // The Store is a thread-safe packet store.
 type Store struct {
-	packets map[string]packet.GenericPacket
+	packets map[uint16]packet.GenericPacket
 	mutex   sync.Mutex
 }
 
 // NewStore returns a new Store.
 func NewStore() *Store {
 	return &Store{
-		packets: make(map[string]packet.GenericPacket),
+		packets: make(map[uint16]packet.GenericPacket),
 	}
 }
 
 // Save will store a packet in the store. An eventual existing packet with the
 // same id gets quietly overwritten.
-func (s *Store) Save(prefix string, pkt packet.GenericPacket) {
+func (s *Store) Save(pkt packet.GenericPacket) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	id, ok := packet.ID(pkt)
 	if ok {
-		s.packets[s.key(prefix, id)] = pkt
+		s.packets[id] = pkt
 	}
 }
 
 // Lookup will retrieve a packet from the store.
-func (s *Store) Lookup(prefix string, id uint16) packet.GenericPacket {
+func (s *Store) Lookup(id uint16) packet.GenericPacket {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	return s.packets[s.key(prefix, id)]
+	return s.packets[id]
 }
 
 // Delete will remove a packet from the store.
-func (s *Store) Delete(prefix string, id uint16) {
+func (s *Store) Delete(id uint16) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	delete(s.packets, s.key(prefix, id))
+	delete(s.packets, id)
 }
 
 // All will return all packets currently saved in the store.
-func (s *Store) All(prefix string) []packet.GenericPacket {
+func (s *Store) All() []packet.GenericPacket {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	var all []packet.GenericPacket
 
-	for key, pkt := range s.packets {
-		if strings.HasPrefix(key, prefix) {
-			all = append(all, pkt)
-		}
+	for _, pkt := range s.packets {
+		all = append(all, pkt)
 	}
 
 	return all
@@ -69,10 +66,5 @@ func (s *Store) Reset() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.packets = make(map[string]packet.GenericPacket)
-}
-
-// key generates a key from a prefix and a id
-func (s *Store) key(prefix string, id uint16) string {
-	return prefix + "-" + string(id)
+	s.packets = make(map[uint16]packet.GenericPacket)
 }
