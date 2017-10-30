@@ -11,7 +11,7 @@ import (
 )
 
 var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
-var topic = flag.String("topic", "speedtest", "the used topic")
+var topic = flag.String("topic", "speed-test", "the used topic")
 var qos = flag.Uint("qos", 0, "the qos level")
 var wait = flag.Int("wait", 0, "time to wait in milliseconds")
 
@@ -60,7 +60,7 @@ func main() {
 	for {
 		t1 := time.Now()
 
-		pf, err := cl.Publish(*topic, []byte("speedtest"), uint8(*qos), false)
+		pf, err := cl.Publish(*topic, []byte(*topic), uint8(*qos), false)
 		if err != nil {
 			panic(err)
 		}

@@ -176,17 +176,17 @@ func reporter() {
 	for {
 		time.Sleep(1 * time.Second)
 
-		_sent := atomic.LoadInt32(&sent)
-		_received := atomic.LoadInt32(&received)
-		_delta := atomic.LoadInt32(&delta)
-		_total := atomic.LoadInt32(&total)
+		curSent := atomic.LoadInt32(&sent)
+		curReceived := atomic.LoadInt32(&received)
+		curDelta := atomic.LoadInt32(&delta)
+		curTotal := atomic.LoadInt32(&total)
 
 		iterations++
 
-		fmt.Printf("Sent: %d msgs - ", _sent)
-		fmt.Printf("Received: %d msgs ", _received)
-		fmt.Printf("(Buffered: %d msgs) ", _delta)
-		fmt.Printf("(Average Throughput: %d msg/s)\n", _total/iterations)
+		fmt.Printf("Sent: %d msgs - ", curSent)
+		fmt.Printf("Received: %d msgs ", curReceived)
+		fmt.Printf("(Buffered: %d msgs) ", curDelta)
+		fmt.Printf("(Average Throughput: %d msg/s)\n", curTotal/iterations)
 
 		atomic.StoreInt32(&sent, 0)
 		atomic.StoreInt32(&received, 0)

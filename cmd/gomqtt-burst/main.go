@@ -9,7 +9,7 @@ import (
 )
 
 var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
-var topic = flag.String("topic", "speedtest", "the used topic")
+var topic = flag.String("topic", "burst", "the used topic")
 var qos = flag.Uint("qos", 0, "the qos level")
 var amount = flag.Int("n", 100, "the amount of messages")
 
@@ -39,7 +39,7 @@ func main() {
 	var futures []client.GenericFuture
 
 	for i := 0; i < *amount; i++ {
-		pf, err := cl.Publish(*topic, []byte("burst"), uint8(*qos), false)
+		pf, err := cl.Publish(*topic, []byte(*topic), uint8(*qos), false)
 		if err != nil {
 			panic(err)
 		}
