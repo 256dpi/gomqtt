@@ -75,8 +75,8 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	<-online
 
-	s.Subscribe("test", 0).Wait()
-	s.Publish("test", []byte("test"), 0, false)
+	assert.NoError(t, s.Subscribe("test", 0).Wait(1*time.Second))
+	assert.NoError(t, s.Publish("test", []byte("test"), 0, false).Wait(1*time.Second))
 
 	<-message
 
@@ -217,7 +217,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 
 	<-online
 
-	s.Unsubscribe("test").Wait()
+	assert.NoError(t, s.Unsubscribe("test").Wait(1*time.Second))
 
 	s.Stop(true)
 
@@ -321,8 +321,7 @@ func TestServiceFutureSurvival(t *testing.T) {
 
 	s.Start(config)
 
-	err := s.Publish("test", []byte("test"), 1, false).Wait()
-	assert.NoError(t, err)
+	assert.NoError(t, s.Publish("test", []byte("test"), 1, false).Wait(5*time.Second))
 
 	s.Stop(true)
 
