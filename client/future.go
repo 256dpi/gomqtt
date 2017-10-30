@@ -3,8 +3,8 @@ package client
 import (
 	"time"
 
+	"github.com/256dpi/gomqtt/client/future"
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/tools"
 )
 
 // A GenericFuture is returned by publish and unsubscribe methods.
@@ -37,12 +37,12 @@ type SubscribeFuture interface {
 }
 
 type genericFuture struct {
-	*tools.Future
+	*future.Future
 }
 
 func newGenericFuture() *genericFuture {
 	return &genericFuture{
-		Future: tools.NewFuture(),
+		Future: future.New(),
 	}
 }
 
@@ -51,7 +51,7 @@ func (f *genericFuture) Bind(f2 *genericFuture) {
 }
 
 type connectFuture struct {
-	*tools.Future
+	*future.Future
 
 	sessionPresent bool
 	returnCode     packet.ConnackCode
@@ -59,7 +59,7 @@ type connectFuture struct {
 
 func newConnectFuture() *connectFuture {
 	return &connectFuture{
-		Future: tools.NewFuture(),
+		Future: future.New(),
 	}
 }
 
@@ -72,14 +72,14 @@ func (f *connectFuture) ReturnCode() packet.ConnackCode {
 }
 
 type subscribeFuture struct {
-	*tools.Future
+	*future.Future
 
 	returnCodes []uint8
 }
 
 func newSubscribeFuture() *subscribeFuture {
 	return &subscribeFuture{
-		Future: tools.NewFuture(),
+		Future: future.New(),
 	}
 }
 

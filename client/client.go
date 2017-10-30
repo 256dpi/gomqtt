@@ -114,9 +114,9 @@ type Client struct {
 	// automatic keep alive handler.
 	Logger Logger
 
-	tracker *tracker
-	clean   bool
+	clean bool
 
+	tracker       *tracker
 	futureStore   *futureStore
 	connectFuture *connectFuture
 

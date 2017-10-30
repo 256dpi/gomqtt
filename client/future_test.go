@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/256dpi/gomqtt/tools"
+	"github.com/256dpi/gomqtt/client/future"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +16,7 @@ func TestGenericFutureBind(t *testing.T) {
 	go f2.Bind(f1)
 
 	err := f2.Wait(10 * time.Millisecond)
-	assert.Equal(t, tools.ErrFutureCanceled, err)
+	assert.Equal(t, future.ErrFutureCanceled, err)
 }
 
 func TestSubscribeFutureBind(t *testing.T) {
@@ -27,5 +27,5 @@ func TestSubscribeFutureBind(t *testing.T) {
 	go f2.Bind(f1)
 
 	err := f2.Wait(10 * time.Millisecond)
-	assert.Equal(t, tools.ErrFutureCanceled, err)
+	assert.Equal(t, future.ErrFutureCanceled, err)
 }

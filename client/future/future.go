@@ -1,4 +1,4 @@
-package tools
+package future
 
 import (
 	"errors"
@@ -18,8 +18,8 @@ type Future struct {
 	cancelChannel   chan struct{}
 }
 
-// NewFuture will return a new Future.
-func NewFuture() *Future {
+// New will return a new Future.
+func New() *Future {
 	return &Future{
 		completeChannel: make(chan struct{}),
 		cancelChannel:   make(chan struct{}),

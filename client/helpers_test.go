@@ -4,18 +4,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/256dpi/gomqtt/tools"
+	"github.com/256dpi/gomqtt/client/future"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFutureStore(t *testing.T) {
-	future := &connectFuture{}
+	connectFuture := &connectFuture{}
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
 
-	store.put(1, future)
-	assert.Equal(t, future, store.get(1))
+	store.put(1, connectFuture)
+	assert.Equal(t, connectFuture, store.get(1))
 	assert.Equal(t, 1, len(store.all()))
 
 	store.del(1)
@@ -24,18 +24,18 @@ func TestFutureStore(t *testing.T) {
 }
 
 func TestFutureStoreAwait(t *testing.T) {
-	future := newConnectFuture()
+	connectFuture := newConnectFuture()
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
 
-	store.put(1, future)
-	assert.Equal(t, future, store.get(1))
+	store.put(1, connectFuture)
+	assert.Equal(t, connectFuture, store.get(1))
 	assert.Equal(t, 1, len(store.all()))
 
 	go func() {
 		time.Sleep(1 * time.Millisecond)
-		future.Complete()
+		connectFuture.Complete()
 		store.del(1)
 	}()
 
@@ -44,17 +44,17 @@ func TestFutureStoreAwait(t *testing.T) {
 }
 
 func TestFutureStoreAwaitTimeout(t *testing.T) {
-	future := newConnectFuture()
+	connectFuture := newConnectFuture()
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
 
-	store.put(1, future)
-	assert.Equal(t, future, store.get(1))
+	store.put(1, connectFuture)
+	assert.Equal(t, connectFuture, store.get(1))
 	assert.Equal(t, 1, len(store.all()))
 
 	err := store.await(10 * time.Millisecond)
-	assert.Equal(t, tools.ErrFutureTimeout, err)
+	assert.Equal(t, future.ErrFutureTimeout, err)
 }
 
 func TestTracker(t *testing.T) {

@@ -1,4 +1,4 @@
-package tools
+package future
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestFutureCompleteBefore(t *testing.T) {
-	f := NewFuture()
+	f := New()
 	f.Complete()
 	assert.NoError(t, f.Wait(10*time.Millisecond))
 }
@@ -16,7 +16,7 @@ func TestFutureCompleteBefore(t *testing.T) {
 func TestFutureCompleteAfter(t *testing.T) {
 	done := make(chan struct{})
 
-	f := NewFuture()
+	f := New()
 
 	go func() {
 		assert.NoError(t, f.Wait(10*time.Millisecond))
@@ -29,7 +29,7 @@ func TestFutureCompleteAfter(t *testing.T) {
 }
 
 func TestFutureCancelBefore(t *testing.T) {
-	f := NewFuture()
+	f := New()
 	f.Cancel()
 	assert.Equal(t, ErrFutureCanceled, f.Wait(10*time.Millisecond))
 }
@@ -37,7 +37,7 @@ func TestFutureCancelBefore(t *testing.T) {
 func TestFutureCancelAfter(t *testing.T) {
 	done := make(chan struct{})
 
-	f := NewFuture()
+	f := New()
 
 	go func() {
 		assert.Equal(t, ErrFutureCanceled, f.Wait(10*time.Millisecond))
@@ -50,17 +50,17 @@ func TestFutureCancelAfter(t *testing.T) {
 }
 
 func TestFutureTimeout(t *testing.T) {
-	f := NewFuture()
+	f := New()
 	assert.Equal(t, ErrFutureTimeout, f.Wait(1*time.Millisecond))
 }
 
 func TestFutureBindBefore(t *testing.T) {
 	done := make(chan struct{})
 
-	f := NewFuture()
+	f := New()
 	f.Cancel()
 
-	ff := NewFuture()
+	ff := New()
 	go ff.Bind(f, nil)
 
 	go func() {
@@ -75,10 +75,10 @@ func TestFutureBindBefore(t *testing.T) {
 func TestFutureBindAfter(t *testing.T) {
 	done := make(chan struct{})
 
-	f := NewFuture()
+	f := New()
 	f.Cancel()
 
-	ff := NewFuture()
+	ff := New()
 
 	go func() {
 		err := ff.Wait(10 * time.Millisecond)
