@@ -9,7 +9,7 @@ import (
 
 func TestBrokerWithMemoryBackend(t *testing.T) {
 	backend := NewMemoryBackend()
-	backend.Logins = map[string]string{
+	backend.Credentials = map[string]string{
 		"allow": "allow",
 	}
 

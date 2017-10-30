@@ -65,7 +65,7 @@ type Backend interface {
 
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
-	Logins map[string]string
+	Credentials map[string]string
 
 	queue        *tools.Tree
 	retained     *tools.Tree
@@ -89,15 +89,15 @@ func NewMemoryBackend() *MemoryBackend {
 }
 
 // Authenticate authenticates a clients credentials by matching them to the
-// saved Logins map.
+// saved Credentials map.
 func (m *MemoryBackend) Authenticate(client *Client, user, password string) (bool, error) {
-	// allow all if there are no logins
-	if m.Logins == nil {
+	// allow all if there are no credentials
+	if m.Credentials == nil {
 		return true, nil
 	}
 
 	// check login
-	if pw, ok := m.Logins[user]; ok && pw == password {
+	if pw, ok := m.Credentials[user]; ok && pw == password {
 		return true, nil
 	}
 
