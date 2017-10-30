@@ -1,5 +1,4 @@
-// Package packet implements functionality for encoding and decoding MQTT 3.1.1
-// (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) packets.
+// Package packet implements functionality for encoding and decoding MQTT packets.
 package packet
 
 import "encoding/binary"

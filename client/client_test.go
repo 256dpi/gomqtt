@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/tools"
 	"github.com/256dpi/gomqtt/transport"
 	"github.com/stretchr/testify/assert"
@@ -395,11 +396,11 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 
 	<-done
 
-	in, err := c.Session.AllPackets(Incoming)
+	in, err := c.Session.AllPackets(session.Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(in))
 
-	out, err := c.Session.AllPackets(Outgoing)
+	out, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(out))
 }
@@ -471,11 +472,11 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 
 	<-done
 
-	in, err := c.Session.AllPackets(Incoming)
+	in, err := c.Session.AllPackets(session.Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(in))
 
-	out, err := c.Session.AllPackets(Outgoing)
+	out, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(out))
 }
@@ -557,11 +558,11 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 
 	<-done
 
-	in, err := c.Session.AllPackets(Incoming)
+	in, err := c.Session.AllPackets(session.Incoming)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(in))
 
-	out, err := c.Session.AllPackets(Outgoing)
+	out, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(out))
 }
@@ -647,7 +648,7 @@ func TestClientHardDisconnect(t *testing.T) {
 
 	<-done
 
-	list, err := c.Session.AllPackets(Outgoing)
+	list, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(list))
 }
@@ -697,7 +698,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 
 	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
-	list, err := c.Session.AllPackets(Outgoing)
+	list, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(list))
 }
@@ -776,7 +777,7 @@ func TestClientSessionResumption(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	c := New()
-	c.Session.SavePacket(Outgoing, publish1)
+	c.Session.SavePacket(session.Outgoing, publish1)
 	c.Session.NextID()
 	c.Callback = errorCallback(t)
 
@@ -797,7 +798,7 @@ func TestClientSessionResumption(t *testing.T) {
 
 	<-done
 
-	pkts, err := c.Session.AllPackets(Outgoing)
+	pkts, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
 }

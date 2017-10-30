@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/tools"
 	"github.com/jpillora/backoff"
 	"gopkg.in/tomb.v2"
@@ -131,7 +132,7 @@ func NewService(queueSize ...int) *Service {
 
 	return &Service{
 		state:             newState(serviceStopped),
-		Session:           NewMemorySession(),
+		Session:           session.NewMemorySession(),
 		MinReconnectDelay: 1 * time.Second,
 		MaxReconnectDelay: 32 * time.Second,
 		ConnectTimeout:    5 * time.Second,

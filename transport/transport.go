@@ -1,5 +1,4 @@
-// Package transport implements functionality for handling MQTT 3.1.1
-// (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) connections.
+// Package transport implements functionality for handling MQTT connections.
 package transport
 
 import "errors"

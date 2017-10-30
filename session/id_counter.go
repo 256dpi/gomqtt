@@ -1,5 +1,4 @@
-// Package tools implements utilities for building MQTT components.
-package tools
+package session
 
 import (
 	"sync"
@@ -7,21 +6,21 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 )
 
-// A Counter continuously counts packet ids.
-type Counter struct {
+// An IDCounter continuously counts packet ids.
+type IDCounter struct {
 	current packet.ID
 	mutex   sync.Mutex
 }
 
-// NewCounter returns a new counter.
-func NewCounter() *Counter {
-	return &Counter{
+// NewIDCounter returns a new counter.
+func NewIDCounter() *IDCounter {
+	return &IDCounter{
 		current: 1,
 	}
 }
 
-// Next will return the next id.
-func (c *Counter) Next() packet.ID {
+// NextID will return the next id.
+func (c *IDCounter) NextID() packet.ID {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -40,7 +39,7 @@ func (c *Counter) Next() packet.ID {
 }
 
 // Reset will reset the counter.
-func (c *Counter) Reset() {
+func (c *IDCounter) Reset() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 

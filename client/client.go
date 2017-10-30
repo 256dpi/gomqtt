@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/transport"
 	"gopkg.in/tomb.v2"
 )
@@ -61,6 +62,29 @@ const (
 	clientDisconnected
 )
 
+// A Session is used to persist incoming and outgoing packets.
+type Session interface {
+	// NextID will return the next id for outgoing packets.
+	NextID() packet.ID
+
+	// SavePacket will store a packet in the session. An eventual existing
+	// packet with the same id gets quietly overwritten.
+	SavePacket(session.Direction, packet.GenericPacket) error
+
+	// LookupPacket will retrieve a packet from the session using a packet id.
+	LookupPacket(session.Direction, packet.ID) (packet.GenericPacket, error)
+
+	// DeletePacket will remove a packet from the session. The method must not
+	// return an error if no packet with the specified id does exists.
+	DeletePacket(session.Direction, packet.ID) error
+
+	// AllPackets will return all packets currently saved in the session.
+	AllPackets(session.Direction) ([]packet.GenericPacket, error)
+
+	// Reset will completely reset the session.
+	Reset() error
+}
+
 // A Client connects to a broker and handles the transmission of packets. It will
 // automatically send PingreqPackets to keep the connection alive. Outgoing
 // publish related packets will be stored in session and resent when the
@@ -102,7 +126,7 @@ type Client struct {
 // New returns a new client that by default uses a fresh MemorySession.
 func New() *Client {
 	return &Client{
-		Session:     NewMemorySession(),
+		Session:     session.NewMemorySession(),
 		state:       newState(clientInitialized),
 		futureStore: newFutureStore(),
 	}
@@ -255,7 +279,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 
 	// store packet if at least qos 1
 	if msg.QOS > 0 {
-		err := c.Session.SavePacket(Outgoing, publish)
+		err := c.Session.SavePacket(session.Outgoing, publish)
 		if err != nil {
 			return nil, c.cleanup(err, true, false)
 		}
@@ -492,7 +516,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	c.connectFuture.Complete()
 
 	// retrieve stored packets
-	packets, err := c.Session.AllPackets(Outgoing)
+	packets, err := c.Session.AllPackets(session.Outgoing)
 	if err != nil {
 		return c.die(err, true, false)
 	}
@@ -519,7 +543,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 // handle an incoming SubackPacket
 func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(Outgoing, suback.ID)
+	err := c.Session.DeletePacket(session.Outgoing, suback.ID)
 	if err != nil {
 		return err
 	}
@@ -553,7 +577,7 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 // handle an incoming UnsubackPacket
 func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(Outgoing, unsuback.ID)
+	err := c.Session.DeletePacket(session.Outgoing, unsuback.ID)
 	if err != nil {
 		return err
 	}
@@ -601,7 +625,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// handle qos 2 flow
 	if publish.Message.QOS == 2 {
 		// store packet
-		err := c.Session.SavePacket(Incoming, publish)
+		err := c.Session.SavePacket(session.Incoming, publish)
 		if err != nil {
 			return c.die(err, true, false)
 		}
@@ -623,7 +647,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(Outgoing, id)
+	err := c.Session.DeletePacket(session.Outgoing, id)
 	if err != nil {
 		return err
 	}
@@ -650,7 +674,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 	pubrel.ID = id
 
 	// overwrite stored PublishPacket with PubrelPacket
-	err := c.Session.SavePacket(Outgoing, pubrel)
+	err := c.Session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
 		return c.die(err, true, false)
 	}
@@ -667,7 +691,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(id packet.ID) error {
 	// get packet from store
-	pkt, err := c.Session.LookupPacket(Incoming, id)
+	pkt, err := c.Session.LookupPacket(session.Incoming, id)
 	if err != nil {
 		return c.die(err, true, false)
 	}
@@ -697,7 +721,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	}
 
 	// remove packet from store
-	err = c.Session.DeletePacket(Incoming, id)
+	err = c.Session.DeletePacket(session.Incoming, id)
 	if err != nil {
 		return c.die(err, true, false)
 	}

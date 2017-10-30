@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/transport"
 	"gopkg.in/tomb.v2"
 )
@@ -239,7 +240,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.tomb.Go(c.sender)
 
 	// retrieve stored packets
-	packets, err := c.session.AllPackets(Outgoing)
+	packets, err := c.session.AllPackets(session.Outgoing)
 	if err != nil {
 		return c.die(SessionError, err, true)
 	}
@@ -387,7 +388,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// handle qos 2 flow
 	if publish.Message.QOS == 2 {
 		// store packet
-		err := c.session.SavePacket(Incoming, publish)
+		err := c.session.SavePacket(session.Incoming, publish)
 		if err != nil {
 			return c.die(SessionError, err, true)
 		}
@@ -408,7 +409,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// remove packet from store
-	c.session.DeletePacket(Outgoing, id)
+	c.session.DeletePacket(session.Outgoing, id)
 
 	return nil
 }
@@ -420,7 +421,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 	pubrel.ID = id
 
 	// overwrite stored PublishPacket with PubrelPacket
-	err := c.session.SavePacket(Outgoing, pubrel)
+	err := c.session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
 		return c.die(SessionError, err, true)
 	}
@@ -437,7 +438,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(id packet.ID) error {
 	// get packet from store
-	pkt, err := c.session.LookupPacket(Incoming, id)
+	pkt, err := c.session.LookupPacket(session.Incoming, id)
 	if err != nil {
 		return c.die(SessionError, err, true)
 	}
@@ -465,7 +466,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	}
 
 	// remove packet from store
-	err = c.session.DeletePacket(Incoming, id)
+	err = c.session.DeletePacket(session.Incoming, id)
 	if err != nil {
 		return c.die(SessionError, err, true)
 	}
@@ -518,7 +519,7 @@ func (c *Client) sender() error {
 
 			// store packet if at least qos 1
 			if publish.Message.QOS > 0 {
-				err := c.session.SavePacket(Outgoing, publish)
+				err := c.session.SavePacket(session.Outgoing, publish)
 				if err != nil {
 					return c.die(SessionError, err, true)
 				}

@@ -1,4 +1,4 @@
-package broker
+package session
 
 import (
 	"math"
@@ -44,9 +44,9 @@ func TestMemorySessionPacketStore(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, publish, pkt)
 
-	pkts, err := session.AllPackets(Incoming)
+	list, err := session.AllPackets(Incoming)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(pkts))
+	assert.Equal(t, 1, len(list))
 
 	err = session.DeletePacket(Incoming, 1)
 	assert.NoError(t, err)
@@ -55,23 +55,23 @@ func TestMemorySessionPacketStore(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, pkt)
 
-	pkts, err = session.AllPackets(Incoming)
+	list, err = session.AllPackets(Incoming)
 	assert.NoError(t, err)
-	assert.Equal(t, 0, len(pkts))
+	assert.Equal(t, 0, len(list))
 
 	err = session.SavePacket(Outgoing, publish)
 	assert.NoError(t, err)
 
-	pkts, err = session.AllPackets(Outgoing)
+	list, err = session.AllPackets(Outgoing)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(pkts))
+	assert.Equal(t, 1, len(list))
 
 	err = session.Reset()
 	assert.NoError(t, err)
 
-	pkts, err = session.AllPackets(Outgoing)
+	list, err = session.AllPackets(Outgoing)
 	assert.NoError(t, err)
-	assert.Equal(t, 0, len(pkts))
+	assert.Equal(t, 0, len(list))
 }
 
 func TestMemorySessionSubscriptionStore(t *testing.T) {
