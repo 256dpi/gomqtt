@@ -99,24 +99,24 @@ func Fuzz(data []byte) int {
 		return 1
 	}
 
-	// Detect packet.
+	// detect packet
 	_, mt := DetectPacket(data)
 
-	// For testing purposes we will not cancel
+	// for testing purposes we will not cancel
 	// on incomplete buffers
 
-	// Create a new packet
+	// create a new packet
 	pkt, err := mt.New()
 	if err != nil {
 		return 0
 	}
 
-	// Decode it from the buffer.
+	// decode it from the buffer.
 	_, err = pkt.Decode(data)
 	if err != nil {
 		return 0
 	}
 
-	// Everything was ok!
+	// everything was ok
 	return 1
 }
