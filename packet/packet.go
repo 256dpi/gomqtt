@@ -54,14 +54,12 @@ func DetectPacket(src []byte) (int, Type) {
 	t := Type(src[0] >> 4)
 
 	// get remaining length
-	_rl, n := binary.Uvarint(src[1:])
-	rl := int(_rl)
-
+	rl, n := binary.Uvarint(src[1:])
 	if n <= 0 {
 		return 0, 0
 	}
 
-	return 1 + n + rl, t
+	return 1 + n + int(rl), t
 }
 
 // ID checks the packets type and returns its PacketID and true, or if it does
