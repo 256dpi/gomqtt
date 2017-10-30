@@ -139,7 +139,12 @@ func TestMemorySessionSubscriptionStore(t *testing.T) {
 func TestMemorySessionWillStore(t *testing.T) {
 	session := NewMemorySession()
 
-	theWill := &packet.Message{"test", []byte("test"), 0, false}
+	theWill := &packet.Message{
+		Topic:   "test",
+		Payload: []byte("test"),
+		QOS:     0,
+		Retain:  false,
+	}
 
 	will, err := session.LookupWill()
 	assert.Nil(t, will)
