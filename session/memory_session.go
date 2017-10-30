@@ -13,7 +13,7 @@ type MemorySession struct {
 	incStore      *PacketStore
 	outStore      *PacketStore
 	subscriptions *tools.Tree
-	offlineStore  *tools.Queue
+	offlineStore  *MessageQueue
 	willMessage   *packet.Message
 	willMutex     sync.Mutex
 }
@@ -25,7 +25,7 @@ func NewMemorySession() *MemorySession {
 		incStore:      NewPacketStore(),
 		outStore:      NewPacketStore(),
 		subscriptions: tools.NewTree(),
-		offlineStore:  tools.NewQueue(100),
+		offlineStore:  NewMessageQueue(100),
 	}
 }
 

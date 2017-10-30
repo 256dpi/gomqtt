@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStore(t *testing.T) {
+func TestPacketStore(t *testing.T) {
 	store := NewPacketStore()
 
 	publish := packet.NewPublishPacket()

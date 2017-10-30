@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCounter(t *testing.T) {
+func TestIDCounter(t *testing.T) {
 	counter := NewIDCounter()
 
 	assert.Equal(t, packet.ID(1), counter.NextID())

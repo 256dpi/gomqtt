@@ -1,4 +1,4 @@
-package tools
+package session
 
 import (
 	"sync"
@@ -6,16 +6,16 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 )
 
-// NewQueue returns a new Queue. If maxSize is greater than zero the queue will
-// not grow more than the defined size.
-func NewQueue(maxSize int) *Queue {
-	return &Queue{
+// NewMessageQueue returns a new MessageQueue. If maxSize is greater than zero the
+// queue will not grow more than the defined size.
+func NewMessageQueue(maxSize int) *MessageQueue {
+	return &MessageQueue{
 		maxSize: maxSize,
 	}
 }
 
-// Queue is a basic FIFO queue for Messages.
-type Queue struct {
+// MessageQueue is a basic FIFO queue for messages.
+type MessageQueue struct {
 	maxSize int
 
 	list  []*packet.Message
@@ -23,7 +23,7 @@ type Queue struct {
 }
 
 // Push adds a message to the queue.
-func (q *Queue) Push(msg *packet.Message) {
+func (q *MessageQueue) Push(msg *packet.Message) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
@@ -35,7 +35,7 @@ func (q *Queue) Push(msg *packet.Message) {
 }
 
 // Pop removes and returns a message from the queue in first to last order.
-func (q *Queue) Pop() *packet.Message {
+func (q *MessageQueue) Pop() *packet.Message {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
@@ -46,7 +46,7 @@ func (q *Queue) Pop() *packet.Message {
 	return q.pop()
 }
 
-func (q *Queue) pop() *packet.Message {
+func (q *MessageQueue) pop() *packet.Message {
 	x := len(q.list) - 1
 	msg := q.list[x]
 	q.list = q.list[:x]
@@ -54,7 +54,7 @@ func (q *Queue) pop() *packet.Message {
 }
 
 // Len returns the length of the queue.
-func (q *Queue) Len() int {
+func (q *MessageQueue) Len() int {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
@@ -62,7 +62,7 @@ func (q *Queue) Len() int {
 }
 
 // All returns and removes all messages from the queue.
-func (q *Queue) All() []*packet.Message {
+func (q *MessageQueue) All() []*packet.Message {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 

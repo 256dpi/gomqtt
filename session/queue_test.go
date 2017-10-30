@@ -1,15 +1,16 @@
-package tools
+package session
 
 import (
+	"testing"
+
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
-func TestQueue(t *testing.T) {
+func TestMessageQueue(t *testing.T) {
 	msg := &packet.Message{}
 
-	queue := NewQueue(2)
+	queue := NewMessageQueue(2)
 	assert.Equal(t, 0, queue.Len())
 
 	queue.Push(msg)
