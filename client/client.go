@@ -118,7 +118,7 @@ type Client struct {
 	clean bool
 
 	tracker       *tracker
-	futureStore   *futureStore
+	futureStore   *future.Store
 	connectFuture *future.Future
 
 	tomb   tomb.Tomb
@@ -131,7 +131,7 @@ func New() *Client {
 	return &Client{
 		state:       clientInitialized,
 		Session:     session.NewMemorySession(),
-		futureStore: newFutureStore(),
+		futureStore: future.NewStore(),
 	}
 }
 
@@ -281,7 +281,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 	publishFuture := future.New()
 
 	// store future
-	c.futureStore.put(publish.ID, publishFuture)
+	c.futureStore.Put(publish.ID, publishFuture)
 
 	// store packet if at least qos 1
 	if msg.QOS > 0 {
@@ -300,7 +300,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 	// complete and remove qos 0 future
 	if msg.QOS == 0 {
 		publishFuture.Complete()
-		c.futureStore.del(publish.ID)
+		c.futureStore.Delete(publish.ID)
 	}
 
 	return publishFuture, nil
@@ -336,7 +336,7 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (Subscri
 	subFuture := future.New()
 
 	// store future
-	c.futureStore.put(subscribe.ID, subFuture)
+	c.futureStore.Put(subscribe.ID, subFuture)
 
 	// send packet
 	err := c.send(subscribe, true)
@@ -378,7 +378,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 	unsubscribeFuture := future.New()
 
 	// store future
-	c.futureStore.put(unsubscribe.ID, unsubscribeFuture)
+	c.futureStore.Put(unsubscribe.ID, unsubscribeFuture)
 
 	// send packet
 	err := c.send(unsubscribe, true)
@@ -405,7 +405,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 
 	// finish current packets
 	if len(timeout) > 0 {
-		c.futureStore.await(timeout[0])
+		c.futureStore.Await(timeout[0])
 	}
 
 	// set state
@@ -558,13 +558,13 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	}
 
 	// get future
-	subscribeFuture := c.futureStore.get(suback.ID)
+	subscribeFuture := c.futureStore.Get(suback.ID)
 	if subscribeFuture == nil {
 		return nil // ignore a wrongly sent SubackPacket
 	}
 
 	// remove future from store
-	c.futureStore.del(suback.ID)
+	c.futureStore.Delete(suback.ID)
 
 	// validate subscriptions if requested
 	if c.config.ValidateSubs {
@@ -592,7 +592,7 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	}
 
 	// get future
-	unsubscribeFuture := c.futureStore.get(unsuback.ID)
+	unsubscribeFuture := c.futureStore.Get(unsuback.ID)
 	if unsubscribeFuture == nil {
 		return nil // ignore a wrongly sent UnsubackPacket
 	}
@@ -601,7 +601,7 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	unsubscribeFuture.Complete()
 
 	// remove future from store
-	c.futureStore.del(unsuback.ID)
+	c.futureStore.Delete(unsuback.ID)
 
 	return nil
 }
@@ -662,7 +662,7 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	}
 
 	// get future
-	publishFuture := c.futureStore.get(id)
+	publishFuture := c.futureStore.Get(id)
 	if publishFuture == nil {
 		return nil // ignore a wrongly sent PubackPacket or PubcompPacket
 	}
@@ -671,7 +671,7 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	publishFuture.Complete()
 
 	// remove future from store
-	c.futureStore.del(id)
+	c.futureStore.Delete(id)
 
 	return nil
 }
@@ -830,7 +830,7 @@ func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	}
 
 	// cancel all futures
-	c.futureStore.clear()
+	c.futureStore.Clear()
 
 	return err
 }

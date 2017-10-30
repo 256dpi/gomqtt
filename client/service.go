@@ -117,7 +117,7 @@ type Service struct {
 	DisconnectTimeout time.Duration
 
 	commandQueue chan *command
-	futureStore  *futureStore
+	futureStore  *future.Store
 
 	mutex sync.Mutex
 	tomb  *tomb.Tomb
@@ -140,7 +140,7 @@ func NewService(queueSize ...int) *Service {
 		ConnectTimeout:    5 * time.Second,
 		DisconnectTimeout: 10 * time.Second,
 		commandQueue:      make(chan *command, qs),
-		futureStore:       newFutureStore(),
+		futureStore:       future.NewStore(),
 	}
 }
 
@@ -173,7 +173,7 @@ func (s *Service) Start(config *Config) {
 	}
 
 	// mark future store as protected
-	s.futureStore.protect(true)
+	s.futureStore.Protect(true)
 
 	// create new tomb
 	s.tomb = &tomb.Tomb{}
@@ -295,8 +295,8 @@ func (s *Service) Stop(clearFutures bool) {
 
 	// clear futures if requested
 	if clearFutures {
-		s.futureStore.protect(false)
-		s.futureStore.clear()
+		s.futureStore.Protect(false)
+		s.futureStore.Clear()
 	}
 
 	// set state
