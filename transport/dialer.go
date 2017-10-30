@@ -89,9 +89,9 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 			port = d.DefaultWSPort
 		}
 
-		url := fmt.Sprintf("ws://%s:%s%s", host, port, urlParts.Path)
+		wsURL := fmt.Sprintf("ws://%s:%s%s", host, port, urlParts.Path)
 
-		conn, _, err := d.webSocketDialer.Dial(url, d.RequestHeader)
+		conn, _, err := d.webSocketDialer.Dial(wsURL, d.RequestHeader)
 		if err != nil {
 			return nil, err
 		}
@@ -102,10 +102,10 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 			port = d.DefaultWSSPort
 		}
 
-		url := fmt.Sprintf("wss://%s:%s%s", host, port, urlParts.Path)
+		wsURL := fmt.Sprintf("wss://%s:%s%s", host, port, urlParts.Path)
 
 		d.webSocketDialer.TLSClientConfig = d.TLSConfig
-		conn, _, err := d.webSocketDialer.Dial(url, d.RequestHeader)
+		conn, _, err := d.webSocketDialer.Dial(wsURL, d.RequestHeader)
 		if err != nil {
 			return nil, err
 		}
