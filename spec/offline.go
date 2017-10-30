@@ -10,7 +10,7 @@ import (
 )
 
 // OfflineSubscriptionTest tests the broker for properly handling offline
-// subscritions.
+// subscriptions.
 func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos uint8) {
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false

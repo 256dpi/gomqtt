@@ -28,9 +28,9 @@ func TestQueue(t *testing.T) {
 	queue.Push(msg)
 	assert.Equal(t, 2, queue.Len())
 
-	msgs := queue.All()
+	messages := queue.All()
 	assert.Equal(t, 0, queue.Len())
-	assert.Equal(t, []*packet.Message{msg, msg}, msgs)
+	assert.Equal(t, []*packet.Message{msg, msg}, messages)
 
 	msg2 := queue.Pop()
 	assert.Nil(t, msg2)
