@@ -20,6 +20,9 @@ const (
 	QOSFailure = 0x80
 )
 
+// ID is the type used to store packet ids.
+type ID uint16
+
 // A GenericPacket is an MQTT control packet that can be encoded to a buffer or decoded
 // from a buffer.
 type GenericPacket interface {
@@ -64,7 +67,7 @@ func DetectPacket(src []byte) (int, Type) {
 
 // GetID checks the packets type and returns its PacketID and true, or if it
 // does not have a PacketID, zero and false.
-func GetID(packet GenericPacket) (uint16, bool) {
+func GetID(packet GenericPacket) (ID, bool) {
 	switch packet.Type() {
 	case PUBLISH:
 		return packet.(*PublishPacket).PacketID, true

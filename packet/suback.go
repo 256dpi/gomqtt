@@ -14,7 +14,7 @@ type SubackPacket struct {
 	ReturnCodes []uint8
 
 	// The packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 // NewSubackPacket creates a new SubackPacket.
@@ -68,7 +68,7 @@ func (sp *SubackPacket) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	sp.PacketID = binary.BigEndian.Uint16(src[total:])
+	sp.PacketID = ID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 
 	// check packet id
@@ -120,7 +120,7 @@ func (sp *SubackPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], sp.PacketID)
+	binary.BigEndian.PutUint16(dst[total:], uint16(sp.PacketID))
 	total += 2
 
 	// write return codes

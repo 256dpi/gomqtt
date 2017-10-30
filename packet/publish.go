@@ -18,7 +18,7 @@ type PublishPacket struct {
 	Dup bool
 
 	// The packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 // NewPublishPacket creates a new PublishPacket.
@@ -86,7 +86,7 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 		}
 
 		// read packet id
-		pp.PacketID = binary.BigEndian.Uint16(src[total:])
+		pp.PacketID = ID(binary.BigEndian.Uint16(src[total:]))
 		total += 2
 
 		// check packet id
@@ -164,7 +164,7 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 
 	// write packet id
 	if pp.Message.QOS != 0 {
-		binary.BigEndian.PutUint16(dst[total:], pp.PacketID)
+		binary.BigEndian.PutUint16(dst[total:], uint16(pp.PacketID))
 		total += 2
 	}
 

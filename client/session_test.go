@@ -11,20 +11,20 @@ import (
 func TestMemorySessionPacketID(t *testing.T) {
 	session := NewMemorySession()
 
-	assert.Equal(t, uint16(1), session.PacketID())
-	assert.Equal(t, uint16(2), session.PacketID())
+	assert.Equal(t, packet.ID(1), session.PacketID())
+	assert.Equal(t, packet.ID(2), session.PacketID())
 
 	for i := 0; i < math.MaxUint16-3; i++ {
 		session.PacketID()
 	}
 
-	assert.Equal(t, uint16(math.MaxUint16), session.PacketID())
-	assert.Equal(t, uint16(1), session.PacketID())
+	assert.Equal(t, packet.ID(math.MaxUint16), session.PacketID())
+	assert.Equal(t, packet.ID(1), session.PacketID())
 
 	err := session.Reset()
 	assert.NoError(t, err)
 
-	assert.Equal(t, uint16(1), session.PacketID())
+	assert.Equal(t, packet.ID(1), session.PacketID())
 }
 
 func TestMemorySessionPacketStore(t *testing.T) {

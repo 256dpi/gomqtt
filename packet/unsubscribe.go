@@ -12,7 +12,7 @@ type UnsubscribePacket struct {
 	Topics []string
 
 	// The packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 // NewUnsubscribePacket creates a new UnsubscribePacket.
@@ -61,7 +61,7 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	up.PacketID = binary.BigEndian.Uint16(src[total:])
+	up.PacketID = ID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 
 	// check packet id
@@ -117,7 +117,7 @@ func (up *UnsubscribePacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], up.PacketID)
+	binary.BigEndian.PutUint16(dst[total:], uint16(up.PacketID))
 	total += 2
 
 	for _, t := range up.Topics {

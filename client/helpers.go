@@ -3,6 +3,8 @@ package client
 import (
 	"sync"
 	"time"
+
+	"github.com/256dpi/gomqtt/packet"
 )
 
 /* futureStore */
@@ -12,18 +14,18 @@ type futureStore struct {
 	sync.RWMutex
 
 	protected bool
-	store     map[uint16]GenericFuture
+	store     map[packet.ID]GenericFuture
 }
 
 // newFutureStore will create a new futureStore
 func newFutureStore() *futureStore {
 	return &futureStore{
-		store: make(map[uint16]GenericFuture),
+		store: make(map[packet.ID]GenericFuture),
 	}
 }
 
 // put will save a GenericFuture to the store
-func (s *futureStore) put(id uint16, future GenericFuture) {
+func (s *futureStore) put(id packet.ID, future GenericFuture) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -31,7 +33,7 @@ func (s *futureStore) put(id uint16, future GenericFuture) {
 }
 
 // get will retrieve a GenericFuture from the store
-func (s *futureStore) get(id uint16) GenericFuture {
+func (s *futureStore) get(id packet.ID) GenericFuture {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -39,7 +41,7 @@ func (s *futureStore) get(id uint16) GenericFuture {
 }
 
 // del will remove a GenericFuture from the store
-func (s *futureStore) del(id uint16) {
+func (s *futureStore) del(id packet.ID) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -90,7 +92,7 @@ func (s *futureStore) clear() {
 		}
 	}
 
-	s.store = make(map[uint16]GenericFuture)
+	s.store = make(map[packet.ID]GenericFuture)
 }
 
 // will wait until all futures have completed and removed or timeout is reached

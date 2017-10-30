@@ -11,7 +11,7 @@ func identifiedPacketLen() int {
 }
 
 // Decodes an identified packet.
-func identifiedPacketDecode(src []byte, t Type) (int, uint16, error) {
+func identifiedPacketDecode(src []byte, t Type) (int, ID, error) {
 	total := 0
 
 	// decode header
@@ -35,15 +35,15 @@ func identifiedPacketDecode(src []byte, t Type) (int, uint16, error) {
 		return total, 0, fmt.Errorf("[%s] packet id must be grater than zero", t)
 	}
 
-	return total, packetID, nil
+	return total, ID(packetID), nil
 }
 
 // Encodes an identified packet.
-func identifiedPacketEncode(dst []byte, packetID uint16, t Type) (int, error) {
+func identifiedPacketEncode(dst []byte, id ID, t Type) (int, error) {
 	total := 0
 
 	// check packet id
-	if packetID == 0 {
+	if id == 0 {
 		return total, fmt.Errorf("[%s] packet id must be grater than zero", t)
 	}
 
@@ -55,7 +55,7 @@ func identifiedPacketEncode(dst []byte, packetID uint16, t Type) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], packetID)
+	binary.BigEndian.PutUint16(dst[total:], uint16(id))
 	total += 2
 
 	return total, nil
@@ -64,7 +64,7 @@ func identifiedPacketEncode(dst []byte, packetID uint16, t Type) (int, error) {
 // A PubackPacket is the response to a PublishPacket with QOS level 1.
 type PubackPacket struct {
 	// The packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 // NewPubackPacket creates a new PubackPacket.
@@ -106,7 +106,7 @@ func (pp *PubackPacket) String() string {
 // final packet of the QOS 2 protocol exchange.
 type PubcompPacket struct {
 	// The packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 var _ GenericPacket = (*PubcompPacket)(nil)
@@ -150,7 +150,7 @@ func (pp *PubcompPacket) String() string {
 // second packet of the QOS 2 protocol exchange.
 type PubrecPacket struct {
 	// Shared packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 // NewPubrecPacket creates a new PubrecPacket.
@@ -192,7 +192,7 @@ func (pp *PubrecPacket) String() string {
 // the QOS 2 protocol exchange.
 type PubrelPacket struct {
 	// Shared packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 var _ GenericPacket = (*PubrelPacket)(nil)
@@ -236,7 +236,7 @@ func (pp *PubrelPacket) String() string {
 // an UnsubscribePacket.
 type UnsubackPacket struct {
 	// Shared packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 // NewUnsubackPacket creates a new UnsubackPacket.

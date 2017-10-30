@@ -621,15 +621,15 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 }
 
 // handle an incoming PubackPacket or PubcompPacket
-func (c *Client) processPubackAndPubcomp(packetID uint16) error {
+func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(Outgoing, packetID)
+	err := c.Session.DeletePacket(Outgoing, id)
 	if err != nil {
 		return err
 	}
 
 	// get future
-	publishFuture, ok := c.futureStore.get(packetID).(*genericFuture)
+	publishFuture, ok := c.futureStore.get(id).(*genericFuture)
 	if !ok {
 		return nil // ignore a wrongly sent PubackPacket or PubcompPacket
 	}
@@ -638,16 +638,16 @@ func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	publishFuture.Complete()
 
 	// remove future from store
-	c.futureStore.del(packetID)
+	c.futureStore.del(id)
 
 	return nil
 }
 
 // handle an incoming PubrecPacket
-func (c *Client) processPubrec(packetID uint16) error {
+func (c *Client) processPubrec(id packet.ID) error {
 	// prepare pubrel packet
 	pubrel := packet.NewPubrelPacket()
-	pubrel.PacketID = packetID
+	pubrel.PacketID = id
 
 	// overwrite stored PublishPacket with PubrelPacket
 	err := c.Session.SavePacket(Outgoing, pubrel)
@@ -665,9 +665,9 @@ func (c *Client) processPubrec(packetID uint16) error {
 }
 
 // handle an incoming PubrelPacket
-func (c *Client) processPubrel(packetID uint16) error {
+func (c *Client) processPubrel(id packet.ID) error {
 	// get packet from store
-	pkt, err := c.Session.LookupPacket(Incoming, packetID)
+	pkt, err := c.Session.LookupPacket(Incoming, id)
 	if err != nil {
 		return c.die(err, true, false)
 	}
@@ -697,7 +697,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	}
 
 	// remove packet from store
-	err = c.Session.DeletePacket(Incoming, packetID)
+	err = c.Session.DeletePacket(Incoming, id)
 	if err != nil {
 		return c.die(err, true, false)
 	}

@@ -22,26 +22,26 @@ const (
 // will.
 type Session interface {
 	// PacketID should return the next id for outgoing packets.
-	PacketID() uint16
+	PacketID() packet.ID
 
 	// SavePacket should store a packet in the session. An eventual existing
 	// packet with the same id should be quietly overwritten.
-	SavePacket(dir Direction, pkt packet.GenericPacket) error
+	SavePacket(Direction, packet.GenericPacket) error
 
 	// LookupPacket should retrieve a packet from the session using the packet id.
-	LookupPacket(dir Direction, id uint16) (packet.GenericPacket, error)
+	LookupPacket(Direction, packet.ID) (packet.GenericPacket, error)
 
 	// DeletePacket should remove a packet from the session. The method should
 	// not return an error if no packet with the specified id does exists.
-	DeletePacket(dir Direction, id uint16) error
+	DeletePacket(Direction, packet.ID) error
 
 	// AllPackets should return all packets currently saved in the session. This
 	// method is used to resend stored packets when the session is resumed.
-	AllPackets(dir Direction) ([]packet.GenericPacket, error)
+	AllPackets(Direction) ([]packet.GenericPacket, error)
 
 	// SaveSubscription should store the subscription in the session. An eventual
 	// subscription with the same topic should be quietly overwritten.
-	SaveSubscription(sub *packet.Subscription) error
+	SaveSubscription(*packet.Subscription) error
 
 	// LookupSubscription should match a topic against the stored subscriptions
 	// and eventually return the first found subscription.
@@ -94,7 +94,7 @@ func NewMemorySession() *MemorySession {
 }
 
 // PacketID will return the next id for outgoing packets.
-func (s *MemorySession) PacketID() uint16 {
+func (s *MemorySession) PacketID() packet.ID {
 	return s.counter.Next()
 }
 
@@ -106,13 +106,13 @@ func (s *MemorySession) SavePacket(dir Direction, pkt packet.GenericPacket) erro
 }
 
 // LookupPacket will retrieve a packet from the session using a packet id.
-func (s *MemorySession) LookupPacket(dir Direction, id uint16) (packet.GenericPacket, error) {
+func (s *MemorySession) LookupPacket(dir Direction, id packet.ID) (packet.GenericPacket, error) {
 	return s.storeForDirection(dir).Lookup(id), nil
 }
 
 // DeletePacket will remove a packet from the session. The method will not
 // return an error if no packet with the specified id exists.
-func (s *MemorySession) DeletePacket(dir Direction, id uint16) error {
+func (s *MemorySession) DeletePacket(dir Direction, id packet.ID) error {
 	s.storeForDirection(dir).Delete(id)
 	return nil
 }

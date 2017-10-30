@@ -8,14 +8,14 @@ import (
 
 // The Store is a thread-safe packet store.
 type Store struct {
-	packets map[uint16]packet.GenericPacket
+	packets map[packet.ID]packet.GenericPacket
 	mutex   sync.Mutex
 }
 
 // NewStore returns a new Store.
 func NewStore() *Store {
 	return &Store{
-		packets: make(map[uint16]packet.GenericPacket),
+		packets: make(map[packet.ID]packet.GenericPacket),
 	}
 }
 
@@ -32,7 +32,7 @@ func (s *Store) Save(pkt packet.GenericPacket) {
 }
 
 // Lookup will retrieve a packet from the store.
-func (s *Store) Lookup(id uint16) packet.GenericPacket {
+func (s *Store) Lookup(id packet.ID) packet.GenericPacket {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -40,7 +40,7 @@ func (s *Store) Lookup(id uint16) packet.GenericPacket {
 }
 
 // Delete will remove a packet from the store.
-func (s *Store) Delete(id uint16) {
+func (s *Store) Delete(id packet.ID) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -66,5 +66,5 @@ func (s *Store) Reset() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.packets = make(map[uint16]packet.GenericPacket)
+	s.packets = make(map[packet.ID]packet.GenericPacket)
 }

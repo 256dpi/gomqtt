@@ -27,7 +27,7 @@ type SubscribePacket struct {
 	Subscriptions []Subscription
 
 	// The packet identifier.
-	PacketID uint16
+	PacketID ID
 }
 
 // NewSubscribePacket creates a new SUBSCRIBE packet.
@@ -76,7 +76,7 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	sp.PacketID = binary.BigEndian.Uint16(src[total:])
+	sp.PacketID = ID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 
 	// check packet id
@@ -137,8 +137,8 @@ func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
 		return total, err
 	}
 
-	// write packet it
-	binary.BigEndian.PutUint16(dst[total:], sp.PacketID)
+	// write packet id
+	binary.BigEndian.PutUint16(dst[total:], uint16(sp.PacketID))
 	total += 2
 
 	for _, t := range sp.Subscriptions {

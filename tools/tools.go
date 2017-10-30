@@ -2,11 +2,15 @@
 // (http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) components.
 package tools
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/256dpi/gomqtt/packet"
+)
 
 // A Counter continuously counts packet ids.
 type Counter struct {
-	current uint16
+	current packet.ID
 	mutex   sync.Mutex
 }
 
@@ -18,7 +22,7 @@ func NewCounter() *Counter {
 }
 
 // Next will return the next id.
-func (c *Counter) Next() uint16 {
+func (c *Counter) Next() packet.ID {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
