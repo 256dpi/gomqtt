@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	clientConnecting byte = iota
+	clientConnecting uint32 = iota
 	clientConnected
 	clientDisconnected
 )
@@ -24,7 +25,9 @@ var ErrExpectedConnect = errors.New("expected a ConnectPacket as the first packe
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
-	Context *Context
+	state uint32
+
+	Context sync.Map
 
 	engine *Engine
 	conn   transport.Conn
@@ -33,8 +36,7 @@ type Client struct {
 	cleanSession bool
 	session      Session
 
-	out   chan *packet.Message
-	state *state
+	out chan *packet.Message
 
 	tomb   tomb.Tomb
 	mutex  sync.Mutex
@@ -44,11 +46,10 @@ type Client struct {
 // newClient takes over a connection and returns a Client
 func newClient(engine *Engine, conn transport.Conn) *Client {
 	c := &Client{
-		Context: NewContext(),
-		engine:  engine,
-		conn:    conn,
-		out:     make(chan *packet.Message),
-		state:   newState(clientConnecting),
+		state:  clientConnecting,
+		engine: engine,
+		conn:   conn,
+		out:    make(chan *packet.Message),
 	}
 
 	// start processor
@@ -94,7 +95,7 @@ func (c *Client) Publish(msg *packet.Message) bool {
 func (c *Client) Close(clean bool) {
 	if clean {
 		// mark client as cleanly disconnected
-		c.state.set(clientDisconnected)
+		atomic.StoreUint32(&c.state, clientDisconnected)
 	}
 
 	// close underlying connection (triggers cleanup)
@@ -189,7 +190,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// set state
-	c.state.set(clientConnected)
+	atomic.StoreUint32(&c.state, clientConnected)
 
 	// add client to the brokers list
 	c.engine.add(c)
@@ -571,7 +572,7 @@ func (c *Client) handleMessage(msg *packet.Message) error {
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error) {
 	// check session
-	if c.session != nil && c.state.get() == clientConnected {
+	if c.session != nil && atomic.LoadUint32(&c.state) == clientConnected {
 		// get will
 		will, willErr := c.session.LookupWill()
 		if willErr != nil && err == nil {
@@ -590,7 +591,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 	}
 
 	// remove client from the queue
-	if c.state.get() > clientConnecting {
+	if atomic.LoadUint32(&c.state) > clientConnecting {
 		termErr := c.engine.Backend.Terminate(c)
 		if termErr != nil && err == nil {
 			event = BackendError
@@ -619,7 +620,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 	c.log(LostConnection, c, nil, nil, nil)
 
 	// remove client from the brokers list if added
-	if c.state.get() > clientConnecting {
+	if atomic.LoadUint32(&c.state) > clientConnecting {
 		c.engine.remove(c)
 	}
 

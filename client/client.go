@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"sync"
 	"time"
+	"sync/atomic"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
@@ -54,7 +55,7 @@ type Callback func(msg *packet.Message, err error) error
 type Logger func(msg string)
 
 const (
-	clientInitialized byte = iota
+	clientInitialized uint32 = iota
 	clientConnecting
 	clientConnacked
 	clientConnected
@@ -96,6 +97,8 @@ type Session interface {
 // messages might get completed after connecting without triggering any futures
 // to complete.
 type Client struct {
+	state uint32
+
 	config *Config
 	conn   transport.Conn
 
@@ -111,7 +114,6 @@ type Client struct {
 	// automatic keep alive handler.
 	Logger Logger
 
-	state   *state
 	tracker *tracker
 	clean   bool
 
@@ -126,8 +128,8 @@ type Client struct {
 // New returns a new client that by default uses a fresh MemorySession.
 func New() *Client {
 	return &Client{
+		state:       clientInitialized,
 		Session:     session.NewMemorySession(),
-		state:       newState(clientInitialized),
 		futureStore: newFutureStore(),
 	}
 }
@@ -147,7 +149,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	c.config = config
 
 	// check if already connecting
-	if c.state.get() >= clientConnecting {
+	if atomic.LoadUint32(&c.state) >= clientConnecting {
 		return nil, ErrClientAlreadyConnecting
 	}
 
@@ -185,7 +187,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	}
 
 	// set to connecting as from this point the client cannot be reused
-	c.state.set(clientConnecting)
+	atomic.StoreUint32(&c.state, clientConnecting)
 
 	// from now on the connection has been used and we have to close the
 	// connection and cleanup on any subsequent error
@@ -258,7 +260,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != clientConnected {
+	if atomic.LoadUint32(&c.state) != clientConnected {
 		return nil, ErrClientNotConnected
 	}
 
@@ -317,7 +319,7 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (Subscri
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != clientConnected {
+	if atomic.LoadUint32(&c.state) != clientConnected {
 		return nil, ErrClientNotConnected
 	}
 
@@ -356,7 +358,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != clientConnected {
+	if atomic.LoadUint32(&c.state) != clientConnected {
 		return nil, ErrClientNotConnected
 	}
 
@@ -390,7 +392,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() != clientConnected {
+	if atomic.LoadUint32(&c.state) != clientConnected {
 		return ErrClientNotConnected
 	}
 
@@ -400,7 +402,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	}
 
 	// set state
-	c.state.set(clientDisconnecting)
+	atomic.StoreUint32(&c.state, clientDisconnecting)
 
 	// send disconnect packet
 	err := c.send(packet.NewDisconnectPacket(), false)
@@ -415,7 +417,7 @@ func (c *Client) Close() error {
 	defer c.mutex.Unlock()
 
 	// check if connected
-	if c.state.get() < clientConnecting {
+	if atomic.LoadUint32(&c.state) < clientConnecting {
 		return ErrClientNotConnected
 	}
 
@@ -433,7 +435,7 @@ func (c *Client) processor() error {
 		pkt, err := c.conn.Receive()
 		if err != nil {
 			// if we are disconnecting we can ignore the error
-			if c.state.get() >= clientDisconnecting {
+			if atomic.LoadUint32(&c.state) >= clientDisconnecting {
 				return nil
 			}
 
@@ -491,12 +493,12 @@ func (c *Client) processor() error {
 // handle the incoming ConnackPacket
 func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// check state
-	if c.state.get() != clientConnecting {
+	if atomic.LoadUint32(&c.state) != clientConnecting {
 		return nil // ignore wrongly sent ConnackPacket
 	}
 
 	// set state
-	c.state.set(clientConnacked)
+	atomic.StoreUint32(&c.state, clientConnacked)
 
 	// fill future
 	c.connectFuture.sessionPresent = connack.SessionPresent
@@ -510,7 +512,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	}
 
 	// set state to connected
-	c.state.set(clientConnected)
+	atomic.StoreUint32(&c.state, clientConnected)
 
 	// complete future
 	c.connectFuture.Complete()
@@ -797,12 +799,12 @@ func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	// cancel connect future if appropriate
-	if c.state.get() < clientConnacked && c.connectFuture != nil {
+	if atomic.LoadUint32(&c.state) < clientConnacked && c.connectFuture != nil {
 		c.connectFuture.Cancel()
 	}
 
 	// set state
-	c.state.set(clientDisconnected)
+	atomic.StoreUint32(&c.state, clientDisconnected)
 
 	// ensure that the connection gets closed
 	if doClose {

@@ -116,38 +116,6 @@ func (s *futureStore) await(timeout time.Duration) error {
 	}
 }
 
-/* state */
-
-// a state keeps track of the clients current state
-type state struct {
-	sync.Mutex
-
-	current byte
-}
-
-// create new state
-func newState(init byte) *state {
-	return &state{
-		current: init,
-	}
-}
-
-// set will change to the specified state
-func (s *state) set(state byte) {
-	s.Lock()
-	defer s.Unlock()
-
-	s.current = state
-}
-
-// get will retrieve the current state
-func (s *state) get() byte {
-	s.Lock()
-	defer s.Unlock()
-
-	return s.current
-}
-
 /* tracker */
 
 // a tracker keeps track of keep alive intervals

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"sync/atomic"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
@@ -60,7 +61,7 @@ type ErrorCallback func(error)
 type OfflineCallback func()
 
 const (
-	serviceStarted byte = iota
+	serviceStarted uint32 = iota
 	serviceStopped
 )
 
@@ -73,9 +74,10 @@ const (
 // Note: If clean session is false and there are packets in the store, messages
 // might get completed after starting without triggering any futures to complete.
 type Service struct {
+	state uint32
+
 	config *Config
 
-	state   *state
 	backoff *backoff.Backoff
 
 	// The session used by the client to store unacknowledged packets.
@@ -131,7 +133,7 @@ func NewService(queueSize ...int) *Service {
 	}
 
 	return &Service{
-		state:             newState(serviceStopped),
+		state:             serviceStopped,
 		Session:           session.NewMemorySession(),
 		MinReconnectDelay: 1 * time.Second,
 		MaxReconnectDelay: 32 * time.Second,
@@ -153,12 +155,12 @@ func (s *Service) Start(config *Config) {
 	defer s.mutex.Unlock()
 
 	// return if already started
-	if s.state.get() == serviceStarted {
+	if atomic.LoadUint32(&s.state) == serviceStarted {
 		return
 	}
 
 	// set state
-	s.state.set(serviceStarted)
+	atomic.StoreUint32(&s.state, serviceStarted)
 
 	// save config
 	s.config = config
@@ -283,7 +285,7 @@ func (s *Service) Stop(clearFutures bool) {
 	defer s.mutex.Unlock()
 
 	// return if service not started
-	if s.state.get() != serviceStarted {
+	if atomic.LoadUint32(&s.state) != serviceStarted {
 		return
 	}
 
@@ -298,7 +300,7 @@ func (s *Service) Stop(clearFutures bool) {
 	}
 
 	// set state
-	s.state.set(serviceStopped)
+	atomic.StoreUint32(&s.state, serviceStopped)
 }
 
 // the supervised reconnect loop

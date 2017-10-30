@@ -733,7 +733,7 @@ func TestClientInvalidPackets(t *testing.T) {
 	err := c.processConnack(packet.NewConnackPacket())
 	assert.NoError(t, err)
 
-	c.state.set(clientConnecting)
+	c.state = clientConnecting
 
 	// missing future
 	err = c.processSuback(packet.NewSubackPacket())

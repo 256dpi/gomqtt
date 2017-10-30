@@ -1,11 +1,14 @@
 package broker
 
 import (
+	"net"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
+	"github.com/stretchr/testify/assert"
 	"gopkg.in/tomb.v2"
 )
 
@@ -205,4 +208,40 @@ func (e *Engine) remove(client *Client) {
 
 	// decrement wait group
 	e.waitGroup.Add(-1)
+}
+
+// Run runs the passed engine on a random available port and returns a channel
+// that can be closed to shutdown the engine. This method is intended to be used
+// in testing scenarios.
+func Run(t *testing.T, engine *Engine, protocol string) (string, chan struct{}, chan struct{}) {
+	server, err := transport.Launch(protocol + "://localhost:0")
+	assert.NoError(t, err)
+
+	quit := make(chan struct{})
+	done := make(chan struct{})
+
+	engine.Accept(server)
+
+	go func() {
+		<-quit
+
+		// check for active clients
+		time.Sleep(100 * time.Millisecond)
+		assert.Equal(t, 0, len(engine.Clients()))
+
+		// errors from close are ignored
+		server.Close()
+
+		// close broker
+		engine.Close()
+
+		// wait for proper closing
+		engine.Wait(10 * time.Millisecond)
+
+		close(done)
+	}()
+
+	_, port, _ := net.SplitHostPort(server.Addr().String())
+
+	return port, quit, done
 }
