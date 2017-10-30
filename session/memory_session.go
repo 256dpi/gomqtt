@@ -9,11 +9,11 @@ import (
 
 // A MemorySession stores packets in memory.
 type MemorySession struct {
-	counter       *IDCounter
-	incStore      *PacketStore
-	outStore      *PacketStore
+	counter       *tools.IDCounter
+	incStore      *tools.PacketStore
+	outStore      *tools.PacketStore
 	subscriptions *tools.Tree
-	offlineStore  *MessageQueue
+	offlineStore  *tools.MessageQueue
 	willMessage   *packet.Message
 	willMutex     sync.Mutex
 }
@@ -21,11 +21,11 @@ type MemorySession struct {
 // NewMemorySession returns a new MemorySession.
 func NewMemorySession() *MemorySession {
 	return &MemorySession{
-		counter:       NewIDCounter(),
-		incStore:      NewPacketStore(),
-		outStore:      NewPacketStore(),
+		counter:       tools.NewIDCounter(),
+		incStore:      tools.NewPacketStore(),
+		outStore:      tools.NewPacketStore(),
 		subscriptions: tools.NewTree(),
-		offlineStore:  NewMessageQueue(100),
+		offlineStore:  tools.NewMessageQueue(100),
 	}
 }
 
@@ -145,7 +145,7 @@ func (s *MemorySession) Reset() error {
 	return nil
 }
 
-func (s *MemorySession) storeForDirection(dir Direction) *PacketStore {
+func (s *MemorySession) storeForDirection(dir Direction) *tools.PacketStore {
 	if dir == Incoming {
 		return s.incStore
 	} else if dir == Outgoing {
