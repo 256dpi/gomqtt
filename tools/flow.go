@@ -226,6 +226,8 @@ func (f *Flow) Test(conn Conn) error {
 	return nil
 }
 
+// TestAsync starts the flow on the given Conn and reports to the specified test
+// asynchronously.
 func (f *Flow) TestAsync(conn Conn, timeout time.Duration) <-chan error {
 	errCh := make(chan error, 1)
 	go func() {
