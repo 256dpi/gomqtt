@@ -124,13 +124,13 @@ func (s *MemorySession) ClearWill() error {
 	return nil
 }
 
-// Queue will enqueue a offline message.
-func (s *MemorySession) Queue(msg *packet.Message) {
+// QueueOffline will enqueue a offline message.
+func (s *MemorySession) QueueOffline(msg *packet.Message) {
 	s.offlineStore.Push(msg)
 }
 
-// Dequeue will dequeue the next offline message.
-func (s *MemorySession) Dequeue() *packet.Message {
+// DequeueOffline will dequeue the next offline message.
+func (s *MemorySession) DequeueOffline() *packet.Message {
 	return s.offlineStore.Pop()
 }
 

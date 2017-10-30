@@ -48,7 +48,7 @@ type Session interface {
 	AllSubscriptions() ([]*packet.Subscription, error)
 
 	// SaveWill should store the will message.
-	SaveWill(msg *packet.Message) error
+	SaveWill(*packet.Message) error
 
 	// LookupWill should retrieve the will message.
 	LookupWill() (*packet.Message, error)
@@ -56,11 +56,11 @@ type Session interface {
 	// ClearWill should remove the will message from the store.
 	ClearWill() error
 
-	// Queue should enqueue the specified offline message.
-	Queue(msg *packet.Message)
+	// QueueOffline should enqueue the specified offline message.
+	QueueOffline(*packet.Message)
 
-	// Dequeue should dequeue the next offline message.
-	Dequeue() *packet.Message
+	// DequeueOffline should dequeue the next offline message.
+	DequeueOffline() *packet.Message
 
 	// Reset should completely reset the session.
 	Reset() error
@@ -219,14 +219,14 @@ func (m *MemoryBackend) QueueOffline(client *Client) error {
 	go func() {
 		for {
 			// get next missed message
-			msg := client.session.Dequeue()
+			msg := client.session.DequeueOffline()
 			if msg == nil {
 				return
 			}
 
 			// publish or add back to queue
 			if !client.Publish(msg) {
-				client.session.Queue(msg)
+				client.session.QueueOffline(msg)
 				return
 			}
 		}
@@ -292,7 +292,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 
 	// queue for offline clients
 	for _, v := range m.offlineQueue.Match(msg.Topic) {
-		v.(Session).Queue(msg)
+		v.(Session).QueueOffline(msg)
 	}
 
 	return nil
