@@ -244,14 +244,14 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 
 	// set packet id
 	if msg.QOS > 0 {
-		publish.PacketID = c.Session.PacketID()
+		publish.ID = c.Session.NextID()
 	}
 
 	// create future
 	future := newGenericFuture()
 
 	// store future
-	c.futureStore.put(publish.PacketID, future)
+	c.futureStore.put(publish.ID, future)
 
 	// store packet if at least qos 1
 	if msg.QOS > 0 {
@@ -270,7 +270,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 	// complete and remove qos 0 future
 	if msg.QOS == 0 {
 		future.Complete()
-		c.futureStore.del(publish.PacketID)
+		c.futureStore.del(publish.ID)
 	}
 
 	return future, nil
@@ -299,14 +299,14 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (Subscri
 
 	// allocate packet
 	subscribe := packet.NewSubscribePacket()
-	subscribe.PacketID = c.Session.PacketID()
+	subscribe.ID = c.Session.NextID()
 	subscribe.Subscriptions = subscriptions
 
 	// create future
 	future := newSubscribeFuture()
 
 	// store future
-	c.futureStore.put(subscribe.PacketID, future)
+	c.futureStore.put(subscribe.ID, future)
 
 	// send packet
 	err := c.send(subscribe, true)
@@ -339,13 +339,13 @@ func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 	// allocate packet
 	unsubscribe := packet.NewUnsubscribePacket()
 	unsubscribe.Topics = topics
-	unsubscribe.PacketID = c.Session.PacketID()
+	unsubscribe.ID = c.Session.NextID()
 
 	// create future
 	future := newGenericFuture()
 
 	// store future
-	c.futureStore.put(unsubscribe.PacketID, future)
+	c.futureStore.put(unsubscribe.ID, future)
 
 	// send packet
 	err := c.send(unsubscribe, true)
@@ -448,13 +448,13 @@ func (c *Client) processor() error {
 		case *packet.PublishPacket:
 			err = c.processPublish(typedPkt)
 		case *packet.PubackPacket:
-			err = c.processPubackAndPubcomp(typedPkt.PacketID)
+			err = c.processPubackAndPubcomp(typedPkt.ID)
 		case *packet.PubcompPacket:
-			err = c.processPubackAndPubcomp(typedPkt.PacketID)
+			err = c.processPubackAndPubcomp(typedPkt.ID)
 		case *packet.PubrecPacket:
-			err = c.processPubrec(typedPkt.PacketID)
+			err = c.processPubrec(typedPkt.ID)
 		case *packet.PubrelPacket:
-			err = c.processPubrel(typedPkt.PacketID)
+			err = c.processPubrel(typedPkt.ID)
 		}
 
 		// return eventual error
@@ -519,19 +519,19 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 // handle an incoming SubackPacket
 func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(Outgoing, suback.PacketID)
+	err := c.Session.DeletePacket(Outgoing, suback.ID)
 	if err != nil {
 		return err
 	}
 
 	// get future
-	subscribeFuture, ok := c.futureStore.get(suback.PacketID).(*subscribeFuture)
+	subscribeFuture, ok := c.futureStore.get(suback.ID).(*subscribeFuture)
 	if !ok {
 		return nil // ignore a wrongly sent SubackPacket
 	}
 
 	// remove future from store
-	c.futureStore.del(suback.PacketID)
+	c.futureStore.del(suback.ID)
 
 	// validate subscriptions if requested
 	if c.config.ValidateSubs {
@@ -553,13 +553,13 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 // handle an incoming UnsubackPacket
 func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// remove packet from store
-	err := c.Session.DeletePacket(Outgoing, unsuback.PacketID)
+	err := c.Session.DeletePacket(Outgoing, unsuback.ID)
 	if err != nil {
 		return err
 	}
 
 	// get future
-	unsubscribeFuture, ok := c.futureStore.get(unsuback.PacketID).(*genericFuture)
+	unsubscribeFuture, ok := c.futureStore.get(unsuback.ID).(*genericFuture)
 	if !ok {
 		return nil // ignore a wrongly sent UnsubackPacket
 	}
@@ -568,7 +568,7 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	unsubscribeFuture.Complete()
 
 	// remove future from store
-	c.futureStore.del(unsuback.PacketID)
+	c.futureStore.del(unsuback.ID)
 
 	return nil
 }
@@ -589,7 +589,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	if publish.Message.QOS == 1 {
 		// prepare puback packet
 		puback := packet.NewPubackPacket()
-		puback.PacketID = publish.PacketID
+		puback.ID = publish.ID
 
 		// acknowledge qos 1 publish
 		err := c.send(puback, true)
@@ -608,7 +608,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 		// prepare pubrec packet
 		pubrec := packet.NewPubrecPacket()
-		pubrec.PacketID = publish.PacketID
+		pubrec.ID = publish.ID
 
 		// acknowledge qos 2 publish
 		err = c.send(pubrec, true)
@@ -647,7 +647,7 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 func (c *Client) processPubrec(id packet.ID) error {
 	// prepare pubrel packet
 	pubrel := packet.NewPubrelPacket()
-	pubrel.PacketID = id
+	pubrel.ID = id
 
 	// overwrite stored PublishPacket with PubrelPacket
 	err := c.Session.SavePacket(Outgoing, pubrel)
@@ -688,7 +688,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 
 	// prepare pubcomp packet
 	pubcomp := packet.NewPubcompPacket()
-	pubcomp.PacketID = publish.PacketID
+	pubcomp.ID = publish.ID
 
 	// acknowledge PublishPacket
 	err = c.send(pubcomp, true)

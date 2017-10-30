@@ -14,7 +14,7 @@ func TestSubscribeInterface(t *testing.T) {
 	}
 
 	assert.Equal(t, pkt.Type(), SUBSCRIBE)
-	assert.Equal(t, "<SubscribePacket PacketID=0 Subscriptions=[\"foo\"=>0, \"bar\"=>1]>", pkt.String())
+	assert.Equal(t, "<SubscribePacket ID=0 Subscriptions=[\"foo\"=>0, \"bar\"=>1]>", pkt.String())
 }
 
 func TestSubscribePacketDecode(t *testing.T) {
@@ -165,7 +165,7 @@ func TestSubscribePacketEncode(t *testing.T) {
 	}
 
 	pkt := NewSubscribePacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
 		{"gomqtt", 0},
 		{"/a/b/#/c", 1},
@@ -182,7 +182,7 @@ func TestSubscribePacketEncode(t *testing.T) {
 
 func TestSubscribePacketEncodeError1(t *testing.T) {
 	pkt := NewSubscribePacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 
 	dst := make([]byte, 1) // <- too small
 	_, err := pkt.Encode(dst)
@@ -192,7 +192,7 @@ func TestSubscribePacketEncodeError1(t *testing.T) {
 
 func TestSubscribePacketEncodeError2(t *testing.T) {
 	pkt := NewSubscribePacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
 		{string(make([]byte, 65536)), 0}, // too big
 	}
@@ -205,7 +205,7 @@ func TestSubscribePacketEncodeError2(t *testing.T) {
 
 func TestSubscribePacketEncodeError3(t *testing.T) {
 	pkt := NewSubscribePacket()
-	pkt.PacketID = 0 // <- zero packet id
+	pkt.ID = 0 // <- zero packet id
 
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)
@@ -254,7 +254,7 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkSubscribeEncode(b *testing.B) {
 	pkt := NewSubscribePacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
 		{"t", 0},
 	}

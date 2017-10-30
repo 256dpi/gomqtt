@@ -65,28 +65,28 @@ func DetectPacket(src []byte) (int, Type) {
 	return 1 + n + int(rl), t
 }
 
-// GetID checks the packets type and returns its PacketID and true, or if it
-// does not have a PacketID, zero and false.
+// GetID checks the packets type and returns its ID and true, or if it
+// does not have a ID, zero and false.
 func GetID(packet GenericPacket) (ID, bool) {
 	switch packet.Type() {
 	case PUBLISH:
-		return packet.(*PublishPacket).PacketID, true
+		return packet.(*PublishPacket).ID, true
 	case PUBACK:
-		return packet.(*PubackPacket).PacketID, true
+		return packet.(*PubackPacket).ID, true
 	case PUBREC:
-		return packet.(*PubrecPacket).PacketID, true
+		return packet.(*PubrecPacket).ID, true
 	case PUBREL:
-		return packet.(*PubrelPacket).PacketID, true
+		return packet.(*PubrelPacket).ID, true
 	case PUBCOMP:
-		return packet.(*PubcompPacket).PacketID, true
+		return packet.(*PubcompPacket).ID, true
 	case SUBSCRIBE:
-		return packet.(*SubscribePacket).PacketID, true
+		return packet.(*SubscribePacket).ID, true
 	case SUBACK:
-		return packet.(*SubackPacket).PacketID, true
+		return packet.(*SubackPacket).ID, true
 	case UNSUBSCRIBE:
-		return packet.(*UnsubscribePacket).PacketID, true
+		return packet.(*UnsubscribePacket).ID, true
 	case UNSUBACK:
-		return packet.(*UnsubackPacket).PacketID, true
+		return packet.(*UnsubackPacket).ID, true
 	}
 
 	return 0, false

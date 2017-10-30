@@ -136,7 +136,7 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 	}
 
 	pkt := NewUnsubscribePacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.Topics = []string{
 		"gomqtt",
 		"/a/b/#/c",
@@ -153,7 +153,7 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 
 func TestUnsubscribePacketEncodeError1(t *testing.T) {
 	pkt := NewUnsubscribePacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.Topics = []string{"gomqtt"}
 
 	dst := make([]byte, 1) // <- too small
@@ -165,7 +165,7 @@ func TestUnsubscribePacketEncodeError1(t *testing.T) {
 
 func TestUnsubscribePacketEncodeError2(t *testing.T) {
 	pkt := NewUnsubscribePacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.Topics = []string{string(make([]byte, 65536))}
 
 	dst := make([]byte, pkt.Len())
@@ -177,7 +177,7 @@ func TestUnsubscribePacketEncodeError2(t *testing.T) {
 
 func TestUnsubscribePacketEncodeError3(t *testing.T) {
 	pkt := NewUnsubscribePacket()
-	pkt.PacketID = 0 // <- zero packet id
+	pkt.ID = 0 // <- zero packet id
 
 	dst := make([]byte, pkt.Len())
 	n, err := pkt.Encode(dst)
@@ -226,7 +226,7 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
 	pkt := NewUnsubscribePacket()
-	pkt.PacketID = 1
+	pkt.ID = 1
 	pkt.Topics = []string{"t"}
 
 	buf := make([]byte, pkt.Len())

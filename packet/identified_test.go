@@ -124,7 +124,7 @@ func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkIdentifiedPacketEncode(b *testing.B) {
 	pkt := &PubackPacket{}
-	pkt.PacketID = 1
+	pkt.ID = 1
 
 	buf := make([]byte, pkt.Len())
 
@@ -155,7 +155,7 @@ func BenchmarkIdentifiedPacketDecode(b *testing.B) {
 }
 
 func testIdentifiedPacketImplementation(t *testing.T, pkt GenericPacket) {
-	assert.Equal(t, fmt.Sprintf("<%sPacket PacketID=1>", pkt.Type().String()), pkt.String())
+	assert.Equal(t, fmt.Sprintf("<%sPacket ID=1>", pkt.Type().String()), pkt.String())
 
 	buf := make([]byte, pkt.Len())
 	n, err := pkt.Encode(buf)
@@ -169,35 +169,35 @@ func testIdentifiedPacketImplementation(t *testing.T, pkt GenericPacket) {
 
 func TestPubackImplementation(t *testing.T) {
 	pkt := NewPubackPacket()
-	pkt.PacketID = 1
+	pkt.ID = 1
 
 	testIdentifiedPacketImplementation(t, pkt)
 }
 
 func TestPubcompImplementation(t *testing.T) {
 	pkt := NewPubcompPacket()
-	pkt.PacketID = 1
+	pkt.ID = 1
 
 	testIdentifiedPacketImplementation(t, pkt)
 }
 
 func TestPubrecImplementation(t *testing.T) {
 	pkt := NewPubrecPacket()
-	pkt.PacketID = 1
+	pkt.ID = 1
 
 	testIdentifiedPacketImplementation(t, pkt)
 }
 
 func TestPubrelImplementation(t *testing.T) {
 	pkt := NewPubrelPacket()
-	pkt.PacketID = 1
+	pkt.ID = 1
 
 	testIdentifiedPacketImplementation(t, pkt)
 }
 
 func TestUnsubackImplementation(t *testing.T) {
 	pkt := NewUnsubackPacket()
-	pkt.PacketID = 1
+	pkt.ID = 1
 
 	testIdentifiedPacketImplementation(t, pkt)
 }

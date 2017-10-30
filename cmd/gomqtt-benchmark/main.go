@@ -111,7 +111,7 @@ func consumer(id string) {
 	conn := connection(name)
 
 	subscribe := packet.NewSubscribePacket()
-	subscribe.PacketID = 1
+	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: id, QOS: 0},
 	}

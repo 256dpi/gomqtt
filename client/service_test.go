@@ -12,11 +12,11 @@ import (
 func TestServicePublishSubscribe(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
-	subscribe.PacketID = 1
+	subscribe.ID = 1
 
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = []uint8{0}
-	suback.PacketID = 1
+	suback.ID = 1
 
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = "test"
@@ -76,11 +76,11 @@ func TestServicePublishSubscribe(t *testing.T) {
 func TestServiceCommandsInCallback(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
-	subscribe.PacketID = 1
+	subscribe.ID = 1
 
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = []uint8{0}
-	suback.PacketID = 1
+	suback.ID = 1
 
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = "test"
@@ -172,10 +172,10 @@ func TestStartStopVariations(t *testing.T) {
 func TestServiceUnsubscribe(t *testing.T) {
 	unsubscribe := packet.NewUnsubscribePacket()
 	unsubscribe.Topics = []string{"test"}
-	unsubscribe.PacketID = 1
+	unsubscribe.ID = 1
 
 	unsuback := packet.NewUnsubackPacket()
-	unsuback.PacketID = 1
+	unsuback.ID = 1
 
 	broker := tools.NewFlow().
 		Receive(connectPacket()).
@@ -274,17 +274,17 @@ func TestServiceFutureSurvival(t *testing.T) {
 	publish1.Message.Topic = "test"
 	publish1.Message.Payload = []byte("test")
 	publish1.Message.QOS = 1
-	publish1.PacketID = 1
+	publish1.ID = 1
 
 	publish2 := packet.NewPublishPacket()
 	publish2.Message.Topic = "test"
 	publish2.Message.Payload = []byte("test")
 	publish2.Message.QOS = 1
 	publish2.Dup = true
-	publish2.PacketID = 1
+	publish2.ID = 1
 
 	puback := packet.NewPubackPacket()
-	puback.PacketID = 1
+	puback.ID = 1
 
 	broker1 := tools.NewFlow().
 		Receive(connect).

@@ -140,13 +140,13 @@ func (c *Client) processor() error {
 		case *packet.PublishPacket:
 			err = c.processPublish(typedPkt)
 		case *packet.PubackPacket:
-			err = c.processPubackAndPubcomp(typedPkt.PacketID)
+			err = c.processPubackAndPubcomp(typedPkt.ID)
 		case *packet.PubcompPacket:
-			err = c.processPubackAndPubcomp(typedPkt.PacketID)
+			err = c.processPubackAndPubcomp(typedPkt.ID)
 		case *packet.PubrecPacket:
-			err = c.processPubrec(typedPkt.PacketID)
+			err = c.processPubrec(typedPkt.ID)
 		case *packet.PubrelPacket:
-			err = c.processPubrel(typedPkt.PacketID)
+			err = c.processPubrel(typedPkt.ID)
 		case *packet.PingreqPacket:
 			err = c.processPingreq()
 		case *packet.DisconnectPacket:
@@ -298,7 +298,7 @@ func (c *Client) processPingreq() error {
 func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
-	suback.PacketID = pkt.PacketID
+	suback.ID = pkt.ID
 
 	// handle contained subscriptions
 	for i, subscription := range pkt.Subscriptions {
@@ -338,7 +338,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 // handle an incoming UnsubscribePacket
 func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	unsuback := packet.NewUnsubackPacket()
-	unsuback.PacketID = pkt.PacketID
+	unsuback.ID = pkt.ID
 
 	for _, topic := range pkt.Topics {
 		// unsubscribe client from queue
@@ -375,7 +375,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		puback := packet.NewPubackPacket()
-		puback.PacketID = publish.PacketID
+		puback.ID = publish.ID
 
 		// acknowledge qos 1 publish
 		err := c.send(puback, true)
@@ -393,7 +393,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 
 		pubrec := packet.NewPubrecPacket()
-		pubrec.PacketID = publish.PacketID
+		pubrec.ID = publish.ID
 
 		// signal qos 2 publish
 		err = c.send(pubrec, true)
@@ -417,7 +417,7 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 func (c *Client) processPubrec(id packet.ID) error {
 	// allocate packet
 	pubrel := packet.NewPubrelPacket()
-	pubrel.PacketID = id
+	pubrel.ID = id
 
 	// overwrite stored PublishPacket with PubrelPacket
 	err := c.session.SavePacket(Outgoing, pubrel)
@@ -456,7 +456,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 
 	// prepare pubcomp packet
 	pubcomp := packet.NewPubcompPacket()
-	pubcomp.PacketID = publish.PacketID
+	pubcomp.ID = publish.ID
 
 	// acknowledge PublishPacket
 	err = c.send(pubcomp, true)
@@ -513,7 +513,7 @@ func (c *Client) sender() error {
 
 			// set packet id
 			if publish.Message.QOS > 0 {
-				publish.PacketID = c.session.PacketID()
+				publish.ID = c.session.NextID()
 			}
 
 			// store packet if at least qos 1

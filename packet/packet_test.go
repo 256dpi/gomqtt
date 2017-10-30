@@ -49,69 +49,62 @@ func TestFixedHeaderFlags(t *testing.T) {
 func TestDetect1(t *testing.T) {
 	buf := []byte{0x10, 0x0}
 
-	l, _t := DetectPacket(buf)
-
+	l, tt := DetectPacket(buf)
 	assert.Equal(t, 2, l)
-	assert.Equal(t, 1, int(_t))
+	assert.Equal(t, 1, int(tt))
 }
 
 func TestDetect2(t *testing.T) {
 	// not enough bytes
 	buf := []byte{0x10, 0xff}
 
-	l, _t := DetectPacket(buf)
-
+	l, tt := DetectPacket(buf)
 	assert.Equal(t, 0, l)
-	assert.Equal(t, 0, int(_t))
+	assert.Equal(t, 0, int(tt))
 }
 
 func TestDetect3(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0x0}
 
-	l, _t := DetectPacket(buf)
-
+	l, tt := DetectPacket(buf)
 	assert.Equal(t, 130, l)
-	assert.Equal(t, 1, int(_t))
+	assert.Equal(t, 1, int(tt))
 }
 
 func TestDetect4(t *testing.T) {
 	// not enough bytes
 	buf := []byte{0x10, 0xff, 0xff}
 
-	l, _t := DetectPacket(buf)
-
+	l, tt := DetectPacket(buf)
 	assert.Equal(t, 0, l)
-	assert.Equal(t, 0, int(_t))
+	assert.Equal(t, 0, int(tt))
 }
 
 func TestDetect5(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0xff, 0xff, 0x7f}
 
-	l, _t := DetectPacket(buf)
-
+	l, tt := DetectPacket(buf)
 	assert.Equal(t, 268435460, l)
-	assert.Equal(t, 1, int(_t))
+	assert.Equal(t, 1, int(tt))
 }
 
 func TestDetect6(t *testing.T) {
 	buf := []byte{0x10}
 
-	l, _t := DetectPacket(buf)
-
+	l, tt := DetectPacket(buf)
 	assert.Equal(t, 0, l)
-	assert.Equal(t, 0, int(_t))
+	assert.Equal(t, 0, int(tt))
 }
 
 func TestDetect7(t *testing.T) {
 	buf := []byte{0x10, 0xff, 0xff, 0xff, 0x80}
 
-	l, _t := DetectPacket(buf)
-
+	l, tt := DetectPacket(buf)
 	assert.Equal(t, 0, l)
-	assert.Equal(t, 0, int(_t))
+	assert.Equal(t, 0, int(tt))
 }
 
-func TestPacketID(t *testing.T) {
+func TestGetID(t *testing.T) {
 	type detail struct {
 		packet GenericPacket
 		ok     bool

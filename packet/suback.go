@@ -14,7 +14,7 @@ type SubackPacket struct {
 	ReturnCodes []uint8
 
 	// The packet identifier.
-	PacketID ID
+	ID ID
 }
 
 // NewSubackPacket creates a new SubackPacket.
@@ -35,8 +35,8 @@ func (sp *SubackPacket) String() string {
 		codes = append(codes, fmt.Sprintf("%d", c))
 	}
 
-	return fmt.Sprintf("<SubackPacket PacketID=%d ReturnCodes=[%s]>",
-		sp.PacketID, strings.Join(codes, ", "))
+	return fmt.Sprintf("<SubackPacket ID=%d ReturnCodes=[%s]>",
+		sp.ID, strings.Join(codes, ", "))
 }
 
 // Len returns the byte length of the encoded packet.
@@ -68,11 +68,11 @@ func (sp *SubackPacket) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	sp.PacketID = ID(binary.BigEndian.Uint16(src[total:]))
+	sp.ID = ID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 
 	// check packet id
-	if sp.PacketID == 0 {
+	if sp.ID == 0 {
 		return total, fmt.Errorf("[%s] packet id must be grater than zero", sp.Type())
 	}
 
@@ -108,7 +108,7 @@ func (sp *SubackPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// check packet id
-	if sp.PacketID == 0 {
+	if sp.ID == 0 {
 		return total, fmt.Errorf("[%s] packet id must be grater than zero", sp.Type())
 	}
 
@@ -120,7 +120,7 @@ func (sp *SubackPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], uint16(sp.PacketID))
+	binary.BigEndian.PutUint16(dst[total:], uint16(sp.ID))
 	total += 2
 
 	// write return codes

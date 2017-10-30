@@ -8,30 +8,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMemorySessionPacketID(t *testing.T) {
+func TestMemorySessionNextID(t *testing.T) {
 	session := NewMemorySession()
 
-	assert.Equal(t, packet.ID(1), session.PacketID())
-	assert.Equal(t, packet.ID(2), session.PacketID())
+	assert.Equal(t, packet.ID(1), session.NextID())
+	assert.Equal(t, packet.ID(2), session.NextID())
 
 	for i := 0; i < math.MaxUint16-3; i++ {
-		session.PacketID()
+		session.NextID()
 	}
 
-	assert.Equal(t, packet.ID(math.MaxUint16), session.PacketID())
-	assert.Equal(t, packet.ID(1), session.PacketID())
+	assert.Equal(t, packet.ID(math.MaxUint16), session.NextID())
+	assert.Equal(t, packet.ID(1), session.NextID())
 
 	err := session.Reset()
 	assert.NoError(t, err)
 
-	assert.Equal(t, packet.ID(1), session.PacketID())
+	assert.Equal(t, packet.ID(1), session.NextID())
 }
 
 func TestMemorySessionPacketStore(t *testing.T) {
 	session := NewMemorySession()
 
 	publish := packet.NewPublishPacket()
-	publish.PacketID = 1
+	publish.ID = 1
 
 	pkt, err := session.LookupPacket(Incoming, 1)
 	assert.NoError(t, err)

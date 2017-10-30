@@ -16,7 +16,7 @@ func TestFlow(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: "test"},
 	}
-	subscribe.PacketID = 1
+	subscribe.ID = 1
 
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = "test"

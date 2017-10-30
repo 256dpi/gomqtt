@@ -25,23 +25,23 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 	connect.Password = password
 
 	subscribe := packet.NewSubscribePacket()
-	subscribe.PacketID = 1
+	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: topic, QOS: 1},
 	}
 
 	publishOut := packet.NewPublishPacket()
-	publishOut.PacketID = 2
+	publishOut.ID = 2
 	publishOut.Message.Topic = topic
 	publishOut.Message.QOS = 1
 
 	publishIn := packet.NewPublishPacket()
-	publishIn.PacketID = 1
+	publishIn.ID = 1
 	publishIn.Message.Topic = topic
 	publishIn.Message.QOS = 1
 
 	pubackIn := packet.NewPubackPacket()
-	pubackIn.PacketID = 1
+	pubackIn.ID = 1
 
 	disconnect := packet.NewDisconnectPacket()
 
@@ -92,29 +92,29 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	connect.Password = password
 
 	subscribe := packet.NewSubscribePacket()
-	subscribe.PacketID = 1
+	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: topic, QOS: 2},
 	}
 
 	publishOut := packet.NewPublishPacket()
-	publishOut.PacketID = 2
+	publishOut.ID = 2
 	publishOut.Message.Topic = topic
 	publishOut.Message.QOS = 2
 
 	pubrelOut := packet.NewPubrelPacket()
-	pubrelOut.PacketID = 2
+	pubrelOut.ID = 2
 
 	publishIn := packet.NewPublishPacket()
-	publishIn.PacketID = 1
+	publishIn.ID = 1
 	publishIn.Message.Topic = topic
 	publishIn.Message.QOS = 2
 
 	pubrecIn := packet.NewPubrecPacket()
-	pubrecIn.PacketID = 1
+	pubrecIn.ID = 1
 
 	pubcompIn := packet.NewPubcompPacket()
-	pubcompIn.PacketID = 1
+	pubcompIn.ID = 1
 
 	disconnect := packet.NewDisconnectPacket()
 
@@ -171,32 +171,32 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	connect.Password = password
 
 	subscribe := packet.NewSubscribePacket()
-	subscribe.PacketID = 1
+	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: topic, QOS: 2},
 	}
 
 	publishOut := packet.NewPublishPacket()
-	publishOut.PacketID = 2
+	publishOut.ID = 2
 	publishOut.Message.Topic = topic
 	publishOut.Message.QOS = 2
 
 	pubrelOut := packet.NewPubrelPacket()
-	pubrelOut.PacketID = 2
+	pubrelOut.ID = 2
 
 	publishIn := packet.NewPublishPacket()
-	publishIn.PacketID = 1
+	publishIn.ID = 1
 	publishIn.Message.Topic = topic
 	publishIn.Message.QOS = 2
 
 	pubrecIn := packet.NewPubrecPacket()
-	pubrecIn.PacketID = 1
+	pubrecIn.ID = 1
 
 	pubrelIn := packet.NewPubrelPacket()
-	pubrelIn.PacketID = 1
+	pubrelIn.ID = 1
 
 	pubcompIn := packet.NewPubcompPacket()
-	pubcompIn.PacketID = 1
+	pubcompIn.ID = 1
 
 	disconnect := packet.NewDisconnectPacket()
 

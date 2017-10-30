@@ -73,13 +73,13 @@ func TestPublishMessage(t *testing.T) {
 
 func TestReceiveMessage(t *testing.T) {
 	subscribe := packet.NewSubscribePacket()
-	subscribe.PacketID = 1
+	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: "test"},
 	}
 
 	suback := packet.NewSubackPacket()
-	suback.PacketID = 1
+	suback.ID = 1
 	suback.ReturnCodes = []uint8{0}
 
 	publish := packet.NewPublishPacket()

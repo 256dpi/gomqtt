@@ -18,7 +18,7 @@ type PublishPacket struct {
 	Dup bool
 
 	// The packet identifier.
-	PacketID ID
+	ID ID
 }
 
 // NewPublishPacket creates a new PublishPacket.
@@ -33,8 +33,8 @@ func (pp *PublishPacket) Type() Type {
 
 // String returns a string representation of the packet.
 func (pp *PublishPacket) String() string {
-	return fmt.Sprintf("<PublishPacket PacketID=%d Message=%s Dup=%t>",
-		pp.PacketID, pp.Message.String(), pp.Dup)
+	return fmt.Sprintf("<PublishPacket ID=%d Message=%s Dup=%t>",
+		pp.ID, pp.Message.String(), pp.Dup)
 }
 
 // Len returns the byte length of the encoded packet.
@@ -86,11 +86,11 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 		}
 
 		// read packet id
-		pp.PacketID = ID(binary.BigEndian.Uint16(src[total:]))
+		pp.ID = ID(binary.BigEndian.Uint16(src[total:]))
 		total += 2
 
 		// check packet id
-		if pp.PacketID == 0 {
+		if pp.ID == 0 {
 			return total, fmt.Errorf("[%s] packet id must be grater than zero", pp.Type())
 		}
 	}
@@ -141,7 +141,7 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 	}
 
 	// check packet id
-	if pp.Message.QOS > 0 && pp.PacketID == 0 {
+	if pp.Message.QOS > 0 && pp.ID == 0 {
 		return total, fmt.Errorf("[%s] packet id must be grater than zero", pp.Type())
 	}
 
@@ -164,7 +164,7 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 
 	// write packet id
 	if pp.Message.QOS != 0 {
-		binary.BigEndian.PutUint16(dst[total:], uint16(pp.PacketID))
+		binary.BigEndian.PutUint16(dst[total:], uint16(pp.ID))
 		total += 2
 	}
 

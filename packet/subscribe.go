@@ -27,7 +27,7 @@ type SubscribePacket struct {
 	Subscriptions []Subscription
 
 	// The packet identifier.
-	PacketID ID
+	ID ID
 }
 
 // NewSubscribePacket creates a new SUBSCRIBE packet.
@@ -48,8 +48,8 @@ func (sp *SubscribePacket) String() string {
 		subscriptions = append(subscriptions, t.String())
 	}
 
-	return fmt.Sprintf("<SubscribePacket PacketID=%d Subscriptions=[%s]>",
-		sp.PacketID, strings.Join(subscriptions, ", "))
+	return fmt.Sprintf("<SubscribePacket ID=%d Subscriptions=[%s]>",
+		sp.ID, strings.Join(subscriptions, ", "))
 }
 
 // Len returns the byte length of the encoded packet.
@@ -76,11 +76,11 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	sp.PacketID = ID(binary.BigEndian.Uint16(src[total:]))
+	sp.ID = ID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 
 	// check packet id
-	if sp.PacketID == 0 {
+	if sp.ID == 0 {
 		return total, fmt.Errorf("[%s] packet id must be grater than zero", sp.Type())
 	}
 
@@ -126,7 +126,7 @@ func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check packet id
-	if sp.PacketID == 0 {
+	if sp.ID == 0 {
 		return total, fmt.Errorf("[%s] packet id must be grater than zero", sp.Type())
 	}
 
@@ -138,7 +138,7 @@ func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], uint16(sp.PacketID))
+	binary.BigEndian.PutUint16(dst[total:], uint16(sp.ID))
 	total += 2
 
 	for _, t := range sp.Subscriptions {

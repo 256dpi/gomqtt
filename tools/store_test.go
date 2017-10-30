@@ -11,7 +11,7 @@ func TestStore(t *testing.T) {
 	store := NewStore()
 
 	publish := packet.NewPublishPacket()
-	publish.PacketID = 1
+	publish.ID = 1
 
 	pkt := store.Lookup(1)
 	assert.Nil(t, pkt)

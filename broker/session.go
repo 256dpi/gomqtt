@@ -21,8 +21,8 @@ const (
 // A Session is used to persist incoming/outgoing packets, subscriptions and the
 // will.
 type Session interface {
-	// PacketID should return the next id for outgoing packets.
-	PacketID() packet.ID
+	// NextID should return the next id for outgoing packets.
+	NextID() packet.ID
 
 	// SavePacket should store a packet in the session. An eventual existing
 	// packet with the same id should be quietly overwritten.
@@ -93,8 +93,8 @@ func NewMemorySession() *MemorySession {
 	}
 }
 
-// PacketID will return the next id for outgoing packets.
-func (s *MemorySession) PacketID() packet.ID {
+// NextID will return the next id for outgoing packets.
+func (s *MemorySession) NextID() packet.ID {
 	return s.counter.Next()
 }
 

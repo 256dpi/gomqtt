@@ -11,7 +11,7 @@ func TestSubackInterface(t *testing.T) {
 	pkt.ReturnCodes = []byte{0, 1}
 
 	assert.Equal(t, pkt.Type(), SUBACK)
-	assert.Equal(t, "<SubackPacket PacketID=0 ReturnCodes=[0, 1]>", pkt.String())
+	assert.Equal(t, "<SubackPacket ID=0 ReturnCodes=[0, 1]>", pkt.String())
 }
 
 func TestSubackPacketDecode(t *testing.T) {
@@ -123,7 +123,7 @@ func TestSubackPacketEncode(t *testing.T) {
 	}
 
 	pkt := NewSubackPacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.ReturnCodes = []byte{0, 1, 2, 0x80}
 
 	dst := make([]byte, 10)
@@ -136,7 +136,7 @@ func TestSubackPacketEncode(t *testing.T) {
 
 func TestSubackPacketEncodeError1(t *testing.T) {
 	pkt := NewSubackPacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.ReturnCodes = []byte{0x81}
 
 	dst := make([]byte, pkt.Len())
@@ -148,7 +148,7 @@ func TestSubackPacketEncodeError1(t *testing.T) {
 
 func TestSubackPacketEncodeError2(t *testing.T) {
 	pkt := NewSubackPacket()
-	pkt.PacketID = 7
+	pkt.ID = 7
 	pkt.ReturnCodes = []byte{0x80}
 
 	dst := make([]byte, pkt.Len()-1)
@@ -160,7 +160,7 @@ func TestSubackPacketEncodeError2(t *testing.T) {
 
 func TestSubackPacketEncodeError3(t *testing.T) {
 	pkt := NewSubackPacket()
-	pkt.PacketID = 0 // <- zero packet id
+	pkt.ID = 0 // <- zero packet id
 	pkt.ReturnCodes = []byte{0x80}
 
 	dst := make([]byte, pkt.Len()-1)
@@ -203,7 +203,7 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 
 func BenchmarkSubackEncode(b *testing.B) {
 	pkt := NewSubackPacket()
-	pkt.PacketID = 1
+	pkt.ID = 1
 	pkt.ReturnCodes = []byte{0}
 
 	buf := make([]byte, pkt.Len())
