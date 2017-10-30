@@ -81,8 +81,10 @@ func (r *Router) onlineCallback(_ bool) {
 	r.ctrl.Go(r.router)
 }
 
-func (r *Router) messageCallback(msg *packet.Message) {
+func (r *Router) messageCallback(msg *packet.Message) error {
 	r.ch <- msg
+	// TODO: Return errors?
+	return nil
 }
 
 func (r *Router) offlineCallback() {

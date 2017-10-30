@@ -39,10 +39,12 @@ type unsubscribe struct {
 type OnlineCallback func(resumed bool)
 
 // A MessageCallback is a function that is called when a message is received.
+// If an error is returned the underlying client will be prevented from
+// acknowledging the specified message and closes immediately.
 //
 // Note: Execution of the service is resumed after the callback returns. This
 // means that waiting on a future inside the callback will deadlock the service.
-type MessageCallback func(*packet.Message)
+type MessageCallback func(*packet.Message) error
 
 // An ErrorCallback is a function that is called when an error occurred.
 //
@@ -368,8 +370,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 		// call the handler
 		if s.MessageCallback != nil {
-			s.MessageCallback(msg)
-			// TODO: Handle error.
+			return s.MessageCallback(msg)
 		}
 
 		return nil

@@ -85,9 +85,10 @@ func ExampleService() {
 		close(done)
 	}
 
-	s.MessageCallback = func(msg *packet.Message) {
+	s.MessageCallback = func(msg *packet.Message) error {
 		fmt.Printf("message: %s - %s\n", msg.Topic, msg.Payload)
 		close(wait)
+		return nil
 	}
 
 	err := ClearSession(config, 1*time.Second)

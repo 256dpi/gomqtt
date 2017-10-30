@@ -49,12 +49,13 @@ func TestServicePublishSubscribe(t *testing.T) {
 		close(offline)
 	}
 
-	s.MessageCallback = func(msg *packet.Message) {
+	s.MessageCallback = func(msg *packet.Message) error {
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(message)
+		return nil
 	}
 
 	s.Start(NewConfig("tcp://localhost:" + port))
@@ -113,13 +114,14 @@ func TestServiceCommandsInCallback(t *testing.T) {
 		close(offline)
 	}
 
-	s.MessageCallback = func(msg *packet.Message) {
+	s.MessageCallback = func(msg *packet.Message) error {
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(message)
+		return nil
 	}
 
 	s.Start(NewConfig("tcp://localhost:" + port))
