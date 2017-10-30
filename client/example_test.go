@@ -102,14 +102,14 @@ func ExampleService() {
 		close(wait)
 	}
 
-	err := ClearSession(config)
+	err := ClearSession(config, 1*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	s.Start(config)
 
-	s.Subscribe("test", 0).Wait()
+	s.Subscribe("test", 0).Wait(10 * time.Second)
 
 	s.Publish("test", []byte("test"), 0, false)
 
