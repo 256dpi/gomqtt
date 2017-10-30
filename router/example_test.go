@@ -23,7 +23,7 @@ func Example() {
 		close(done)
 	}))
 
-	config := client.NewConfig("mqtt://try:try@broker.shiftr.io")
+	config := client.NewConfigWithClientID("mqtt://0.0.0.0", "gomqtt/router")
 
 	r.Start(config)
 

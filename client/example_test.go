@@ -23,7 +23,7 @@ func ExampleClient() {
 		return nil
 	}
 
-	config := NewConfigWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/client")
+	config := NewConfigWithClientID("mqtt://0.0.0.0", "gomqtt/client")
 
 	connectFuture, err := c.Connect(config)
 	if err != nil {
@@ -70,7 +70,7 @@ func ExampleService() {
 	wait := make(chan struct{})
 	done := make(chan struct{})
 
-	config := NewConfigWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/service")
+	config := NewConfigWithClientID("mqtt://0.0.0.0", "gomqtt/service")
 	config.CleanSession = false
 
 	s := NewService()
