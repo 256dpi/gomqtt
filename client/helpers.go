@@ -9,7 +9,7 @@ import (
 
 // a tracker keeps track of keep alive intervals
 type tracker struct {
-	sync.Mutex
+	sync.RWMutex
 
 	last    time.Time
 	pings   uint8
@@ -34,8 +34,8 @@ func (t *tracker) reset() {
 
 // returns the current time window
 func (t *tracker) window() time.Duration {
-	t.Lock()
-	defer t.Unlock()
+	t.RLock()
+	defer t.RUnlock()
 
 	return t.timeout - time.Since(t.last)
 }
@@ -58,8 +58,8 @@ func (t *tracker) pong() {
 
 // returns if pings are pending
 func (t *tracker) pending() bool {
-	t.Lock()
-	defer t.Unlock()
+	t.RLock()
+	defer t.RUnlock()
 
 	return t.pings > 0
 }

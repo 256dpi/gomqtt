@@ -19,7 +19,7 @@ type MessageQueue struct {
 	maxSize int
 
 	list  []*packet.Message
-	mutex sync.Mutex
+	mutex sync.RWMutex
 }
 
 // Push adds a message to the queue.
@@ -55,16 +55,16 @@ func (q *MessageQueue) pop() *packet.Message {
 
 // Len returns the length of the queue.
 func (q *MessageQueue) Len() int {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
+	q.mutex.RLock()
+	defer q.mutex.RUnlock()
 
 	return len(q.list)
 }
 
 // All returns and removes all messages from the queue.
 func (q *MessageQueue) All() []*packet.Message {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
+	q.mutex.RLock()
+	defer q.mutex.RUnlock()
 
 	cache := q.list
 	q.list = nil

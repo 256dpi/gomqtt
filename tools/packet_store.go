@@ -9,7 +9,7 @@ import (
 // PacketStore is a goroutine safe packet store.
 type PacketStore struct {
 	packets map[packet.ID]packet.GenericPacket
-	mutex   sync.Mutex
+	mutex   sync.RWMutex
 }
 
 // NewPacketStore returns a new PacketStore.
@@ -33,8 +33,8 @@ func (s *PacketStore) Save(pkt packet.GenericPacket) {
 
 // Lookup will retrieve a packet from the store.
 func (s *PacketStore) Lookup(id packet.ID) packet.GenericPacket {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 
 	return s.packets[id]
 }
@@ -49,8 +49,8 @@ func (s *PacketStore) Delete(id packet.ID) {
 
 // All will return all packets currently saved in the store.
 func (s *PacketStore) All() []packet.GenericPacket {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 
 	var all []packet.GenericPacket
 
