@@ -146,21 +146,21 @@ func (c *Client) processor() error {
 			first = false
 		}
 
-		switch _pkt := pkt.(type) {
+		switch typedPkt := pkt.(type) {
 		case *packet.SubscribePacket:
-			err = c.processSubscribe(_pkt)
+			err = c.processSubscribe(typedPkt)
 		case *packet.UnsubscribePacket:
-			err = c.processUnsubscribe(_pkt)
+			err = c.processUnsubscribe(typedPkt)
 		case *packet.PublishPacket:
-			err = c.processPublish(_pkt)
+			err = c.processPublish(typedPkt)
 		case *packet.PubackPacket:
-			err = c.processPubackAndPubcomp(_pkt.PacketID)
+			err = c.processPubackAndPubcomp(typedPkt.PacketID)
 		case *packet.PubcompPacket:
-			err = c.processPubackAndPubcomp(_pkt.PacketID)
+			err = c.processPubackAndPubcomp(typedPkt.PacketID)
 		case *packet.PubrecPacket:
-			err = c.processPubrec(_pkt.PacketID)
+			err = c.processPubrec(typedPkt.PacketID)
 		case *packet.PubrelPacket:
-			err = c.processPubrel(_pkt.PacketID)
+			err = c.processPubrel(typedPkt.PacketID)
 		case *packet.PingreqPacket:
 			err = c.processPingreq()
 		case *packet.DisconnectPacket:
