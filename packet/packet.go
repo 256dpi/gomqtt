@@ -62,9 +62,9 @@ func DetectPacket(src []byte) (int, Type) {
 	return 1 + n + int(rl), t
 }
 
-// ID checks the packets type and returns its PacketID and true, or if it does
-// not have a PacketID, zero and false.
-func ID(packet GenericPacket) (uint16, bool) {
+// GetID checks the packets type and returns its PacketID and true, or if it
+// does not have a PacketID, zero and false.
+func GetID(packet GenericPacket) (uint16, bool) {
 	switch packet.Type() {
 	case PUBLISH:
 		return packet.(*PublishPacket).PacketID, true

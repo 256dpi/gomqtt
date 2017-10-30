@@ -25,7 +25,7 @@ func (s *Store) Save(pkt packet.GenericPacket) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	id, ok := packet.ID(pkt)
+	id, ok := packet.GetID(pkt)
 	if ok {
 		s.packets[id] = pkt
 	}
