@@ -23,6 +23,9 @@ type ResponseWriter interface {
 type Handler func(ResponseWriter, *Request)
 
 // A Router wraps a service and provides routing of incoming messages.
+//
+// Note: All received messages are automatically acknowledged. Do not use this
+// package for critical applications.
 type Router struct {
 	SubscribeTimeout time.Duration
 
@@ -83,7 +86,6 @@ func (r *Router) onlineCallback(_ bool) {
 
 func (r *Router) messageCallback(msg *packet.Message) error {
 	r.ch <- msg
-	// TODO: Return errors?
 	return nil
 }
 
