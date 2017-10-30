@@ -94,7 +94,9 @@ func (s *Store) Await(timeout time.Duration) error {
 
 	for {
 		// Get futures
+		s.RLock()
 		futures := s.All()
+		s.RUnlock()
 
 		// return if no futures are left
 		if len(futures) == 0 {
