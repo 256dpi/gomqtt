@@ -428,7 +428,8 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 					return false
 				}
 
-				// TODO: Ensure goroutine gets closed.
+				// bind future in a own goroutine. the goroutine will be
+				// ultimately collected when the service is stopped
 				go cmd.subscribe.future.Bind(future.(*subscribeFuture))
 			}
 
@@ -444,7 +445,8 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 					return false
 				}
 
-				// TODO: Ensure goroutine gets closed.
+				// bind future in a own goroutine. the goroutine will be
+				// ultimately collected when the service is stopped
 				go cmd.unsubscribe.future.Bind(future.(*genericFuture))
 			}
 
@@ -460,7 +462,8 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 					return false
 				}
 
-				// TODO: Ensure goroutine gets closed.
+				// bind future in a own goroutine. the goroutine will be
+				// ultimately collected when the service is stopped
 				go cmd.publish.future.Bind(future.(*genericFuture))
 			}
 		case <-s.tomb.Dying():
