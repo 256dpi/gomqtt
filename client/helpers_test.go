@@ -18,11 +18,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/256dpi/gomqtt/tools"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFutureStore(t *testing.T) {
-	future := &ConnectFuture{}
+	future := &connectFuture{}
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
@@ -37,8 +38,7 @@ func TestFutureStore(t *testing.T) {
 }
 
 func TestFutureStoreAwait(t *testing.T) {
-	future := &ConnectFuture{}
-	future.initialize()
+	future := newConnectFuture()
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
@@ -49,7 +49,7 @@ func TestFutureStoreAwait(t *testing.T) {
 
 	go func() {
 		time.Sleep(1 * time.Millisecond)
-		future.complete()
+		future.Complete()
 		store.del(1)
 	}()
 
@@ -58,8 +58,7 @@ func TestFutureStoreAwait(t *testing.T) {
 }
 
 func TestFutureStoreAwaitTimeout(t *testing.T) {
-	future := &ConnectFuture{}
-	future.initialize()
+	future := newConnectFuture()
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
@@ -69,7 +68,7 @@ func TestFutureStoreAwaitTimeout(t *testing.T) {
 	assert.Equal(t, 1, len(store.all()))
 
 	err := store.await(10 * time.Millisecond)
-	assert.Equal(t, ErrFutureTimeout, err)
+	assert.Equal(t, tools.ErrFutureTimeout, err)
 }
 
 func TestTracker(t *testing.T) {

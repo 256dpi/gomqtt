@@ -15,126 +15,27 @@
 package client
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/256dpi/gomqtt/tools"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestAbstractFuture(t *testing.T) {
+func TestGenericFutureBind(t *testing.T) {
 	done := make(chan struct{})
 
-	f := &abstractFuture{}
-	f.initialize()
+	f := newGenericFuture()
+	f.Cancel()
+
+	ff := newGenericFuture()
+	go ff.Bind(f)
 
 	go func() {
-		assert.NoError(t, f.Wait())
+		err := ff.Wait(10 * time.Millisecond)
+		assert.Equal(t, tools.ErrFutureCanceled, err)
 		close(done)
 	}()
-
-	f.complete()
-
-	<-done
-}
-
-func TestAbstractFutureCancel(t *testing.T) {
-	done := make(chan struct{})
-
-	f := &abstractFuture{}
-	f.initialize()
-
-	go func() {
-		assert.Equal(t, ErrFutureCanceled, f.Wait())
-		close(done)
-	}()
-
-	f.cancel()
-
-	<-done
-}
-
-func TestAbstractFutureTimeout(t *testing.T) {
-	done := make(chan struct{})
-
-	f := &abstractFuture{}
-	f.initialize()
-
-	go func() {
-		assert.NoError(t, f.Wait(10*time.Millisecond))
-		close(done)
-	}()
-
-	f.complete()
-
-	<-done
-}
-
-func TestAbstractFutureCancelTimeout(t *testing.T) {
-	done := make(chan struct{})
-
-	f := &abstractFuture{}
-	f.initialize()
-
-	go func() {
-		assert.Equal(t, ErrFutureCanceled, f.Wait(10*time.Millisecond))
-		close(done)
-	}()
-
-	f.cancel()
-
-	<-done
-}
-
-func TestAbstractFutureTimeoutExceeded(t *testing.T) {
-	done := make(chan struct{})
-
-	f := &abstractFuture{}
-	f.initialize()
-
-	go func() {
-		assert.Equal(t, ErrFutureTimeout, f.Wait(1*time.Millisecond))
-		close(done)
-	}()
-
-	<-time.After(10 * time.Millisecond)
-
-	f.complete()
-
-	<-done
-}
-
-func TestAbstractFutureCall(t *testing.T) {
-	done := make(chan struct{})
-
-	f := &abstractFuture{}
-	f.initialize()
-
-	f.Call(func(err error) {
-		assert.NoError(t, err)
-		close(done)
-	})
-
-	f.complete()
-
-	<-done
-}
-
-func TestPublishFutureBind(t *testing.T) {
-	done := make(chan struct{})
-
-	f := &PublishFuture{}
-	f.initialize()
-
-	ff := &PublishFuture{}
-	ff.initialize()
-
-	ff.bind(f)
-
-	ff.Call(func(err error) {
-		assert.Equal(t, ErrFutureCanceled, err)
-		close(done)
-	})
-
-	f.cancel()
 
 	<-done
 }
@@ -142,41 +43,17 @@ func TestPublishFutureBind(t *testing.T) {
 func TestSubscribeFutureBind(t *testing.T) {
 	done := make(chan struct{})
 
-	f := &SubscribeFuture{}
-	f.initialize()
+	f := newSubscribeFuture()
+	f.Cancel()
 
-	ff := &SubscribeFuture{}
-	ff.initialize()
+	ff := newSubscribeFuture()
+	go ff.Bind(f)
 
-	ff.bind(f)
-
-	ff.Call(func(err error) {
-		assert.Equal(t, ErrFutureCanceled, err)
+	go func() {
+		err := ff.Wait(10 * time.Millisecond)
+		assert.Equal(t, tools.ErrFutureCanceled, err)
 		close(done)
-	})
-
-	f.cancel()
-
-	<-done
-}
-
-func TestUnsubscribeFutureBind(t *testing.T) {
-	done := make(chan struct{})
-
-	f := &UnsubscribeFuture{}
-	f.initialize()
-
-	ff := &UnsubscribeFuture{}
-	ff.initialize()
-
-	ff.bind(f)
-
-	ff.Call(func(err error) {
-		assert.Equal(t, ErrFutureCanceled, err)
-		close(done)
-	})
-
-	f.cancel()
+	}()
 
 	<-done
 }

@@ -48,7 +48,7 @@ func main() {
 		panic(err)
 	}
 
-	var futures []*client.PublishFuture
+	var futures []client.GenericFuture
 
 	for i := 0; i < *amount; i++ {
 		pf, err := cl.Publish(*topic, []byte("burst"), uint8(*qos), false)

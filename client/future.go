@@ -15,132 +15,94 @@
 package client
 
 import (
-	"errors"
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/tools"
 )
 
-// ErrFutureTimeout is returned by Wait if the specified timeout is exceeded.
-var ErrFutureTimeout = errors.New("future timeout")
-
-// ErrFutureCanceled is returned by Wait if the future gets canceled while waiting.
-var ErrFutureCanceled = errors.New("future canceled")
-
-// A Future represents information that might become available in the future.
-type Future interface {
+// A GenericFuture is returned by publish and unsubscribe methods.
+type GenericFuture interface {
 	// Wait will block until the future is completed or canceled. It will return
-	// ErrCanceled if the future gets canceled. If a timeout is specified it
-	// might return a ErrTimeoutExceeded.
+	// ErrCanceled if the future gets canceled. If the timeout is reached, an
+	// ErrTimeoutExceeded is returned.
 	//
-	// Note: Wait will not return an Client related errors.
-	Wait(timeout ...time.Duration) error
-
-	// Call calls the supplied callback in a separate goroutine with the error
-	// returned by Wait.
-	Call(func(err error), ...time.Duration)
+	// Note: Wait will not return any Client related errors.
+	Wait(timeout time.Duration) error
 }
 
-type abstractFuture struct {
-	completeChannel chan struct{}
-	cancelChannel   chan struct{}
+// A ConnectFuture is returned by the connect method.
+type ConnectFuture interface {
+	GenericFuture
+
+	// SessionPresent will return whether a session was present.
+	SessionPresent() bool
+
+	// ReturnCode will return the connack code returned by the broker.
+	ReturnCode() packet.ConnackCode
 }
 
-func (f *abstractFuture) initialize() {
-	f.completeChannel = make(chan struct{})
-	f.cancelChannel = make(chan struct{})
+// A SubscribeFuture is returned by the subscribe methods.
+type SubscribeFuture interface {
+	GenericFuture
+
+	// ReturnCodes will return the suback codes returned by the broker.
+	ReturnCodes() []uint8
 }
 
-func (f *abstractFuture) Wait(timeout ...time.Duration) error {
-	if len(timeout) > 0 {
-		select {
-		case <-f.completeChannel:
-			return nil
-		case <-f.cancelChannel:
-			return ErrFutureCanceled
-		case <-time.After(timeout[0]):
-			return ErrFutureTimeout
-		}
-	}
+type genericFuture struct {
+	*tools.Future
+}
 
-	select {
-	case <-f.completeChannel:
-		return nil
-	case <-f.cancelChannel:
-		return ErrFutureCanceled
+func newGenericFuture() *genericFuture {
+	return &genericFuture{
+		Future: tools.NewFuture(),
 	}
 }
 
-func (f *abstractFuture) Call(callback func(error), timeout ...time.Duration) {
-	go func() {
-		callback(f.Wait(timeout...))
-	}()
+func (f *genericFuture) Bind(f2 *genericFuture) {
+	f.Future.Bind(f2.Future, nil)
 }
 
-func (f *abstractFuture) complete() {
-	close(f.completeChannel)
+type connectFuture struct {
+	*tools.Future
+
+	sessionPresent bool
+	returnCode     packet.ConnackCode
 }
 
-func (f *abstractFuture) cancel() {
-	close(f.cancelChannel)
+func newConnectFuture() *connectFuture {
+	return &connectFuture{
+		Future: tools.NewFuture(),
+	}
 }
 
-// The ConnectFuture is returned by the Client on Connect.
-type ConnectFuture struct {
-	abstractFuture
-
-	SessionPresent bool
-	ReturnCode     packet.ConnackCode
+func (f *connectFuture) SessionPresent() bool {
+	return f.sessionPresent
 }
 
-// The PublishFuture is returned by the Client on Publish.
-type PublishFuture struct {
-	abstractFuture
+func (f *connectFuture) ReturnCode() packet.ConnackCode {
+	return f.returnCode
 }
 
-func (f *PublishFuture) bind(future Future) {
-	future.Call(func(err error) {
-		if err != nil {
-			f.cancel()
-			return
-		}
+type subscribeFuture struct {
+	*tools.Future
 
-		f.complete()
+	returnCodes []uint8
+}
+
+func newSubscribeFuture() *subscribeFuture {
+	return &subscribeFuture{
+		Future: tools.NewFuture(),
+	}
+}
+
+func (f *subscribeFuture) Bind(f2 *subscribeFuture) {
+	f.Future.Bind(f2.Future, func() {
+		f.returnCodes = f2.returnCodes
 	})
 }
 
-// The SubscribeFuture is returned by the Client on Subscribe.
-type SubscribeFuture struct {
-	abstractFuture
-
-	ReturnCodes []uint8
-}
-
-func (f *SubscribeFuture) bind(future *SubscribeFuture) {
-	future.Call(func(err error) {
-		if err != nil {
-			f.cancel()
-			return
-		}
-
-		f.ReturnCodes = future.ReturnCodes
-
-		f.complete()
-	})
-}
-
-// UnsubscribeFuture is returned by the Client on Unsubscribe.
-type UnsubscribeFuture struct {
-	abstractFuture
-}
-
-func (f *UnsubscribeFuture) bind(future Future) {
-	future.Call(func(err error) {
-		if err != nil {
-			f.cancel()
-			return
-		}
-
-		f.complete()
-	})
+func (f *subscribeFuture) ReturnCodes() []uint8 {
+	return f.returnCodes
 }

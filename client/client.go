@@ -104,7 +104,7 @@ type Client struct {
 	clean   bool
 
 	futureStore   *futureStore
-	connectFuture *ConnectFuture
+	connectFuture *connectFuture
 
 	tomb   tomb.Tomb
 	mutex  sync.Mutex
@@ -123,7 +123,7 @@ func New() *Client {
 // Connect opens the connection to the broker and sends a ConnectPacket. It will
 // return a ConnectFuture that gets completed once a ConnackPacket has been
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
-func (c *Client) Connect(config *Config) (*ConnectFuture, error) {
+func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	if config == nil {
 		panic("No config specified")
 	}
@@ -205,8 +205,7 @@ func (c *Client) Connect(config *Config) (*ConnectFuture, error) {
 	connect.Will = config.WillMessage
 
 	// create new ConnectFuture
-	c.connectFuture = &ConnectFuture{}
-	c.connectFuture.initialize()
+	c.connectFuture = newConnectFuture()
 
 	// send connect packet
 	err = c.send(connect, false)
@@ -228,7 +227,7 @@ func (c *Client) Connect(config *Config) (*ConnectFuture, error) {
 // Publish will send a PublishPacket containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
-func (c *Client) Publish(topic string, payload []byte, qos uint8, retain bool) (*PublishFuture, error) {
+func (c *Client) Publish(topic string, payload []byte, qos uint8, retain bool) (GenericFuture, error) {
 	msg := &packet.Message{
 		Topic:   topic,
 		Payload: payload,
@@ -242,7 +241,7 @@ func (c *Client) Publish(topic string, payload []byte, qos uint8, retain bool) (
 // PublishMessage will send a PublishPacket containing the passed message. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
-func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
+func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -261,8 +260,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 	}
 
 	// create future
-	future := &PublishFuture{}
-	future.initialize()
+	future := newGenericFuture()
 
 	// store future
 	c.futureStore.put(publish.PacketID, future)
@@ -283,7 +281,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 
 	// complete and remove qos 0 future
 	if msg.QOS == 0 {
-		future.complete()
+		future.Complete()
 		c.futureStore.del(publish.PacketID)
 	}
 
@@ -293,7 +291,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (*PublishFuture, error) {
 // Subscribe will send a SubscribePacket containing one topic to subscribe. It
 // will return a SubscribeFuture that gets completed once a SubackPacket has
 // been received.
-func (c *Client) Subscribe(topic string, qos uint8) (*SubscribeFuture, error) {
+func (c *Client) Subscribe(topic string, qos uint8) (SubscribeFuture, error) {
 	return c.SubscribeMultiple([]packet.Subscription{
 		{Topic: topic, QOS: qos},
 	})
@@ -302,7 +300,7 @@ func (c *Client) Subscribe(topic string, qos uint8) (*SubscribeFuture, error) {
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. It will return a SubscribeFuture that gets completed once a
 // SubackPacket has been received.
-func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (*SubscribeFuture, error) {
+func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (SubscribeFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -317,8 +315,7 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (*Subscr
 	subscribe.Subscriptions = subscriptions
 
 	// create future
-	future := &SubscribeFuture{}
-	future.initialize()
+	future := newSubscribeFuture()
 
 	// store future
 	c.futureStore.put(subscribe.PacketID, future)
@@ -335,14 +332,14 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (*Subscr
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
 // It will return a UnsubscribeFuture that gets completed once a UnsubackPacket
 // has been received.
-func (c *Client) Unsubscribe(topic string) (*UnsubscribeFuture, error) {
+func (c *Client) Unsubscribe(topic string) (GenericFuture, error) {
 	return c.UnsubscribeMultiple([]string{topic})
 }
 
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
 // topics to unsubscribe. It will return a UnsubscribeFuture that gets completed
 // once a UnsubackPacket has been received.
-func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error) {
+func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -357,8 +354,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (*UnsubscribeFuture, error
 	unsubscribe.PacketID = c.Session.PacketID()
 
 	// create future
-	future := &UnsubscribeFuture{}
-	future.initialize()
+	future := newGenericFuture()
 
 	// store future
 	c.futureStore.put(unsubscribe.PacketID, future)
@@ -491,13 +487,13 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	c.state.set(clientConnacked)
 
 	// fill future
-	c.connectFuture.SessionPresent = connack.SessionPresent
-	c.connectFuture.ReturnCode = connack.ReturnCode
+	c.connectFuture.sessionPresent = connack.SessionPresent
+	c.connectFuture.returnCode = connack.ReturnCode
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
 		err := c.die(ErrClientConnectionDenied, true)
-		c.connectFuture.cancel()
+		c.connectFuture.Cancel()
 		return err
 	}
 
@@ -505,7 +501,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	c.state.set(clientConnected)
 
 	// complete future
-	c.connectFuture.complete()
+	c.connectFuture.Complete()
 
 	// retrieve stored packets
 	packets, err := c.Session.AllPackets(outgoing)
@@ -541,7 +537,7 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	}
 
 	// get future
-	subscribeFuture, ok := c.futureStore.get(suback.PacketID).(*SubscribeFuture)
+	subscribeFuture, ok := c.futureStore.get(suback.PacketID).(*subscribeFuture)
 	if !ok {
 		return nil // ignore a wrongly sent SubackPacket
 	}
@@ -553,15 +549,15 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	if c.config.ValidateSubs {
 		for _, code := range suback.ReturnCodes {
 			if code == packet.QOSFailure {
-				subscribeFuture.cancel()
+				subscribeFuture.Cancel()
 				return ErrFailedSubscription
 			}
 		}
 	}
 
 	// complete future
-	subscribeFuture.ReturnCodes = suback.ReturnCodes
-	subscribeFuture.complete()
+	subscribeFuture.returnCodes = suback.ReturnCodes
+	subscribeFuture.Complete()
 
 	return nil
 }
@@ -575,13 +571,13 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	}
 
 	// get future
-	unsubscribeFuture, ok := c.futureStore.get(unsuback.PacketID).(*UnsubscribeFuture)
+	unsubscribeFuture, ok := c.futureStore.get(unsuback.PacketID).(*genericFuture)
 	if !ok {
 		return nil // ignore a wrongly sent UnsubackPacket
 	}
 
 	// complete future
-	unsubscribeFuture.complete()
+	unsubscribeFuture.Complete()
 
 	// remove future from store
 	c.futureStore.del(unsuback.PacketID)
@@ -640,13 +636,13 @@ func (c *Client) processPubackAndPubcomp(packetID uint16) error {
 	}
 
 	// get future
-	publishFuture, ok := c.futureStore.get(packetID).(*PublishFuture)
+	publishFuture, ok := c.futureStore.get(packetID).(*genericFuture)
 	if !ok {
 		return nil // ignore a wrongly sent PubackPacket or PubcompPacket
 	}
 
 	// complete future
-	publishFuture.complete()
+	publishFuture.Complete()
 
 	// remove future from store
 	c.futureStore.del(packetID)
@@ -786,7 +782,7 @@ func (c *Client) send(pkt packet.Packet, buffered bool) error {
 func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	// cancel connect future if appropriate
 	if c.state.get() < clientConnacked && c.connectFuture != nil {
-		c.connectFuture.cancel()
+		c.connectFuture.Cancel()
 	}
 
 	// set state
@@ -794,17 +790,17 @@ func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 
 	// ensure that the connection gets closed
 	if doClose {
-		_err := c.conn.Close()
+		connErr := c.conn.Close()
 		if err == nil && !possiblyClosed {
-			err = _err
+			err = connErr
 		}
 	}
 
 	// reset store
 	if c.clean {
-		_err := c.Session.Reset()
+		sessErr := c.Session.Reset()
 		if err == nil {
-			err = _err
+			err = sessErr
 		}
 	}
 

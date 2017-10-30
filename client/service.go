@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/tools"
 	"github.com/jpillora/backoff"
 	"gopkg.in/tomb.v2"
 )
@@ -32,17 +33,17 @@ type command struct {
 
 type publish struct {
 	msg    *packet.Message
-	future *PublishFuture
+	future *genericFuture
 }
 
 type subscribe struct {
 	subscriptions []packet.Subscription
-	future        *SubscribeFuture
+	future        *subscribeFuture
 }
 
 type unsubscribe struct {
 	topics []string
-	future *UnsubscribeFuture
+	future *genericFuture
 }
 
 // An OnlineCallback is a function that is called when the service is connected.
@@ -193,7 +194,7 @@ func (s *Service) Start(config *Config) {
 // Publish will send a PublishPacket containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
-func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) *PublishFuture {
+func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) GenericFuture {
 	msg := &packet.Message{
 		Topic:   topic,
 		Payload: payload,
@@ -207,13 +208,12 @@ func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) 
 // PublishMessage will send a PublishPacket containing the passed message. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
-func (s *Service) PublishMessage(msg *packet.Message) *PublishFuture {
+func (s *Service) PublishMessage(msg *packet.Message) GenericFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	// allocate future
-	future := &PublishFuture{}
-	future.initialize()
+	future := newGenericFuture()
 
 	// queue publish
 	s.commandQueue <- &command{
@@ -229,7 +229,7 @@ func (s *Service) PublishMessage(msg *packet.Message) *PublishFuture {
 // Subscribe will send a SubscribePacket containing one topic to subscribe. It
 // will return a SubscribeFuture that gets completed once the acknowledgements
 // have been received.
-func (s *Service) Subscribe(topic string, qos uint8) *SubscribeFuture {
+func (s *Service) Subscribe(topic string, qos uint8) SubscribeFuture {
 	return s.SubscribeMultiple([]packet.Subscription{
 		{Topic: topic, QOS: qos},
 	})
@@ -238,13 +238,12 @@ func (s *Service) Subscribe(topic string, qos uint8) *SubscribeFuture {
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. It will return a SubscribeFuture that gets completed once the
 // acknowledgements have been received.
-func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) *SubscribeFuture {
+func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) SubscribeFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	// allocate future
-	future := &SubscribeFuture{}
-	future.initialize()
+	future := newSubscribeFuture()
 
 	// queue subscribe
 	s.commandQueue <- &command{
@@ -260,20 +259,19 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) *Subscr
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
 // It will return a SubscribeFuture that gets completed once the acknowledgements
 // have been received.
-func (s *Service) Unsubscribe(topic string) *UnsubscribeFuture {
+func (s *Service) Unsubscribe(topic string) GenericFuture {
 	return s.UnsubscribeMultiple([]string{topic})
 }
 
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
 // topics to unsubscribe. It will return a SubscribeFuture that gets completed
 // once the acknowledgements have been received.
-func (s *Service) UnsubscribeMultiple(topics []string) *UnsubscribeFuture {
+func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	// allocate future
-	future := &UnsubscribeFuture{}
-	future.initialize()
+	future := newGenericFuture()
 
 	// queue unsubscribe
 	s.commandQueue <- &command{
@@ -399,13 +397,13 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 	err = future.Wait(s.ConnectTimeout)
 
 	// check if future has been canceled
-	if err == ErrFutureCanceled {
+	if err == tools.ErrFutureCanceled {
 		s.err("Connect", err)
 		return nil, false
 	}
 
 	// check if future has timed out
-	if err == ErrFutureTimeout {
+	if err == tools.ErrFutureTimeout {
 		client.Close()
 
 		s.err("Connect", err)
@@ -413,14 +411,14 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 	}
 
 	// check return code
-	if future.ReturnCode != packet.ConnectionAccepted {
+	if future.ReturnCode() != packet.ConnectionAccepted {
 		client.Close()
 
-		s.err("Connect", future.ReturnCode)
+		s.err("Connect", future.ReturnCode())
 		return nil, false
 	}
 
-	return client, future.SessionPresent
+	return client, future.SessionPresent()
 }
 
 // reads from the queues and calls the current client
@@ -436,12 +434,12 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 					s.err("Subscribe", err)
 
 					// cancel future
-					cmd.subscribe.future.cancel()
+					cmd.subscribe.future.Cancel()
 
 					return false
 				}
 
-				cmd.subscribe.future.bind(future)
+				go cmd.subscribe.future.Bind(future.(*subscribeFuture))
 			}
 
 			// handle unsubscribe command
@@ -451,12 +449,12 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 					s.err("Unsubscribe", err)
 
 					// cancel future
-					cmd.unsubscribe.future.cancel()
+					cmd.unsubscribe.future.Cancel()
 
 					return false
 				}
 
-				cmd.unsubscribe.future.bind(future)
+				go cmd.unsubscribe.future.Bind(future.(*genericFuture))
 			}
 
 			// handle publish command
@@ -471,7 +469,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 					return false
 				}
 
-				cmd.publish.future.bind(future)
+				go cmd.publish.future.Bind(future.(*genericFuture))
 			}
 		case <-s.tomb.Dying():
 			// disconnect client on Stop

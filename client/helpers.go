@@ -26,33 +26,33 @@ type futureStore struct {
 	sync.RWMutex
 
 	protected bool
-	store     map[uint16]Future
+	store     map[uint16]GenericFuture
 }
 
 // newFutureStore will create a new futureStore
 func newFutureStore() *futureStore {
 	return &futureStore{
-		store: make(map[uint16]Future),
+		store: make(map[uint16]GenericFuture),
 	}
 }
 
-// put will save a Future to the store
-func (s *futureStore) put(id uint16, future Future) {
+// put will save a GenericFuture to the store
+func (s *futureStore) put(id uint16, future GenericFuture) {
 	s.Lock()
 	defer s.Unlock()
 
 	s.store[id] = future
 }
 
-// get will retrieve a Future from the store
-func (s *futureStore) get(id uint16) Future {
+// get will retrieve a GenericFuture from the store
+func (s *futureStore) get(id uint16) GenericFuture {
 	s.RLock()
 	defer s.RUnlock()
 
 	return s.store[id]
 }
 
-// del will remove a Future from the store
+// del will remove a GenericFuture from the store
 func (s *futureStore) del(id uint16) {
 	s.Lock()
 	defer s.Unlock()
@@ -61,11 +61,11 @@ func (s *futureStore) del(id uint16) {
 }
 
 // return a slice with all stored futures
-func (s *futureStore) all() []Future {
+func (s *futureStore) all() []GenericFuture {
 	s.RLock()
 	defer s.RUnlock()
 
-	all := make([]Future, len(s.store))
+	all := make([]GenericFuture, len(s.store))
 
 	i := 0
 	for _, future := range s.store {
@@ -95,18 +95,16 @@ func (s *futureStore) clear() {
 
 	for _, future := range s.store {
 		switch f := future.(type) {
-		case *ConnectFuture:
-			f.cancel()
-		case *PublishFuture:
-			f.cancel()
-		case *SubscribeFuture:
-			f.cancel()
-		case *UnsubscribeFuture:
-			f.cancel()
+		case *connectFuture:
+			f.Cancel()
+		case *genericFuture:
+			f.Cancel()
+		case *subscribeFuture:
+			f.Cancel()
 		}
 	}
 
-	s.store = make(map[uint16]Future)
+	s.store = make(map[uint16]GenericFuture)
 }
 
 // will wait until all futures have completed and removed or timeout is reached
