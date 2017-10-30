@@ -36,59 +36,45 @@ type SubscribeFuture interface {
 	ReturnCodes() []uint8
 }
 
-type genericFuture struct {
-	*future.Future
-}
+type futureKey int
 
-func newGenericFuture() *genericFuture {
-	return &genericFuture{
-		Future: future.New(),
-	}
-}
-
-func (f *genericFuture) Bind(f2 *genericFuture) {
-	f.Future.Bind(f2.Future, nil)
-}
+const (
+	sessionPresentKey = iota
+	returnCodeKey
+	returnCodesKey
+)
 
 type connectFuture struct {
 	*future.Future
-
-	sessionPresent bool
-	returnCode     packet.ConnackCode
-}
-
-func newConnectFuture() *connectFuture {
-	return &connectFuture{
-		Future: future.New(),
-	}
 }
 
 func (f *connectFuture) SessionPresent() bool {
-	return f.sessionPresent
+	v, ok := f.Data.Load(sessionPresentKey)
+	if !ok {
+		return false
+	}
+
+	return v.(bool)
 }
 
 func (f *connectFuture) ReturnCode() packet.ConnackCode {
-	return f.returnCode
+	v, ok := f.Data.Load(returnCodeKey)
+	if !ok {
+		return 0
+	}
+
+	return v.(packet.ConnackCode)
 }
 
 type subscribeFuture struct {
 	*future.Future
-
-	returnCodes []uint8
-}
-
-func newSubscribeFuture() *subscribeFuture {
-	return &subscribeFuture{
-		Future: future.New(),
-	}
-}
-
-func (f *subscribeFuture) Bind(f2 *subscribeFuture) {
-	f.Future.Bind(f2.Future, func() {
-		f.returnCodes = f2.returnCodes
-	})
 }
 
 func (f *subscribeFuture) ReturnCodes() []uint8 {
-	return f.returnCodes
+	v, ok := f.Data.Load(returnCodesKey)
+	if !ok {
+		return nil
+	}
+
+	return v.([]uint8)
 }

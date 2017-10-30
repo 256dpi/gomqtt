@@ -9,13 +9,13 @@ import (
 )
 
 func TestFutureStore(t *testing.T) {
-	connectFuture := &connectFuture{}
+	f := future.New()
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
 
-	store.put(1, connectFuture)
-	assert.Equal(t, connectFuture, store.get(1))
+	store.put(1, f)
+	assert.Equal(t, f, store.get(1))
 	assert.Equal(t, 1, len(store.all()))
 
 	store.del(1)
@@ -24,18 +24,18 @@ func TestFutureStore(t *testing.T) {
 }
 
 func TestFutureStoreAwait(t *testing.T) {
-	connectFuture := newConnectFuture()
+	f := future.New()
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
 
-	store.put(1, connectFuture)
-	assert.Equal(t, connectFuture, store.get(1))
+	store.put(1, f)
+	assert.Equal(t, f, store.get(1))
 	assert.Equal(t, 1, len(store.all()))
 
 	go func() {
 		time.Sleep(1 * time.Millisecond)
-		connectFuture.Complete()
+		f.Complete()
 		store.del(1)
 	}()
 
@@ -44,17 +44,17 @@ func TestFutureStoreAwait(t *testing.T) {
 }
 
 func TestFutureStoreAwaitTimeout(t *testing.T) {
-	connectFuture := newConnectFuture()
+	f := future.New()
 
 	store := newFutureStore()
 	assert.Equal(t, 0, len(store.all()))
 
-	store.put(1, connectFuture)
-	assert.Equal(t, connectFuture, store.get(1))
+	store.put(1, f)
+	assert.Equal(t, f, store.get(1))
 	assert.Equal(t, 1, len(store.all()))
 
 	err := store.await(10 * time.Millisecond)
-	assert.Equal(t, future.ErrFutureTimeout, err)
+	assert.Equal(t, future.ErrTimeout, err)
 }
 
 func TestTracker(t *testing.T) {

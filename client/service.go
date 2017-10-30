@@ -21,17 +21,17 @@ type command struct {
 
 type publish struct {
 	msg    *packet.Message
-	future *genericFuture
+	future *future.Future
 }
 
 type subscribe struct {
 	subscriptions []packet.Subscription
-	future        *subscribeFuture
+	future        *future.Future
 }
 
 type unsubscribe struct {
 	topics []string
-	future *genericFuture
+	future *future.Future
 }
 
 // An OnlineCallback is a function that is called when the service is connected.
@@ -204,7 +204,7 @@ func (s *Service) PublishMessage(msg *packet.Message) GenericFuture {
 	defer s.mutex.Unlock()
 
 	// allocate future
-	genericFuture := newGenericFuture()
+	genericFuture := future.New()
 
 	// queue publish
 	s.commandQueue <- &command{
@@ -234,17 +234,17 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) Subscri
 	defer s.mutex.Unlock()
 
 	// allocate future
-	genericFuture := newSubscribeFuture()
+	f := future.New()
 
 	// queue subscribe
 	s.commandQueue <- &command{
 		subscribe: &subscribe{
 			subscriptions: subscriptions,
-			future:        genericFuture,
+			future:        f,
 		},
 	}
 
-	return genericFuture
+	return &subscribeFuture{f}
 }
 
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
@@ -262,7 +262,7 @@ func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	defer s.mutex.Unlock()
 
 	// allocate future
-	genericFuture := newGenericFuture()
+	genericFuture := future.New()
 
 	// queue unsubscribe
 	s.commandQueue <- &command{
@@ -390,13 +390,13 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 	err = connectFuture.Wait(s.ConnectTimeout)
 
 	// check if future has been canceled
-	if err == future.ErrFutureCanceled {
+	if err == future.ErrCanceled {
 		s.err("Connect", err)
 		return nil, false
 	}
 
 	// check if future has timed out
-	if err == future.ErrFutureTimeout {
+	if err == future.ErrTimeout {
 		client.Close()
 
 		s.err("Connect", err)
@@ -434,7 +434,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 
 				// bind future in a own goroutine. the goroutine will be
 				// ultimately collected when the service is stopped
-				go cmd.subscribe.future.Bind(subFuture.(*subscribeFuture))
+				go cmd.subscribe.future.Bind(subFuture.(*subscribeFuture).Future)
 			}
 
 			// handle unsubscribe command
@@ -451,7 +451,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 
 				// bind future in a own goroutine. the goroutine will be
 				// ultimately collected when the service is stopped
-				go cmd.unsubscribe.future.Bind(unsubFuture.(*genericFuture))
+				go cmd.unsubscribe.future.Bind(unsubFuture.(*future.Future))
 			}
 
 			// handle publish command
@@ -468,7 +468,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 
 				// bind future in a own goroutine. the goroutine will be
 				// ultimately collected when the service is stopped
-				go cmd.publish.future.Bind(pubFuture.(*genericFuture))
+				go cmd.publish.future.Bind(pubFuture.(*future.Future))
 			}
 		case <-s.tomb.Dying():
 			// disconnect client on Stop

@@ -2,18 +2,21 @@ package future
 
 import (
 	"errors"
+	"sync"
 	"time"
 )
 
-// ErrFutureTimeout is returned by Wait if the specified timeout is exceeded.
-var ErrFutureTimeout = errors.New("future timeout")
+// ErrTimeout is returned by Wait if the specified timeout is exceeded.
+var ErrTimeout = errors.New("future timeout")
 
-// ErrFutureCanceled is returned by Wait if the future gets canceled while waiting.
-var ErrFutureCanceled = errors.New("future canceled")
+// ErrCanceled is returned by Wait if the future gets canceled while waiting.
+var ErrCanceled = errors.New("future canceled")
 
 // A Future is a low-level future type that can be extended to transport
 // custom information.
 type Future struct {
+	Data *sync.Map
+
 	completeChannel chan struct{}
 	cancelChannel   chan struct{}
 }
@@ -21,28 +24,22 @@ type Future struct {
 // New will return a new Future.
 func New() *Future {
 	return &Future{
+		Data:            new(sync.Map),
 		completeChannel: make(chan struct{}),
 		cancelChannel:   make(chan struct{}),
 	}
 }
 
 // Bind will tie the current future to the specified future. If the bound to
-// future is completed or canceled the current will as well.
-func (f *Future) Bind(f2 *Future, transfer func()) {
+// future is completed or canceled the current will as well. Data saved in the
+// bound future is copied to the current on complete and cancel.
+func (f *Future) Bind(f2 *Future) {
 	select {
 	case <-f2.completeChannel:
-		// call transfer function if available
-		if transfer != nil {
-			transfer()
-		}
-
+		f.Data = f2.Data
 		close(f.completeChannel)
 	case <-f2.cancelChannel:
-		// call transfer function if available
-		if transfer != nil {
-			transfer()
-		}
-
+		f.Data = f2.Data
 		close(f.cancelChannel)
 	}
 }
@@ -54,9 +51,9 @@ func (f *Future) Wait(timeout time.Duration) error {
 	case <-f.completeChannel:
 		return nil
 	case <-f.cancelChannel:
-		return ErrFutureCanceled
+		return ErrCanceled
 	case <-time.After(timeout):
-		return ErrFutureTimeout
+		return ErrTimeout
 	}
 }
 

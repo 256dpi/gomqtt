@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/256dpi/gomqtt/client/future"
 	"github.com/256dpi/gomqtt/packet"
 )
 
@@ -14,18 +15,18 @@ type futureStore struct {
 	sync.RWMutex
 
 	protected bool
-	store     map[packet.ID]GenericFuture
+	store     map[packet.ID]*future.Future
 }
 
 // newFutureStore will create a new futureStore
 func newFutureStore() *futureStore {
 	return &futureStore{
-		store: make(map[packet.ID]GenericFuture),
+		store: make(map[packet.ID]*future.Future),
 	}
 }
 
 // put will save a GenericFuture to the store
-func (s *futureStore) put(id packet.ID, future GenericFuture) {
+func (s *futureStore) put(id packet.ID, future *future.Future) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -33,7 +34,7 @@ func (s *futureStore) put(id packet.ID, future GenericFuture) {
 }
 
 // get will retrieve a GenericFuture from the store
-func (s *futureStore) get(id packet.ID) GenericFuture {
+func (s *futureStore) get(id packet.ID) *future.Future {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -49,15 +50,15 @@ func (s *futureStore) del(id packet.ID) {
 }
 
 // return a slice with all stored futures
-func (s *futureStore) all() []GenericFuture {
+func (s *futureStore) all() []*future.Future {
 	s.RLock()
 	defer s.RUnlock()
 
-	all := make([]GenericFuture, len(s.store))
+	all := make([]*future.Future, len(s.store))
 
 	i := 0
-	for _, future := range s.store {
-		all[i] = future
+	for _, savedFuture := range s.store {
+		all[i] = savedFuture
 		i++
 	}
 
@@ -81,18 +82,11 @@ func (s *futureStore) clear() {
 		return
 	}
 
-	for _, future := range s.store {
-		switch f := future.(type) {
-		case *connectFuture:
-			f.Cancel()
-		case *genericFuture:
-			f.Cancel()
-		case *subscribeFuture:
-			f.Cancel()
-		}
+	for _, savedFuture := range s.store {
+		savedFuture.Cancel()
 	}
 
-	s.store = make(map[packet.ID]GenericFuture)
+	s.store = make(map[packet.ID]*future.Future)
 }
 
 // will wait until all futures have completed and removed or timeout is reached

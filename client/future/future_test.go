@@ -31,7 +31,7 @@ func TestFutureCompleteAfter(t *testing.T) {
 func TestFutureCancelBefore(t *testing.T) {
 	f := New()
 	f.Cancel()
-	assert.Equal(t, ErrFutureCanceled, f.Wait(10*time.Millisecond))
+	assert.Equal(t, ErrCanceled, f.Wait(10*time.Millisecond))
 }
 
 func TestFutureCancelAfter(t *testing.T) {
@@ -40,7 +40,7 @@ func TestFutureCancelAfter(t *testing.T) {
 	f := New()
 
 	go func() {
-		assert.Equal(t, ErrFutureCanceled, f.Wait(10*time.Millisecond))
+		assert.Equal(t, ErrCanceled, f.Wait(10*time.Millisecond))
 		close(done)
 	}()
 
@@ -51,21 +51,24 @@ func TestFutureCancelAfter(t *testing.T) {
 
 func TestFutureTimeout(t *testing.T) {
 	f := New()
-	assert.Equal(t, ErrFutureTimeout, f.Wait(1*time.Millisecond))
+	assert.Equal(t, ErrTimeout, f.Wait(1*time.Millisecond))
 }
 
 func TestFutureBindBefore(t *testing.T) {
 	done := make(chan struct{})
 
 	f := New()
+	f.Data.Store("foo", "bar")
 	f.Cancel()
 
 	ff := New()
-	go ff.Bind(f, nil)
+	go ff.Bind(f)
 
 	go func() {
 		err := ff.Wait(10 * time.Millisecond)
-		assert.Equal(t, ErrFutureCanceled, err)
+		assert.Equal(t, ErrCanceled, err)
+		val, _ := ff.Data.Load("foo")
+		assert.Equal(t, "bar", val)
 		close(done)
 	}()
 
@@ -76,17 +79,20 @@ func TestFutureBindAfter(t *testing.T) {
 	done := make(chan struct{})
 
 	f := New()
+	f.Data.Store("foo", "bar")
 	f.Cancel()
 
 	ff := New()
 
 	go func() {
 		err := ff.Wait(10 * time.Millisecond)
-		assert.Equal(t, ErrFutureCanceled, err)
+		assert.Equal(t, ErrCanceled, err)
+		val, _ := ff.Data.Load("foo")
+		assert.Equal(t, "bar", val)
 		close(done)
 	}()
 
-	go ff.Bind(f, nil)
+	go ff.Bind(f)
 
 	<-done
 }

@@ -241,7 +241,7 @@ func TestClientExpectedConnack(t *testing.T) {
 
 	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.Equal(t, future.ErrFutureCanceled, connectFuture.Wait(1*time.Second))
+	assert.Equal(t, future.ErrCanceled, connectFuture.Wait(1*time.Second))
 
 	<-done
 	<-wait
@@ -645,7 +645,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	assert.Equal(t, future.ErrFutureCanceled, publishFuture.Wait(1*time.Second))
+	assert.Equal(t, future.ErrCanceled, publishFuture.Wait(1*time.Second))
 
 	<-done
 
@@ -851,7 +851,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 
 	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.Equal(t, future.ErrFutureCanceled, connectFuture.Wait(1*time.Second))
+	assert.Equal(t, future.ErrCanceled, connectFuture.Wait(1*time.Second))
 
 	<-wait
 	<-done
@@ -887,7 +887,7 @@ func TestClientFutureCancellation(t *testing.T) {
 
 	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
 	assert.NoError(t, err)
-	assert.Equal(t, future.ErrFutureCanceled, publishFuture.Wait(1*time.Second))
+	assert.Equal(t, future.ErrCanceled, publishFuture.Wait(1*time.Second))
 
 	<-done
 }

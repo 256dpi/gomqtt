@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/256dpi/gomqtt/client/future"
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/transport"
@@ -118,7 +119,7 @@ type Client struct {
 
 	tracker       *tracker
 	futureStore   *futureStore
-	connectFuture *connectFuture
+	connectFuture *future.Future
 
 	tomb   tomb.Tomb
 	mutex  sync.Mutex
@@ -219,7 +220,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	connect.Will = config.WillMessage
 
 	// create new ConnectFuture
-	c.connectFuture = newConnectFuture()
+	c.connectFuture = future.New()
 
 	// send connect packet
 	err = c.send(connect, false)
@@ -235,7 +236,10 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 		c.tomb.Go(c.pinger)
 	}
 
-	return c.connectFuture, nil
+	// wrap future
+	wrappedFuture := &connectFuture{c.connectFuture}
+
+	return wrappedFuture, nil
 }
 
 // Publish will send a PublishPacket containing the passed parameters. It will
@@ -274,10 +278,10 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 	}
 
 	// create future
-	future := newGenericFuture()
+	publishFuture := future.New()
 
 	// store future
-	c.futureStore.put(publish.ID, future)
+	c.futureStore.put(publish.ID, publishFuture)
 
 	// store packet if at least qos 1
 	if msg.QOS > 0 {
@@ -295,11 +299,11 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 
 	// complete and remove qos 0 future
 	if msg.QOS == 0 {
-		future.Complete()
+		publishFuture.Complete()
 		c.futureStore.del(publish.ID)
 	}
 
-	return future, nil
+	return publishFuture, nil
 }
 
 // Subscribe will send a SubscribePacket containing one topic to subscribe. It
@@ -329,10 +333,10 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (Subscri
 	subscribe.Subscriptions = subscriptions
 
 	// create future
-	future := newSubscribeFuture()
+	subFuture := future.New()
 
 	// store future
-	c.futureStore.put(subscribe.ID, future)
+	c.futureStore.put(subscribe.ID, subFuture)
 
 	// send packet
 	err := c.send(subscribe, true)
@@ -340,7 +344,10 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (Subscri
 		return nil, c.cleanup(err, false, false)
 	}
 
-	return future, nil
+	// wrap future
+	wrappedFuture := &subscribeFuture{subFuture}
+
+	return wrappedFuture, nil
 }
 
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
@@ -368,10 +375,10 @@ func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 	unsubscribe.ID = c.Session.NextID()
 
 	// create future
-	future := newGenericFuture()
+	unsubscribeFuture := future.New()
 
 	// store future
-	c.futureStore.put(unsubscribe.ID, future)
+	c.futureStore.put(unsubscribe.ID, unsubscribeFuture)
 
 	// send packet
 	err := c.send(unsubscribe, true)
@@ -379,7 +386,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 		return nil, c.cleanup(err, false, false)
 	}
 
-	return future, nil
+	return unsubscribeFuture, nil
 }
 
 // Disconnect will send a DisconnectPacket and close the connection.
@@ -501,8 +508,8 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	atomic.StoreUint32(&c.state, clientConnacked)
 
 	// fill future
-	c.connectFuture.sessionPresent = connack.SessionPresent
-	c.connectFuture.returnCode = connack.ReturnCode
+	c.connectFuture.Data.Store(sessionPresentKey, connack.SessionPresent)
+	c.connectFuture.Data.Store(returnCodeKey, connack.ReturnCode)
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
@@ -551,8 +558,8 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	}
 
 	// get future
-	subscribeFuture, ok := c.futureStore.get(suback.ID).(*subscribeFuture)
-	if !ok {
+	subscribeFuture := c.futureStore.get(suback.ID)
+	if subscribeFuture == nil {
 		return nil // ignore a wrongly sent SubackPacket
 	}
 
@@ -570,7 +577,7 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	}
 
 	// complete future
-	subscribeFuture.returnCodes = suback.ReturnCodes
+	subscribeFuture.Data.Store(returnCodesKey, suback.ReturnCodes)
 	subscribeFuture.Complete()
 
 	return nil
@@ -585,8 +592,8 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	}
 
 	// get future
-	unsubscribeFuture, ok := c.futureStore.get(unsuback.ID).(*genericFuture)
-	if !ok {
+	unsubscribeFuture := c.futureStore.get(unsuback.ID)
+	if unsubscribeFuture == nil {
 		return nil // ignore a wrongly sent UnsubackPacket
 	}
 
@@ -655,8 +662,8 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	}
 
 	// get future
-	publishFuture, ok := c.futureStore.get(id).(*genericFuture)
-	if !ok {
+	publishFuture := c.futureStore.get(id)
+	if publishFuture == nil {
 		return nil // ignore a wrongly sent PubackPacket or PubcompPacket
 	}
 
