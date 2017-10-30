@@ -149,7 +149,7 @@ func TestPacketID(t *testing.T) {
 	}
 
 	for _, d := range details {
-		_, ok := PacketID(d.packet)
+		_, ok := ID(d.packet)
 		assert.Equal(t, d.ok, ok)
 	}
 }

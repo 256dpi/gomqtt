@@ -26,7 +26,7 @@ func (s *Store) Save(prefix string, pkt packet.Packet) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	id, ok := packet.PacketID(pkt)
+	id, ok := packet.ID(pkt)
 	if ok {
 		s.packets[s.key(prefix, id)] = pkt
 	}
