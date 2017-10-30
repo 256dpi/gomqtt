@@ -126,24 +126,19 @@ type Backend interface {
 type MemoryBackend struct {
 	Credentials map[string]string
 
-	queue        *tools.Tree
-	retained     *tools.Tree
-	offlineQueue *tools.Tree
-
-	sessions      map[string]Session
-	sessionsMutex sync.Mutex
-
-	clients map[string]*Client
+	subscribedClients *tools.Tree
+	retainedMessages  *tools.Tree
+	offlineSessions   *tools.Tree
+	storedSessions    sync.Map
+	activeClients     sync.Map
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		queue:        tools.NewTree(),
-		retained:     tools.NewTree(),
-		offlineQueue: tools.NewTree(),
-		sessions:     make(map[string]Session),
-		clients:      make(map[string]*Client),
+		subscribedClients: tools.NewTree(),
+		retainedMessages:  tools.NewTree(),
+		offlineSessions:   tools.NewTree(),
 	}
 }
 
@@ -168,37 +163,34 @@ func (m *MemoryBackend) Authenticate(client *Client, user, password string) (boo
 // returned that is not stored further. Furthermore, it will disconnect any client
 // connected with the same client id.
 func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) {
-	m.sessionsMutex.Lock()
-	defer m.sessionsMutex.Unlock()
-
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
 		return session.NewMemorySession(), false, nil
 	}
 
 	// close existing client
-	existingClient, ok := m.clients[id]
+	existingClient, ok := m.activeClients.Load(id)
 	if ok {
-		existingClient.Close(true)
+		existingClient.(*Client).Close(true)
 	}
 
 	// add new client
-	m.clients[id] = client
+	m.activeClients.Store(id, client)
 
 	// retrieve stored session
-	s, ok := m.sessions[id]
+	s, ok := m.storedSessions.Load(id)
 
 	// when found
 	if ok {
 		// remove session if clean is true
 		if client.CleanSession() {
-			delete(m.sessions, id)
+			m.storedSessions.Delete(id)
 		}
 
 		// clear offline subscriptions
-		m.offlineQueue.Clear(s)
+		m.offlineSessions.Clear(s)
 
-		return s, true, nil
+		return s.(Session), true, nil
 	}
 
 	// create fresh session
@@ -206,10 +198,10 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 
 	// save session if not clean
 	if !client.CleanSession() {
-		m.sessions[id] = s
+		m.storedSessions.Store(id, s)
 	}
 
-	return s, false, nil
+	return s.(Session), false, nil
 }
 
 // QueueOffline will begin with forwarding all missed messages in a separate
@@ -239,7 +231,7 @@ func (m *MemoryBackend) QueueOffline(client *Client) error {
 // begin to forward messages by calling the clients Publish method.
 func (m *MemoryBackend) Subscribe(client *Client, topic string) error {
 	// add subscription
-	m.queue.Add(topic, client)
+	m.subscribedClients.Add(topic, client)
 
 	return nil
 }
@@ -247,7 +239,7 @@ func (m *MemoryBackend) Subscribe(client *Client, topic string) error {
 // Unsubscribe will unsubscribe the passed client from the specified topic.
 func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 	// remove subscription
-	m.queue.Remove(topic, client)
+	m.subscribedClients.Remove(topic, client)
 
 	return nil
 }
@@ -255,7 +247,7 @@ func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 // StoreRetained will store the specified message.
 func (m *MemoryBackend) StoreRetained(client *Client, msg *packet.Message) error {
 	// set retained message
-	m.retained.Set(msg.Topic, msg.Copy())
+	m.retainedMessages.Set(msg.Topic, msg.Copy())
 
 	return nil
 }
@@ -263,7 +255,7 @@ func (m *MemoryBackend) StoreRetained(client *Client, msg *packet.Message) error
 // ClearRetained will remove the stored messages for the given topic.
 func (m *MemoryBackend) ClearRetained(client *Client, topic string) error {
 	// clear retained message
-	m.retained.Empty(topic)
+	m.retainedMessages.Empty(topic)
 
 	return nil
 }
@@ -271,7 +263,7 @@ func (m *MemoryBackend) ClearRetained(client *Client, topic string) error {
 // QueueRetained will queue all retained messages matching the given topic.
 func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
 	// get retained messages
-	values := m.retained.Search(topic)
+	values := m.retainedMessages.Search(topic)
 
 	// publish messages
 	for _, value := range values {
@@ -286,12 +278,12 @@ func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
 // subscription.
 func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	// publish directly to clients
-	for _, v := range m.queue.Match(msg.Topic) {
+	for _, v := range m.subscribedClients.Match(msg.Topic) {
 		v.(*Client).Publish(msg)
 	}
 
 	// queue for offline clients
-	for _, v := range m.offlineQueue.Match(msg.Topic) {
+	for _, v := range m.offlineSessions.Match(msg.Topic) {
 		v.(Session).QueueOffline(msg)
 	}
 
@@ -303,15 +295,12 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 // Otherwise it will create offline subscriptions for all QOS 1 and QOS 2
 // subscriptions.
 func (m *MemoryBackend) Terminate(client *Client) error {
-	m.sessionsMutex.Lock()
-	defer m.sessionsMutex.Unlock()
-
 	// clear all subscriptions
-	m.queue.Clear(client)
+	m.subscribedClients.Clear(client)
 
 	// remove client from list
 	if len(client.ClientID()) > 0 {
-		delete(m.clients, client.ClientID())
+		m.activeClients.Delete(client.ClientID())
 	}
 
 	// return if the client requested a clean session
@@ -329,7 +318,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	for _, sub := range subscriptions {
 		if sub.QOS >= 1 {
 			// add offline subscription
-			m.offlineQueue.Add(sub.Topic, client.Session())
+			m.offlineSessions.Add(sub.Topic, client.Session())
 		}
 	}
 
