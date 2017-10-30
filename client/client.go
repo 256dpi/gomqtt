@@ -428,7 +428,7 @@ func (c *Client) processor() error {
 			}
 
 			// die on any other error
-			return c.die(err, false)
+			return c.die(err, false, false)
 		}
 
 		// log received message
@@ -440,7 +440,7 @@ func (c *Client) processor() error {
 			// get connack
 			connack, ok := pkt.(*packet.ConnackPacket)
 			if !ok {
-				return c.die(ErrClientExpectedConnack, true)
+				return c.die(ErrClientExpectedConnack, true, false)
 			}
 
 			// process connack
@@ -494,7 +494,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
-		err := c.die(ErrClientConnectionDenied, true)
+		err := c.die(ErrClientConnectionDenied, true, false)
 		c.connectFuture.Cancel()
 		return err
 	}
@@ -508,7 +508,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 	// retrieve stored packets
 	packets, err := c.Session.AllPackets(outgoing)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(err, true, false)
 	}
 
 	// resend stored packets
@@ -523,7 +523,7 @@ func (c *Client) processConnack(connack *packet.ConnackPacket) error {
 		// resend packet
 		err = c.send(pkt, true)
 		if err != nil {
-			return c.die(err, false)
+			return c.die(err, false, false)
 		}
 	}
 
@@ -594,7 +594,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		if c.Callback != nil {
 			err := c.Callback(&publish.Message, nil)
 			if err != nil {
-				return c.die(err, true)
+				return c.die(err, true, true)
 			}
 		}
 	}
@@ -608,7 +608,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// acknowledge qos 1 publish
 		err := c.send(puback, true)
 		if err != nil {
-			return c.die(err, false)
+			return c.die(err, false, false)
 		}
 	}
 
@@ -617,7 +617,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// store packet
 		err := c.Session.SavePacket(incoming, publish)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(err, true, false)
 		}
 
 		// prepare pubrec packet
@@ -627,7 +627,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// acknowledge qos 2 publish
 		err = c.send(pubrec, true)
 		if err != nil {
-			return c.die(err, false)
+			return c.die(err, false, false)
 		}
 	}
 
@@ -666,13 +666,13 @@ func (c *Client) processPubrec(packetID uint16) error {
 	// overwrite stored PublishPacket with PubrelPacket
 	err := c.Session.SavePacket(outgoing, pubrel)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(err, true, false)
 	}
 
 	// send packet
 	err = c.send(pubrel, true)
 	if err != nil {
-		return c.die(err, false)
+		return c.die(err, false, false)
 	}
 
 	return nil
@@ -683,7 +683,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	// get packet from store
 	pkt, err := c.Session.LookupPacket(incoming, packetID)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(err, true, false)
 	}
 
 	// get packet from store
@@ -696,7 +696,7 @@ func (c *Client) processPubrel(packetID uint16) error {
 	if c.Callback != nil {
 		err = c.Callback(&publish.Message, nil)
 		if err != nil {
-			return c.die(err, true)
+			return c.die(err, true, true)
 		}
 	}
 
@@ -707,13 +707,13 @@ func (c *Client) processPubrel(packetID uint16) error {
 	// acknowledge PublishPacket
 	err = c.send(pubcomp, true)
 	if err != nil {
-		return c.die(err, false)
+		return c.die(err, false, false)
 	}
 
 	// remove packet from store
 	err = c.Session.DeletePacket(incoming, packetID)
 	if err != nil {
-		return c.die(err, true)
+		return c.die(err, true, false)
 	}
 
 	return nil
@@ -731,13 +731,13 @@ func (c *Client) pinger() error {
 		if window < 0 {
 			// check if a pong has already been sent
 			if c.tracker.pending() {
-				return c.die(ErrClientMissingPong, true)
+				return c.die(ErrClientMissingPong, true, false)
 			}
 
 			// send pingreq packet
 			err := c.send(packet.NewPingreqPacket(), true)
 			if err != nil {
-				return c.die(err, false)
+				return c.die(err, false, false)
 			}
 
 			// save ping attempt
@@ -817,11 +817,11 @@ func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 }
 
 // used for closing and cleaning up from internal goroutines
-func (c *Client) die(err error, close bool) error {
+func (c *Client) die(err error, close bool, fromCallback bool) error {
 	c.finish.Do(func() {
 		err = c.cleanup(err, close, false)
 
-		if c.Callback != nil {
+		if c.Callback != nil && !fromCallback {
 			returnedErr := c.Callback(nil, err)
 			if returnedErr == nil {
 				err = nil
