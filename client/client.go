@@ -55,13 +55,13 @@ var ErrClientExpectedConnack = errors.New("client expected connack")
 var ErrFailedSubscription = errors.New("failed subscription")
 
 // A Callback is a function called by the client upon received messages or
-// internal errors.
+// internal errors. An error can be returned if the callback is not already
+// called with an error to instantly close the client and prevent it from
+// sending any acknowledgments for the specified message.
 //
 // Note: Execution of the client is resumed after the callback returns. This
-// means that waiting on a future will actually deadlock the client.
-type Callback func(msg *packet.Message, err error)
-
-// TODO: Allow callback to return an error to allow control of the ack process.
+// means that waiting on a future inside the callback will deadlock the client.
+type Callback func(msg *packet.Message, err error) error
 
 // A Logger is a function called by the client to log activity.
 type Logger func(msg string)
@@ -452,23 +452,23 @@ func (c *Client) processor() error {
 		}
 
 		// call handlers for packet types and ignore other packets
-		switch _pkt := pkt.(type) {
+		switch typedPkt := pkt.(type) {
 		case *packet.SubackPacket:
-			err = c.processSuback(_pkt)
+			err = c.processSuback(typedPkt)
 		case *packet.UnsubackPacket:
-			err = c.processUnsuback(_pkt)
+			err = c.processUnsuback(typedPkt)
 		case *packet.PingrespPacket:
 			c.tracker.pong()
 		case *packet.PublishPacket:
-			err = c.processPublish(_pkt)
+			err = c.processPublish(typedPkt)
 		case *packet.PubackPacket:
-			err = c.processPubackAndPubcomp(_pkt.PacketID)
+			err = c.processPubackAndPubcomp(typedPkt.PacketID)
 		case *packet.PubcompPacket:
-			err = c.processPubackAndPubcomp(_pkt.PacketID)
+			err = c.processPubackAndPubcomp(typedPkt.PacketID)
 		case *packet.PubrecPacket:
-			err = c.processPubrec(_pkt.PacketID)
+			err = c.processPubrec(typedPkt.PacketID)
 		case *packet.PubrelPacket:
-			err = c.processPubrel(_pkt.PacketID)
+			err = c.processPubrel(typedPkt.PacketID)
 		}
 
 		// return eventual error
@@ -592,7 +592,10 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// call callback for unacknowledged and directly acknowledged messages
 	if publish.Message.QOS <= 1 {
 		if c.Callback != nil {
-			c.Callback(&publish.Message, nil)
+			err := c.Callback(&publish.Message, nil)
+			if err != nil {
+				return c.die(err, true)
+			}
 		}
 	}
 
@@ -691,7 +694,10 @@ func (c *Client) processPubrel(packetID uint16) error {
 
 	// call callback
 	if c.Callback != nil {
-		c.Callback(&publish.Message, nil)
+		err = c.Callback(&publish.Message, nil)
+		if err != nil {
+			return c.die(err, true)
+		}
 	}
 
 	// prepare pubcomp packet
@@ -820,7 +826,10 @@ func (c *Client) die(err error, close bool) error {
 		err = c.cleanup(err, close, false)
 
 		if c.Callback != nil {
-			c.Callback(nil, err)
+			returnedErr := c.Callback(nil, err)
+			if returnedErr == nil {
+				err = nil
+			}
 		}
 	})
 

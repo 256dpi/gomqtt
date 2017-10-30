@@ -108,13 +108,14 @@ func ReceiveMessage(config *Config, topic string, qos byte, timeout time.Duratio
 	errCh := make(chan error)
 
 	// set callback
-	client.Callback = func(msg *packet.Message, err error) {
+	client.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
 			errCh <- err
-			return
+			return nil
 		}
 
 		msgCh <- msg
+		return nil
 	}
 
 	// make subscription

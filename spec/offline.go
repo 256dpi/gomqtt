@@ -51,7 +51,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 	wait := make(chan struct{})
 
 	offlineReceiver := client.New()
-	offlineReceiver.Callback = func(msg *packet.Message, err error) {
+	offlineReceiver.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -59,6 +59,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err = offlineReceiver.Connect(options)
@@ -120,7 +121,7 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 	wait := make(chan struct{})
 
 	offlineReceiver := client.New()
-	offlineReceiver.Callback = func(msg *packet.Message, err error) {
+	offlineReceiver.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -128,6 +129,7 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err = offlineReceiver.Connect(options)

@@ -26,13 +26,15 @@ func ExampleClient() {
 
 	c := New()
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
 			panic(err)
 		}
 
 		fmt.Printf("%s: %s\n", msg.Topic, msg.Payload)
 		close(done)
+
+		return nil
 	}
 
 	config := NewConfigWithClientID("mqtt://try:try@broker.shiftr.io", "gomqtt/client")

@@ -215,10 +215,11 @@ func TestClientConnectionDenied(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.Nil(t, msg)
 		assert.Equal(t, ErrClientConnectionDenied, err)
 		close(wait)
+		return nil
 	}
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
@@ -242,10 +243,11 @@ func TestClientExpectedConnack(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.Nil(t, msg)
 		assert.Equal(t, ErrClientExpectedConnack, err)
 		close(wait)
+		return nil
 	}
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
@@ -326,10 +328,11 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.Nil(t, msg)
 		assert.Equal(t, ErrClientMissingPong, err)
 		close(wait)
+		return nil
 	}
 
 	config := NewConfig("tcp://localhost:" + port)
@@ -373,13 +376,14 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(0), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
+		return nil
 	}
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
@@ -448,13 +452,14 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(1), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
+		return nil
 	}
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
@@ -533,13 +538,14 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
 		assert.Equal(t, uint8(2), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
+		return nil
 	}
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
@@ -820,10 +826,11 @@ func TestClientUnexpectedClose(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.Nil(t, msg)
 		assert.Error(t, err)
 		close(wait)
+		return nil
 	}
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
@@ -846,10 +853,11 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.Nil(t, msg)
 		assert.Error(t, err)
 		close(wait)
+		return nil
 	}
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
@@ -876,9 +884,10 @@ func TestClientFutureCancellation(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.Nil(t, msg)
 		assert.Error(t, err)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
@@ -922,8 +931,9 @@ func TestClientLogger(t *testing.T) {
 	wait := make(chan struct{})
 
 	c := New()
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		close(wait)
+		return nil
 	}
 
 	var counter uint32

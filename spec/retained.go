@@ -36,7 +36,7 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 
 	wait := make(chan struct{})
 
-	receiver.Callback = func(msg *packet.Message, err error) {
+	receiver.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, out, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -44,6 +44,7 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 		assert.True(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err = receiver.Connect(client.NewConfig(config.URL))
@@ -99,7 +100,7 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 
 	wait := make(chan struct{})
 
-	receiver.Callback = func(msg *packet.Message, err error) {
+	receiver.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload2, msg.Payload)
@@ -107,6 +108,7 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 		assert.True(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err = receiver.Connect(client.NewConfig(config.URL))
@@ -155,10 +157,10 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 
 	wait := make(chan struct{})
 
-	receiverAndClearer.Callback = func(msg *packet.Message, err error) {
+	receiverAndClearer.Callback = func(msg *packet.Message, err error) error {
 		// ignore directly send message
 		if msg.Topic == topic && msg.Payload == nil {
-			return
+			return nil
 		}
 
 		assert.NoError(t, err)
@@ -168,6 +170,7 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 		assert.True(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err = receiverAndClearer.Connect(client.NewConfig(config.URL))
@@ -195,8 +198,9 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 
 	nonReceiver := client.New()
-	nonReceiver.Callback = func(msg *packet.Message, err error) {
+	nonReceiver.Callback = func(msg *packet.Message, err error) error {
 		assert.Fail(t, "should not be called")
+		return nil
 	}
 
 	connectFuture, err = nonReceiver.Connect(client.NewConfig(config.URL))
@@ -226,7 +230,7 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -234,6 +238,7 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -269,7 +274,7 @@ func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) 
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Nil(t, msg.Payload)
@@ -277,6 +282,7 @@ func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) 
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -332,7 +338,7 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	receiver := client.New()
 	wait := make(chan struct{})
 
-	receiver.Callback = func(msg *packet.Message, err error) {
+	receiver.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -340,6 +346,7 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 		assert.True(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err = receiver.Connect(client.NewConfig(config.URL))
@@ -389,7 +396,7 @@ func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic strin
 
 	wait := make(chan struct{})
 
-	receiver.Callback = func(msg *packet.Message, err error) {
+	receiver.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -397,6 +404,7 @@ func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic strin
 		assert.True(t, msg.Retain)
 
 		wait <- struct{}{}
+		return nil
 	}
 
 	connectFuture, err = receiver.Connect(client.NewConfig(config.URL))

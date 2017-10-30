@@ -266,7 +266,7 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 
 	wait := make(chan struct{})
 
-	receiver.Callback = func(msg *packet.Message, err error) {
+	receiver.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -274,6 +274,7 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err = receiver.Connect(options)
@@ -319,8 +320,9 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 	assert.NoError(t, err)
 
 	nonReceiver := client.New()
-	nonReceiver.Callback = func(msg *packet.Message, err error) {
+	nonReceiver.Callback = func(msg *packet.Message, err error) error {
 		assert.Fail(t, "should not be called")
+		return nil
 	}
 
 	options.CleanSession = true
@@ -370,8 +372,9 @@ func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string
 	assert.NoError(t, err)
 
 	nonReceiver := client.New()
-	nonReceiver.Callback = func(msg *packet.Message, err error) {
+	nonReceiver.Callback = func(msg *packet.Message, err error) error {
 		assert.Fail(t, "should not be called")
+		return nil
 	}
 
 	connectFuture, err = nonReceiver.Connect(client.NewConfig(config.URL))

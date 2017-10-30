@@ -12,8 +12,9 @@ import (
 // AuthenticationTest tests the broker for valid and invalid authentication.
 func AuthenticationTest(t *testing.T, config *Config) {
 	deniedClient := client.New()
-	deniedClient.Callback = func(msg *packet.Message, err error) {
+	deniedClient.Callback = func(msg *packet.Message, err error) error {
 		assert.Equal(t, client.ErrClientConnectionDenied, err)
+		return nil
 	}
 
 	connectFuture, err := deniedClient.Connect(client.NewConfig(config.DenyURL))
@@ -43,9 +44,10 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 	wait := make(chan struct{})
 
 	firstClient := client.New()
-	firstClient.Callback = func(msg *packet.Message, err error) {
+	firstClient.Callback = func(msg *packet.Message, err error) error {
 		assert.Error(t, err)
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := firstClient.Connect(options)
@@ -74,7 +76,7 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -82,6 +84,7 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))

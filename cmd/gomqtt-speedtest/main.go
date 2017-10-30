@@ -36,12 +36,13 @@ func main() {
 
 	cl := client.New()
 
-	cl.Callback = func(msg *packet.Message, err error) {
+	cl.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
 			panic(err)
 		}
 
 		received <- time.Now()
+		return nil
 	}
 
 	cf, err := cl.Connect(client.NewConfig(*urlString))

@@ -373,17 +373,20 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 	client.futureStore = s.futureStore
 
 	// set callback
-	client.Callback = func(msg *packet.Message, err error) {
+	client.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
 			s.err("Client", err)
 			close(fail)
-			return
+			return nil
 		}
 
 		// call the handler
 		if s.MessageCallback != nil {
 			s.MessageCallback(msg)
+			// TODO: Handle error.
 		}
+
+		return nil
 	}
 
 	// attempt to connect

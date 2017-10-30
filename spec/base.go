@@ -18,7 +18,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, pub, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -26,6 +26,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -56,7 +57,7 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic+"/2", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -64,6 +65,7 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -107,8 +109,9 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 func UnsubscribeNotExistingSubscriptionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.Fail(t, "should not be called")
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -133,7 +136,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic+"/foo", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -141,6 +144,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -180,7 +184,7 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -188,6 +192,7 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -222,7 +227,7 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, pub, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -230,6 +235,7 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -266,7 +272,7 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic+"/3", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -274,6 +280,7 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -305,13 +312,13 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
-// DuplicateSubscriptionTest tests the broker for properly hanlding duplicate
+// DuplicateSubscriptionTest tests the broker for properly handling duplicate
 // subscriptions.
 func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -319,6 +326,7 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -354,7 +362,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic+"/foo", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -362,6 +370,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
@@ -419,7 +428,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	clientReceivingWill := client.New()
 	wait := make(chan struct{})
 
-	clientReceivingWill.Callback = func(msg *packet.Message, err error) {
+	clientReceivingWill.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
@@ -427,6 +436,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 		assert.False(t, msg.Retain)
 
 		close(wait)
+		return nil
 	}
 
 	connectFuture, err = clientReceivingWill.Connect(client.NewConfig(config.URL))
@@ -471,8 +481,9 @@ func CleanWillTest(t *testing.T, config *Config, topic string) {
 
 	nonReceiver := client.New()
 
-	nonReceiver.Callback = func(msg *packet.Message, err error) {
+	nonReceiver.Callback = func(msg *packet.Message, err error) error {
 		assert.Fail(t, "should not be called")
+		return nil
 	}
 
 	connectFuture, err = nonReceiver.Connect(client.NewConfig(config.URL))

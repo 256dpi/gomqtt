@@ -50,9 +50,10 @@ func TestDefaultReadLimit(t *testing.T) {
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		assert.Error(t, err)
 		close(wait)
+		return nil
 	}
 
 	cf, err := c.Connect(client.NewConfig("tcp://localhost:" + port))

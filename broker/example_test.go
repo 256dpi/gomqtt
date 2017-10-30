@@ -35,13 +35,14 @@ func Example() {
 	c := client.New()
 	wait := make(chan struct{})
 
-	c.Callback = func(msg *packet.Message, err error) {
+	c.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
 			panic(err)
 		}
 
 		fmt.Println(msg.String())
 		close(wait)
+		return nil
 	}
 
 	cf, err := c.Connect(client.NewConfig("tcp://localhost:8080"))

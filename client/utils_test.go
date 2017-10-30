@@ -24,13 +24,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func errorCallback(t *testing.T) func(*packet.Message, error) {
-	return func(msg *packet.Message, err error) {
+func errorCallback(t *testing.T) func(*packet.Message, error) error {
+	return func(msg *packet.Message, err error) error {
 		if err != nil {
 			println(err.Error())
 		}
 
 		assert.Fail(t, "callback should not have been called")
+		return nil
 	}
 }
 
