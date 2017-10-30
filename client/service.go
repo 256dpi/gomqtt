@@ -49,25 +49,25 @@ type unsubscribe struct {
 // An OnlineCallback is a function that is called when the service is connected.
 //
 // Note: Execution of the service is resumed after the callback returns. This
-// means that waiting on a future will actually deadlock the service.
+// means that waiting on a future inside the callback will deadlock the service.
 type OnlineCallback func(resumed bool)
 
 // A MessageCallback is a function that is called when a message is received.
 //
 // Note: Execution of the service is resumed after the callback returns. This
-// means that waiting on a future will actually deadlock the service.
+// means that waiting on a future inside the callback will deadlock the service.
 type MessageCallback func(*packet.Message)
 
 // An ErrorCallback is a function that is called when an error occurred.
 //
 // Note: Execution of the service is resumed after the callback returns. This
-// means that waiting on a future will actually deadlock the service.
+// means that waiting on a future inside the callback will deadlock the service.
 type ErrorCallback func(error)
 
 // An OfflineCallback is a function that is called when the service is disconnected.
 //
 // Note: Execution of the service is resumed after the callback returns. This
-// means that waiting on a future will actually deadlock the service.
+// means that waiting on a future inside the callback will deadlock the service.
 type OfflineCallback func()
 
 const (
