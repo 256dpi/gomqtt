@@ -14,7 +14,7 @@ import (
 // PublishResendQOS1Test tests the broker for properly retrying QOS1 publish
 // packets.
 func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id)))
+	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id), 10*time.Second))
 
 	username, password := config.usernamePassword()
 
@@ -81,7 +81,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 // PublishResendQOS2Test tests the broker for properly retrying QOS2 Publish
 // packets.
 func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id)))
+	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id), 10*time.Second))
 
 	username, password := config.usernamePassword()
 
@@ -160,7 +160,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 // PubrelResendQOS2Test tests the broker for properly retrying QOS2 Pubrel
 // packets.
 func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
-	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id)))
+	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id), 10*time.Second))
 
 	username, password := config.usernamePassword()
 
@@ -244,19 +244,19 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
-	assert.NoError(t, client.ClearSession(options))
+	assert.NoError(t, client.ClearSession(options, 10*time.Second))
 
 	subscriber := client.New()
 
 	connectFuture, err := subscriber.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := subscriber.Subscribe(topic, qos)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
 	err = subscriber.Disconnect()
@@ -278,13 +278,13 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 
 	connectFuture, err = receiver.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.True(t, connectFuture.SessionPresent)
 
 	publishFuture, err := receiver.Publish(topic, testPayload, qos, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -300,19 +300,19 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
-	assert.NoError(t, client.ClearSession(options))
+	assert.NoError(t, client.ClearSession(options, 10*time.Second))
 
 	subscriber := client.New()
 
 	connectFuture, err := subscriber.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := subscriber.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	err = subscriber.Disconnect()
@@ -327,13 +327,13 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 
 	connectFuture, err = nonReceiver.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	publishFuture, err := nonReceiver.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	time.Sleep(config.NoMessageWait)
 
@@ -347,24 +347,24 @@ func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
-	assert.NoError(t, client.ClearSession(options))
+	assert.NoError(t, client.ClearSession(options, 10*time.Second))
 
 	subscriberAndUnsubscriber := client.New()
 
 	connectFuture, err := subscriberAndUnsubscriber.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := subscriberAndUnsubscriber.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	unsubscribeFuture, err := subscriberAndUnsubscriber.Unsubscribe(topic)
 	assert.NoError(t, err)
-	assert.NoError(t, unsubscribeFuture.Wait())
+	assert.NoError(t, unsubscribeFuture.Wait(10*time.Second))
 
 	err = subscriberAndUnsubscriber.Disconnect()
 	assert.NoError(t, err)
@@ -376,13 +376,13 @@ func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string
 
 	connectFuture, err = nonReceiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	publishFuture, err := nonReceiver.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	time.Sleep(config.NoMessageWait)
 

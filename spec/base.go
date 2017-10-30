@@ -30,18 +30,18 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := c.Subscribe(sub, subQOS)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{subQOS}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish(pub, testPayload, pubQOS, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -68,31 +68,31 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := c.Subscribe(topic+"/1", qos)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
 	subscribeFuture, err = c.Subscribe(topic+"/2", qos)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes)
 
 	unsubscribeFuture, err := c.Unsubscribe(topic + "/1")
 	assert.NoError(t, err)
-	assert.NoError(t, unsubscribeFuture.Wait())
+	assert.NoError(t, unsubscribeFuture.Wait(10*time.Second))
 
 	publishFuture, err := c.Publish(topic+"/1", testPayload, qos, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	publishFuture, err = c.Publish(topic+"/2", testPayload, qos, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -113,13 +113,13 @@ func UnsubscribeNotExistingSubscriptionTest(t *testing.T, config *Config, topic 
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	unsubscribeFuture, err := c.Unsubscribe(topic)
 	assert.NoError(t, err)
-	assert.NoError(t, unsubscribeFuture.Wait())
+	assert.NoError(t, unsubscribeFuture.Wait(10*time.Second))
 
 	time.Sleep(config.NoMessageWait)
 
@@ -145,27 +145,27 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := c.Subscribe(topic+"/#", 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	subscribeFuture, err = c.Subscribe(topic+"/+", 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	unsubscribeFuture, err := c.Unsubscribe(topic + "/#")
 	assert.NoError(t, err)
-	assert.NoError(t, unsubscribeFuture.Wait())
+	assert.NoError(t, unsubscribeFuture.Wait(10*time.Second))
 
 	publishFuture, err := c.Publish(topic+"/foo", testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -192,23 +192,23 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := c.Subscribe(topic, from)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{from}, subscribeFuture.ReturnCodes)
 
 	subscribeFuture, err = c.Subscribe(topic, to)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{to}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish(topic, testPayload, to, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -234,23 +234,23 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := c.Subscribe(sub, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	subscribeFuture, err = c.Subscribe(pub, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish(pub, testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -278,7 +278,7 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
@@ -290,12 +290,12 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 
 	subscribeFuture, err := c.SubscribeMultiple(subs)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0, 1, 2}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish(topic+"/3", testPayload, 2, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -323,7 +323,7 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
@@ -334,12 +334,12 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 
 	subscribeFuture, err := c.SubscribeMultiple(subs)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0, 1}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish(topic, testPayload, 1, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -366,30 +366,30 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 
 	connectFuture, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := c.Subscribe(topic+"/foo", 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	publishFuture, err = c.Publish(topic+"/bar", testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	publishFuture, err = c.Publish(topic+"/baz", testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	publishFuture, err = c.Publish(topic+"/foo", testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(10*time.Second))
 
 	<-wait
 
@@ -412,7 +412,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 
 	connectFuture, err := clientWithWill.Connect(opts)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
@@ -431,13 +431,13 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 
 	connectFuture, err = clientReceivingWill.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := clientReceivingWill.Subscribe(topic, sub)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes)
 
 	err = clientWithWill.Close()
@@ -465,7 +465,7 @@ func CleanWillTest(t *testing.T, config *Config, topic string) {
 
 	connectFuture, err := clientWithWill.Connect(opts)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
@@ -477,13 +477,13 @@ func CleanWillTest(t *testing.T, config *Config, topic string) {
 
 	connectFuture, err = nonReceiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
 	subscribeFuture, err := nonReceiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	err = clientWithWill.Disconnect()
@@ -515,7 +515,7 @@ func KeepAliveTest(t *testing.T, config *Config) {
 
 	connectFuture, err := c.Connect(opts)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 	assert.False(t, connectFuture.SessionPresent)
 
