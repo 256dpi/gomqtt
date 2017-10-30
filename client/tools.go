@@ -7,22 +7,22 @@ import (
 )
 
 // ClearSession will connect to the specified broker and request a clean session.
-func ClearSession(config *Config, timeout ...time.Duration) error {
+func ClearSession(config *Config, timeout time.Duration) error {
 	// copy config
-	config = &(*(config))
-	config.CleanSession = true
+	newConfig := *config
+	newConfig.CleanSession = true
 
 	// create client
 	client := New()
 
 	// connect to broker
-	future, err := client.Connect(config)
+	future, err := client.Connect(&newConfig)
 	if err != nil {
 		return err
 	}
 
 	// wait for future
-	err = future.Wait(timeout...)
+	err = future.Wait(timeout)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func ClearSession(config *Config, timeout ...time.Duration) error {
 }
 
 // PublishMessage will connect to the specified broker to publish the passed message.
-func PublishMessage(config *Config, msg *packet.Message, timeout ...time.Duration) error {
+func PublishMessage(config *Config, msg *packet.Message, timeout time.Duration) error {
 	// create client
 	client := New()
 
@@ -48,7 +48,7 @@ func PublishMessage(config *Config, msg *packet.Message, timeout ...time.Duratio
 	}
 
 	// wait on future
-	err = future.Wait(timeout...)
+	err = future.Wait(timeout)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func PublishMessage(config *Config, msg *packet.Message, timeout ...time.Duratio
 	}
 
 	// wait on future
-	err = publishFuture.Wait(timeout...)
+	err = publishFuture.Wait(timeout)
 	if err != nil {
 		return err
 	}
@@ -76,13 +76,13 @@ func PublishMessage(config *Config, msg *packet.Message, timeout ...time.Duratio
 
 // ClearRetainedMessage will connect to the specified broker and send an empty
 // retained message to force any already retained message to be cleared.
-func ClearRetainedMessage(config *Config, topic string, timeout ...time.Duration) error {
+func ClearRetainedMessage(config *Config, topic string, timeout time.Duration) error {
 	return PublishMessage(config, &packet.Message{
 		Topic:   topic,
 		Payload: nil,
 		QOS:     0,
 		Retain:  true,
-	}, timeout...)
+	}, timeout)
 }
 
 // ReceiveMessage will connect to the specified broker and issue a subscription
