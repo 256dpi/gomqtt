@@ -464,6 +464,10 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 				future, err := client.PublishMessage(cmd.publish.msg)
 				if err != nil {
 					s.err("Publish", err)
+
+					// cancel future
+					cmd.publish.future.Cancel()
+
 					return false
 				}
 
