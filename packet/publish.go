@@ -114,6 +114,8 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 
 	// read payload
 	if l > 0 {
+		// TODO: Support zero allocation mode?
+
 		pp.Message.Payload = make([]byte, l)
 		copy(pp.Message.Payload, src[total:total+l])
 		total += len(pp.Message.Payload)
