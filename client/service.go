@@ -176,7 +176,7 @@ func (s *Service) Start(config *Config) {
 	s.futureStore.Protect(true)
 
 	// create new tomb
-	s.tomb = &tomb.Tomb{}
+	s.tomb = new(tomb.Tomb)
 
 	// start supervisor
 	s.tomb.Go(s.supervisor)
