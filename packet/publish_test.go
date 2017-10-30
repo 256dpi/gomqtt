@@ -16,10 +16,10 @@ func TestPublishInterface(t *testing.T) {
 func TestPublishPacketDecode1(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 11,
-		23,
+		22,
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // packet ID MSB
 		7, // packet ID LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
@@ -31,7 +31,7 @@ func TestPublishPacketDecode1(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, uint16(7), pkt.PacketID)
-	assert.Equal(t, "surgemq", pkt.Message.Topic)
+	assert.Equal(t, "gomqtt", pkt.Message.Topic)
 	assert.Equal(t, []byte("send me home"), pkt.Message.Payload)
 	assert.Equal(t, uint8(1), pkt.Message.QOS)
 	assert.Equal(t, true, pkt.Message.Retain)
@@ -41,10 +41,10 @@ func TestPublishPacketDecode1(t *testing.T) {
 func TestPublishPacketDecode2(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH << 4),
-		21,
+		20,
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
@@ -54,7 +54,7 @@ func TestPublishPacketDecode2(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, uint16(0), pkt.PacketID)
-	assert.Equal(t, "surgemq", pkt.Message.Topic)
+	assert.Equal(t, "gomqtt", pkt.Message.Topic)
 	assert.Equal(t, []byte("send me home"), pkt.Message.Payload)
 	assert.Equal(t, uint8(0), pkt.Message.QOS)
 	assert.Equal(t, false, pkt.Message.Retain)
@@ -149,17 +149,17 @@ func TestPublishPacketDecodeError6(t *testing.T) {
 func TestPublishPacketEncode1(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 11,
-		23,
+		22,
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // packet ID MSB
 		7, // packet ID LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
 	pkt := NewPublishPacket()
-	pkt.Message.Topic = "surgemq"
+	pkt.Message.Topic = "gomqtt"
 	pkt.Message.QOS = QOSAtLeastOnce
 	pkt.Message.Retain = true
 	pkt.Dup = true
@@ -177,15 +177,15 @@ func TestPublishPacketEncode1(t *testing.T) {
 func TestPublishPacketEncode2(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH << 4),
-		21,
+		20,
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
 	pkt := NewPublishPacket()
-	pkt.Message.Topic = "surgemq"
+	pkt.Message.Topic = "gomqtt"
 	pkt.Message.Payload = []byte("send me home")
 
 	dst := make([]byte, pkt.Len())

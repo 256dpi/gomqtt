@@ -20,12 +20,12 @@ func TestSubscribeInterface(t *testing.T) {
 func TestSubscribePacketDecode(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
-		36,
+		35,
 		0, // packet ID MSB
 		7, // packet ID LSB
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // QOS
 		0, // topic name MSB
 		8, // topic name LSB
@@ -43,7 +43,7 @@ func TestSubscribePacketDecode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, 3, len(pkt.Subscriptions))
-	assert.Equal(t, "surgemq", pkt.Subscriptions[0].Topic)
+	assert.Equal(t, "gomqtt", pkt.Subscriptions[0].Topic)
 	assert.Equal(t, uint8(0), pkt.Subscriptions[0].QOS)
 	assert.Equal(t, "/a/b/#/c", pkt.Subscriptions[1].Topic)
 	assert.Equal(t, uint8(1), pkt.Subscriptions[1].QOS)
@@ -147,12 +147,12 @@ func TestSubscribePacketDecodeError6(t *testing.T) {
 func TestSubscribePacketEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
-		36,
+		35,
 		0, // packet ID MSB
 		7, // packet ID LSB
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // QOS
 		0, // topic name MSB
 		8, // topic name LSB
@@ -167,7 +167,7 @@ func TestSubscribePacketEncode(t *testing.T) {
 	pkt := NewSubscribePacket()
 	pkt.PacketID = 7
 	pkt.Subscriptions = []Subscription{
-		{"surgemq", 0},
+		{"gomqtt", 0},
 		{"/a/b/#/c", 1},
 		{"/a/b/#/cdd", 2},
 	}

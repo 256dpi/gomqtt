@@ -21,7 +21,7 @@ func TestConnectInterface(t *testing.T) {
 func TestConnectPacketDecode1(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),
-		60,
+		58,
 		0, // Protocol String MSB
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
@@ -30,8 +30,8 @@ func TestConnectPacketDecode1(t *testing.T) {
 		0,   // Keep Alive MSB
 		10,  // Keep Alive LSB
 		0,   // Client ID MSB
-		7,   // Client ID LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6,   // Client ID LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // Will Topic MSB
 		4, // Will Topic LSB
 		'w', 'i', 'l', 'l',
@@ -39,8 +39,8 @@ func TestConnectPacketDecode1(t *testing.T) {
 		12, // Will Message LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 		0, // Username ID MSB
-		7, // Username ID LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // Username ID LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0,  // Password ID MSB
 		10, // Password ID LSB
 		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
@@ -52,10 +52,10 @@ func TestConnectPacketDecode1(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, uint16(10), pkt.KeepAlive)
-	assert.Equal(t, "surgemq", pkt.ClientID)
+	assert.Equal(t, "gomqtt", pkt.ClientID)
 	assert.Equal(t, "will", pkt.Will.Topic)
 	assert.Equal(t, []byte("send me home"), pkt.Will.Payload)
-	assert.Equal(t, "surgemq", pkt.Username)
+	assert.Equal(t, "gomqtt", pkt.Username)
 	assert.Equal(t, "verysecret", pkt.Password)
 	assert.Equal(t, Version311, pkt.Version)
 }
@@ -63,7 +63,7 @@ func TestConnectPacketDecode1(t *testing.T) {
 func TestConnectPacketDecode2(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),
-		60,
+		58,
 		0, // Protocol String MSB
 		6, // Protocol String LSB
 		'M', 'Q', 'I', 's', 'd', 'p',
@@ -72,8 +72,8 @@ func TestConnectPacketDecode2(t *testing.T) {
 		0,   // Keep Alive MSB
 		10,  // Keep Alive LSB
 		0,   // Client ID MSB
-		7,   // Client ID LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6,   // Client ID LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // Will Topic MSB
 		4, // Will Topic LSB
 		'w', 'i', 'l', 'l',
@@ -81,8 +81,8 @@ func TestConnectPacketDecode2(t *testing.T) {
 		12, // Will Message LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 		0, // Username ID MSB
-		7, // Username ID LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // Username ID LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0,  // Password ID MSB
 		10, // Password ID LSB
 		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
@@ -94,10 +94,10 @@ func TestConnectPacketDecode2(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, uint16(10), pkt.KeepAlive)
-	assert.Equal(t, "surgemq", pkt.ClientID)
+	assert.Equal(t, "gomqtt", pkt.ClientID)
 	assert.Equal(t, "will", pkt.Will.Topic)
 	assert.Equal(t, []byte("send me home"), pkt.Will.Payload)
-	assert.Equal(t, "surgemq", pkt.Username)
+	assert.Equal(t, "gomqtt", pkt.Username)
 	assert.Equal(t, "verysecret", pkt.Password)
 	assert.Equal(t, Version31, pkt.Version)
 }
@@ -426,7 +426,7 @@ func TestConnectPacketDecodeError17(t *testing.T) {
 func TestConnectPacketEncode1(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),
-		60,
+		58,
 		0, // Protocol String MSB
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
@@ -435,8 +435,8 @@ func TestConnectPacketEncode1(t *testing.T) {
 		0,   // Keep Alive MSB
 		10,  // Keep Alive LSB
 		0,   // Client ID MSB
-		7,   // Client ID LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6,   // Client ID LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // Will Topic MSB
 		4, // Will Topic LSB
 		'w', 'i', 'l', 'l',
@@ -444,8 +444,8 @@ func TestConnectPacketEncode1(t *testing.T) {
 		12, // Will Message LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 		0, // Username ID MSB
-		7, // Username ID LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // Username ID LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0,  // Password ID MSB
 		10, // Password ID LSB
 		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
@@ -458,9 +458,9 @@ func TestConnectPacketEncode1(t *testing.T) {
 		Payload: []byte("send me home"),
 	}
 	pkt.CleanSession = false
-	pkt.ClientID = "surgemq"
+	pkt.ClientID = "gomqtt"
 	pkt.KeepAlive = 10
-	pkt.Username = "surgemq"
+	pkt.Username = "gomqtt"
 	pkt.Password = "verysecret"
 
 	dst := make([]byte, pkt.Len())

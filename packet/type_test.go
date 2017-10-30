@@ -5,26 +5,6 @@ import (
 	"testing"
 )
 
-func TestTypes(t *testing.T) {
-	if CONNECT != 1 ||
-		CONNACK != 2 ||
-		PUBLISH != 3 ||
-		PUBACK != 4 ||
-		PUBREC != 5 ||
-		PUBREL != 6 ||
-		PUBCOMP != 7 ||
-		SUBSCRIBE != 8 ||
-		SUBACK != 9 ||
-		UNSUBSCRIBE != 10 ||
-		UNSUBACK != 11 ||
-		PINGREQ != 12 ||
-		PINGRESP != 13 ||
-		DISCONNECT != 14 {
-
-		t.Errorf("Types have invalid code")
-	}
-}
-
 func TestTypeString(t *testing.T) {
 	assert.Equal(t, "Unknown", Type(99).String())
 }
@@ -51,8 +31,8 @@ func TestTypeNew(t *testing.T) {
 		DISCONNECT,
 	}
 
-	for _, _t := range list {
-		m, err := _t.New()
+	for _, tt := range list {
+		m, err := tt.New()
 		assert.NotNil(t, m)
 		assert.NoError(t, err)
 	}
