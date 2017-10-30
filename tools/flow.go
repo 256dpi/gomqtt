@@ -216,9 +216,12 @@ func (f *Flow) Test(conn Conn) error {
 				return fmt.Errorf("expected connection to close successfully but got error: %v", err)
 			}
 		case actionEnd:
-			_, err := conn.Receive()
+			pkt, err := conn.Receive()
 			if err != nil && !strings.Contains(err.Error(), "EOF") {
 				return fmt.Errorf("expected EOF but got %v", err)
+			}
+			if pkt != nil {
+				return fmt.Errorf("expected no packet but got %v", pkt)
 			}
 		}
 	}
