@@ -3,8 +3,8 @@ package client
 import (
 	"fmt"
 	"sync"
-	"time"
 	"sync/atomic"
+	"time"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"

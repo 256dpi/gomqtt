@@ -13,7 +13,7 @@ func TestBrokerWithMemoryBackend(t *testing.T) {
 		"allow": "allow",
 	}
 
-	port, quit, done := Run(t, NewEngineWithBackend(backend), "tcp")
+	port, quit, done := Run(NewEngineWithBackend(backend), "tcp")
 
 	config := spec.AllFeatures()
 	config.URL = "tcp://allow:allow@localhost:" + port

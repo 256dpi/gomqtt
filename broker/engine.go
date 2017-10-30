@@ -3,12 +3,10 @@ package broker
 import (
 	"net"
 	"sync"
-	"testing"
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
-	"github.com/stretchr/testify/assert"
 	"gopkg.in/tomb.v2"
 )
 
@@ -213,9 +211,11 @@ func (e *Engine) remove(client *Client) {
 // Run runs the passed engine on a random available port and returns a channel
 // that can be closed to shutdown the engine. This method is intended to be used
 // in testing scenarios.
-func Run(t *testing.T, engine *Engine, protocol string) (string, chan struct{}, chan struct{}) {
+func Run(engine *Engine, protocol string) (string, chan struct{}, chan struct{}) {
 	server, err := transport.Launch(protocol + "://localhost:0")
-	assert.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
 	quit := make(chan struct{})
 	done := make(chan struct{})
@@ -225,9 +225,13 @@ func Run(t *testing.T, engine *Engine, protocol string) (string, chan struct{}, 
 	go func() {
 		<-quit
 
-		// check for active clients
+		// give some grace
 		time.Sleep(100 * time.Millisecond)
-		assert.Equal(t, 0, len(engine.Clients()))
+
+		// check for active clients
+		if len(engine.Clients()) != 0 {
+			panic("leftover clients")
+		}
 
 		// errors from close are ignored
 		server.Close()

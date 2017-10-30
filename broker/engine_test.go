@@ -14,7 +14,7 @@ func TestConnectTimeout(t *testing.T) {
 	engine := NewEngine()
 	engine.ConnectTimeout = 10 * time.Millisecond
 
-	port, quit, done := Run(t, engine, "tcp")
+	port, quit, done := Run(engine, "tcp")
 
 	conn, err := transport.Dial("tcp://localhost:" + port)
 	assert.NoError(t, err)
@@ -31,7 +31,7 @@ func TestDefaultReadLimit(t *testing.T) {
 	engine := NewEngine()
 	engine.DefaultReadLimit = 1
 
-	port, quit, done := Run(t, engine, "tcp")
+	port, quit, done := Run(engine, "tcp")
 
 	c := client.New()
 	wait := make(chan struct{})
