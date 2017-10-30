@@ -85,7 +85,7 @@ func TestClientConnect(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
@@ -112,7 +112,7 @@ func TestClientConnectCustomDialer(t *testing.T) {
 
 	future, err := c.Connect(config)
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
@@ -136,7 +136,7 @@ func TestClientConnectAfterConnect(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
@@ -168,7 +168,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 
 	future, err := c.Connect(NewConfig(fmt.Sprintf("tcp://test:test@localhost:%s/", port)))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
@@ -223,7 +223,7 @@ func TestClientConnectionDenied(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.Error(t, future.Wait())
+	assert.Error(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ErrNotAuthorized, future.ReturnCode)
 
@@ -250,7 +250,7 @@ func TestClientExpectedConnack(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.Equal(t, ErrFutureCanceled, future.Wait())
+	assert.Equal(t, tools.ErrFutureCanceled, future.Wait(1*time.Second))
 
 	<-done
 	<-wait
@@ -294,7 +294,7 @@ func TestClientKeepAlive(t *testing.T) {
 
 	future, err := c.Connect(config)
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
@@ -337,7 +337,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 
 	future, err := c.Connect(config)
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
@@ -384,18 +384,18 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	subscribeFuture, err := c.Subscribe("test", 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
 	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish("test", []byte("test"), 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
 	<-wait
 
@@ -459,18 +459,18 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	subscribeFuture, err := c.Subscribe("test", 1)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
 	assert.Equal(t, []uint8{1}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
 	<-wait
 
@@ -544,18 +544,18 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	subscribeFuture, err := c.Subscribe("test", 2)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait())
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
 	assert.Equal(t, []uint8{2}, subscribeFuture.ReturnCodes)
 
 	publishFuture, err := c.Publish("test", []byte("test"), 2, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
 	<-wait
 
@@ -596,13 +596,13 @@ func TestClientUnsubscribe(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
 	unsubscribeFuture, err := c.Unsubscribe("test")
 	assert.NoError(t, err)
-	assert.NoError(t, unsubscribeFuture.Wait())
+	assert.NoError(t, unsubscribeFuture.Wait(1*time.Second))
 
 	err = c.Disconnect()
 	assert.NoError(t, err)
@@ -639,7 +639,7 @@ func TestClientHardDisconnect(t *testing.T) {
 
 	connectFuture, err := c.Connect(config)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
@@ -650,7 +650,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	err = c.Disconnect()
 	assert.NoError(t, err)
 
-	assert.Equal(t, ErrFutureCanceled, publishFuture.Wait())
+	assert.Equal(t, tools.ErrFutureCanceled, publishFuture.Wait(1*time.Second))
 
 	<-done
 
@@ -689,7 +689,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 
 	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
@@ -702,7 +702,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 
 	<-done
 
-	assert.NoError(t, publishFuture.Wait())
+	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
 	list, err := c.Session.AllPackets(outgoing)
 	assert.NoError(t, err)
@@ -722,7 +722,7 @@ func TestClientClose(t *testing.T) {
 
 	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
@@ -793,7 +793,7 @@ func TestClientSessionResumption(t *testing.T) {
 
 	connectFuture, err := c.Connect(config)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
@@ -828,7 +828,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, future.Wait())
+	assert.NoError(t, future.Wait(1*time.Second))
 	assert.False(t, future.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, future.ReturnCode)
 
@@ -854,7 +854,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 
 	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.Equal(t, ErrFutureCanceled, future.Wait())
+	assert.Equal(t, tools.ErrFutureCanceled, future.Wait(1*time.Second))
 
 	<-wait
 	<-done
@@ -883,13 +883,13 @@ func TestClientFutureCancellation(t *testing.T) {
 
 	connectFuture, err := c.Connect(NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait())
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
 	assert.False(t, connectFuture.SessionPresent)
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode)
 
 	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
 	assert.NoError(t, err)
-	assert.Equal(t, ErrFutureCanceled, publishFuture.Wait())
+	assert.Equal(t, tools.ErrFutureCanceled, publishFuture.Wait(1*time.Second))
 
 	<-done
 }
@@ -931,18 +931,21 @@ func TestClientLogger(t *testing.T) {
 		atomic.AddUint32(&counter, 1)
 	}
 
-	future, _ := c.Connect(NewConfig("tcp://localhost:" + port))
-	future.Wait()
+	future, err := c.Connect(NewConfig("tcp://localhost:" + port))
+	assert.NoError(t, err)
+	assert.NoError(t, future.Wait(1*time.Second))
 
-	subscribeFuture, _ := c.Subscribe("test", 0)
-	subscribeFuture.Wait()
+	subscribeFuture, err := c.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
 
-	publishFuture, _ := c.Publish("test", []byte("test"), 0, false)
-	publishFuture.Wait()
+	publishFuture, err := c.Publish("test", []byte("test"), 0, false)
+	assert.NoError(t, err)
+	assert.NoError(t, publishFuture.Wait(1*time.Second))
 
 	<-wait
 
-	c.Disconnect()
+	assert.NoError(t, c.Disconnect())
 
 	<-done
 
@@ -957,7 +960,7 @@ func BenchmarkClientPublish(b *testing.B) {
 		panic(err)
 	}
 
-	err = connectFuture.Wait()
+	err = connectFuture.Wait(1 * time.Second)
 	if err != nil {
 		panic(err)
 	}
