@@ -49,7 +49,7 @@ func main() {
 		panic(err)
 	}
 
-	err = cf.Wait()
+	err = cf.Wait(10 * time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +59,7 @@ func main() {
 		panic(err)
 	}
 
-	err = sf.Wait()
+	err = sf.Wait(10 * time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +78,7 @@ func main() {
 			panic(err)
 		}
 
-		err = pf.Wait()
+		err = pf.Wait(10 * time.Second)
 		if err != nil {
 			panic(err)
 		}

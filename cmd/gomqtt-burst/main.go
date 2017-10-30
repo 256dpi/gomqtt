@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"time"
 
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
@@ -42,7 +43,7 @@ func main() {
 		panic(err)
 	}
 
-	err = cf.Wait()
+	err = cf.Wait(10 * time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +60,7 @@ func main() {
 	}
 
 	for _, pf := range futures {
-		err = pf.Wait()
+		err = pf.Wait(10 * time.Second)
 		if err != nil {
 			panic(err)
 		}
