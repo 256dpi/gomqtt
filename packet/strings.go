@@ -49,8 +49,6 @@ func readLPString(buf []byte, t Type) (string, int, error) {
 		return "", total, fmt.Errorf("[%s] insufficient buffer size, expected %d, got %d", t, total, len(buf))
 	}
 
-	// TODO: Support zero allocation mode?
-
 	return string(buf[2:total]), total, nil
 }
 
