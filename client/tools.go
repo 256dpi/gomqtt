@@ -1,135 +1,106 @@
 package client
 
-import "github.com/256dpi/gomqtt/packet"
+import (
+	"time"
 
-// ClearSession will connect/disconnect once with a clean session request to force
-// the broker to reset the clients session. This is useful in situations where
-// its not clear in what state the last session was left.
-func ClearSession(config *Config) error {
-	if config == nil {
-		panic("No config specified")
-	}
+	"github.com/256dpi/gomqtt/packet"
+)
 
+// ClearSession will connect to the specified broker and request a clean session.
+func ClearSession(config *Config, timeout ...time.Duration) error {
+	// copy config
+	config = &(*(config))
+	config.CleanSession = true
+
+	// create client
 	client := New()
 
-	// copy config
-	config2 := *config
-	config2.CleanSession = true
-
 	// connect to broker
-	future, err := client.Connect(&config2)
+	future, err := client.Connect(config)
 	if err != nil {
 		return err
 	}
 
-	// wait for connack
-	future.Wait()
-
-	// check if connection has been accepted
-	if future.ReturnCode != packet.ConnectionAccepted {
-		return ErrClientConnectionDenied
-	}
-
-	// disconnect
-	return client.Disconnect()
-}
-
-// ClearRetainedMessage will connect/disconnect and send an empty retained message.
-// This is useful in situations where its not clear if a message has already been
-// retained.
-func ClearRetainedMessage(config *Config, topic string) error {
-	if config == nil {
-		panic("No config specified")
-	}
-
-	client := New()
-
-	// copy config
-	config2 := *config
-	config2.CleanSession = true
-
-	// connect to broker
-	future, err := client.Connect(&config2)
-	if err != nil {
-		return err
-	}
-
-	// wait for connack
-	future.Wait()
-
-	// check if connection has been accepted
-	if future.ReturnCode != packet.ConnectionAccepted {
-		return ErrClientConnectionDenied
-	}
-
-	// clear retained message
-	_, err = client.Publish(topic, nil, 0, true)
+	// wait for future
+	err = future.Wait(timeout...)
 	if err != nil {
 		return err
 	}
 
 	// disconnect
-	return client.Disconnect()
-}
-
-func PublishMessage(config *Config, msg *packet.Message) error {
-	if config == nil {
-		panic("No config specified")
-	}
-
-	client := New()
-
-	// copy config
-	config2 := *config
-	config2.CleanSession = true
-
-	// connect to broker
-	future, err := client.Connect(&config2)
+	err = client.Disconnect()
 	if err != nil {
 		return err
 	}
 
-	// wait for connack
-	future.Wait()
+	return nil
+}
 
-	// check if connection has been accepted
-	if future.ReturnCode != packet.ConnectionAccepted {
-		return ErrClientConnectionDenied
+// PublishMessage will connect to the specified broker to publish the passed message.
+func PublishMessage(config *Config, msg *packet.Message, timeout ...time.Duration) error {
+	// create client
+	client := New()
+
+	// connect to broker
+	future, err := client.Connect(config)
+	if err != nil {
+		return err
 	}
 
-	// clear retained message
-	_, err = client.PublishMessage(msg)
+	// wait on future
+	err = future.Wait(timeout...)
+	if err != nil {
+		return err
+	}
+
+	// publish message
+	publishFuture, err := client.PublishMessage(msg)
+	if err != nil {
+		return err
+	}
+
+	// wait on future
+	err = publishFuture.Wait(timeout...)
 	if err != nil {
 		return err
 	}
 
 	// disconnect
-	return client.Disconnect()
-}
-
-func ReceiveMessage(config *Config, topic string, qos byte) (*packet.Message, error) {
-	if config == nil {
-		panic("No config specified")
+	err = client.Disconnect()
+	if err != nil {
+		return err
 	}
 
+	return nil
+}
+
+// ClearRetainedMessage will connect to the specified broker and send an empty
+// retained message to force any already retained message to be cleared.
+func ClearRetainedMessage(config *Config, topic string, timeout ...time.Duration) error {
+	return PublishMessage(config, &packet.Message{
+		Topic:   topic,
+		Payload: nil,
+		QOS:     0,
+		Retain:  true,
+	}, timeout...)
+}
+
+// ReceiveMessage will connect to the specified broker and issue a subscription
+// for the specified topic and return the first message received.
+func ReceiveMessage(config *Config, topic string, qos byte, timeout time.Duration) (*packet.Message, error) {
+	// create client
 	client := New()
 
-	// copy config
-	config2 := *config
-	config2.CleanSession = true
-
 	// connect to broker
-	future, err := client.Connect(&config2)
+	future, err := client.Connect(config)
 	if err != nil {
 		return nil, err
 	}
 
-	// wait for connack
-	future.Wait()
-
-	// check if connection has been accepted
-	if future.ReturnCode != packet.ConnectionAccepted {
-		return nil, ErrClientConnectionDenied
+	// wait for future
+	err = future.Wait(timeout)
+	if err != nil {
+		return nil, err
 	}
 
 	// create channel
@@ -147,17 +118,33 @@ func ReceiveMessage(config *Config, topic string, qos byte) (*packet.Message, er
 	}
 
 	// make subscription
-	_, err = client.Subscribe(topic, qos)
+	subscribeFuture, err := client.Subscribe(topic, qos)
 	if err != nil {
 		return nil, err
 	}
 
-	// wait
-	select {
-	case msg := <-msgCh:
-		// disconnect
-		return msg, client.Disconnect()
-	case err := <-errCh:
+	// wait for future
+	err = subscribeFuture.Wait(timeout)
+	if err != nil {
 		return nil, err
 	}
+
+	// prepare message
+	var msg *packet.Message
+
+	// wait for error, message or timeout
+	select {
+	case err = <-errCh:
+		return nil, err
+	case msg = <-msgCh:
+	case <-time.After(timeout):
+	}
+
+	// disconnect
+	err = client.Disconnect()
+	if err != nil {
+		return nil, err
+	}
+
+	return msg, nil
 }

@@ -2,6 +2,7 @@ package client
 
 import (
 	"testing"
+	"time"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/tools"
@@ -20,7 +21,7 @@ func TestClearSession(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	err := ClearSession(NewConfigWithClientID("tcp://localhost:"+port, "test"))
+	err := ClearSession(NewConfigWithClientID("tcp://localhost:"+port, "test"), 1*time.Second)
 	assert.NoError(t, err)
 
 	<-done
@@ -41,7 +42,7 @@ func TestClearRetainedMessage(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	err := ClearRetainedMessage(NewConfig("tcp://localhost:"+port), "test")
+	err := ClearRetainedMessage(NewConfig("tcp://localhost:"+port), "test", 1*time.Second)
 	assert.NoError(t, err)
 
 	<-done
@@ -64,7 +65,7 @@ func TestPublishMessage(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	err := PublishMessage(NewConfig("tcp://localhost:"+port), &publish.Message)
+	err := PublishMessage(NewConfig("tcp://localhost:"+port), &publish.Message, 1*time.Second)
 	assert.NoError(t, err)
 
 	<-done
@@ -99,7 +100,7 @@ func TestReceiveMessage(t *testing.T) {
 
 	done, port := fakeBroker(t, broker)
 
-	msg, err := ReceiveMessage(NewConfig("tcp://localhost:"+port), "test", 0)
+	msg, err := ReceiveMessage(NewConfig("tcp://localhost:"+port), "test", 0, 1*time.Second)
 	assert.NoError(t, err)
 	assert.Equal(t, publish.Message.String(), msg.String())
 
