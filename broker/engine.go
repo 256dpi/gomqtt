@@ -45,7 +45,7 @@ const (
 )
 
 // The Logger callback handles incoming log messages.
-type Logger func(LogEvent, *Client, packet.Packet, *packet.Message, error)
+type Logger func(LogEvent, *Client, packet.GenericPacket, *packet.Message, error)
 
 // The Engine handles incoming connections and connects them to the backend.
 type Engine struct {

@@ -747,7 +747,7 @@ func (c *Client) pinger() error {
 /* helpers */
 
 // sends packet and updates lastSend
-func (c *Client) send(pkt packet.Packet, buffered bool) error {
+func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
 	// reset keep alive tracker
 	c.tracker.reset()
 

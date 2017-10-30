@@ -639,7 +639,7 @@ func (c *Client) die(event LogEvent, err error, close bool) error {
 	return err
 }
 
-func (c *Client) send(pkt packet.Packet, buffered bool) error {
+func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
 	var err error
 
 	// send packet
@@ -660,7 +660,7 @@ func (c *Client) send(pkt packet.Packet, buffered bool) error {
 }
 
 // log a message
-func (c *Client) log(event LogEvent, client *Client, pkt packet.Packet, msg *packet.Message, err error) {
+func (c *Client) log(event LogEvent, client *Client, pkt packet.GenericPacket, msg *packet.Message, err error) {
 	if c.engine.Logger != nil {
 		c.engine.Logger(event, client, pkt, msg, err)
 	}

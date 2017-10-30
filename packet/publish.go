@@ -14,7 +14,7 @@ type PublishPacket struct {
 	// If the Dup flag is set to false, it indicates that this is the first
 	// occasion that the client or server has attempted to send this
 	// PublishPacket. If the dup flag is set to true, it indicates that this
-	// might be re-delivery of an earlier attempt to send the Packet.
+	// might be re-delivery of an earlier attempt to send the packet.
 	Dup bool
 
 	// The packet identifier.

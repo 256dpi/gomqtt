@@ -43,7 +43,7 @@ func main() {
 	var published int32
 	var forwarded int32
 
-	engine.Logger = func(event broker.LogEvent, client *broker.Client, pkt packet.Packet, msg *packet.Message, err error) {
+	engine.Logger = func(event broker.LogEvent, client *broker.Client, pkt packet.GenericPacket, msg *packet.Message, err error) {
 		if event == broker.MessagePublished {
 			atomic.AddInt32(&published, 1)
 		} else if event == broker.MessageForwarded {

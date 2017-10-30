@@ -159,7 +159,7 @@ func BenchmarkIdentifiedPacketDecode(b *testing.B) {
 	}
 }
 
-func testIdentifiedPacketImplementation(t *testing.T, pkt Packet) {
+func testIdentifiedPacketImplementation(t *testing.T, pkt GenericPacket) {
 	assert.Equal(t, fmt.Sprintf("<%sPacket PacketID=1>", pkt.Type().String()), pkt.String())
 
 	buf := make([]byte, pkt.Len())

@@ -20,9 +20,9 @@ const (
 	QOSFailure = 0x80
 )
 
-// A Packet is an MQTT control packet that can be encoded to a buffer or decoded
+// A GenericPacket is an MQTT control packet that can be encoded to a buffer or decoded
 // from a buffer.
-type Packet interface {
+type GenericPacket interface {
 	// Type returns the packets type.
 	Type() Type
 
@@ -66,7 +66,7 @@ func DetectPacket(src []byte) (int, Type) {
 
 // ID checks the packets type and returns its PacketID and true, or if it does
 // not have a PacketID, zero and false.
-func ID(packet Packet) (uint16, bool) {
+func ID(packet GenericPacket) (uint16, bool) {
 	switch packet.Type() {
 	case PUBLISH:
 		return packet.(*PublishPacket).PacketID, true

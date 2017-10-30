@@ -109,7 +109,7 @@ type PubcompPacket struct {
 	PacketID uint16
 }
 
-var _ Packet = (*PubcompPacket)(nil)
+var _ GenericPacket = (*PubcompPacket)(nil)
 
 // NewPubcompPacket creates a new PubcompPacket.
 func NewPubcompPacket() *PubcompPacket {
@@ -195,7 +195,7 @@ type PubrelPacket struct {
 	PacketID uint16
 }
 
-var _ Packet = (*PubrelPacket)(nil)
+var _ GenericPacket = (*PubrelPacket)(nil)
 
 // NewPubrelPacket creates a new PubrelPacket.
 func NewPubrelPacket() *PubrelPacket {

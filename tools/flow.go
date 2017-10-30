@@ -12,27 +12,27 @@ import (
 
 // A Conn defines an abstract interface for connections used with a Flow.
 type Conn interface {
-	Send(pkt packet.Packet) error
-	Receive() (packet.Packet, error)
+	Send(pkt packet.GenericPacket) error
+	Receive() (packet.GenericPacket, error)
 	Close() error
 }
 
 // The Pipe pipes packets from Send to Receive.
 type Pipe struct {
-	pipe  chan packet.Packet
+	pipe  chan packet.GenericPacket
 	close chan struct{}
 }
 
 // NewPipe returns a new Pipe.
 func NewPipe() *Pipe {
 	return &Pipe{
-		pipe:  make(chan packet.Packet),
+		pipe:  make(chan packet.GenericPacket),
 		close: make(chan struct{}),
 	}
 }
 
 // Send returns packet on next Receive call.
-func (conn *Pipe) Send(pkt packet.Packet) error {
+func (conn *Pipe) Send(pkt packet.GenericPacket) error {
 	select {
 	case conn.pipe <- pkt:
 		return nil
@@ -42,7 +42,7 @@ func (conn *Pipe) Send(pkt packet.Packet) error {
 }
 
 // Receive returns the packet being sent with Send.
-func (conn *Pipe) Receive() (packet.Packet, error) {
+func (conn *Pipe) Receive() (packet.GenericPacket, error) {
 	select {
 	case pkt := <-conn.pipe:
 		return pkt, nil
@@ -72,7 +72,7 @@ const (
 // An Action is a step in a flow.
 type action struct {
 	kind     byte
-	packet   packet.Packet
+	packet   packet.GenericPacket
 	fn       func()
 	ch       chan struct{}
 	duration time.Duration
@@ -91,7 +91,7 @@ func NewFlow() *Flow {
 }
 
 // Send will send and one packet.
-func (f *Flow) Send(pkt packet.Packet) *Flow {
+func (f *Flow) Send(pkt packet.GenericPacket) *Flow {
 	f.add(&action{
 		kind:   actionSend,
 		packet: pkt,
@@ -101,7 +101,7 @@ func (f *Flow) Send(pkt packet.Packet) *Flow {
 }
 
 // Receive will receive and match one packet.
-func (f *Flow) Receive(pkt packet.Packet) *Flow {
+func (f *Flow) Receive(pkt packet.GenericPacket) *Flow {
 	f.add(&action{
 		kind:   actionReceive,
 		packet: pkt,

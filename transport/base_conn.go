@@ -44,7 +44,7 @@ func NewBaseConn(c Carrier) *BaseConn {
 // underlying connection.
 //
 // Note: Only one goroutine can Send at the same time.
-func (c *BaseConn) Send(pkt packet.Packet) error {
+func (c *BaseConn) Send(pkt packet.GenericPacket) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
@@ -69,7 +69,7 @@ func (c *BaseConn) Send(pkt packet.Packet) error {
 // the buffer at a later time will be returned on the next call.
 //
 // Note: Only one goroutine can call BufferedSend at the same time.
-func (c *BaseConn) BufferedSend(pkt packet.Packet) error {
+func (c *BaseConn) BufferedSend(pkt packet.GenericPacket) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
@@ -96,7 +96,7 @@ func (c *BaseConn) BufferedSend(pkt packet.Packet) error {
 	return nil
 }
 
-func (c *BaseConn) write(pkt packet.Packet) error {
+func (c *BaseConn) write(pkt packet.GenericPacket) error {
 	err := c.stream.Write(pkt)
 	if err != nil {
 		// ensure connection gets closed
@@ -136,7 +136,7 @@ func (c *BaseConn) asyncFlush() {
 // reading from the underlying connection.
 //
 // Note: Only one goroutine can Receive at the same time.
-func (c *BaseConn) Receive() (packet.Packet, error) {
+func (c *BaseConn) Receive() (packet.GenericPacket, error) {
 	c.rMutex.Lock()
 	defer c.rMutex.Unlock()
 

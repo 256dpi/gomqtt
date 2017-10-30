@@ -20,10 +20,10 @@ type Session interface {
 
 	// SavePacket should store a packet in the session. An eventual existing
 	// packet with the same id should be quietly overwritten.
-	SavePacket(direction string, pkt packet.Packet) error
+	SavePacket(direction string, pkt packet.GenericPacket) error
 
 	// LookupPacket should retrieve a packet from the session using the packet id.
-	LookupPacket(direction string, id uint16) (packet.Packet, error)
+	LookupPacket(direction string, id uint16) (packet.GenericPacket, error)
 
 	// DeletePacket should remove a packet from the session. The method should
 	// not return an error if no packet with the specified id does exists.
@@ -31,7 +31,7 @@ type Session interface {
 
 	// AllPackets should return all packets currently saved in the session. This
 	// method is used to resend stored packets when the session is resumed.
-	AllPackets(direction string) ([]packet.Packet, error)
+	AllPackets(direction string) ([]packet.GenericPacket, error)
 
 	// SaveSubscription should store the subscription in the session. An eventual
 	// subscription with the same topic should be quietly overwritten.
@@ -92,13 +92,13 @@ func (s *MemorySession) PacketID() uint16 {
 
 // SavePacket will store a packet in the session. An eventual existing
 // packet with the same id gets quietly overwritten.
-func (s *MemorySession) SavePacket(direction string, pkt packet.Packet) error {
+func (s *MemorySession) SavePacket(direction string, pkt packet.GenericPacket) error {
 	s.store.Save(direction, pkt)
 	return nil
 }
 
 // LookupPacket will retrieve a packet from the session using a packet id.
-func (s *MemorySession) LookupPacket(direction string, id uint16) (packet.Packet, error) {
+func (s *MemorySession) LookupPacket(direction string, id uint16) (packet.GenericPacket, error) {
 	return s.store.Lookup(direction, id), nil
 }
 
@@ -110,7 +110,7 @@ func (s *MemorySession) DeletePacket(direction string, id uint16) error {
 }
 
 // AllPackets will return all packets currently saved in the session.
-func (s *MemorySession) AllPackets(direction string) ([]packet.Packet, error) {
+func (s *MemorySession) AllPackets(direction string) ([]packet.GenericPacket, error) {
 	return s.store.All(direction), nil
 }
 

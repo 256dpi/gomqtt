@@ -9,20 +9,20 @@ import (
 
 // The Store is a thread-safe packet store.
 type Store struct {
-	packets map[string]packet.Packet
+	packets map[string]packet.GenericPacket
 	mutex   sync.Mutex
 }
 
 // NewStore returns a new Store.
 func NewStore() *Store {
 	return &Store{
-		packets: make(map[string]packet.Packet),
+		packets: make(map[string]packet.GenericPacket),
 	}
 }
 
 // Save will store a packet in the store. An eventual existing packet with the
 // same id gets quietly overwritten.
-func (s *Store) Save(prefix string, pkt packet.Packet) {
+func (s *Store) Save(prefix string, pkt packet.GenericPacket) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -33,7 +33,7 @@ func (s *Store) Save(prefix string, pkt packet.Packet) {
 }
 
 // Lookup will retrieve a packet from the store.
-func (s *Store) Lookup(prefix string, id uint16) packet.Packet {
+func (s *Store) Lookup(prefix string, id uint16) packet.GenericPacket {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -49,11 +49,11 @@ func (s *Store) Delete(prefix string, id uint16) {
 }
 
 // All will return all packets currently saved in the store.
-func (s *Store) All(prefix string) []packet.Packet {
+func (s *Store) All(prefix string) []packet.GenericPacket {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	var all []packet.Packet
+	var all []packet.GenericPacket
 
 	for key, pkt := range s.packets {
 		if strings.HasPrefix(key, prefix) {
@@ -69,7 +69,7 @@ func (s *Store) Reset() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.packets = make(map[string]packet.Packet)
+	s.packets = make(map[string]packet.GenericPacket)
 }
 
 // key generates a key from a prefix and a id
