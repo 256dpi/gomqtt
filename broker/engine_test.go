@@ -57,7 +57,7 @@ func TestDefaultReadLimit(t *testing.T) {
 
 	cf, err := c.Connect(client.NewConfig("tcp://localhost:" + port))
 	assert.NoError(t, err)
-	assert.Error(t, cf.Wait())
+	assert.Error(t, cf.Wait(10*time.Second))
 
 	<-wait
 	close(quit)

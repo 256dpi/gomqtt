@@ -16,6 +16,7 @@ package broker
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
@@ -48,21 +49,21 @@ func Example() {
 		panic(err)
 	}
 
-	cf.Wait()
+	cf.Wait(10 * time.Second)
 
 	sf, err := c.Subscribe("test", 0)
 	if err != nil {
 		panic(err)
 	}
 
-	sf.Wait()
+	sf.Wait(10 * time.Second)
 
 	pf, err := c.Publish("test", []byte("test"), 0, false)
 	if err != nil {
 		panic(err)
 	}
 
-	pf.Wait()
+	pf.Wait(10 * time.Second)
 
 	<-wait
 
