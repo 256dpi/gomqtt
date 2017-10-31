@@ -13,7 +13,6 @@ type MemorySession struct {
 	incStore      *tools.PacketStore
 	outStore      *tools.PacketStore
 	subscriptions *tools.Tree
-	offlineStore  *tools.MessageQueue
 	willMessage   *packet.Message
 	willMutex     sync.Mutex
 }
@@ -25,7 +24,6 @@ func NewMemorySession() *MemorySession {
 		incStore:      tools.NewPacketStore(),
 		outStore:      tools.NewPacketStore(),
 		subscriptions: tools.NewTree(),
-		offlineStore:  tools.NewMessageQueue(100),
 	}
 }
 
@@ -124,23 +122,12 @@ func (s *MemorySession) ClearWill() error {
 	return nil
 }
 
-// QueueOffline will enqueue a offline message.
-func (s *MemorySession) QueueOffline(msg *packet.Message) {
-	s.offlineStore.Push(msg)
-}
-
-// DequeueOffline will dequeue the next offline message.
-func (s *MemorySession) DequeueOffline() *packet.Message {
-	return s.offlineStore.Pop()
-}
-
 // Reset will completely reset the session.
 func (s *MemorySession) Reset() error {
 	s.counter.Reset()
 	s.incStore.Reset()
 	s.outStore.Reset()
 	s.subscriptions.Reset()
-	s.offlineStore.Reset()
 	s.ClearWill()
 
 	return nil

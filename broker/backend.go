@@ -56,17 +56,11 @@ type Session interface {
 	// ClearWill should remove the will message from the store.
 	ClearWill() error
 
-	// QueueOffline should enqueue the specified offline message.
-	QueueOffline(*packet.Message)
-
-	// DequeueOffline should dequeue the next offline message.
-	DequeueOffline() *packet.Message
-
 	// Reset should completely reset the session.
 	Reset() error
 }
 
-// A Backend provides effective queuing functionality to a Broker and its Clients.
+// A Backend provides the effective brokering functionality to its clients.
 type Backend interface {
 	// Authenticate should authenticate the client using the user and password
 	// values and return true if the client is eligible to continue or false
@@ -126,19 +120,20 @@ type Backend interface {
 type MemoryBackend struct {
 	Credentials map[string]string
 
-	subscribedClients *tools.Tree
-	retainedMessages  *tools.Tree
-	offlineSessions   *tools.Tree
-	storedSessions    sync.Map
-	activeClients     sync.Map
+	subscribedClients    *tools.Tree
+	retainedMessages     *tools.Tree
+	storedSessions       sync.Map
+	activeClients        sync.Map
+	offlineQueues        sync.Map
+	offlineSubscriptions *tools.Tree
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		subscribedClients: tools.NewTree(),
-		retainedMessages:  tools.NewTree(),
-		offlineSessions:   tools.NewTree(),
+		subscribedClients:    tools.NewTree(),
+		retainedMessages:     tools.NewTree(),
+		offlineSubscriptions: tools.NewTree(),
 	}
 }
 
@@ -187,8 +182,13 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 			m.storedSessions.Delete(id)
 		}
 
-		// clear offline subscriptions
-		m.offlineSessions.Clear(s)
+		// get offline queue
+		val, ok := m.offlineQueues.Load(client.ClientID())
+		if ok {
+			// clear offline subscriptions
+			queue := val.(*tools.MessageQueue)
+			m.offlineSubscriptions.Clear(queue)
+		}
 
 		return s.(Session), true, nil
 	}
@@ -210,15 +210,24 @@ func (m *MemoryBackend) QueueOffline(client *Client) error {
 	// send all missed messages in another goroutine
 	go func() {
 		for {
+			// get offline queue
+			val, ok := m.offlineQueues.Load(client.ClientID())
+			if !ok {
+				return
+			}
+
+			// cast queue
+			queue := val.(*tools.MessageQueue)
+
 			// get next missed message
-			msg := client.session.DequeueOffline()
+			msg := queue.Pop()
 			if msg == nil {
 				return
 			}
 
 			// publish or add back to queue
 			if !client.Publish(msg) {
-				client.session.QueueOffline(msg)
+				queue.Push(msg)
 				return
 			}
 		}
@@ -283,8 +292,8 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	}
 
 	// queue for offline clients
-	for _, v := range m.offlineSessions.Match(msg.Topic) {
-		v.(Session).QueueOffline(msg)
+	for _, v := range m.offlineSubscriptions.Match(msg.Topic) {
+		v.(*tools.MessageQueue).Push(msg)
 	}
 
 	return nil
@@ -314,13 +323,19 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 		return err
 	}
 
+	// create offline queue
+	queue := tools.NewMessageQueue(1000)
+
 	// iterate through stored subscriptions
 	for _, sub := range subscriptions {
 		if sub.QOS >= 1 {
 			// add offline subscription
-			m.offlineSessions.Add(sub.Topic, client.Session())
+			m.offlineSubscriptions.Add(sub.Topic, queue)
 		}
 	}
+
+	// store offline queue
+	m.offlineQueues.Store(client.ClientID(), queue)
 
 	return nil
 }
