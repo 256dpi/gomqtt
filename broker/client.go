@@ -164,6 +164,7 @@ func (c *Client) processor() error {
 
 // handle an incoming ConnackPacket
 func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
+	// prepare connack packet
 	connack := packet.NewConnackPacket()
 	connack.ReturnCode = packet.ConnectionAccepted
 	connack.SessionPresent = false
@@ -248,12 +249,13 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// resend stored packets
 	for _, pkt := range packets {
+		// set the dup flag on a publish packet
 		publish, ok := pkt.(*packet.PublishPacket)
 		if ok {
-			// set the dup flag on a publish packet
 			publish.Dup = true
 		}
 
+		// send packet
 		err = c.send(pkt, true)
 		if err != nil {
 			return c.die(TransportError, err, false)
@@ -288,6 +290,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 // handle an incoming PingreqPacket
 func (c *Client) processPingreq() error {
+	// send a pingresp packet
 	err := c.send(packet.NewPingrespPacket(), true)
 	if err != nil {
 		return c.die(TransportError, err, false)
@@ -298,6 +301,7 @@ func (c *Client) processPingreq() error {
 
 // handle an incoming SubscribePacket
 func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
+	// prepare suback packet
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
 	suback.ID = pkt.ID
@@ -339,9 +343,11 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 // handle an incoming UnsubscribePacket
 func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
+	// prepare unsuback packet
 	unsuback := packet.NewUnsubackPacket()
 	unsuback.ID = pkt.ID
 
+	// handle contained topics
 	for _, topic := range pkt.Topics {
 		// unsubscribe client from queue
 		err := c.engine.Backend.Unsubscribe(c, topic)
@@ -356,6 +362,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 		}
 	}
 
+	// send packet
 	err := c.send(unsuback, true)
 	if err != nil {
 		return c.die(TransportError, err, false)
@@ -394,6 +401,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 			return c.die(SessionError, err, true)
 		}
 
+		// prepare pubrec packet
 		pubrec := packet.NewPubrecPacket()
 		pubrec.ID = publish.ID
 
@@ -498,6 +506,7 @@ func (c *Client) sender() error {
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
 		case msg := <-c.out:
+			// prepare publish packet
 			publish := packet.NewPublishPacket()
 			publish.Message = *msg
 
@@ -543,11 +552,13 @@ func (c *Client) handleMessage(msg *packet.Message) error {
 	// check retain flag
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
+			// retain message
 			err := c.engine.Backend.StoreRetained(c, msg)
 			if err != nil {
 				return err
 			}
 		} else {
+			// clear already retained message
 			err := c.engine.Backend.ClearRetained(c, msg.Topic)
 			if err != nil {
 				return err
@@ -641,6 +652,7 @@ func (c *Client) die(event LogEvent, err error, close bool) error {
 	return err
 }
 
+// send a packet
 func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
 	var err error
 
