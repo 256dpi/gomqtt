@@ -171,7 +171,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// authenticate
 	ok, err := c.engine.Backend.Authenticate(c, pkt.Username, pkt.Password)
 	if err != nil {
-		c.die(BackendError, err, true)
+		return c.die(BackendError, err, true)
 	}
 
 	// check authentication
