@@ -228,11 +228,6 @@ func Run(engine *Engine, protocol string) (string, chan struct{}, chan struct{})
 		// give some grace
 		time.Sleep(100 * time.Millisecond)
 
-		// check for active clients
-		if len(engine.Clients()) != 0 {
-			panic("leftover clients")
-		}
-
 		// errors from close are ignored
 		server.Close()
 
