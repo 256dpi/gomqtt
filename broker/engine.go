@@ -212,21 +212,23 @@ func (e *Engine) remove(client *Client) {
 // that can be closed to shutdown the engine. This method is intended to be used
 // in testing scenarios.
 func Run(engine *Engine, protocol string) (string, chan struct{}, chan struct{}) {
+	// launch server
 	server, err := transport.Launch(protocol + "://localhost:0")
 	if err != nil {
 		panic(err)
 	}
 
+	// prepare channels
 	quit := make(chan struct{})
 	done := make(chan struct{})
 
+	// start accepting connections
 	engine.Accept(server)
 
+	// prepare shutdown
 	go func() {
+		// wait for signal
 		<-quit
-
-		// give some grace
-		time.Sleep(100 * time.Millisecond)
 
 		// errors from close are ignored
 		server.Close()
@@ -240,6 +242,7 @@ func Run(engine *Engine, protocol string) (string, chan struct{}, chan struct{})
 		close(done)
 	}()
 
+	// get random port
 	_, port, _ := net.SplitHostPort(server.Addr().String())
 
 	return port, quit, done
