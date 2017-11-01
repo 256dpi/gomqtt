@@ -126,6 +126,7 @@ type MemoryBackend struct {
 	activeClients        sync.Map
 	offlineQueues        sync.Map
 	offlineSubscriptions *tools.Tree
+	mutex                sync.Mutex
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
@@ -140,6 +141,8 @@ func NewMemoryBackend() *MemoryBackend {
 // Authenticate authenticates a clients credentials by matching them to the
 // saved Credentials map.
 func (m *MemoryBackend) Authenticate(client *Client, user, password string) (bool, error) {
+	// mutex locking not needed
+
 	// allow all if there are no credentials
 	if m.Credentials == nil {
 		return true, nil
@@ -158,6 +161,9 @@ func (m *MemoryBackend) Authenticate(client *Client, user, password string) (boo
 // returned that is not stored further. Furthermore, it will disconnect any client
 // connected with the same client id.
 func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
 		return session.NewMemorySession(), false, nil
@@ -207,6 +213,8 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 // QueueOffline will begin with forwarding all missed messages in a separate
 // goroutine.
 func (m *MemoryBackend) QueueOffline(client *Client) error {
+	// mutex locking not needed
+
 	// send all missed messages in another goroutine
 	go func() {
 		for {
@@ -239,6 +247,8 @@ func (m *MemoryBackend) QueueOffline(client *Client) error {
 // Subscribe will subscribe the passed client to the specified topic and
 // begin to forward messages by calling the clients Publish method.
 func (m *MemoryBackend) Subscribe(client *Client, topic string) error {
+	// mutex locking not needed
+
 	// add subscription
 	m.subscribedClients.Add(topic, client)
 
@@ -247,6 +257,8 @@ func (m *MemoryBackend) Subscribe(client *Client, topic string) error {
 
 // Unsubscribe will unsubscribe the passed client from the specified topic.
 func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
+	// mutex locking not needed
+
 	// remove subscription
 	m.subscribedClients.Remove(topic, client)
 
@@ -255,6 +267,8 @@ func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 
 // StoreRetained will store the specified message.
 func (m *MemoryBackend) StoreRetained(client *Client, msg *packet.Message) error {
+	// mutex locking not needed
+
 	// set retained message
 	m.retainedMessages.Set(msg.Topic, msg.Copy())
 
@@ -263,6 +277,8 @@ func (m *MemoryBackend) StoreRetained(client *Client, msg *packet.Message) error
 
 // ClearRetained will remove the stored messages for the given topic.
 func (m *MemoryBackend) ClearRetained(client *Client, topic string) error {
+	// mutex locking not needed
+
 	// clear retained message
 	m.retainedMessages.Empty(topic)
 
@@ -271,6 +287,8 @@ func (m *MemoryBackend) ClearRetained(client *Client, topic string) error {
 
 // QueueRetained will queue all retained messages matching the given topic.
 func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
+	// mutex locking not needed
+
 	// get retained messages
 	values := m.retainedMessages.Search(topic)
 
@@ -286,6 +304,8 @@ func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
 // will also add the message to all sessions that have a matching offline
 // subscription.
 func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
+	// mutex locking not needed
+
 	// publish directly to clients
 	for _, v := range m.subscribedClients.Match(msg.Topic) {
 		v.(*Client).Publish(msg)
@@ -304,6 +324,9 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 // Otherwise it will create offline subscriptions for all QOS 1 and QOS 2
 // subscriptions.
 func (m *MemoryBackend) Terminate(client *Client) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	// clear all subscriptions
 	m.subscribedClients.Clear(client)
 
