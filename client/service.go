@@ -148,7 +148,7 @@ func NewService(queueSize ...int) *Service {
 // the service will automatically reconnect on any error until Stop is called.
 func (s *Service) Start(config *Config) {
 	if config == nil {
-		panic("No config specified")
+		panic("no config specified")
 	}
 
 	s.mutex.Lock()

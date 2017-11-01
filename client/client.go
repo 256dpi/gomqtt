@@ -140,7 +140,7 @@ func New() *Client {
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
 func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	if config == nil {
-		panic("No config specified")
+		panic("no config specified")
 	}
 
 	c.mutex.Lock()
