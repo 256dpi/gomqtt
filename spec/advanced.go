@@ -41,14 +41,7 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 
 	assert.NoError(t, client.ClearSession(options, 10*time.Second))
 
-	wait := make(chan struct{})
-
 	firstClient := client.New()
-	firstClient.Callback = func(msg *packet.Message, err error) error {
-		assert.Error(t, err)
-		close(wait)
-		return nil
-	}
 
 	connectFuture, err := firstClient.Connect(options)
 	assert.NoError(t, err)
@@ -64,7 +57,10 @@ func UniqueClientIDTest(t *testing.T, config *Config, id string) {
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 	assert.False(t, connectFuture.SessionPresent())
 
-	safeReceive(wait)
+	subscribeFuture, err := firstClient.Subscribe("foo", 0)
+	if err == nil {
+		assert.Error(t, subscribeFuture.Wait(10*time.Second))
+	}
 
 	err = secondClient.Disconnect()
 	assert.NoError(t, err)
