@@ -27,8 +27,6 @@ var ErrExpectedConnect = errors.New("expected a ConnectPacket as the first packe
 type Client struct {
 	state uint32
 
-	Context sync.Map
-
 	engine *Engine
 	conn   transport.Conn
 
