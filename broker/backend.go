@@ -82,17 +82,17 @@ type Backend interface {
 	// QueueOffline is called after the clients stored subscriptions have been
 	// resubscribed. It should be used to trigger a background process that
 	// forwards all missed messages.
-	QueueOffline(client *Client) error
+	QueueOffline(*Client) error
 
 	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages.
-	Subscribe(client *Client, topic string) error
+	Subscribe(*Client, *packet.Subscription) error
 
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
 	Unsubscribe(client *Client, topic string) error
 
 	// StoreRetained should store the specified message.
-	StoreRetained(client *Client, msg *packet.Message) error
+	StoreRetained(*Client, *packet.Message) error
 
 	// ClearRetained should remove the stored messages for the given topic.
 	ClearRetained(client *Client, topic string) error
@@ -104,7 +104,7 @@ type Backend interface {
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
 	// message to all sessions that have a matching offline subscription.
-	Publish(client *Client, msg *packet.Message) error
+	Publish(*Client, *packet.Message) error
 
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics. The
@@ -113,7 +113,7 @@ type Backend interface {
 	// Note: The Backend may also cleanup previously allocated resources for
 	// that client as the broker will close the connection when the call
 	// returns.
-	Terminate(client *Client) error
+	Terminate(*Client) error
 }
 
 // A MemoryBackend stores everything in memory.
@@ -246,11 +246,11 @@ func (m *MemoryBackend) QueueOffline(client *Client) error {
 
 // Subscribe will subscribe the passed client to the specified topic and
 // begin to forward messages by calling the clients Publish method.
-func (m *MemoryBackend) Subscribe(client *Client, topic string) error {
+func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription) error {
 	// mutex locking not needed
 
 	// add subscription
-	m.subscribedClients.Add(topic, client)
+	m.subscribedClients.Add(sub.Topic, client)
 
 	return nil
 }

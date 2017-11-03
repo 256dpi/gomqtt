@@ -270,7 +270,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 		// resubscribe subscriptions
 		for _, sub := range subs {
-			err = c.engine.Backend.Subscribe(c, sub.Topic)
+			err = c.engine.Backend.Subscribe(c, sub)
 			if err != nil {
 				return c.die(BackendError, err, true)
 			}
@@ -313,7 +313,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		}
 
 		// subscribe client to queue
-		err = c.engine.Backend.Subscribe(c, subscription.Topic)
+		err = c.engine.Backend.Subscribe(c, &subscription)
 		if err != nil {
 			return c.die(BackendError, err, true)
 		}
