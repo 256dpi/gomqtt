@@ -135,6 +135,30 @@ func (t *Tree) set(value interface{}, i int, segments []string, node *node) {
 	t.set(value, i+1, segments, child)
 }
 
+// Get gets the values from the topic that exactly matches the supplied topics.
+func (t *Tree) Get(topic string) []interface{} {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	return t.get(0, strings.Split(topic, t.Separator), t.root)
+}
+
+func (t *Tree) get(i int, segments []string, node *node) []interface{} {
+	// set value on leaf
+	if i == len(segments) {
+		return node.values
+	}
+
+	// get next segment
+	segment := segments[i]
+	child, ok := node.children[segment]
+	if !ok {
+		return nil
+	}
+
+	return t.get(i+1, segments, child)
+}
+
 // Remove un-registers the value from the supplied topic. This function will
 // automatically shrink the tree.
 func (t *Tree) Remove(topic string, value interface{}) {

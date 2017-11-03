@@ -41,6 +41,14 @@ func TestTreeSetReplace(t *testing.T) {
 	assert.Equal(t, 2, tree.root.children["foo"].children["bar"].values[0])
 }
 
+func TestTreeGet(t *testing.T) {
+	tree := NewTree()
+
+	tree.Set("foo/#", 1)
+
+	assert.Equal(t, 1, tree.Get("foo/#")[0])
+}
+
 func TestTreeRemove(t *testing.T) {
 	tree := NewTree()
 
@@ -119,6 +127,14 @@ func TestTreeMatchWildcard4(t *testing.T) {
 	assert.Equal(t, 1, tree.Match("foo/bar")[0])
 }
 
+func TestTreeMatchWildcard5(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/#", 1)
+
+	assert.Equal(t, 1, tree.Match("foo/bar/#")[0])
+}
+
 func TestTreeMatchMultiple(t *testing.T) {
 	tree := NewTree()
 
@@ -193,6 +209,14 @@ func TestTreeSearchWildcard4(t *testing.T) {
 	tree.Add("foo/bar", 1)
 
 	assert.Equal(t, 1, tree.Search("foo/bar/#")[0])
+}
+
+func TestTreeSearchWildcard5(t *testing.T) {
+	tree := NewTree()
+
+	tree.Add("foo/bar/#", 1)
+
+	assert.Equal(t, 1, tree.Search("foo/#")[0])
 }
 
 func TestTreeSearchMultiple(t *testing.T) {
