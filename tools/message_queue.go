@@ -62,6 +62,24 @@ func (q *MessageQueue) Pop() *packet.Message {
 	return node
 }
 
+// Range will call range with the contents of the queue. If fn returns false the
+// operation is stopped immediately.
+func (q *MessageQueue) Range(fn func(*packet.Message) bool) {
+	q.mutex.RLock()
+	defer q.mutex.RUnlock()
+
+	for i := 0; i < q.count; i++ {
+		j := q.head + i
+		if j >= q.size {
+			j = j - q.size
+		}
+
+		if !fn(q.nodes[j]) {
+			return
+		}
+	}
+}
+
 // Len returns the length of the queue.
 func (q *MessageQueue) Len() int {
 	q.mutex.RLock()

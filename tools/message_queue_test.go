@@ -26,6 +26,13 @@ func TestMessageQueue(t *testing.T) {
 	queue.Push(msg3)
 	assert.Equal(t, 2, queue.Len())
 
+	var list []*packet.Message
+	queue.Range(func(msg *packet.Message) bool {
+		list = append(list, msg)
+		return true
+	})
+	assert.Equal(t, []*packet.Message{msg2, msg3}, list)
+
 	msg = queue.Pop()
 	assert.Equal(t, msg, msg2)
 	assert.Equal(t, 1, queue.Len())
