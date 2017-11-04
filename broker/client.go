@@ -162,16 +162,20 @@ func (c *Client) processor() error {
 
 // handle an incoming ConnackPacket
 func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
-	// prepare connack packet
-	connack := packet.NewConnackPacket()
-	connack.ReturnCode = packet.ConnectionAccepted
-	connack.SessionPresent = false
+	// set values
+	c.cleanSession = pkt.CleanSession
+	c.clientID = pkt.ClientID
 
 	// authenticate
 	ok, err := c.engine.Backend.Authenticate(c, pkt.Username, pkt.Password)
 	if err != nil {
 		return c.die(BackendError, err, true)
 	}
+
+	// prepare connack packet
+	connack := packet.NewConnackPacket()
+	connack.ReturnCode = packet.ConnectionAccepted
+	connack.SessionPresent = false
 
 	// check authentication
 	if !ok {
@@ -200,10 +204,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	} else {
 		c.conn.SetReadTimeout(0)
 	}
-
-	// set values
-	c.cleanSession = pkt.CleanSession
-	c.clientID = pkt.ClientID
 
 	// retrieve session
 	s, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID)
@@ -341,10 +341,6 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 // handle an incoming UnsubscribePacket
 func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
-	// prepare unsuback packet
-	unsuback := packet.NewUnsubackPacket()
-	unsuback.ID = pkt.ID
-
 	// handle contained topics
 	for _, topic := range pkt.Topics {
 		// unsubscribe client from queue
@@ -359,6 +355,10 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 			return c.die(SessionError, err, true)
 		}
 	}
+
+	// prepare unsuback packet
+	unsuback := packet.NewUnsubackPacket()
+	unsuback.ID = pkt.ID
 
 	// send packet
 	err := c.send(unsuback, true)
@@ -513,6 +513,8 @@ func (c *Client) sender() error {
 			if err != nil {
 				return c.die(SessionError, err, true)
 			}
+
+			// check subscription
 			if sub != nil {
 				// respect maximum qos
 				if publish.Message.QOS > sub.QOS {
