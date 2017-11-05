@@ -117,6 +117,7 @@ type Client struct {
 
 	clean bool
 
+	keepAlive     time.Duration
 	tracker       *tracker
 	futureStore   *future.Store
 	connectFuture *future.Future
@@ -172,6 +173,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	}
 
 	// allocate and initialize tracker
+	c.keepAlive = keepAlive
 	c.tracker = newTracker(keepAlive)
 
 	// dial broker (with custom dialer if present)
@@ -230,11 +232,6 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 
 	// start process routine
 	c.tomb.Go(c.processor)
-
-	// start keep alive if greater than zero
-	if keepAlive > 0 {
-		c.tomb.Go(c.pinger)
-	}
 
 	// wrap future
 	wrappedFuture := &connectFuture{c.connectFuture}
@@ -436,6 +433,11 @@ func (c *Client) Close() error {
 // processes incoming packets
 func (c *Client) processor() error {
 	first := true
+
+	// start keep alive if greater than zero
+	if c.keepAlive > 0 {
+		c.tomb.Go(c.pinger)
+	}
 
 	for {
 		// get next packet from connection
