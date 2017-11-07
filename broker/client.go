@@ -27,6 +27,10 @@ var ErrExpectedConnect = errors.New("expected a ConnectPacket as the first packe
 type Client struct {
 	state uint32
 
+	// Ref can be used to store a custom reference to an object. This is usually
+	// used to attach a state object to client that is created in the Backend.
+	Ref interface{}
+
 	engine *Engine
 	conn   transport.Conn
 
