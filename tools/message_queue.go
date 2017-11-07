@@ -32,18 +32,15 @@ func (q *MessageQueue) Push(msg *packet.Message) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
-	if q.head == q.tail && q.count > 0 {
-		nodes := make([]*packet.Message, len(q.nodes)+q.size)
-		copy(nodes, q.nodes[q.head:])
-		copy(nodes[len(q.nodes)-q.head:], q.nodes[:q.head])
-		q.head = 0
-		q.tail = len(q.nodes)
-		q.nodes = nodes
+	// remove item if full
+	if q.count == q.size {
+		q.Pop()
 	}
 
-	q.nodes[q.tail] = msg
-	q.tail = (q.tail + 1) % len(q.nodes)
+	// add item
+	q.nodes[q.head] = msg
 	q.count++
+	q.head = q.wrap(q.head + 1)
 }
 
 // Pop removes and returns a message from the queue in first to last order.
@@ -55,9 +52,11 @@ func (q *MessageQueue) Pop() *packet.Message {
 		return nil
 	}
 
-	node := q.nodes[q.head]
-	q.head = (q.head + 1) % len(q.nodes)
+	// remove item
+	node := q.nodes[q.tail]
+	q.nodes[q.tail] = nil
 	q.count--
+	q.tail = q.wrap(q.tail + 1)
 
 	return node
 }
@@ -69,12 +68,7 @@ func (q *MessageQueue) Range(fn func(*packet.Message) bool) {
 	defer q.mutex.RUnlock()
 
 	for i := 0; i < q.count; i++ {
-		j := q.head + i
-		if j >= q.size {
-			j = j - q.size
-		}
-
-		if !fn(q.nodes[j]) {
+		if !fn(q.nodes[q.wrap(q.head+i)]) {
 			return
 		}
 	}
@@ -93,8 +87,17 @@ func (q *MessageQueue) Reset() {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
+	// reset state
 	q.nodes = make([]*packet.Message, q.size)
 	q.head = 0
 	q.tail = 0
 	q.count = 0
+}
+
+func (q *MessageQueue) wrap(i int) int {
+	if i >= q.size {
+		return i - q.size
+	}
+
+	return i
 }

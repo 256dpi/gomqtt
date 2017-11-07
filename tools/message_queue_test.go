@@ -45,3 +45,17 @@ func TestMessageQueue(t *testing.T) {
 	assert.Nil(t, msg)
 	assert.Equal(t, 0, queue.Len())
 }
+
+func BenchmarkMessageQueue(b *testing.B) {
+	b.ReportAllocs()
+	q := NewMessageQueue(100)
+
+	msg := &packet.Message{}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		q.Push(msg)
+		q.Pop()
+	}
+}
