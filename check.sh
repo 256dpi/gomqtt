@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 
-set -x
+echo 'formatting...'
 go fmt ./...
+
+echo 'vetting...'
 go vet ./...
-golint ./...
+
+echo 'linting...'
+golint ./..
+
+echo 'testing...'
 go test ./...
