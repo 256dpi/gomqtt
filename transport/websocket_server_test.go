@@ -3,7 +3,6 @@ package transport
 import (
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,8 +41,8 @@ func TestWebSocketServerInvalidUpgrade(t *testing.T) {
 	server, err := testLauncher.Launch("ws://localhost:0")
 	require.NoError(t, err)
 
-	resp, err := http.PostForm(getURL(server, "http"), url.Values{"foo": {"bar"}})
-	assert.Equal(t, "405 Method Not Allowed", resp.Status)
+	resp, err := http.Get(getURL(server, "http"))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.NoError(t, err)
 
 	err = server.Close()
@@ -94,7 +93,7 @@ func TestWebSocketFallback(t *testing.T) {
 
 	resp, err := http.Get(getURL(server, "http") + "/test")
 	assert.NoError(t, err)
-	assert.Equal(t, "200 OK", resp.Status)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	bytes, err := ioutil.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("Hello world!"), bytes)
