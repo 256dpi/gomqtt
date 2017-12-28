@@ -1,4 +1,4 @@
-package tools
+package flow
 
 import (
 	"testing"
@@ -26,7 +26,7 @@ func TestFlow(t *testing.T) {
 		close(wait)
 	}
 
-	server := NewFlow().
+	server := New().
 		Receive(connect).
 		Send(connack).
 		Run(cb).
@@ -34,7 +34,7 @@ func TestFlow(t *testing.T) {
 		Receive(publish).
 		Close()
 
-	client := NewFlow().
+	client := New().
 		Send(connect).
 		Receive(connack).
 		Wait(wait).

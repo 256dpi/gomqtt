@@ -11,8 +11,8 @@ import (
 	"github.com/256dpi/gomqtt/client/future"
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
-	"github.com/256dpi/gomqtt/tools"
 	"github.com/256dpi/gomqtt/transport"
+	"github.com/256dpi/gomqtt/transport/flow"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,7 +61,7 @@ func TestClientConnectErrorMissingClientID(t *testing.T) {
 }
 
 func TestClientConnect(t *testing.T) {
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
@@ -85,7 +85,7 @@ func TestClientConnect(t *testing.T) {
 }
 
 func TestClientConnectCustomDialer(t *testing.T) {
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
@@ -112,7 +112,7 @@ func TestClientConnectCustomDialer(t *testing.T) {
 }
 
 func TestClientConnectAfterConnect(t *testing.T) {
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
@@ -144,7 +144,7 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	connect.Username = "test"
 	connect.Password = "test"
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connect).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
@@ -194,7 +194,7 @@ func TestClientConnectionDenied(t *testing.T) {
 	connack := connackPacket()
 	connack.ReturnCode = packet.ErrNotAuthorized
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connack).
 		Close()
@@ -222,7 +222,7 @@ func TestClientConnectionDenied(t *testing.T) {
 }
 
 func TestClientExpectedConnack(t *testing.T) {
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(packet.NewPingrespPacket()).
 		End()
@@ -254,7 +254,7 @@ func TestClientKeepAlive(t *testing.T) {
 	pingreq := packet.NewPingreqPacket()
 	pingresp := packet.NewPingrespPacket()
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connect).
 		Send(connackPacket()).
 		Receive(pingreq).
@@ -306,7 +306,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 
 	pingreq := packet.NewPingreqPacket()
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connect).
 		Send(connackPacket()).
 		Receive(pingreq).
@@ -350,7 +350,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -424,7 +424,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	puback := packet.NewPubackPacket()
 	puback.ID = 2
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -506,7 +506,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	pubcomp := packet.NewPubcompPacket()
 	pubcomp.ID = 2
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -576,7 +576,7 @@ func TestClientUnsubscribe(t *testing.T) {
 	unsuback := packet.NewUnsubackPacket()
 	unsuback.ID = 1
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(unsubscribe).
@@ -616,7 +616,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	publish.Message.QOS = 1
 	publish.ID = 1
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connect).
 		Send(connackPacket()).
 		Receive(publish).
@@ -668,7 +668,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(publish).
@@ -705,7 +705,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 }
 
 func TestClientClose(t *testing.T) {
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		End()
@@ -767,7 +767,7 @@ func TestClientSessionResumption(t *testing.T) {
 	puback1 := packet.NewPubackPacket()
 	puback1.ID = 1
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connect).
 		Send(connackPacket()).
 		Receive(publish1).
@@ -805,7 +805,7 @@ func TestClientSessionResumption(t *testing.T) {
 }
 
 func TestClientUnexpectedClose(t *testing.T) {
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Close()
@@ -833,7 +833,7 @@ func TestClientUnexpectedClose(t *testing.T) {
 }
 
 func TestClientConnackFutureCancellation(t *testing.T) {
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Close()
 
@@ -864,7 +864,7 @@ func TestClientFutureCancellation(t *testing.T) {
 	publish.Message.QOS = 1
 	publish.ID = 1
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(publish).
@@ -899,7 +899,7 @@ func TestClientErrorCallback(t *testing.T) {
 	publish.Message.QOS = 1
 	publish.ID = 1
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Send(publish).
@@ -936,7 +936,7 @@ func TestClientLogger(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).

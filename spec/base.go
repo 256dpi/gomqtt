@@ -8,8 +8,8 @@ import (
 
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/tools"
 	"github.com/256dpi/gomqtt/transport"
+	"github.com/256dpi/gomqtt/transport/flow"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -551,7 +551,7 @@ func KeepAliveTimeoutTest(t *testing.T, config *Config) {
 
 	connack := packet.NewConnackPacket()
 
-	c := tools.NewFlow().
+	c := flow.New().
 		Send(connect).
 		Receive(connack).
 		End()

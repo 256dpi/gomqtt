@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/tools"
+	"github.com/256dpi/gomqtt/transport/flow"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +22,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -86,7 +86,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).
@@ -135,7 +135,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 }
 
 func TestStartStopVariations(t *testing.T) {
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
@@ -177,7 +177,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 	unsuback := packet.NewUnsubackPacket()
 	unsuback.ID = 1
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(unsubscribe).
@@ -214,12 +214,12 @@ func TestServiceUnsubscribe(t *testing.T) {
 }
 
 func TestServiceReconnect(t *testing.T) {
-	delay := tools.NewFlow().
+	delay := flow.New().
 		Receive(connectPacket()).
 		Delay(55 * time.Millisecond).
 		End()
 
-	noDelay := tools.NewFlow().
+	noDelay := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
@@ -286,13 +286,13 @@ func TestServiceFutureSurvival(t *testing.T) {
 	puback := packet.NewPubackPacket()
 	puback.ID = 1
 
-	broker1 := tools.NewFlow().
+	broker1 := flow.New().
 		Receive(connect).
 		Send(connack).
 		Receive(publish1).
 		Close()
 
-	broker2 := tools.NewFlow().
+	broker2 := flow.New().
 		Receive(connect).
 		Send(connack).
 		Receive(publish2).

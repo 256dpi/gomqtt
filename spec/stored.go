@@ -6,8 +6,8 @@ import (
 
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/tools"
 	"github.com/256dpi/gomqtt/transport"
+	"github.com/256dpi/gomqtt/transport/flow"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,7 +49,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
-	err = tools.NewFlow().
+	err = flow.New().
 		Send(connect).
 		Skip(). // connack
 		Send(subscribe).
@@ -67,7 +67,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 
 	publishIn.Dup = true
 
-	err = tools.NewFlow().
+	err = flow.New().
 		Send(connect).
 		Skip(). // connack
 		Receive(publishIn).
@@ -122,7 +122,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
-	err = tools.NewFlow().
+	err = flow.New().
 		Send(connect).
 		Skip(). // connack
 		Send(subscribe).
@@ -144,7 +144,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 	publishIn.Dup = true
 
-	err = tools.NewFlow().
+	err = flow.New().
 		Send(connect).
 		Skip(). // connack
 		Receive(publishIn).
@@ -204,7 +204,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 	assert.NoError(t, err)
 	assert.NotNil(t, conn1)
 
-	err = tools.NewFlow().
+	err = flow.New().
 		Send(connect).
 		Skip(). // connack
 		Send(subscribe).
@@ -227,7 +227,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 	publishIn.Dup = true
 
-	err = tools.NewFlow().
+	err = flow.New().
 		Send(connect).
 		Skip(). // connack
 		Receive(pubrelIn).

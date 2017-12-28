@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/tools"
+	"github.com/256dpi/gomqtt/transport/flow"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +13,7 @@ func TestClearSession(t *testing.T) {
 	connect := connectPacket()
 	connect.ClientID = "test"
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connect).
 		Send(connackPacket()).
 		Receive(disconnectPacket()).
@@ -33,7 +33,7 @@ func TestClearRetainedMessage(t *testing.T) {
 	publish.Message.Payload = nil
 	publish.Message.Retain = true
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(publish).
@@ -56,7 +56,7 @@ func TestPublishMessage(t *testing.T) {
 		Retain:  true,
 	}
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(publish).
@@ -89,7 +89,7 @@ func TestReceiveMessage(t *testing.T) {
 		Retain:  true,
 	}
 
-	broker := tools.NewFlow().
+	broker := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe).

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/tools"
 	"github.com/256dpi/gomqtt/transport"
+	"github.com/256dpi/gomqtt/transport/flow"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +30,7 @@ func errorCallback(t *testing.T) func(*packet.Message, error) error {
 	}
 }
 
-func fakeBroker(t *testing.T, testFlows ...*tools.Flow) (chan struct{}, string) {
+func fakeBroker(t *testing.T, testFlows ...*flow.Flow) (chan struct{}, string) {
 	done := make(chan struct{})
 
 	server, err := transport.Launch("tcp://localhost:0")
