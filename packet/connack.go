@@ -30,7 +30,7 @@ func (cc ConnackCode) Error() string {
 	case ErrIdentifierRejected:
 		return "connection refused: identifier rejected"
 	case ErrServerUnavailable:
-		return "connection refused: Server unavailable"
+		return "connection refused: server unavailable"
 	case ErrBadUsernameOrPassword:
 		return "connection refused: bad user name or password"
 	case ErrNotAuthorized:
