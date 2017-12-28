@@ -39,7 +39,7 @@ type SubscribeFuture interface {
 type futureKey int
 
 const (
-	sessionPresentKey = iota
+	sessionPresentKey futureKey = iota
 	returnCodeKey
 	returnCodesKey
 )
