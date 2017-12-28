@@ -195,7 +195,7 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 		val, ok := m.offlineQueues.Load(client.ClientID())
 		if ok {
 			// clear offline subscriptions
-			queue := val.(*tools.MessageQueue)
+			queue := val.(*MessageQueue)
 			m.offlineSubscriptions.Clear(queue)
 		}
 
@@ -228,7 +228,7 @@ func (m *MemoryBackend) QueueOffline(client *Client) error {
 			}
 
 			// cast queue
-			queue := val.(*tools.MessageQueue)
+			queue := val.(*MessageQueue)
 
 			// get next missed message
 			msg := queue.Pop()
@@ -316,7 +316,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 
 	// queue for offline clients
 	for _, v := range m.offlineSubscriptions.Match(msg.Topic) {
-		v.(*tools.MessageQueue).Push(msg)
+		v.(*MessageQueue).Push(msg)
 	}
 
 	return nil
@@ -353,7 +353,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	}
 
 	// create offline queue
-	queue := tools.NewMessageQueue(1000)
+	queue := NewMessageQueue(1000)
 
 	// iterate through stored subscriptions
 	for _, sub := range subscriptions {
