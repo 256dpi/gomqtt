@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-/* tracker */
-
 // a tracker keeps track of keep alive intervals
 type tracker struct {
 	sync.RWMutex
