@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/tools"
+	"github.com/256dpi/gomqtt/topic"
 )
 
 // Direction denotes a packets direction.
@@ -25,7 +25,7 @@ type MemorySession struct {
 	counter       *IDCounter
 	incStore      *PacketStore
 	outStore      *PacketStore
-	subscriptions *tools.Tree
+	subscriptions *topic.Tree
 	willMessage   *packet.Message
 	willMutex     sync.Mutex
 }
@@ -36,7 +36,7 @@ func NewMemorySession() *MemorySession {
 		counter:       NewIDCounter(),
 		incStore:      NewPacketStore(),
 		outStore:      NewPacketStore(),
-		subscriptions: tools.NewTree(),
+		subscriptions: topic.NewTree(),
 	}
 }
 

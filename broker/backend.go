@@ -5,7 +5,7 @@ import (
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
-	"github.com/256dpi/gomqtt/tools"
+	"github.com/256dpi/gomqtt/topic"
 )
 
 // A Session is used to persist incoming/outgoing packets, subscriptions and the
@@ -120,22 +120,22 @@ type Backend interface {
 type MemoryBackend struct {
 	Credentials map[string]string
 
-	subscribedClients    *tools.Tree
-	retainedMessages     *tools.Tree
+	subscribedClients    *topic.Tree
+	retainedMessages     *topic.Tree
 	storedSessions       sync.Map
 	activeClients        map[string]*Client
 	offlineQueues        sync.Map
-	offlineSubscriptions *tools.Tree
+	offlineSubscriptions *topic.Tree
 	mutex                sync.Mutex
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		subscribedClients:    tools.NewTree(),
-		retainedMessages:     tools.NewTree(),
+		subscribedClients:    topic.NewTree(),
+		retainedMessages:     topic.NewTree(),
 		activeClients:        make(map[string]*Client),
-		offlineSubscriptions: tools.NewTree(),
+		offlineSubscriptions: topic.NewTree(),
 	}
 }
 

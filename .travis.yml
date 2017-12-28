@@ -15,7 +15,7 @@ script:
   - go test -coverprofile=client.coverprofile ./client
   - go test -coverprofile=packet.coverprofile ./packet
   - go test -coverprofile=spec.coverprofile ./spec
-  - go test -coverprofile=tools.coverprofile ./tools
+  - go test -coverprofile=topic.coverprofile ./topic
   - go test -coverprofile=transport.coverprofile ./transport
   - $HOME/gopath/bin/gover
   - $HOME/gopath/bin/goveralls -coverprofile=gover.coverprofile -service=travis-ci

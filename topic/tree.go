@@ -1,5 +1,5 @@
-// Package tools implements utilities for building MQTT components.
-package tools
+// Package topic implements tools for working with MQTT topics.
+package topic
 
 import (
 	"fmt"
