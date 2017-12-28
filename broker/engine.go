@@ -1,3 +1,4 @@
+// Package broker implements an extensible MQTT broker.
 package broker
 
 import (

@@ -1,3 +1,4 @@
+// Package spec implements a reusable specification test for MQTT brokers.
 package spec
 
 import (

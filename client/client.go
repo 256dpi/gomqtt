@@ -1,3 +1,5 @@
+// Package client implements a MQTT client and service for interacting with
+// brokers.
 package client
 
 import (

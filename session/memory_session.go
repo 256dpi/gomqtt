@@ -1,4 +1,5 @@
-// Package session implements session objects to be used with MQTT clients.
+// Package session implements session objects to be used with MQTT clients and
+// brokers.
 package session
 
 import (

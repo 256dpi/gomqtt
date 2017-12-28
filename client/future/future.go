@@ -1,3 +1,4 @@
+// Package future implements a generic future handling system.
 package future
 
 import (
