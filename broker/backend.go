@@ -123,7 +123,7 @@ type MemoryBackend struct {
 	subscribedClients    *tools.Tree
 	retainedMessages     *tools.Tree
 	storedSessions       sync.Map
-	activeClients        sync.Map
+	activeClients        map[string]*Client
 	offlineQueues        sync.Map
 	offlineSubscriptions *tools.Tree
 	mutex                sync.Mutex
@@ -134,6 +134,7 @@ func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
 		subscribedClients:    tools.NewTree(),
 		retainedMessages:     tools.NewTree(),
+		activeClients:        make(map[string]*Client),
 		offlineSubscriptions: tools.NewTree(),
 	}
 }
@@ -169,14 +170,16 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 		return session.NewMemorySession(), false, nil
 	}
 
+	// client id is available
+
 	// close existing client
-	existingClient, ok := m.activeClients.Load(id)
+	existingClient, ok := m.activeClients[id]
 	if ok {
-		existingClient.(*Client).Close(true)
+		existingClient.Close(true)
 	}
 
-	// add new client
-	m.activeClients.Store(id, client)
+	// store new client
+	m.activeClients[id] = client
 
 	// retrieve stored session
 	s, ok := m.storedSessions.Load(id)
@@ -330,9 +333,12 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	// clear all subscriptions
 	m.subscribedClients.Clear(client)
 
-	// remove client from list
+	// remove client from list if an id is available
 	if len(client.ClientID()) > 0 {
-		m.activeClients.Delete(client.ClientID())
+		// check if the client is still the same as it might be already replaced
+		if storedClient := m.activeClients[client.ClientID()]; storedClient == client {
+			delete(m.activeClients, client.ClientID())
+		}
 	}
 
 	// return if the client requested a clean session
