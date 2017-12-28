@@ -1,3 +1,4 @@
+// Package session implements session objects to be used with MQTT clients.
 package session
 
 import (
@@ -7,11 +8,22 @@ import (
 	"github.com/256dpi/gomqtt/tools"
 )
 
+// Direction denotes a packets direction.
+type Direction int
+
+const (
+	// Incoming packets are being received.
+	Incoming Direction = iota
+
+	// Outgoing packets are being be sent.
+	Outgoing
+)
+
 // A MemorySession stores packets in memory.
 type MemorySession struct {
-	counter       *tools.IDCounter
-	incStore      *tools.PacketStore
-	outStore      *tools.PacketStore
+	counter       *IDCounter
+	incStore      *PacketStore
+	outStore      *PacketStore
 	subscriptions *tools.Tree
 	willMessage   *packet.Message
 	willMutex     sync.Mutex
@@ -20,9 +32,9 @@ type MemorySession struct {
 // NewMemorySession returns a new MemorySession.
 func NewMemorySession() *MemorySession {
 	return &MemorySession{
-		counter:       tools.NewIDCounter(),
-		incStore:      tools.NewPacketStore(),
-		outStore:      tools.NewPacketStore(),
+		counter:       NewIDCounter(),
+		incStore:      NewPacketStore(),
+		outStore:      NewPacketStore(),
 		subscriptions: tools.NewTree(),
 	}
 }
@@ -133,7 +145,7 @@ func (s *MemorySession) Reset() error {
 	return nil
 }
 
-func (s *MemorySession) storeForDirection(dir Direction) *tools.PacketStore {
+func (s *MemorySession) storeForDirection(dir Direction) *PacketStore {
 	if dir == Incoming {
 		return s.incStore
 	} else if dir == Outgoing {

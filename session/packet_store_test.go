@@ -1,4 +1,4 @@
-package tools
+package session
 
 import (
 	"testing"
