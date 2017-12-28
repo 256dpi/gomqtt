@@ -647,6 +647,17 @@ func TestConnectPacketEncodeError10(t *testing.T) {
 	assert.Equal(t, 2, n)
 }
 
+func TestConnectPacketEncodeError11(t *testing.T) {
+	pkt := NewConnectPacket()
+	pkt.CleanSession = false // < client id is empty
+
+	dst := make([]byte, pkt.Len())
+	n, err := pkt.Encode(dst)
+
+	assert.Error(t, err)
+	assert.Equal(t, 9, n)
+}
+
 func TestConnectEqualDecodeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),

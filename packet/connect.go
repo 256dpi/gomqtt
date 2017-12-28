@@ -299,6 +299,11 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 		connectFlags &= 251 // 11111011
 	}
 
+	// check client id and clean session
+	if len(cp.ClientID) == 0 && !cp.CleanSession {
+		return total, fmt.Errorf("[%s] clean session must be 1 if client id is zero length", cp.Type())
+	}
+
 	// set clean session flag
 	if cp.CleanSession {
 		connectFlags |= 0x2 // 00000010
