@@ -1,4 +1,4 @@
-// Package topic implements common methods to handle topics.
+// Package topic implements common methods to handle MQTT topics.
 package topic
 
 import (

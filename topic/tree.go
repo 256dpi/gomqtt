@@ -1,4 +1,3 @@
-// Package topic implements tools for working with MQTT topics.
 package topic
 
 import (
