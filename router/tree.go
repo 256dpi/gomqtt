@@ -39,7 +39,7 @@ func (t *Tree) Add(filter string, value interface{}) *Route {
 	}
 
 	segments := strings.Split(filter, "/")
-	realFilter := []string{}
+	var realFilter []string
 
 	for i, segment := range segments {
 		isParam := strings.HasPrefix(segment, "+")
