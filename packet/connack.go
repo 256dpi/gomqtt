@@ -24,20 +24,20 @@ func (cc ConnackCode) Valid() bool {
 func (cc ConnackCode) Error() string {
 	switch cc {
 	case ConnectionAccepted:
-		return "Connection accepted"
+		return "connection accepted"
 	case ErrInvalidProtocolVersion:
-		return "Connection refused, unacceptable protocol version"
+		return "connection refused: unacceptable protocol version"
 	case ErrIdentifierRejected:
-		return "Connection refused, identifier rejected"
+		return "connection refused: identifier rejected"
 	case ErrServerUnavailable:
-		return "Connection refused, Server unavailable"
+		return "connection refused: Server unavailable"
 	case ErrBadUsernameOrPassword:
-		return "Connection refused, bad user name or password"
+		return "connection refused: bad user name or password"
 	case ErrNotAuthorized:
-		return "Connection refused, not authorized"
+		return "connection refused: not authorized"
 	}
 
-	return "Unknown error"
+	return "unknown error"
 }
 
 // A ConnackPacket is sent by the server in response to a ConnectPacket
