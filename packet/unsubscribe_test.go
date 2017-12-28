@@ -87,12 +87,12 @@ func TestUnsubscribePacketDecodeError3(t *testing.T) {
 func TestUnsubscribePacketDecodeError4(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
-		11,
+		10,
 		0, // packet ID MSB
 		7, // packet ID LSB
 		0, // topic name MSB
 		9, // topic name LSB < wrong size
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		'g', 'o', 'm', 'q', 't', 't',
 	}
 
 	pkt := NewUnsubscribePacket()
@@ -104,12 +104,12 @@ func TestUnsubscribePacketDecodeError4(t *testing.T) {
 func TestUnsubscribePacketDecodeError5(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
-		11,
+		10,
 		0, // packet ID MSB
 		0, // packet ID LSB < zero packet id
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 	}
 
 	pkt := NewUnsubscribePacket()
@@ -186,17 +186,15 @@ func TestUnsubscribePacketEncodeError3(t *testing.T) {
 	assert.Equal(t, 0, n)
 }
 
-// test to ensure encoding and decoding are the same
-// decode, encode, and decode again
 func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
-		33,
+		32,
 		0, // packet ID MSB
 		7, // packet ID LSB
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // topic name MSB
 		8, // topic name LSB
 		'/', 'a', '/', 'b', '/', '#', '/', 'c',

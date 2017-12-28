@@ -252,10 +252,10 @@ func TestPublishPacketEncodeError5(t *testing.T) {
 func TestPublishEqualDecodeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 2,
-		23,
+		22,
 		0, // topic name MSB
-		7, // topic name LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // topic name LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // packet ID MSB
 		7, // packet ID LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',

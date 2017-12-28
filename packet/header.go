@@ -5,9 +5,8 @@ import (
 	"fmt"
 )
 
-const maxRemainingLength int = 268435455 // bytes, or 256 MB
+const maxRemainingLength = 268435455 // 256 MB
 
-// Returns the length of the fixed header in bytes.
 func headerLen(rl int) int {
 	// packet type and flag byte
 	total := 1
@@ -25,7 +24,6 @@ func headerLen(rl int) int {
 	return total
 }
 
-// Encodes the fixed header.
 func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	total := 0
 
@@ -58,7 +56,6 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	return total, nil
 }
 
-// Decodes the fixed header.
 func headerDecode(src []byte, t Type) (int, byte, int, error) {
 	total := 0
 

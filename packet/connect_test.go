@@ -650,7 +650,7 @@ func TestConnectPacketEncodeError10(t *testing.T) {
 func TestConnectEqualDecodeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNECT << 4),
-		60,
+		58,
 		0, // Protocol String MSB
 		4, // Protocol String LSB
 		'M', 'Q', 'T', 'T',
@@ -659,8 +659,8 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 		0,   // Keep Alive MSB
 		10,  // Keep Alive LSB
 		0,   // Client ID MSB
-		7,   // Client ID LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6,   // Client ID LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0, // Will Topic MSB
 		4, // Will Topic LSB
 		'w', 'i', 'l', 'l',
@@ -668,8 +668,8 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 		12, // Will Message LSB
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 		0, // Username ID MSB
-		7, // Username ID LSB
-		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		6, // Username ID LSB
+		'g', 'o', 'm', 'q', 't', 't',
 		0,  // Password ID MSB
 		10, // Password ID LSB
 		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
