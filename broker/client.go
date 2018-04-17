@@ -111,6 +111,7 @@ func (c *Client) Close(clean bool) {
 
 // processes incoming packets
 func (c *Client) processor() error {
+	// prepare flag
 	first := true
 
 	c.log(NewConnection, c, nil, nil, nil)
@@ -127,6 +128,7 @@ func (c *Client) processor() error {
 
 		c.log(PacketReceived, c, pkt, nil, nil)
 
+		// check flag
 		if first {
 			// get connect
 			connect, ok := pkt.(*packet.ConnectPacket)
@@ -134,11 +136,19 @@ func (c *Client) processor() error {
 				return c.die(ClientError, ErrExpectedConnect, true)
 			}
 
+			// set flag
+			first = false
+
 			// process connect
 			err = c.processConnect(connect)
-			first = false
+			if err != nil {
+				return err
+			}
+
+			continue
 		}
 
+		// handle individual packets
 		switch typedPkt := pkt.(type) {
 		case *packet.SubscribePacket:
 			err = c.processSubscribe(typedPkt)
