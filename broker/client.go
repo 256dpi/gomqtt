@@ -23,6 +23,9 @@ const (
 // ConnectPacket.
 var ErrExpectedConnect = errors.New("expected a ConnectPacket as the first packet")
 
+// ErrMissingSession is returned if the backend does not return a session.
+var ErrMissingSession = errors.New("no session returned from Backend")
+
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
 	state uint32
@@ -213,6 +216,8 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	s, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID)
 	if err != nil {
 		return c.die(BackendError, err, true)
+	} else if s == nil {
+		return c.die(BackendError, ErrMissingSession, true)
 	}
 
 	// reset the session if clean is requested
