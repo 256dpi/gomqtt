@@ -32,7 +32,7 @@ func TestClientConnectWrongKeepAlive(t *testing.T) {
 
 	// wrong keep alive
 	connectFuture, err := c.Connect(&Config{
-		BrokerURL:    "mqtt://localhost:1234",
+		BrokerURL:    "mqtt://localhost:1234567",
 		KeepAlive:    "foo",
 		CleanSession: true,
 	})
@@ -45,7 +45,7 @@ func TestClientConnectErrorWrongPort(t *testing.T) {
 	c.Callback = errorCallback(t)
 
 	// wrong port
-	connectFuture, err := c.Connect(NewConfig("mqtt://localhost:1234"))
+	connectFuture, err := c.Connect(NewConfig("mqtt://localhost:1234567"))
 	assert.Error(t, err)
 	assert.Nil(t, connectFuture)
 }
@@ -54,8 +54,12 @@ func TestClientConnectErrorMissingClientID(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
+	// prepare config
+	cfg := NewConfig("tcp://localhost:1234")
+	cfg.CleanSession = false
+
 	// missing clientID when clean=false
-	connectFuture, err := c.Connect(NewConfig("mqtt://localhost:1234"))
+	connectFuture, err := c.Connect(cfg)
 	assert.Error(t, err)
 	assert.Nil(t, connectFuture)
 }
