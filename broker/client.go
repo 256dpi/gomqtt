@@ -23,6 +23,9 @@ const (
 // ConnectPacket.
 var ErrExpectedConnect = errors.New("expected a ConnectPacket as the first packet")
 
+// ErrNotAuthorized is returned when a client is not authorized.
+var ErrNotAuthorized = errors.New("client is not authorized")
+
 // ErrMissingSession is returned if the backend does not return a session.
 var ErrMissingSession = errors.New("no session returned from Backend")
 
@@ -206,7 +209,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		}
 
 		// close client
-		return c.die(ClientError, nil, true)
+		return c.die(ClientError, ErrNotAuthorized, true)
 	}
 
 	// set state
