@@ -163,11 +163,11 @@ func Run(engine *Engine, protocol string) (string, chan struct{}, chan struct{})
 		// wait for signal
 		<-quit
 
-		// close broker
-		engine.Close()
-
 		// errors from close are ignored
 		server.Close()
+
+		// close broker
+		engine.Close()
 
 		close(done)
 	}()

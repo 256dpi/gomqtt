@@ -75,9 +75,9 @@ func main() {
 
 	backend.Close()
 
-	engine.Close()
-
 	server.Close()
+
+	engine.Close()
 
 	fmt.Println("Bye!")
 }
