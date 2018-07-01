@@ -49,6 +49,9 @@ type Conn interface {
 	// and Read returns an error.
 	SetReadTimeout(timeout time.Duration)
 
+	// SetBuffers will set the size of the operating system buffers.
+	SetBuffers(read, write int)
+
 	// LocalAddr will return the underlying connection's local net address.
 	LocalAddr() net.Addr
 

@@ -1,6 +1,8 @@
 package transport
 
-import "net"
+import (
+	"net"
+)
 
 // A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
@@ -25,6 +27,26 @@ func (c *NetConn) LocalAddr() net.Addr {
 // RemoteAddr returns the remote network address.
 func (c *NetConn) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
+}
+
+func (c *NetConn) SetBuffers(read, write int) {
+	// set tcp conn
+	if tcpConn, ok := c.conn.(*net.TCPConn); ok {
+		tcpConn.SetReadBuffer(read)
+		tcpConn.SetWriteBuffer(write)
+	}
+
+	// set ip conn
+	if tcpConn, ok := c.conn.(*net.IPConn); ok {
+		tcpConn.SetReadBuffer(read)
+		tcpConn.SetWriteBuffer(write)
+	}
+
+	// set unix conn
+	if tcpConn, ok := c.conn.(*net.UnixConn); ok {
+		tcpConn.SetReadBuffer(read)
+		tcpConn.SetWriteBuffer(write)
+	}
 }
 
 // UnderlyingConn returns the underlying net.Conn.

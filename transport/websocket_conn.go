@@ -120,6 +120,26 @@ func (c *WebSocketConn) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
 }
 
+func (c *WebSocketConn) SetBuffers(read, write int) {
+	// set tcp conn
+	if tcpConn, ok := c.conn.UnderlyingConn().(*net.TCPConn); ok {
+		tcpConn.SetReadBuffer(read)
+		tcpConn.SetWriteBuffer(write)
+	}
+
+	// set ip conn
+	if tcpConn, ok := c.conn.UnderlyingConn().(*net.IPConn); ok {
+		tcpConn.SetReadBuffer(read)
+		tcpConn.SetWriteBuffer(write)
+	}
+
+	// set unix conn
+	if tcpConn, ok := c.conn.UnderlyingConn().(*net.UnixConn); ok {
+		tcpConn.SetReadBuffer(read)
+		tcpConn.SetWriteBuffer(write)
+	}
+}
+
 // UnderlyingConn returns the underlying websocket.Conn.
 func (c *WebSocketConn) UnderlyingConn() *websocket.Conn {
 	return c.conn
