@@ -92,6 +92,8 @@ type Backend interface {
 	Unsubscribe(client *Client, topic string) error
 
 	// Receive is called by the Client repeatedly to obtain the next message.
+	// If the call returns no message and no error, the client will be closed
+	// cleanly.
 	Receive(*Client) (*packet.Message, error)
 
 	// StoreRetained should store the specified message.
@@ -131,6 +133,7 @@ type MemoryBackend struct {
 	offlineQueues        sync.Map
 	offlineSubscriptions *topic.Tree
 	mutex                sync.Mutex
+	shutdown             chan bool
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
@@ -141,6 +144,7 @@ func NewMemoryBackend() *MemoryBackend {
 		retainedMessages:     topic.NewTree(),
 		activeClients:        make(map[string]*Client),
 		offlineSubscriptions: topic.NewTree(),
+		shutdown:             make(chan bool),
 	}
 }
 
@@ -183,7 +187,7 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 	// close existing client
 	existingClient, ok := m.activeClients[id]
 	if ok {
-		existingClient.Close(true)
+		close(m.queues[existingClient])
 	}
 
 	// store new client
@@ -276,10 +280,15 @@ func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 }
 
 func (m *MemoryBackend) Receive(client *Client) (*packet.Message, error) {
-	// get next message from queue
-	msg := <-m.queues[client]
+	// mutex locking not needed
 
-	return msg, nil
+	// get next message from queue
+	select {
+	case msg := <-m.queues[client]:
+		return msg, nil
+	case <-m.shutdown:
+		return nil, nil
+	}
 }
 
 // StoreRetained will store the specified message.
@@ -381,4 +390,9 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	m.offlineQueues.Store(client.ClientID(), queue)
 
 	return nil
+}
+
+// Close will close the backend and make all clients go away.
+func (m *MemoryBackend) Close() {
+	close(m.shutdown)
 }

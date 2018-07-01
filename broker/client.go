@@ -31,15 +31,15 @@ var ErrMissingSession = errors.New("no session returned from Backend")
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
-	state uint32
-
 	// Ref can be used to store a custom reference to an object. This is usually
 	// used to attach a state object to client that is created in the Backend.
 	Ref interface{}
 
-	engine *Engine
-	conn   transport.Conn
+	backend Backend
+	logger  Logger
+	conn    transport.Conn
 
+	state        uint32
 	clientID     string
 	cleanSession bool
 	session      Session
@@ -52,16 +52,15 @@ type Client struct {
 	finish sync.Once
 }
 
-// TODO: Remove dependency on engine and expose as NewClient with Backend.
-
-// newClient takes over a connection and returns a Client
-func newClient(engine *Engine, conn transport.Conn) *Client {
+// NewClient takes over a connection and returns a Client.
+func NewClient(backend Backend, logger Logger, conn transport.Conn) *Client {
 	c := &Client{
-		state:  clientConnecting,
-		engine: engine,
-		conn:   conn,
-		inc:    make(chan packet.GenericPacket),
-		fwd:    make(chan *packet.Message),
+		state:   clientConnecting,
+		backend: backend,
+		logger:  logger,
+		conn:    conn,
+		inc:     make(chan packet.GenericPacket),
+		fwd:     make(chan *packet.Message),
 	}
 
 	// start processor
@@ -89,21 +88,6 @@ func (c *Client) ClientID() string {
 // underlying connection.
 func (c *Client) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
-}
-
-// TODO: Remove close method.
-
-// Close will immediately close the connection. When clean=true the client
-// will be marked as cleanly disconnected, and the will message will not
-// get dispatched.
-func (c *Client) Close(clean bool) {
-	if clean {
-		// mark client as cleanly disconnected
-		atomic.StoreUint32(&c.state, clientDisconnected)
-	}
-
-	// close underlying connection (triggers cleanup)
-	c.conn.Close()
 }
 
 /* goroutines */
@@ -179,9 +163,17 @@ func (c *Client) receiver() error {
 func (c *Client) requester() error {
 	for {
 		// request next message
-		msg, err := c.engine.Backend.Receive(c)
+		msg, err := c.backend.Receive(c)
 		if err != nil {
 			return c.die(BackendError, err, true)
+		} else if msg == nil {
+			// mark client as cleanly disconnected
+			atomic.StoreUint32(&c.state, clientDisconnected)
+
+			// close underlying connection (triggers cleanup)
+			c.conn.Close()
+
+			return nil
 		}
 
 		// forward message
@@ -200,7 +192,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.clientID = pkt.ClientID
 
 	// authenticate
-	ok, err := c.engine.Backend.Authenticate(c, pkt.Username, pkt.Password)
+	ok, err := c.backend.Authenticate(c, pkt.Username, pkt.Password)
 	if err != nil {
 		return c.die(BackendError, err, true)
 	}
@@ -228,9 +220,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// set state
 	atomic.StoreUint32(&c.state, clientConnected)
 
-	// add client to the brokers list
-	c.engine.add(c)
-
 	// set keep alive
 	if pkt.KeepAlive > 0 {
 		c.conn.SetReadTimeout(time.Duration(pkt.KeepAlive) * 1500 * time.Millisecond)
@@ -239,7 +228,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// retrieve session
-	s, resumed, err := c.engine.Backend.Setup(c, pkt.ClientID)
+	s, resumed, err := c.backend.Setup(c, pkt.ClientID)
 	if err != nil {
 		return c.die(BackendError, err, true)
 	} else if s == nil {
@@ -302,14 +291,14 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 		// resubscribe subscriptions
 		for _, sub := range subs {
-			err = c.engine.Backend.Subscribe(c, sub)
+			err = c.backend.Subscribe(c, sub)
 			if err != nil {
 				return c.die(BackendError, err, true)
 			}
 		}
 
 		// begin with queueing offline messages
-		err = c.engine.Backend.QueueOffline(c)
+		err = c.backend.QueueOffline(c)
 		if err != nil {
 			return c.die(BackendError, err, true)
 		}
@@ -382,7 +371,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		}
 
 		// subscribe client to queue
-		err = c.engine.Backend.Subscribe(c, &subscription)
+		err = c.backend.Subscribe(c, &subscription)
 		if err != nil {
 			return c.die(BackendError, err, true)
 		}
@@ -399,7 +388,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 	// queue retained messages
 	for _, sub := range pkt.Subscriptions {
-		err := c.engine.Backend.QueueRetained(c, sub.Topic)
+		err := c.backend.QueueRetained(c, sub.Topic)
 		if err != nil {
 			return c.die(BackendError, err, true)
 		}
@@ -413,7 +402,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	// handle contained topics
 	for _, topic := range pkt.Topics {
 		// unsubscribe client from queue
-		err := c.engine.Backend.Unsubscribe(c, topic)
+		err := c.backend.Unsubscribe(c, topic)
 		if err != nil {
 			return c.die(BackendError, err, true)
 		}
@@ -558,8 +547,11 @@ func (c *Client) processDisconnect() error {
 		return c.die(SessionError, err, true)
 	}
 
-	// close client
-	c.Close(true)
+	// mark client as cleanly disconnected
+	atomic.StoreUint32(&c.state, clientDisconnected)
+
+	// close underlying connection (triggers cleanup)
+	c.conn.Close()
 
 	return nil
 }
@@ -572,13 +564,13 @@ func (c *Client) handleMessage(msg *packet.Message) error {
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
 			// retain message
-			err := c.engine.Backend.StoreRetained(c, msg)
+			err := c.backend.StoreRetained(c, msg)
 			if err != nil {
 				return err
 			}
 		} else {
 			// clear already retained message
-			err := c.engine.Backend.ClearRetained(c, msg.Topic)
+			err := c.backend.ClearRetained(c, msg.Topic)
 			if err != nil {
 				return err
 			}
@@ -589,7 +581,7 @@ func (c *Client) handleMessage(msg *packet.Message) error {
 	msg.Retain = false
 
 	// publish message to others
-	err := c.engine.Backend.Publish(c, msg)
+	err := c.backend.Publish(c, msg)
 	if err != nil {
 		return err
 	}
@@ -689,7 +681,7 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 
 	// remove client from the queue
 	if atomic.LoadUint32(&c.state) > clientConnecting {
-		termErr := c.engine.Backend.Terminate(c)
+		termErr := c.backend.Terminate(c)
 		if termErr != nil && err == nil {
 			event = BackendError
 			err = termErr
@@ -716,11 +708,6 @@ func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error
 
 	c.log(LostConnection, c, nil, nil, nil)
 
-	// remove client from the brokers list if added
-	if atomic.LoadUint32(&c.state) > clientConnecting {
-		c.engine.remove(c)
-	}
-
 	return event, err
 }
 
@@ -740,7 +727,7 @@ func (c *Client) die(event LogEvent, err error, close bool) error {
 
 // log a message
 func (c *Client) log(event LogEvent, client *Client, pkt packet.GenericPacket, msg *packet.Message, err error) {
-	if c.engine.Logger != nil {
-		c.engine.Logger(event, client, pkt, msg, err)
+	if c.logger != nil {
+		c.logger(event, client, pkt, msg, err)
 	}
 }

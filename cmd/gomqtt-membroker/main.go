@@ -37,7 +37,9 @@ func main() {
 
 	fmt.Println("Done!")
 
-	engine := broker.NewEngine()
+	backend := broker.NewMemoryBackend()
+
+	engine := broker.NewEngine(backend)
 	engine.Accept(server)
 
 	var published int32
@@ -71,10 +73,11 @@ func main() {
 
 	<-finish
 
-	server.Close()
+	backend.Close()
 
 	engine.Close()
-	engine.Wait(1 * time.Second)
+
+	server.Close()
 
 	fmt.Println("Bye!")
 }

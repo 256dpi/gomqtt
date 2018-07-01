@@ -11,7 +11,7 @@ import (
 )
 
 func TestConnectTimeout(t *testing.T) {
-	engine := NewEngine()
+	engine := NewEngine(NewMemoryBackend())
 	engine.ConnectTimeout = 10 * time.Millisecond
 
 	port, quit, done := Run(engine, "tcp")
@@ -28,7 +28,7 @@ func TestConnectTimeout(t *testing.T) {
 }
 
 func TestDefaultReadLimit(t *testing.T) {
-	engine := NewEngine()
+	engine := NewEngine(NewMemoryBackend())
 	engine.DefaultReadLimit = 1
 
 	port, quit, done := Run(engine, "tcp")

@@ -15,7 +15,7 @@ func Example() {
 		panic(err)
 	}
 
-	engine := NewEngine()
+	engine := NewEngine(NewMemoryBackend())
 	engine.Accept(server)
 
 	c := client.New()

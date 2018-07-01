@@ -59,27 +59,20 @@ type Engine struct {
 	DefaultReadBuffer  int
 	DefaultWriteBuffer int
 
-	closing   bool
-	clients   []*Client
-	mutex     sync.Mutex
-	waitGroup sync.WaitGroup
-
-	tomb tomb.Tomb
+	closing bool
+	mutex   sync.Mutex
+	tomb    tomb.Tomb
 }
 
-// NewEngine returns a new Engine with a basic MemoryBackend.
-func NewEngine() *Engine {
-	return NewEngineWithBackend(NewMemoryBackend())
-}
-
-// NewEngineWithBackend returns a new Engine with a custom Backend.
-func NewEngineWithBackend(backend Backend) *Engine {
+// NewEngine returns a new Engine.
+func NewEngine(backend Backend) *Engine {
 	return &Engine{
 		Backend:        backend,
 		ConnectTimeout: 10 * time.Second,
-		clients:        make([]*Client, 0),
 	}
 }
+
+// TODO: What happens if a call to accept fails?
 
 // Accept begins accepting connections from the passed server.
 func (e *Engine) Accept(server transport.Server) {
@@ -127,21 +120,9 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 	conn.SetReadTimeout(e.ConnectTimeout)
 
 	// handle client
-	newClient(e, conn)
+	NewClient(e.Backend, e.Logger, conn)
 
 	return true
-}
-
-// Clients returns a current list of connected clients.
-func (e *Engine) Clients() []*Client {
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
-	// copy list
-	clients := make([]*Client, len(e.clients))
-	copy(clients, e.clients)
-
-	return clients
 }
 
 // Close will stop handling incoming connections and close all current clients.
@@ -158,66 +139,6 @@ func (e *Engine) Close() {
 	// stop acceptors
 	e.tomb.Kill(nil)
 	e.tomb.Wait()
-
-	// close all clients
-	for _, client := range e.clients {
-		client.Close(false)
-	}
-}
-
-// Wait can be called after close to wait until all clients have been closed.
-// The method returns whether all clients have been closed (true) or the timeout
-// has been reached (false).
-func (e *Engine) Wait(timeout time.Duration) bool {
-	wait := make(chan struct{})
-
-	go func() {
-		e.waitGroup.Wait()
-		close(wait)
-	}()
-
-	select {
-	case <-wait:
-		return true
-	case <-time.After(timeout):
-		return false
-	}
-}
-
-// clients call add to add themselves to the list
-func (e *Engine) add(client *Client) {
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
-	// add client
-	e.clients = append(e.clients, client)
-
-	// increment wait group
-	e.waitGroup.Add(1)
-}
-
-// clients call remove when closed to remove themselves from the list
-func (e *Engine) remove(client *Client) {
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
-	// get index of client
-	index := 0
-	for i, c := range e.clients {
-		if c == client {
-			index = i
-			break
-		}
-	}
-
-	// remove client from list
-	// https://github.com/golang/go/wiki/SliceTricks
-	e.clients[index] = e.clients[len(e.clients)-1]
-	e.clients[len(e.clients)-1] = nil
-	e.clients = e.clients[:len(e.clients)-1]
-
-	// decrement wait group
-	e.waitGroup.Add(-1)
 }
 
 // Run runs the passed engine on a random available port and returns a channel
@@ -242,14 +163,11 @@ func Run(engine *Engine, protocol string) (string, chan struct{}, chan struct{})
 		// wait for signal
 		<-quit
 
-		// errors from close are ignored
-		server.Close()
-
 		// close broker
 		engine.Close()
 
-		// wait for proper closing
-		engine.Wait(10 * time.Millisecond)
+		// errors from close are ignored
+		server.Close()
 
 		close(done)
 	}()
