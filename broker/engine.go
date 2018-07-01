@@ -56,6 +56,8 @@ type Engine struct {
 
 	ConnectTimeout   time.Duration
 	DefaultReadLimit int64
+	DefaultReadBuffer int
+	DefaultWriteBuffer int
 
 	closing   bool
 	clients   []*Client
@@ -108,6 +110,12 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 
 	// set default read limit
 	conn.SetReadLimit(e.DefaultReadLimit)
+
+	// TODO: Buffers should be configured before the socket is opened.
+	// go1.11 should provide a custom dialer facility that might allow this
+
+	// set default buffer sizes
+	conn.SetBuffers(e.DefaultReadBuffer, e.DefaultWriteBuffer)
 
 	// close conn immediately when closing
 	if e.closing {
