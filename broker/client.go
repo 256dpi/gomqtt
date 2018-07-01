@@ -44,12 +44,15 @@ type Client struct {
 	cleanSession bool
 	session      Session
 
-	out chan *packet.Message
+	inc chan packet.GenericPacket
+	fwd chan *packet.Message
 
 	tomb   tomb.Tomb
 	mutex  sync.Mutex
 	finish sync.Once
 }
+
+// TODO: Remove dependency on engine and expose as NewClient with Backend.
 
 // newClient takes over a connection and returns a Client
 func newClient(engine *Engine, conn transport.Conn) *Client {
@@ -57,7 +60,8 @@ func newClient(engine *Engine, conn transport.Conn) *Client {
 		state:  clientConnecting,
 		engine: engine,
 		conn:   conn,
-		out:    make(chan *packet.Message),
+		inc:    make(chan packet.GenericPacket),
+		fwd:    make(chan *packet.Message),
 	}
 
 	// start processor
@@ -87,15 +91,7 @@ func (c *Client) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
 }
 
-// Publish will send a Message to the client and initiate QOS flows.
-func (c *Client) Publish(msg *packet.Message) bool {
-	select {
-	case c.out <- msg:
-		return true
-	case <-c.tomb.Dying():
-		return false
-	}
-}
+// TODO: Remove close method.
 
 // Close will immediately close the connection. When clean=true the client
 // will be marked as cleanly disconnected, and the will message will not
@@ -110,75 +106,95 @@ func (c *Client) Close(clean bool) {
 	c.conn.Close()
 }
 
-/* processor goroutine */
+/* goroutines */
 
-// processes incoming packets
+// main processor
 func (c *Client) processor() error {
-	// prepare flag
-	first := true
-
 	c.log(NewConnection, c, nil, nil, nil)
 
+	// start receiver
+	c.tomb.Go(c.receiver)
+
+	// prepare packet
+	var pkt packet.GenericPacket
+
+	// get first packet from connection
+	select {
+	case pkt = <-c.inc:
+		// continue
+	case <-c.tomb.Dying():
+		return tomb.ErrDying
+	}
+
+	// get connect
+	connect, ok := pkt.(*packet.ConnectPacket)
+	if !ok {
+		return c.die(ClientError, ErrExpectedConnect, true)
+	}
+
+	// process connect
+	err := c.processConnect(connect)
+	if err != nil {
+		return err // error has already been cleaned
+	}
+
+	// start requester
+	c.tomb.Go(c.requester)
+
 	for {
-		// get next packet from connection
+		select {
+		case msg := <-c.fwd:
+			// forward message
+			err = c.forwardMessage(msg)
+			if err != nil {
+				return err // error has already been cleaned
+			}
+		case pkt = <-c.inc:
+			// process packet
+			err = c.processPacket(pkt)
+			if err != nil {
+				return err // error has already been cleaned
+			}
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
+		}
+	}
+}
+
+// packet receiver
+func (c *Client) receiver() error {
+	for {
+		// receive next packet
 		pkt, err := c.conn.Receive()
 		if err != nil {
 			return c.die(TransportError, err, false)
 		}
 
-		c.log(PacketReceived, c, pkt, nil, nil)
-
-		// check flag
-		if first {
-			// get connect
-			connect, ok := pkt.(*packet.ConnectPacket)
-			if !ok {
-				return c.die(ClientError, ErrExpectedConnect, true)
-			}
-
-			// set flag
-			first = false
-
-			// process connect
-			err = c.processConnect(connect)
-			if err != nil {
-				return err
-			}
-
-			continue
-		}
-
-		// handle individual packets
-		switch typedPkt := pkt.(type) {
-		case *packet.SubscribePacket:
-			err = c.processSubscribe(typedPkt)
-		case *packet.UnsubscribePacket:
-			err = c.processUnsubscribe(typedPkt)
-		case *packet.PublishPacket:
-			err = c.processPublish(typedPkt)
-		case *packet.PubackPacket:
-			err = c.processPubackAndPubcomp(typedPkt.ID)
-		case *packet.PubcompPacket:
-			err = c.processPubackAndPubcomp(typedPkt.ID)
-		case *packet.PubrecPacket:
-			err = c.processPubrec(typedPkt.ID)
-		case *packet.PubrelPacket:
-			err = c.processPubrel(typedPkt.ID)
-		case *packet.PingreqPacket:
-			err = c.processPingreq()
-		case *packet.DisconnectPacket:
-			err = c.processDisconnect()
-		}
-
-		// return eventual error
-		if err != nil {
-			return err // error has already been cleaned
-		}
+		// send packet
+		c.inc <- pkt
 	}
 }
 
+// message requester
+func (c *Client) requester() error {
+	for {
+		// request next message
+		msg, err := c.engine.Backend.Receive(c)
+		if err != nil {
+			return c.die(BackendError, err, true)
+		}
+
+		// forward message
+		c.fwd <- msg
+	}
+}
+
+/* packet handling */
+
 // handle an incoming ConnackPacket
 func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
+	c.log(PacketReceived, c, pkt, nil, nil)
+
 	// set values
 	c.cleanSession = pkt.CleanSession
 	c.clientID = pkt.ClientID
@@ -255,9 +271,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		return c.die(TransportError, err, false)
 	}
 
-	// start sender
-	c.tomb.Go(c.sender)
-
 	// retrieve stored packets
 	packets, err := c.session.AllPackets(session.Outgoing)
 	if err != nil {
@@ -300,6 +313,43 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		if err != nil {
 			return c.die(BackendError, err, true)
 		}
+	}
+
+	return nil
+}
+
+// handle an incoming GenericPacket
+func (c *Client) processPacket(pkt packet.GenericPacket) error {
+	c.log(PacketReceived, c, pkt, nil, nil)
+
+	// prepare error
+	var err error
+
+	// handle individual packets
+	switch typedPkt := pkt.(type) {
+	case *packet.SubscribePacket:
+		err = c.processSubscribe(typedPkt)
+	case *packet.UnsubscribePacket:
+		err = c.processUnsubscribe(typedPkt)
+	case *packet.PublishPacket:
+		err = c.processPublish(typedPkt)
+	case *packet.PubackPacket:
+		err = c.processPubackAndPubcomp(typedPkt.ID)
+	case *packet.PubcompPacket:
+		err = c.processPubackAndPubcomp(typedPkt.ID)
+	case *packet.PubrecPacket:
+		err = c.processPubrec(typedPkt.ID)
+	case *packet.PubrelPacket:
+		err = c.processPubrel(typedPkt.ID)
+	case *packet.PingreqPacket:
+		err = c.processPingreq()
+	case *packet.DisconnectPacket:
+		err = c.processDisconnect()
+	}
+
+	// return eventual error
+	if err != nil {
+		return err // error has already been cleaned
 	}
 
 	return nil
@@ -514,59 +564,9 @@ func (c *Client) processDisconnect() error {
 	return nil
 }
 
-/* sender goroutine */
-
-// sends outgoing messages
-func (c *Client) sender() error {
-	for {
-		select {
-		case <-c.tomb.Dying():
-			return tomb.ErrDying
-		case msg := <-c.out:
-			// prepare publish packet
-			publish := packet.NewPublishPacket()
-			publish.Message = *msg
-
-			// get stored subscription
-			sub, err := c.session.LookupSubscription(publish.Message.Topic)
-			if err != nil {
-				return c.die(SessionError, err, true)
-			}
-
-			// check subscription
-			if sub != nil {
-				// respect maximum qos
-				if publish.Message.QOS > sub.QOS {
-					publish.Message.QOS = sub.QOS
-				}
-			}
-
-			// set packet id
-			if publish.Message.QOS > 0 {
-				publish.ID = c.session.NextID()
-			}
-
-			// store packet if at least qos 1
-			if publish.Message.QOS > 0 {
-				err := c.session.SavePacket(session.Outgoing, publish)
-				if err != nil {
-					return c.die(SessionError, err, true)
-				}
-			}
-
-			// send packet
-			err = c.send(publish, true)
-			if err != nil {
-				return c.die(TransportError, err, false)
-			}
-
-			c.log(MessageForwarded, c, nil, msg, nil)
-		}
-	}
-}
-
 /* helpers */
 
+// handle publish messages
 func (c *Client) handleMessage(msg *packet.Message) error {
 	// check retain flag
 	if msg.Retain {
@@ -598,6 +598,73 @@ func (c *Client) handleMessage(msg *packet.Message) error {
 
 	return nil
 }
+
+// forward messages
+func (c *Client) forwardMessage(msg *packet.Message) error {
+	// prepare publish packet
+	publish := packet.NewPublishPacket()
+	publish.Message = *msg
+
+	// get stored subscription
+	sub, err := c.session.LookupSubscription(publish.Message.Topic)
+	if err != nil {
+		return c.die(SessionError, err, true)
+	}
+
+	// check subscription
+	if sub != nil {
+		// respect maximum qos
+		if publish.Message.QOS > sub.QOS {
+			publish.Message.QOS = sub.QOS
+		}
+	}
+
+	// set packet id
+	if publish.Message.QOS > 0 {
+		publish.ID = c.session.NextID()
+	}
+
+	// store packet if at least qos 1
+	if publish.Message.QOS > 0 {
+		err := c.session.SavePacket(session.Outgoing, publish)
+		if err != nil {
+			return c.die(SessionError, err, true)
+		}
+	}
+
+	// send packet
+	err = c.send(publish, true)
+	if err != nil {
+		return c.die(TransportError, err, false)
+	}
+
+	c.log(MessageForwarded, c, nil, msg, nil)
+
+	return nil
+}
+
+// send a packet
+func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
+	var err error
+
+	// send packet
+	if buffered {
+		err = c.conn.BufferedSend(pkt)
+	} else {
+		err = c.conn.Send(pkt)
+	}
+
+	// check error
+	if err != nil {
+		return err
+	}
+
+	c.log(PacketSent, c, pkt, nil, nil)
+
+	return nil
+}
+
+/* error handling and logging */
 
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error) {
@@ -669,27 +736,6 @@ func (c *Client) die(event LogEvent, err error, close bool) error {
 	})
 
 	return err
-}
-
-// send a packet
-func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
-	var err error
-
-	// send packet
-	if buffered {
-		err = c.conn.BufferedSend(pkt)
-	} else {
-		err = c.conn.Send(pkt)
-	}
-
-	// check error
-	if err != nil {
-		return err
-	}
-
-	c.log(PacketSent, c, pkt, nil, nil)
-
-	return nil
 }
 
 // log a message

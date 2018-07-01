@@ -626,7 +626,7 @@ func TestConnectPacketEncodeError8(t *testing.T) {
 func TestConnectPacketEncodeError9(t *testing.T) {
 	pkt := NewConnectPacket()
 	pkt.Will = &Message{
-	// < missing topic
+		// < missing topic
 	}
 
 	dst := make([]byte, pkt.Len())

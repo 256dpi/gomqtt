@@ -91,6 +91,9 @@ type Backend interface {
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
 	Unsubscribe(client *Client, topic string) error
 
+	// Receive is called by the Client repeatedly to obtain the next message.
+	Receive(*Client) (*packet.Message, error)
+
 	// StoreRetained should store the specified message.
 	StoreRetained(*Client, *packet.Message) error
 
@@ -120,7 +123,8 @@ type Backend interface {
 type MemoryBackend struct {
 	Credentials map[string]string
 
-	subscribedClients    *topic.Tree
+	queues               map[*Client]chan *packet.Message
+	subscribedQueues     *topic.Tree
 	retainedMessages     *topic.Tree
 	storedSessions       sync.Map
 	activeClients        map[string]*Client
@@ -132,7 +136,8 @@ type MemoryBackend struct {
 // NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		subscribedClients:    topic.NewTree(),
+		queues:               make(map[*Client]chan *packet.Message), // TODO: Add to Session?
+		subscribedQueues:     topic.NewTree(),
 		retainedMessages:     topic.NewTree(),
 		activeClients:        make(map[string]*Client),
 		offlineSubscriptions: topic.NewTree(),
@@ -164,6 +169,9 @@ func (m *MemoryBackend) Authenticate(client *Client, user, password string) (boo
 func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
+
+	// create queue
+	m.queues[client] = make(chan *packet.Message, 100) // TODO: Allow a backlog?,
 
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
@@ -236,11 +244,10 @@ func (m *MemoryBackend) QueueOffline(client *Client) error {
 				return
 			}
 
-			// publish or add back to queue
-			if !client.Publish(msg) {
-				queue.Push(msg)
-				return
-			}
+			// add message
+			m.queues[client] <- msg
+
+			// TODO: What happens if the client dies?
 		}
 	}()
 
@@ -253,7 +260,7 @@ func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription) erro
 	// mutex locking not needed
 
 	// add subscription
-	m.subscribedClients.Add(sub.Topic, client)
+	m.subscribedQueues.Add(sub.Topic, m.queues[client])
 
 	return nil
 }
@@ -263,9 +270,16 @@ func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 	// mutex locking not needed
 
 	// remove subscription
-	m.subscribedClients.Remove(topic, client)
+	m.subscribedQueues.Remove(topic, m.queues[client])
 
 	return nil
+}
+
+func (m *MemoryBackend) Receive(client *Client) (*packet.Message, error) {
+	// get next message from queue
+	msg := <-m.queues[client]
+
+	return msg, nil
 }
 
 // StoreRetained will store the specified message.
@@ -297,7 +311,7 @@ func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
 
 	// publish messages
 	for _, value := range values {
-		client.Publish(value.(*packet.Message))
+		m.queues[client] <- value.(*packet.Message)
 	}
 
 	return nil
@@ -310,8 +324,8 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	// mutex locking not needed
 
 	// publish directly to clients
-	for _, v := range m.subscribedClients.Match(msg.Topic) {
-		v.(*Client).Publish(msg)
+	for _, v := range m.subscribedQueues.Match(msg.Topic) {
+		v.(chan *packet.Message) <- msg
 	}
 
 	// queue for offline clients
@@ -331,7 +345,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	defer m.mutex.Unlock()
 
 	// clear all subscriptions
-	m.subscribedClients.Clear(client)
+	m.subscribedQueues.Clear(client)
 
 	// remove client from list if an id is available
 	if len(client.ClientID()) > 0 {

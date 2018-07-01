@@ -54,9 +54,9 @@ type Engine struct {
 	Backend Backend
 	Logger  Logger
 
-	ConnectTimeout   time.Duration
-	DefaultReadLimit int64
-	DefaultReadBuffer int
+	ConnectTimeout     time.Duration
+	DefaultReadLimit   int64
+	DefaultReadBuffer  int
 	DefaultWriteBuffer int
 
 	closing   bool
