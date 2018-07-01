@@ -394,5 +394,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 
 // Close will close the backend and make all clients go away.
 func (m *MemoryBackend) Close() {
+	// TODO: Can we wait for clients to finish clean up?
+
 	close(m.shutdown)
 }
