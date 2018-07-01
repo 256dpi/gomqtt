@@ -119,9 +119,6 @@ func (c *Client) processor() error {
 
 	c.log(NewConnection, c, nil, nil, nil)
 
-	// set initial read timeout
-	c.conn.SetReadTimeout(c.engine.ConnectTimeout)
-
 	for {
 		// get next packet from connection
 		pkt, err := c.conn.Receive()

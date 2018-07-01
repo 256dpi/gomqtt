@@ -108,6 +108,12 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 		panic("passed conn is nil")
 	}
 
+	// close conn immediately when closing
+	if e.closing {
+		conn.Close()
+		return false
+	}
+
 	// set default read limit
 	conn.SetReadLimit(e.DefaultReadLimit)
 
@@ -117,11 +123,8 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 	// set default buffer sizes
 	conn.SetBuffers(e.DefaultReadBuffer, e.DefaultWriteBuffer)
 
-	// close conn immediately when closing
-	if e.closing {
-		conn.Close()
-		return false
-	}
+	// set initial read timeout
+	conn.SetReadTimeout(e.ConnectTimeout)
 
 	// handle client
 	newClient(e, conn)
