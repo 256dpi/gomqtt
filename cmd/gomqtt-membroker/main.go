@@ -75,7 +75,7 @@ func main() {
 
 	<-finish
 
-	backend.Close()
+	backend.Close(5 * time.Second)
 
 	server.Close()
 

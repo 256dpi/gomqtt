@@ -3,6 +3,7 @@ package broker
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
@@ -149,8 +150,11 @@ func (s *memorySession) reset() {
 // ErrQueueFull is returned to a client that attempts to write to a full queue.
 var ErrQueueFull = errors.New("queue full")
 
-// ErrKilled is returned by to a client that is killed by the broker.
+// ErrKilled is returned to a client that is killed by the broker.
 var ErrKilled = errors.New("killed")
+
+// ErrClosing is returned to a client if the backend is closing.
+var ErrClosing = errors.New("closing")
 
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
@@ -158,7 +162,7 @@ type MemoryBackend struct {
 	SessionQueueSize int
 
 	// A map of username and passwords that grant read and write access.
-	Credentials      map[string]string
+	Credentials map[string]string
 
 	storedSessions    map[string]*memorySession
 	temporarySessions map[*Client]*memorySession
@@ -166,12 +170,13 @@ type MemoryBackend struct {
 
 	globalMutex sync.Mutex
 	setupMutex  sync.Mutex
+	closing     bool
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		SessionQueueSize: 100,
+		SessionQueueSize:  100,
 		storedSessions:    make(map[string]*memorySession),
 		temporarySessions: make(map[*Client]*memorySession),
 		retainedMessages:  topic.NewTree(),
@@ -181,7 +186,14 @@ func NewMemoryBackend() *MemoryBackend {
 // Authenticate authenticates a clients credentials by matching them to the
 // saved Credentials map.
 func (m *MemoryBackend) Authenticate(client *Client, user, password string) (bool, error) {
-	// mutex locking not needed
+	// acquire global mutex
+	m.globalMutex.Lock()
+	defer m.globalMutex.Unlock()
+
+	// return error if closing
+	if m.closing {
+		return false, ErrClosing
+	}
 
 	// allow all if there are no credentials
 	if m.Credentials == nil {
@@ -209,6 +221,11 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 	m.setupMutex.Lock()
 	defer m.setupMutex.Unlock()
 
+	// return error if closing
+	if m.closing {
+		return nil, false, ErrClosing
+	}
+
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
 		// create session
@@ -231,7 +248,8 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 		// send signal
 		close(sess.kill)
 
-		// release global mutex (allow publish and termination)
+		// release global mutex to allow publish and termination, but leave the
+		// setup mutex to prevent setups
 		m.globalMutex.Unlock()
 
 		// wait for client to close
@@ -244,7 +262,7 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 		sess, ok = m.storedSessions[id]
 	}
 
-	// TODO: Handle clean sessions.
+	// TODO: Properly handle clean sessions.
 
 	// reuse if (still) existing
 	if ok {
@@ -404,15 +422,52 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	return nil
 }
 
-// Close will close the backend and make all clients go away.
-func (m *MemoryBackend) Close() {
+// Close will close all active clients and close the backend. The return value
+// denotes if the timeout has been reached.
+func (m *MemoryBackend) Close(timeout time.Duration) bool {
 	// acquire global mutex
 	m.globalMutex.Lock()
-	defer m.globalMutex.Unlock()
 
-	// add close temporary sessions
+	// set closing
+	m.closing = true
+
+	// prepare channel list
+	var list []chan struct{}
+
+	// close temporary sessions
 	for _, sess := range m.temporarySessions {
 		close(sess.kill)
-		<-sess.done // TODO: Timeout?
+		list = append(list, sess.done)
 	}
+
+	// closed owned stored sessions
+	for _, sess := range m.storedSessions {
+		if sess.owner != nil {
+			close(sess.kill)
+			list = append(list, sess.done)
+		}
+	}
+
+	// release mutex to allow termination
+	m.globalMutex.Unlock()
+
+	// return early if empty
+	if len(list) == 0 {
+		return true
+	}
+
+	// prepare timeout
+	tm := time.After(timeout)
+
+	// wait for clients to close
+	for _, ch := range list {
+		select {
+		case <-ch:
+			continue
+		case <-tm:
+			return false
+		}
+	}
+
+	return true
 }
