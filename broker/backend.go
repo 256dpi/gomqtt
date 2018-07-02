@@ -142,7 +142,7 @@ func newMemorySession(backlog int) *memorySession {
 	}
 }
 
-func (s *memorySession) reset() {
+func (s *memorySession) reuse() {
 	s.kill = make(chan struct{}, 1)
 	s.done = make(chan struct{}, 1)
 }
@@ -165,6 +165,7 @@ type MemoryBackend struct {
 	// A map of username and passwords that grant read and write access.
 	Credentials map[string]string
 
+	activeClients     map[string]*Client
 	storedSessions    map[string]*memorySession
 	temporarySessions map[*Client]*memorySession
 	retainedMessages  *topic.Tree
@@ -178,6 +179,7 @@ type MemoryBackend struct {
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
 		SessionQueueSize:  100,
+		activeClients:     make(map[string]*Client),
 		storedSessions:    make(map[string]*memorySession),
 		temporarySessions: make(map[*Client]*memorySession),
 		retainedMessages:  topic.NewTree(),
@@ -241,47 +243,73 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 
 	// client id is available
 
-	// retrieve stored session
-	sess, ok := m.storedSessions[id]
+	// retrieve existing client
+	existingSession, ok := m.storedSessions[id]
+	if !ok {
+		if existingClient, ok2 := m.activeClients[id]; ok2 {
+			existingSession, ok = m.temporarySessions[existingClient]
+		}
+	}
 
-	// kill existing client if existing
-	if ok && sess.owner != nil {
+	// kill existing client if session is taken
+	if ok && existingSession.owner != nil {
 		// send signal
-		close(sess.kill)
+		close(existingSession.kill)
 
 		// release global mutex to allow publish and termination, but leave the
 		// setup mutex to prevent setups
 		m.globalMutex.Unlock()
 
 		// wait for client to close
-		<-sess.done // TODO: Timeout?
+		<-existingSession.done
+		// TODO: Timeout?
 
 		// acquire mutex again
 		m.globalMutex.Lock()
-
-		// reload stored session
-		sess, ok = m.storedSessions[id]
 	}
 
-	// TODO: Properly handle clean sessions.
+	// delete any stored session and return temporary if requested
+	if client.CleanSession() {
+		// delete any stored session
+		delete(m.storedSessions, id)
 
-	// reuse if (still) existing
-	if ok {
-		// reset session
-		sess.reset()
+		// create new session
+		sess := newMemorySession(m.SessionQueueSize)
 		sess.owner = client
 
-		return sess, true, nil
+		// save session
+		m.temporarySessions[client] = sess
+
+		// save client
+		m.activeClients[id] = client
+
+		return sess, false, nil
+	}
+
+	// attempt to reuse a stored session
+	storedSession, ok := m.storedSessions[id]
+	if ok {
+		// reuse session
+		storedSession.reuse()
+		storedSession.owner = client
+
+		// save client
+		m.activeClients[id] = client
+
+		return storedSession, true, nil
 	}
 
 	// otherwise create fresh session
-	sess = newMemorySession(m.SessionQueueSize)
-	sess.owner = client
+	storedSession = newMemorySession(m.SessionQueueSize)
+	storedSession.owner = client
 
 	// save session
-	m.storedSessions[id] = sess
+	m.storedSessions[id] = storedSession
 
-	return sess, false, nil
+	// save client
+	m.activeClients[id] = client
+
+	return storedSession, false, nil
 }
 
 // QueueOffline will begin with forwarding all missed messages in a separate
@@ -419,13 +447,11 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	// release session
 	sess.owner = nil
 
-	// delete stored session if clean is requested
-	if client.CleanSession() {
-		delete(m.storedSessions, client.ClientID())
-	}
-
-	// remove temporary session
+	// remove any temporary session
 	delete(m.temporarySessions, client)
+
+	// remove any saved client
+	delete(m.activeClients, client.clientID)
 
 	// signal exit
 	close(sess.done)

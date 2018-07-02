@@ -31,7 +31,9 @@ var ErrNotAuthorized = errors.New("client is not authorized")
 var ErrMissingSession = errors.New("no session returned from Backend")
 
 // ErrDisconnected is returned if a client disconnects cleanly.
-var ErrDisconnected = errors.New("disconnected") // TODO: needed?
+var ErrDisconnected = errors.New("disconnected")
+
+// TODO: needed?
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
@@ -253,7 +255,8 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// reset the session if clean is requested
 	if pkt.CleanSession {
-		s.Reset() // TODO: Needed?
+		s.Reset()
+		// TODO: Needed?
 	}
 
 	// set session present

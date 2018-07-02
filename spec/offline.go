@@ -146,3 +146,5 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 	err = offlineReceiver.Disconnect()
 	assert.NoError(t, err)
 }
+
+// TODO: Add test that checks if retained messages are part of the server session.
