@@ -35,9 +35,45 @@ func AuthenticationTest(t *testing.T, config *Config) {
 	assert.NoError(t, err)
 }
 
-// UniqueClientIDTest tests the broker for enforcing unique client ids.
-func UniqueClientIDTest(t *testing.T, config *Config, id string) {
+// UniqueClientIDUncleanTest tests the broker for enforcing unique client ids.
+func UniqueClientIDUncleanTest(t *testing.T, config *Config, id string) {
 	options := client.NewConfigWithClientID(config.URL, id)
+	options.CleanSession = false
+
+	assert.NoError(t, client.ClearSession(options, 10*time.Second))
+
+	wait := make(chan struct{})
+
+	firstClient := client.New()
+	firstClient.Callback = func(msg *packet.Message, err error) error {
+		close(wait)
+		return nil
+	}
+
+	connectFuture, err := firstClient.Connect(options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
+	assert.False(t, connectFuture.SessionPresent())
+
+	secondClient := client.New()
+
+	connectFuture, err = secondClient.Connect(options)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
+	assert.True(t, connectFuture.SessionPresent())
+
+	safeReceive(wait)
+
+	err = secondClient.Disconnect()
+	assert.NoError(t, err)
+}
+
+// UniqueClientIDCleanTest tests the broker for enforcing unique client ids.
+func UniqueClientIDCleanTest(t *testing.T, config *Config, id string) {
+	options := client.NewConfigWithClientID(config.URL, id)
+	options.CleanSession = true
 
 	assert.NoError(t, client.ClearSession(options, 10*time.Second))
 

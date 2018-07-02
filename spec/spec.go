@@ -279,8 +279,12 @@ func Run(t *testing.T, config *Config) {
 	}
 
 	if config.UniqueClientIDs {
-		t.Run("UniqueClientID", func(t *testing.T) {
-			UniqueClientIDTest(t, config, "c13")
+		t.Run("UniqueClientIDUnclean", func(t *testing.T) {
+			UniqueClientIDUncleanTest(t, config, "c13")
+		})
+
+		t.Run("UniqueClientIDClean", func(t *testing.T) {
+			UniqueClientIDCleanTest(t, config, "c14")
 		})
 	}
 
