@@ -147,7 +147,8 @@ func (s *memorySession) reset() {
 	s.done = make(chan struct{}, 1)
 }
 
-// ErrQueueFull is returned to a client that attempts to write to a full queue.
+// ErrQueueFull is returned to a client that attempts two write to its own full
+// queue, which would result in a deadlock.
 var ErrQueueFull = errors.New("queue full")
 
 // ErrKilled is returned to a client that is killed by the broker.
@@ -371,10 +372,15 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	// add message to temporary sessions
 	for _, sess := range m.temporarySessions {
 		if sub, _ := sess.LookupSubscription(msg.Topic); sub != nil {
-			select {
-			case sess.queue <- msg:
-			default:
-				return ErrQueueFull
+			// detect deadlock when adding to own queue
+			if sess.owner == client {
+				select {
+				case sess.queue <- msg:
+				default:
+					return ErrQueueFull
+				}
+			} else {
+				sess.queue <- msg
 			}
 		}
 	}
@@ -382,10 +388,15 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	// add message to stored sessions
 	for _, sess := range m.storedSessions {
 		if sub, _ := sess.LookupSubscription(msg.Topic); sub != nil {
-			select {
-			case sess.queue <- msg:
-			default:
-				return ErrQueueFull
+			// detect deadlock when adding to own queue
+			if sess.owner == client {
+				select {
+				case sess.queue <- msg:
+				default:
+					return ErrQueueFull
+				}
+			} else {
+				sess.queue <- msg
 			}
 		}
 	}
