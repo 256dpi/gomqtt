@@ -9,7 +9,6 @@ import (
 
 func TestBrokerWithMemoryBackend(t *testing.T) {
 	backend := NewMemoryBackend()
-	backend.SessionQueueSize = 100
 	backend.Credentials = map[string]string{
 		"allow": "allow",
 	}

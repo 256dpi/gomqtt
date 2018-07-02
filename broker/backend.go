@@ -171,6 +171,7 @@ type MemoryBackend struct {
 // NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
+		SessionQueueSize: 100,
 		storedSessions:    make(map[string]*memorySession),
 		temporarySessions: make(map[*Client]*memorySession),
 		retainedMessages:  topic.NewTree(),
