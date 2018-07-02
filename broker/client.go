@@ -10,6 +10,7 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/transport"
+
 	"gopkg.in/tomb.v2"
 )
 

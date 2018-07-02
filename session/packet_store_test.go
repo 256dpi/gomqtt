@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/256dpi/gomqtt/packet"
+
 	"github.com/stretchr/testify/assert"
 )
 
