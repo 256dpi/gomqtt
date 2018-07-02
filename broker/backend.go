@@ -146,9 +146,15 @@ func (s *memorySession) reset() {
 	s.done = make(chan struct{}, 1)
 }
 
+// ErrKilled is returned by to a client that is killed by the broker.
+var ErrKilled = errors.New("killed")
+
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
+	// The maximal size of the session queue.
 	SessionQueueSize int
+
+	// A map of username and passwords that grant read and write access.
 	Credentials      map[string]string
 
 	storedSessions    map[string]*memorySession
@@ -291,7 +297,7 @@ func (m *MemoryBackend) Receive(client *Client, close <-chan struct{}) (*packet.
 	case <-close:
 		return nil, nil
 	case <-sess.kill:
-		return nil, errors.New("kill")
+		return nil, ErrKilled
 	}
 }
 
