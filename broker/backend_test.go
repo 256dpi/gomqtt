@@ -9,8 +9,10 @@ import (
 
 func TestBrokerWithMemoryBackend(t *testing.T) {
 	backend := NewMemoryBackend()
-	backend.Credentials = map[string]string{
-		"allow": "allow",
+
+	backend.AuthenticateCB = func(c *Client, username string, password string) (ok bool, err error) {
+		ok = username == "allow" && password == "allow"
+		return
 	}
 
 	port, quit, done := Run(NewEngine(backend), "tcp")

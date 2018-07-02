@@ -10,7 +10,7 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
 	"github.com/256dpi/gomqtt/transport"
-	"gopkg.in/tomb.v2"
+	tomb "gopkg.in/tomb.v2"
 )
 
 const (
@@ -28,6 +28,12 @@ var ErrNotAuthorized = errors.New("client is not authorized")
 
 // ErrMissingSession is returned if the backend does not return a session.
 var ErrMissingSession = errors.New("no session returned from Backend")
+
+// ErrNotAuthorizedSubscribe is returned when client do not have subcribe permission on topic
+var ErrNotAuthorizedSubscribe = errors.New("client subcribed to an unauthorized topic")
+
+// ErrNotAuthorizedPublish is returned when client do not have publish permission on topic
+var ErrNotAuthorizedPublish = errors.New("client published to an unauthorized topic")
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
@@ -357,6 +363,14 @@ func (c *Client) processPingreq() error {
 
 // handle an incoming SubscribePacket
 func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
+	// authorize subcribe
+	ok, err := c.backend.AuthorizeSubscribe(c, pkt)
+	if err != nil {
+		return c.die(BackendError, err, true)
+	}
+	if !ok {
+		return c.die(ClientError, ErrNotAuthorizedSubscribe, true)
+	}
 	// prepare suback packet
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
@@ -381,7 +395,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	}
 
 	// send suback
-	err := c.send(suback, true)
+	err = c.send(suback, true)
 	if err != nil {
 		return c.die(TransportError, err, false)
 	}
@@ -429,6 +443,14 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 
 // handle an incoming PublishPacket
 func (c *Client) processPublish(publish *packet.PublishPacket) error {
+	// authorize publish
+	ok, err := c.backend.AuthorizePublish(c, &publish.Message)
+	if err != nil {
+		return c.die(BackendError, err, true)
+	}
+	if !ok {
+		return c.die(ClientError, ErrNotAuthorizedPublish, true)
+	}
 	// handle unacknowledged and directly acknowledged messages
 	if publish.Message.QOS <= 1 {
 		err := c.handleMessage(&publish.Message)
