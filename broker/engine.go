@@ -12,38 +12,41 @@ import (
 )
 
 // LogEvent are received by a Logger.
-type LogEvent int
+type LogEvent string
 
 const (
 	// NewConnection is emitted when a client comes online.
-	NewConnection LogEvent = iota
+	NewConnection LogEvent = "new connection"
 
 	// PacketReceived is emitted when a packet has been received.
-	PacketReceived
+	PacketReceived LogEvent = "packet received"
 
 	// MessagePublished is emitted after a message has been published.
-	MessagePublished
+	MessagePublished LogEvent = "message published"
 
 	// MessageForwarded is emitted after a message has been forwarded.
-	MessageForwarded
+	MessageForwarded LogEvent = "message forwarded"
 
 	// PacketSent is emitted when a packet has been sent.
-	PacketSent
+	PacketSent LogEvent = "packet sent"
 
-	// LostConnection is emitted when the connection has been terminated.
-	LostConnection
+	// ClientDisconnected is emitted when a client disconnects cleanly.
+	ClientDisconnected LogEvent = "client disconnected"
 
 	// TransportError is emitted when an underlying transport error occurs.
-	TransportError
+	TransportError LogEvent = "transport error"
 
 	// SessionError is emitted when a call to the session fails.
-	SessionError
+	SessionError LogEvent = "session error"
 
 	// BackendError is emitted when a call to the backend fails.
-	BackendError
+	BackendError LogEvent = "backend error"
 
 	// ClientError is emitted when the client violates the protocol.
-	ClientError
+	ClientError LogEvent = "client error"
+
+	// LostConnection is emitted when the connection has been terminated.
+	LostConnection LogEvent = "lost connection"
 )
 
 // The Logger callback handles incoming log messages.
