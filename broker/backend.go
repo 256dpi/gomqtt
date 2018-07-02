@@ -146,6 +146,9 @@ func (s *memorySession) reset() {
 	s.done = make(chan struct{}, 1)
 }
 
+// ErrQueueFull is returned to a client that attempts to write to a full queue.
+var ErrQueueFull = errors.New("queue full")
+
 // ErrKilled is returned by to a client that is killed by the broker.
 var ErrKilled = errors.New("killed")
 
@@ -331,8 +334,7 @@ func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
 		select {
 		case client.session.(*memorySession).queue <- value.(*packet.Message):
 		default:
-			// TODO: Close client?
-			panic("full")
+			return ErrQueueFull
 		}
 	}
 
@@ -353,8 +355,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 			select {
 			case sess.queue <- msg:
 			default:
-				// TODO: Close client?
-				panic("full")
+				return ErrQueueFull
 			}
 		}
 	}
@@ -365,8 +366,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 			select {
 			case sess.queue <- msg:
 			default:
-				// TODO: Close client?
-				panic("full")
+				return ErrQueueFull
 			}
 		}
 	}
