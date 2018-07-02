@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/256dpi/gomqtt/packet"
@@ -94,7 +95,7 @@ type Backend interface {
 	// Receive is called by the Client repeatedly to obtain the next message.
 	// If the call returns no message and no error, the client will be closed
 	// cleanly.
-	Receive(*Client) (*packet.Message, error)
+	Receive(*Client, <-chan struct{}) (*packet.Message, error)
 
 	// StoreRetained should store the specified message.
 	StoreRetained(*Client, *packet.Message) error
@@ -121,30 +122,49 @@ type Backend interface {
 	Terminate(*Client) error
 }
 
+type memorySession struct {
+	*session.MemorySession
+
+	queue chan *packet.Message
+
+	owner *Client
+	kill  chan struct{}
+	done  chan struct{}
+}
+
+func newMemorySession(backlog int) *memorySession {
+	return &memorySession{
+		MemorySession: session.NewMemorySession(),
+		queue:         make(chan *packet.Message, backlog),
+		kill:          make(chan struct{}, 1),
+		done:          make(chan struct{}, 1),
+	}
+}
+
+func (s *memorySession) reset() {
+	s.kill = make(chan struct{}, 1)
+	s.done = make(chan struct{}, 1)
+}
+
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
-	Credentials map[string]string
+	SessionQueueSize int
+	Credentials      map[string]string
 
-	queues               map[*Client]chan *packet.Message
-	subscribedQueues     *topic.Tree
-	retainedMessages     *topic.Tree
-	storedSessions       sync.Map
-	activeClients        map[string]*Client
-	offlineQueues        sync.Map
-	offlineSubscriptions *topic.Tree
-	mutex                sync.Mutex
-	shutdown             chan bool
+	storedSessions    map[string]*memorySession
+	temporarySessions map[*Client]*memorySession
+	retainedMessages  *topic.Tree
+
+	globalMutex sync.Mutex
+	setupMutex  sync.Mutex
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
-		queues:               make(map[*Client]chan *packet.Message), // TODO: Add to Session?
-		subscribedQueues:     topic.NewTree(),
-		retainedMessages:     topic.NewTree(),
-		activeClients:        make(map[string]*Client),
-		offlineSubscriptions: topic.NewTree(),
-		shutdown:             make(chan bool),
+		storedSessions:    make(map[string]*memorySession),
+		temporarySessions: make(map[*Client]*memorySession),
+		retainedMessages:  topic.NewTree(),
 	}
 }
 
@@ -171,123 +191,107 @@ func (m *MemoryBackend) Authenticate(client *Client, user, password string) (boo
 // returned that is not stored further. Furthermore, it will disconnect any client
 // connected with the same client id.
 func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	// acquire global mutex
+	m.globalMutex.Lock()
+	defer m.globalMutex.Unlock()
 
-	// create queue
-	m.queues[client] = make(chan *packet.Message, 100) // TODO: Allow a backlog?,
+	// acquire setup mutex
+	m.setupMutex.Lock()
+	defer m.setupMutex.Unlock()
 
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
-		return session.NewMemorySession(), false, nil
+		// create session
+		sess := newMemorySession(m.SessionQueueSize)
+		sess.owner = client
+
+		// save session
+		m.temporarySessions[client] = sess
+
+		return sess, false, nil
 	}
 
 	// client id is available
 
-	// close existing client
-	existingClient, ok := m.activeClients[id]
-	if ok {
-		close(m.queues[existingClient])
-	}
-
-	// store new client
-	m.activeClients[id] = client
-
 	// retrieve stored session
-	s, ok := m.storedSessions.Load(id)
+	sess, ok := m.storedSessions[id]
 
-	// when found
+	// kill existing client if existing
+	if ok && sess.owner != nil {
+		// send signal
+		close(sess.kill)
+
+		// release global mutex (allow publish and termination)
+		m.globalMutex.Unlock()
+
+		// wait for client to close
+		<-sess.done // TODO: Timeout?
+
+		// acquire mutex again
+		m.globalMutex.Lock()
+
+		// reload stored session
+		sess, ok = m.storedSessions[id]
+	}
+
+	// TODO: Handle clean sessions.
+
+	// reuse if (still) existing
 	if ok {
-		// remove session if clean is true
-		if client.CleanSession() {
-			m.storedSessions.Delete(id)
-		}
+		// reset session
+		sess.reset()
+		sess.owner = client
 
-		// get offline queue
-		val, ok := m.offlineQueues.Load(client.ClientID())
-		if ok {
-			// clear offline subscriptions
-			queue := val.(*MessageQueue)
-			m.offlineSubscriptions.Clear(queue)
-		}
-
-		return s.(Session), true, nil
+		return sess, true, nil
 	}
 
-	// create fresh session
-	s = session.NewMemorySession()
+	// otherwise create fresh session
+	sess = newMemorySession(m.SessionQueueSize)
+	sess.owner = client
 
-	// save session if not clean
-	if !client.CleanSession() {
-		m.storedSessions.Store(id, s)
-	}
+	// save session
+	m.storedSessions[id] = sess
 
-	return s.(Session), false, nil
+	return sess, false, nil
 }
 
 // QueueOffline will begin with forwarding all missed messages in a separate
 // goroutine.
 func (m *MemoryBackend) QueueOffline(client *Client) error {
-	// mutex locking not needed
-
-	// send all missed messages in another goroutine
-	go func() {
-		for {
-			// get offline queue
-			val, ok := m.offlineQueues.Load(client.ClientID())
-			if !ok {
-				return
-			}
-
-			// cast queue
-			queue := val.(*MessageQueue)
-
-			// get next missed message
-			msg := queue.Pop()
-			if msg == nil {
-				return
-			}
-
-			// add message
-			m.queues[client] <- msg
-
-			// TODO: What happens if the client dies?
-		}
-	}()
+	// not needed as misses messages will be received in Receive()
 
 	return nil
 }
 
-// Subscribe will subscribe the passed client to the specified topic and
-// begin to forward messages by calling the clients Publish method.
+// Subscribe will subscribe the passed client to the specified topic.
 func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription) error {
-	// mutex locking not needed
-
-	// add subscription
-	m.subscribedQueues.Add(sub.Topic, m.queues[client])
+	// the subscription will be added to the session by the broker
 
 	return nil
 }
 
 // Unsubscribe will unsubscribe the passed client from the specified topic.
 func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
-	// mutex locking not needed
-
-	// remove subscription
-	m.subscribedQueues.Remove(topic, m.queues[client])
+	// the subscription will be removed to the session by the broker
 
 	return nil
 }
 
-func (m *MemoryBackend) Receive(client *Client) (*packet.Message, error) {
+// Receive will get the next message from the queue.
+func (m *MemoryBackend) Receive(client *Client, close <-chan struct{}) (*packet.Message, error) {
 	// mutex locking not needed
+
+	// get session
+	sess := client.session.(*memorySession)
 
 	// get next message from queue
 	select {
-	case msg := <-m.queues[client]:
+	case msg := <-sess.queue:
 		return msg, nil
-	case <-m.shutdown:
+	case <-close:
 		return nil, nil
+	case <-sess.kill:
+		return nil, errors.New("kill")
 	}
 }
 
@@ -313,14 +317,17 @@ func (m *MemoryBackend) ClearRetained(client *Client, topic string) error {
 
 // QueueRetained will queue all retained messages matching the given topic.
 func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
-	// mutex locking not needed
-
 	// get retained messages
 	values := m.retainedMessages.Search(topic)
 
 	// publish messages
 	for _, value := range values {
-		m.queues[client] <- value.(*packet.Message)
+		select {
+		case client.session.(*memorySession).queue <- value.(*packet.Message):
+		default:
+			// TODO: Close client?
+			panic("full")
+		}
 	}
 
 	return nil
@@ -330,16 +337,32 @@ func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
 // will also add the message to all sessions that have a matching offline
 // subscription.
 func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
-	// mutex locking not needed
+	// acquire global mutex
+	m.globalMutex.Lock()
+	defer m.globalMutex.Unlock()
 
-	// publish directly to clients
-	for _, v := range m.subscribedQueues.Match(msg.Topic) {
-		v.(chan *packet.Message) <- msg
+	// add message to temporary sessions
+	for _, sess := range m.temporarySessions {
+		if sub, _ := sess.LookupSubscription(msg.Topic); sub != nil {
+			select {
+			case sess.queue <- msg:
+			default:
+				// TODO: Close client?
+				panic("full")
+			}
+		}
 	}
 
-	// queue for offline clients
-	for _, v := range m.offlineSubscriptions.Match(msg.Topic) {
-		v.(*MessageQueue).Push(msg)
+	// add message to stored sessions
+	for _, sess := range m.storedSessions {
+		if sub, _ := sess.LookupSubscription(msg.Topic); sub != nil {
+			select {
+			case sess.queue <- msg:
+			default:
+				// TODO: Close client?
+				panic("full")
+			}
+		}
 	}
 
 	return nil
@@ -350,51 +373,39 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 // Otherwise it will create offline subscriptions for all QOS 1 and QOS 2
 // subscriptions.
 func (m *MemoryBackend) Terminate(client *Client) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	// acquire global mutex
+	m.globalMutex.Lock()
+	defer m.globalMutex.Unlock()
 
-	// clear all subscriptions
-	m.subscribedQueues.Clear(client)
+	// get session
+	sess := client.session.(*memorySession)
 
-	// remove client from list if an id is available
-	if len(client.ClientID()) > 0 {
-		// check if the client is still the same as it might be already replaced
-		if storedClient := m.activeClients[client.ClientID()]; storedClient == client {
-			delete(m.activeClients, client.ClientID())
-		}
-	}
+	// release session
+	sess.owner = nil
 
-	// return if the client requested a clean session
+	// delete stored session if clean is requested
 	if client.CleanSession() {
-		return nil
+		delete(m.storedSessions, client.ClientID())
 	}
 
-	// otherwise get stored subscriptions
-	subscriptions, err := client.Session().AllSubscriptions()
-	if err != nil {
-		return err
-	}
+	// remove temporary session
+	delete(m.temporarySessions, client)
 
-	// create offline queue
-	queue := NewMessageQueue(1000)
-
-	// iterate through stored subscriptions
-	for _, sub := range subscriptions {
-		if sub.QOS >= 1 {
-			// add offline subscription
-			m.offlineSubscriptions.Add(sub.Topic, queue)
-		}
-	}
-
-	// store offline queue
-	m.offlineQueues.Store(client.ClientID(), queue)
+	// signal exit
+	close(sess.done)
 
 	return nil
 }
 
 // Close will close the backend and make all clients go away.
 func (m *MemoryBackend) Close() {
-	// TODO: Can we wait for clients to finish clean up?
+	// acquire global mutex
+	m.globalMutex.Lock()
+	defer m.globalMutex.Unlock()
 
-	close(m.shutdown)
+	// add close temporary sessions
+	for _, sess := range m.temporarySessions {
+		close(sess.kill)
+		<-sess.done // TODO: Timeout?
+	}
 }

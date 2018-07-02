@@ -29,6 +29,9 @@ var ErrNotAuthorized = errors.New("client is not authorized")
 // ErrMissingSession is returned if the backend does not return a session.
 var ErrMissingSession = errors.New("no session returned from Backend")
 
+// ErrDisconnected is returned if a client disconnects cleanly.
+var ErrDisconnected = errors.New("disconnected") // TODO: needed?
+
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
 	// Ref can be used to store a custom reference to an object. This is usually
@@ -54,6 +57,7 @@ type Client struct {
 
 // NewClient takes over a connection and returns a Client.
 func NewClient(backend Backend, logger Logger, conn transport.Conn) *Client {
+	// create client
 	c := &Client{
 		state:   clientConnecting,
 		backend: backend,
@@ -66,6 +70,13 @@ func NewClient(backend Backend, logger Logger, conn transport.Conn) *Client {
 	// start processor
 	c.tomb.Go(c.processor)
 
+	// run cleanup goroutine
+	go func() {
+		// wait for death and cleanup
+		c.tomb.Wait()
+		c.cleanup()
+	}()
+
 	return c
 }
 
@@ -74,7 +85,8 @@ func (c *Client) Session() Session {
 	return c.session
 }
 
-// CleanSession returns whether the client requested a clean session during connect.
+// CleanSession returns whether the client requested a clean session during
+// connect.
 func (c *Client) CleanSession() bool {
 	return c.cleanSession
 }
@@ -84,8 +96,8 @@ func (c *Client) ClientID() string {
 	return c.clientID
 }
 
-// RemoteAddr returns the client's remote net address from the
-// underlying connection.
+// RemoteAddr returns the client's remote net address from the underlying
+// connection.
 func (c *Client) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
 }
@@ -113,7 +125,7 @@ func (c *Client) processor() error {
 	// get connect
 	connect, ok := pkt.(*packet.ConnectPacket)
 	if !ok {
-		return c.die(ClientError, ErrExpectedConnect, true)
+		return c.die(ClientError, ErrExpectedConnect)
 	}
 
 	// process connect
@@ -148,10 +160,15 @@ func (c *Client) processor() error {
 // packet receiver
 func (c *Client) receiver() error {
 	for {
+		// check if dying
+		if !c.tomb.Alive() {
+			return tomb.ErrDying
+		}
+
 		// receive next packet
 		pkt, err := c.conn.Receive()
 		if err != nil {
-			return c.die(TransportError, err, false)
+			return c.die(TransportError, err)
 		}
 
 		// send packet
@@ -161,19 +178,15 @@ func (c *Client) receiver() error {
 
 // message requester
 func (c *Client) requester() error {
+	// TODO: Remove goroutine by exposing channels?
+
 	for {
 		// request next message
-		msg, err := c.backend.Receive(c)
+		msg, err := c.backend.Receive(c, c.tomb.Dying())
 		if err != nil {
-			return c.die(BackendError, err, true)
+			return c.die(BackendError, err)
 		} else if msg == nil {
-			// mark client as cleanly disconnected
-			atomic.StoreUint32(&c.state, clientDisconnected)
-
-			// close underlying connection (triggers cleanup)
-			c.conn.Close()
-
-			return nil
+			return tomb.ErrDying
 		}
 
 		// forward message
@@ -194,7 +207,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// authenticate
 	ok, err := c.backend.Authenticate(c, pkt.Username, pkt.Password)
 	if err != nil {
-		return c.die(BackendError, err, true)
+		return c.die(BackendError, err)
 	}
 
 	// prepare connack packet
@@ -210,11 +223,11 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		// send connack
 		err = c.send(connack, false)
 		if err != nil {
-			return c.die(TransportError, err, false)
+			return c.die(TransportError, err)
 		}
 
 		// close client
-		return c.die(ClientError, ErrNotAuthorized, true)
+		return c.die(ClientError, ErrNotAuthorized)
 	}
 
 	// set state
@@ -230,14 +243,16 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// retrieve session
 	s, resumed, err := c.backend.Setup(c, pkt.ClientID)
 	if err != nil {
-		return c.die(BackendError, err, true)
+		return c.die(BackendError, err)
 	} else if s == nil {
-		return c.die(BackendError, ErrMissingSession, true)
+		return c.die(BackendError, ErrMissingSession)
 	}
+
+	// set state
 
 	// reset the session if clean is requested
 	if pkt.CleanSession {
-		s.Reset()
+		s.Reset() // TODO: Needed?
 	}
 
 	// set session present
@@ -250,20 +265,20 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	if pkt.Will != nil {
 		err = c.session.SaveWill(pkt.Will)
 		if err != nil {
-			return c.die(SessionError, err, true)
+			return c.die(SessionError, err)
 		}
 	}
 
 	// send connack
 	err = c.send(connack, false)
 	if err != nil {
-		return c.die(TransportError, err, false)
+		return c.die(TransportError, err)
 	}
 
 	// retrieve stored packets
 	packets, err := c.session.AllPackets(session.Outgoing)
 	if err != nil {
-		return c.die(SessionError, err, true)
+		return c.die(SessionError, err)
 	}
 
 	// resend stored packets
@@ -277,7 +292,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		// send packet
 		err = c.send(pkt, true)
 		if err != nil {
-			return c.die(TransportError, err, false)
+			return c.die(TransportError, err)
 		}
 	}
 
@@ -286,21 +301,21 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		// get stored subscriptions
 		subs, err := s.AllSubscriptions()
 		if err != nil {
-			return c.die(SessionError, err, true)
+			return c.die(SessionError, err)
 		}
 
 		// resubscribe subscriptions
 		for _, sub := range subs {
 			err = c.backend.Subscribe(c, sub)
 			if err != nil {
-				return c.die(BackendError, err, true)
+				return c.die(BackendError, err)
 			}
 		}
 
 		// begin with queueing offline messages
 		err = c.backend.QueueOffline(c)
 		if err != nil {
-			return c.die(BackendError, err, true)
+			return c.die(BackendError, err)
 		}
 	}
 
@@ -349,7 +364,7 @@ func (c *Client) processPingreq() error {
 	// send a pingresp packet
 	err := c.send(packet.NewPingrespPacket(), true)
 	if err != nil {
-		return c.die(TransportError, err, false)
+		return c.die(TransportError, err)
 	}
 
 	return nil
@@ -367,13 +382,13 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		// save subscription in session
 		err := c.session.SaveSubscription(&subscription)
 		if err != nil {
-			return c.die(SessionError, err, true)
+			return c.die(SessionError, err)
 		}
 
 		// subscribe client to queue
 		err = c.backend.Subscribe(c, &subscription)
 		if err != nil {
-			return c.die(BackendError, err, true)
+			return c.die(BackendError, err)
 		}
 
 		// save granted qos
@@ -383,14 +398,14 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	// send suback
 	err := c.send(suback, true)
 	if err != nil {
-		return c.die(TransportError, err, false)
+		return c.die(TransportError, err)
 	}
 
 	// queue retained messages
 	for _, sub := range pkt.Subscriptions {
 		err := c.backend.QueueRetained(c, sub.Topic)
 		if err != nil {
-			return c.die(BackendError, err, true)
+			return c.die(BackendError, err)
 		}
 	}
 
@@ -404,13 +419,13 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 		// unsubscribe client from queue
 		err := c.backend.Unsubscribe(c, topic)
 		if err != nil {
-			return c.die(BackendError, err, true)
+			return c.die(BackendError, err)
 		}
 
 		// remove subscription from session
 		err = c.session.DeleteSubscription(topic)
 		if err != nil {
-			return c.die(SessionError, err, true)
+			return c.die(SessionError, err)
 		}
 	}
 
@@ -421,7 +436,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	// send packet
 	err := c.send(unsuback, true)
 	if err != nil {
-		return c.die(TransportError, err, false)
+		return c.die(TransportError, err)
 	}
 
 	return nil
@@ -433,7 +448,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	if publish.Message.QOS <= 1 {
 		err := c.handleMessage(&publish.Message)
 		if err != nil {
-			return c.die(BackendError, err, true)
+			return c.die(BackendError, err)
 		}
 	}
 
@@ -445,7 +460,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// acknowledge qos 1 publish
 		err := c.send(puback, true)
 		if err != nil {
-			return c.die(TransportError, err, false)
+			return c.die(TransportError, err)
 		}
 	}
 
@@ -454,7 +469,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// store packet
 		err := c.session.SavePacket(session.Incoming, publish)
 		if err != nil {
-			return c.die(SessionError, err, true)
+			return c.die(SessionError, err)
 		}
 
 		// prepare pubrec packet
@@ -464,7 +479,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		// signal qos 2 publish
 		err = c.send(pubrec, true)
 		if err != nil {
-			return c.die(TransportError, err, false)
+			return c.die(TransportError, err)
 		}
 	}
 
@@ -488,13 +503,13 @@ func (c *Client) processPubrec(id packet.ID) error {
 	// overwrite stored PublishPacket with PubrelPacket
 	err := c.session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
-		return c.die(SessionError, err, true)
+		return c.die(SessionError, err)
 	}
 
 	// send packet
 	err = c.send(pubrel, true)
 	if err != nil {
-		return c.die(TransportError, err, false)
+		return c.die(TransportError, err)
 	}
 
 	return nil
@@ -505,7 +520,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	// get packet from store
 	pkt, err := c.session.LookupPacket(session.Incoming, id)
 	if err != nil {
-		return c.die(SessionError, err, true)
+		return c.die(SessionError, err)
 	}
 
 	// get packet from store
@@ -517,7 +532,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	// publish packet to others
 	err = c.handleMessage(&publish.Message)
 	if err != nil {
-		return c.die(BackendError, err, true)
+		return c.die(BackendError, err)
 	}
 
 	// prepare pubcomp packet
@@ -527,13 +542,13 @@ func (c *Client) processPubrel(id packet.ID) error {
 	// acknowledge PublishPacket
 	err = c.send(pubcomp, true)
 	if err != nil {
-		return c.die(TransportError, err, false)
+		return c.die(TransportError, err)
 	}
 
 	// remove packet from store
 	err = c.session.DeletePacket(session.Incoming, id)
 	if err != nil {
-		return c.die(SessionError, err, true)
+		return c.die(SessionError, err)
 	}
 
 	return nil
@@ -544,7 +559,7 @@ func (c *Client) processDisconnect() error {
 	// clear will
 	err := c.session.ClearWill()
 	if err != nil {
-		return c.die(SessionError, err, true)
+		return c.die(SessionError, err)
 	}
 
 	// mark client as cleanly disconnected
@@ -553,7 +568,9 @@ func (c *Client) processDisconnect() error {
 	// close underlying connection (triggers cleanup)
 	c.conn.Close()
 
-	return nil
+	c.log(ClientDisconnected, c, nil, nil, nil)
+
+	return ErrDisconnected
 }
 
 /* helpers */
@@ -600,7 +617,7 @@ func (c *Client) forwardMessage(msg *packet.Message) error {
 	// get stored subscription
 	sub, err := c.session.LookupSubscription(publish.Message.Topic)
 	if err != nil {
-		return c.die(SessionError, err, true)
+		return c.die(SessionError, err)
 	}
 
 	// check subscription
@@ -620,14 +637,14 @@ func (c *Client) forwardMessage(msg *packet.Message) error {
 	if publish.Message.QOS > 0 {
 		err := c.session.SavePacket(session.Outgoing, publish)
 		if err != nil {
-			return c.die(SessionError, err, true)
+			return c.die(SessionError, err)
 		}
 	}
 
 	// send packet
 	err = c.send(publish, true)
 	if err != nil {
-		return c.die(TransportError, err, false)
+		return c.die(TransportError, err)
 	}
 
 	c.log(MessageForwarded, c, nil, msg, nil)
@@ -658,76 +675,58 @@ func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
 
 /* error handling and logging */
 
-// will try to cleanup as many resources as possible
-func (c *Client) cleanup(event LogEvent, err error, close bool) (LogEvent, error) {
-	// check session
-	if c.session != nil && atomic.LoadUint32(&c.state) == clientConnected {
-		// get will
-		will, willErr := c.session.LookupWill()
-		if willErr != nil && err == nil {
-			event = SessionError
-			err = willErr
-		}
-
-		// publish will message
-		if will != nil {
-			willErr = c.handleMessage(will)
-			if willErr != nil && err == nil {
-				event = BackendError
-				err = willErr
-			}
-		}
-	}
-
-	// remove client from the queue
-	if atomic.LoadUint32(&c.state) > clientConnecting {
-		termErr := c.backend.Terminate(c)
-		if termErr != nil && err == nil {
-			event = BackendError
-			err = termErr
-		}
-
-		// reset the session if clean is requested
-		if c.session != nil && c.cleanSession {
-			resetErr := c.session.Reset()
-			if resetErr != nil && err == nil {
-				event = SessionError
-				err = resetErr
-			}
-		}
-	}
-
-	// ensure that the connection gets closed
-	if close {
-		closeErr := c.conn.Close()
-		if closeErr != nil && err == nil {
-			event = TransportError
-			err = closeErr
-		}
-	}
-
-	c.log(LostConnection, c, nil, nil, nil)
-
-	return event, err
-}
-
-// used for closing and cleaning up from internal goroutines
-func (c *Client) die(event LogEvent, err error, close bool) error {
-	c.finish.Do(func() {
-		event, err = c.cleanup(event, err, close)
-
-		// report error
-		if err != nil {
-			c.log(event, c, nil, nil, err)
-		}
-	})
-
-	return err
-}
-
 // log a message
 func (c *Client) log(event LogEvent, client *Client, pkt packet.GenericPacket, msg *packet.Message, err error) {
 	if c.logger != nil {
 		c.logger(event, client, pkt, msg, err)
 	}
+}
+
+// used for closing and cleaning up from internal goroutines
+func (c *Client) die(event LogEvent, err error) error {
+	// report error
+	c.log(event, c, nil, nil, err)
+
+	// close connection if requested
+	c.conn.Close()
+
+	return err
+}
+
+// will try to cleanup as many resources as possible
+func (c *Client) cleanup() {
+	// check session
+	if c.session != nil && atomic.LoadUint32(&c.state) == clientConnected {
+		// get will
+		will, err := c.session.LookupWill()
+		if err != nil {
+			c.log(SessionError, c, nil, nil, err)
+		}
+
+		// publish will message
+		if will != nil {
+			err = c.handleMessage(will)
+			if err != nil {
+				c.log(BackendError, c, nil, nil, err)
+			}
+		}
+	}
+
+	// remove client from the queue
+	if atomic.LoadUint32(&c.state) >= clientConnected {
+		err := c.backend.Terminate(c)
+		if err != nil {
+			c.log(BackendError, c, nil, nil, err)
+		}
+
+		// reset the session if clean is requested
+		if c.session != nil && c.cleanSession {
+			err = c.session.Reset()
+			if err != nil {
+				c.log(SessionError, c, nil, nil, err)
+			}
+		}
+	}
+
+	c.log(LostConnection, c, nil, nil, nil)
 }
