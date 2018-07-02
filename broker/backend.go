@@ -67,6 +67,14 @@ type Backend interface {
 	// when the broker should terminate the connection.
 	Authenticate(client *Client, user, password string) (bool, error)
 
+	// topic and return true if the client is authorized for the topic or false
+	// if the client is unauthorized.
+	AuthorizeSubscribe(client *Client, pkt *packet.SubscribePacket) (bool, error)
+
+	// message and return true if the client is authorized to publish or false
+	// if the client is unauthorized.
+	AuthorizePublish(client *Client, msg *packet.Message) (bool, error)
+
 	// Setup is called when a new client comes online and is successfully
 	// authenticated. Setup should return the already stored session for the
 	// supplied id or create and return a new one. If the supplied id has a zero
@@ -123,7 +131,9 @@ type Backend interface {
 
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
-	Credentials map[string]string
+	AuthenticateCB       func(c *Client, username string, password string) (bool, error)
+	AuthorizeSubscribeCB func(c *Client, pkt *packet.SubscribePacket) (bool, error)
+	AuthorizePublishCB   func(c *Client, msg *packet.Message) (bool, error)
 
 	queues               map[*Client]chan *packet.Message
 	subscribedQueues     *topic.Tree
@@ -148,22 +158,29 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-// Authenticate authenticates a clients credentials by matching them to the
-// saved Credentials map.
-func (m *MemoryBackend) Authenticate(client *Client, user, password string) (bool, error) {
-	// mutex locking not needed
-
-	// allow all if there are no credentials
-	if m.Credentials == nil {
+// Authenticate authenticates a clients credentials by call the AuthenticateCB hook function
+func (m *MemoryBackend) Authenticate(client *Client, username, password string) (bool, error) {
+	if m.AuthenticateCB == nil {
 		return true, nil
 	}
 
-	// check login
-	if pw, ok := m.Credentials[user]; ok && pw == password {
+	return m.AuthenticateCB(client, username, password)
+}
+
+// AuthorizeSubscribe will call AuthorizeSubscribeCB to authorize client subcribe
+func (m *MemoryBackend) AuthorizeSubscribe(client *Client, pkt *packet.SubscribePacket) (bool, error) {
+	if m.AuthorizeSubscribeCB == nil {
 		return true, nil
 	}
+	return m.AuthorizeSubscribeCB(client, pkt)
+}
 
-	return false, nil
+// AuthorizePublish will call AuthorizePublishCB to authorize client publish
+func (m *MemoryBackend) AuthorizePublish(client *Client, msg *packet.Message) (bool, error) {
+	if m.AuthorizePublishCB == nil {
+		return true, nil
+	}
+	return m.AuthorizePublishCB(client, msg)
 }
 
 // Setup returns the already stored session for the supplied id or creates and

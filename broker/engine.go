@@ -8,7 +8,7 @@ import (
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
-	"gopkg.in/tomb.v2"
+	tomb "gopkg.in/tomb.v2"
 )
 
 // LogEvent are received by a Logger.
