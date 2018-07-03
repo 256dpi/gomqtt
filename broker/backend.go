@@ -157,10 +157,18 @@ var ErrKilled = errors.New("killed")
 // ErrClosing is returned to a client if the backend is closing.
 var ErrClosing = errors.New("closing")
 
+// ErrKillTimeout is returned to a client if the killed existing client does not
+// close in time.
+var ErrKillTimeout = errors.New("kill timeout")
+
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
 	// The maximal size of the session queue.
 	SessionQueueSize int
+
+	// The time after an error is returned while waiting on an killed existing
+	// client to exit.
+	KillTimeout time.Duration
 
 	// A map of username and passwords that grant read and write access.
 	Credentials map[string]string
@@ -179,6 +187,7 @@ type MemoryBackend struct {
 func NewMemoryBackend() *MemoryBackend {
 	return &MemoryBackend{
 		SessionQueueSize:  100,
+		KillTimeout:       5 * time.Second,
 		activeClients:     make(map[string]*Client),
 		storedSessions:    make(map[string]*memorySession),
 		temporarySessions: make(map[*Client]*memorySession),
@@ -261,8 +270,12 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 		m.globalMutex.Unlock()
 
 		// wait for client to close
-		<-existingSession.done
-		// TODO: Timeout?
+		select {
+		case <-existingSession.done:
+			// continue
+		case <-time.After(m.KillTimeout):
+			return nil, false, ErrKillTimeout
+		}
 
 		// acquire mutex again
 		m.globalMutex.Lock()
