@@ -413,14 +413,6 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		return c.die(TransportError, err)
 	}
 
-	// queue retained messages
-	for _, sub := range pkt.Subscriptions {
-		err := c.backend.QueueRetained(c, sub.Topic)
-		if err != nil {
-			return c.die(BackendError, err)
-		}
-	}
-
 	return nil
 }
 

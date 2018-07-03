@@ -96,6 +96,11 @@ type Backend interface {
 	// call Publish with any incoming messages. The subscription will also be
 	// added to the session if the call returns without an error.
 	//
+	// Retained messages that match the supplied subscription should be added to
+	// a temporary queue that is also drained when Dequeue is called. Retained
+	// messages are not part of the stored session queue as they are anyway
+	// redelivered using the stored subscription mechanism.
+	//
 	// Note: Subscribe is also called to resubscribe stored subscriptions
 	// between calls to Setup and Restored.
 	Subscribe(*Client, *packet.Subscription) error
@@ -128,12 +133,6 @@ type Backend interface {
 	// Clear should remove the stored retained messages for the given topic.
 	Clear(client *Client, topic string) error
 
-	// QueueRetained is called after acknowledging a subscription and should be
-	// used to trigger a background process that forwards all retained messages.
-	QueueRetained(client *Client, topic string) error
-
-	// TODO: Rename QueueRetained.
-
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics. The
 	// backend may also convert a clients subscriptions to offline subscriptions.
@@ -148,6 +147,7 @@ type memorySession struct {
 	*session.MemorySession
 
 	queue chan *packet.Message
+	retained chan *packet.Message
 
 	owner *Client
 	kill  chan struct{}
@@ -158,12 +158,14 @@ func newMemorySession(backlog int) *memorySession {
 	return &memorySession{
 		MemorySession: session.NewMemorySession(),
 		queue:         make(chan *packet.Message, backlog),
+		retained:      make(chan *packet.Message, backlog),
 		kill:          make(chan struct{}, 1),
 		done:          make(chan struct{}, 1),
 	}
 }
 
 func (s *memorySession) reuse() {
+	s.retained = make(chan *packet.Message, cap(s.retained))
 	s.kill = make(chan struct{}, 1)
 	s.done = make(chan struct{}, 1)
 }
@@ -355,6 +357,20 @@ func (m *MemoryBackend) Restored(client *Client) error {
 // Subscribe is not needed as the subscription will be added to the session by
 // the broker
 func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription) error {
+	// mutex locking not needed
+
+	// get retained messages
+	values := m.retainedMessages.Search(sub.Topic)
+
+	// publish messages
+	for _, value := range values {
+		select {
+		case client.Session().(*memorySession).retained <- value.(*packet.Message):
+		default:
+			return ErrQueueFull
+		}
+	}
+
 	return nil
 }
 
@@ -420,6 +436,8 @@ func (m *MemoryBackend) Dequeue(client *Client, close <-chan struct{}) (*packet.
 	select {
 	case msg := <-sess.queue:
 		return msg, nil, nil
+	case msg := <-sess.retained:
+		return msg, nil, nil
 	case <-close:
 		return nil, nil, nil
 	case <-sess.kill:
@@ -443,23 +461,6 @@ func (m *MemoryBackend) Clear(client *Client, topic string) error {
 
 	// clear retained message
 	m.retainedMessages.Empty(topic)
-
-	return nil
-}
-
-// QueueRetained will queue all retained messages matching the given topic.
-func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
-	// get retained messages
-	values := m.retainedMessages.Search(topic)
-
-	// publish messages
-	for _, value := range values {
-		select {
-		case client.Session().(*memorySession).queue <- value.(*packet.Message):
-		default:
-			return ErrQueueFull
-		}
-	}
 
 	return nil
 }
