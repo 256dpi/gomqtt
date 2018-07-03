@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 	"time"
 
@@ -81,6 +82,7 @@ type action struct {
 
 // A Flow is a sequence of actions that can be tested against a connection.
 type Flow struct {
+	debug   bool
 	actions []*action
 }
 
@@ -89,6 +91,12 @@ func New() *Flow {
 	return &Flow{
 		actions: make([]*action, 0),
 	}
+}
+
+// Debug will activate the debug mode.
+func (f *Flow) Debug() *Flow {
+	f.debug = true
+	return f
 }
 
 // Send will send and one packet.
@@ -112,9 +120,10 @@ func (f *Flow) Receive(pkt packet.GenericPacket) *Flow {
 }
 
 // Skip will receive one packet without matching it.
-func (f *Flow) Skip() *Flow {
+func (f *Flow) Skip(pkt packet.GenericPacket) *Flow {
 	f.add(&action{
-		kind: actionSkip,
+		kind:   actionSkip,
+		packet: pkt,
 	})
 
 	return f
@@ -173,11 +182,19 @@ func (f *Flow) Test(conn Conn) error {
 	for _, action := range f.actions {
 		switch action.kind {
 		case actionSend:
+			if f.debug {
+				fmt.Printf("sending packet: %s...\n", action.packet.String())
+			}
+
 			err := conn.Send(action.packet)
 			if err != nil {
 				return fmt.Errorf("error sending packet: %v", err)
 			}
 		case actionReceive:
+			if f.debug {
+				fmt.Printf("receiving packet...\n")
+			}
+
 			pkt, err := conn.Receive()
 			if err != nil {
 				return fmt.Errorf("expected to receive a packet but got error: %v", err)
@@ -187,22 +204,51 @@ func (f *Flow) Test(conn Conn) error {
 				return fmt.Errorf("expected packet of %q but got %q", want, got)
 			}
 		case actionSkip:
-			_, err := conn.Receive()
+			if f.debug {
+				fmt.Printf("skiping packet...\n")
+			}
+
+			pkt, err := conn.Receive()
 			if err != nil {
 				return fmt.Errorf("expected to skip over a received packet but got error: %v", err)
 			}
+
+			t1 := reflect.TypeOf(pkt)
+			t2 := reflect.TypeOf(action.packet)
+			if t1 != t2 {
+				return fmt.Errorf("expected to receive a packet of type %v instead of %v", t2, t1)
+			}
 		case actionWait:
+			if f.debug {
+				fmt.Printf("waiting...\n")
+			}
+
 			<-action.ch
 		case actionRun:
+			if f.debug {
+				fmt.Printf("running...\n")
+			}
 			action.fn()
 		case actionDelay:
+			if f.debug {
+				fmt.Printf("sleeping: %s\n", action.duration.String())
+			}
+
 			time.Sleep(action.duration)
 		case actionClose:
+			if f.debug {
+				fmt.Printf("closing...\n")
+			}
+
 			err := conn.Close()
 			if err != nil {
 				return fmt.Errorf("expected connection to close successfully but got error: %v", err)
 			}
 		case actionEnd:
+			if f.debug {
+				fmt.Printf("ending...\n")
+			}
+
 			pkt, err := conn.Receive()
 			if err != nil && !strings.Contains(err.Error(), "EOF") {
 				return fmt.Errorf("expected EOF but got %v", err)

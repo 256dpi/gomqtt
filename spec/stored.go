@@ -52,11 +52,11 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(). // connack
+		Skip(&packet.ConnackPacket{}).
 		Send(subscribe).
-		Skip(). // suback
+		Skip(&packet.SubackPacket{}).
 		Send(publishOut).
-		Skip(). // puback
+		Skip(&packet.PubackPacket{}).
 		Receive(publishIn).
 		Close().
 		Test(conn1)
@@ -70,7 +70,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(). // connack
+		Skip(&packet.ConnackPacket{}).
 		Receive(publishIn).
 		Send(pubackIn).
 		Send(disconnect).
@@ -125,13 +125,13 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(). // connack
+		Skip(&packet.ConnackPacket{}).
 		Send(subscribe).
-		Skip(). // suback
+		Skip(&packet.SubackPacket{}).
 		Send(publishOut).
-		Skip(). // pubrec
+		Skip(&packet.PubrecPacket{}).
 		Send(pubrelOut).
-		Skip(). // pubcomp
+		Skip(&packet.PubcompPacket{}).
 		Receive(publishIn).
 		Close().
 		Test(conn1)
@@ -147,10 +147,10 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(). // connack
+		Skip(&packet.ConnackPacket{}).
 		Receive(publishIn).
 		Send(pubrecIn).
-		Skip(). // pubrel
+		Skip(&packet.PubrelPacket{}).
 		Send(pubcompIn).
 		Send(disconnect).
 		Close().
@@ -207,13 +207,13 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(). // connack
+		Skip(&packet.ConnackPacket{}).
 		Send(subscribe).
-		Skip(). // suback
+		Skip(&packet.SubackPacket{}).
 		Send(publishOut).
-		Skip(). // pubrec
+		Skip(&packet.PubrecPacket{}).
 		Send(pubrelOut).
-		Skip(). // pubcomp
+		Skip(&packet.PubcompPacket{}).
 		Receive(publishIn).
 		Send(pubrecIn).
 		Close().
@@ -230,7 +230,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(). // connack
+		Skip(&packet.ConnackPacket{}).
 		Receive(pubrelIn).
 		Send(pubcompIn).
 		Send(disconnect).

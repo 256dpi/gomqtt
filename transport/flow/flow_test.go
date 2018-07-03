@@ -31,7 +31,7 @@ func TestFlow(t *testing.T) {
 		Receive(connect).
 		Send(connack).
 		Run(cb).
-		Skip().
+		Skip(&packet.SubscribePacket{}).
 		Receive(publish).
 		Close()
 
