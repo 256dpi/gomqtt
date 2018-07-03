@@ -464,6 +464,8 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 	}
 
+	// TODO: What happens if delivering the qos 1 msg fails?
+
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		puback := packet.NewPubackPacket()
@@ -608,6 +610,9 @@ func (c *Client) handleMessage(msg *packet.Message) error {
 
 	// reset an existing retain flag
 	msg.Retain = false
+
+	// message has been added to the session by now, if publish failed it will
+	// be retried the next time
 
 	// publish message to others
 	err := c.backend.Publish(c, msg)

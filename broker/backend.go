@@ -91,16 +91,23 @@ type Backend interface {
 	// forwards all missed messages.
 	QueueOffline(*Client) error
 
+	// TODO: Rename to restored?
+
 	// Subscribe should subscribe the passed client to the specified topic and
-	// call Publish with any incoming messages.
+	// call Publish with any incoming messages. The subscription will also be
+	// added to the session if the call returns without an error.
 	Subscribe(*Client, *packet.Subscription) error
 
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
+	// The subscription will also be removed from the session if the call returns
+	// without an error.
 	Unsubscribe(client *Client, topic string) error
 
 	// Dequeue is called by the Client repeatedly to obtain the next message.
-	// If the call returns no message and no error, the client will be closed
-	// cleanly.
+	// The backend must return no message and no error if the supplied channel
+	// is closed. The returned Ack is executed by the Backend to signal that the
+	// message is being delivered under the selected qos level and is therefore
+	// safe to be deleted from the queue.
 	Dequeue(*Client, <-chan struct{}) (*packet.Message, Ack, error)
 
 	// StoreRetained should store the specified message.
@@ -116,7 +123,12 @@ type Backend interface {
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
 	// message to all sessions that have a matching offline subscription.
+	//
+	// Note: If the backend does not return an error the message will be
+	// immediately acknowledged by the client and removed from the session.
 	Publish(*Client, *packet.Message) error
+
+	// TODO: Publish with ack.
 
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics. The
@@ -359,7 +371,7 @@ func (m *MemoryBackend) Dequeue(client *Client, close <-chan struct{}) (*packet.
 	// get session
 	sess := client.Session().(*memorySession)
 
-	// TODO: Add ack.
+	// TODO: Add ack support.
 
 	// get next message from queue
 	select {
