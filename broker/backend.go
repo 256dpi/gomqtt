@@ -339,7 +339,7 @@ func (m *MemoryBackend) Receive(client *Client, close <-chan struct{}) (*packet.
 	// mutex locking not needed
 
 	// get session
-	sess := client.session.(*memorySession)
+	sess := client.Session().(*memorySession)
 
 	// get next message from queue
 	select {
@@ -380,7 +380,7 @@ func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
 	// publish messages
 	for _, value := range values {
 		select {
-		case client.session.(*memorySession).queue <- value.(*packet.Message):
+		case client.Session().(*memorySession).queue <- value.(*packet.Message):
 		default:
 			return ErrQueueFull
 		}
@@ -442,7 +442,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	defer m.globalMutex.Unlock()
 
 	// get session
-	sess := client.session.(*memorySession)
+	sess := client.Session().(*memorySession)
 
 	// release session
 	sess.owner = nil
@@ -451,7 +451,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	delete(m.temporarySessions, client)
 
 	// remove any saved client
-	delete(m.activeClients, client.clientID)
+	delete(m.activeClients, client.ClientID())
 
 	// signal exit
 	close(sess.done)
