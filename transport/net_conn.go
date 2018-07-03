@@ -29,6 +29,7 @@ func (c *NetConn) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
 }
 
+// SetBuffers allows to set the buffer sizes used by the operating system.
 func (c *NetConn) SetBuffers(read, write int) {
 	// set tcp conn
 	if tcpConn, ok := c.conn.(*net.TCPConn); ok {

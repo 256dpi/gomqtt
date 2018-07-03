@@ -120,6 +120,7 @@ func (c *WebSocketConn) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
 }
 
+// SetBuffers allows to set the buffer sizes used by the operating system.
 func (c *WebSocketConn) SetBuffers(read, write int) {
 	// set tcp conn
 	if tcpConn, ok := c.conn.UnderlyingConn().(*net.TCPConn); ok {
