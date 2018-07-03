@@ -93,10 +93,10 @@ type Backend interface {
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
 	Unsubscribe(client *Client, topic string) error
 
-	// Receive is called by the Client repeatedly to obtain the next message.
+	// Dequeue is called by the Client repeatedly to obtain the next message.
 	// If the call returns no message and no error, the client will be closed
 	// cleanly.
-	Receive(*Client, <-chan struct{}) (*packet.Message, error)
+	Dequeue(*Client, <-chan struct{}) (*packet.Message, error)
 
 	// StoreRetained should store the specified message.
 	StoreRetained(*Client, *packet.Message) error
@@ -315,7 +315,7 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 // QueueOffline will begin with forwarding all missed messages in a separate
 // goroutine.
 func (m *MemoryBackend) QueueOffline(client *Client) error {
-	// not needed as misses messages will be received in Receive()
+	// not needed as missed messages are already added to the session queue
 
 	return nil
 }
@@ -329,12 +329,12 @@ func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription) erro
 
 // Unsubscribe will unsubscribe the passed client from the specified topic.
 func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
-	// the subscription will be removed to the session by the broker
+	// the subscription will be removed from the session by the broker
 
 	return nil
 }
 
-// Receive will get the next message from the queue.
+// Dequeue will get the next message from the queue.
 func (m *MemoryBackend) Receive(client *Client, close <-chan struct{}) (*packet.Message, error) {
 	// mutex locking not needed
 
