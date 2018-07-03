@@ -33,7 +33,12 @@ var ErrMissingSession = errors.New("no session returned from Backend")
 // ErrDisconnected is returned if a client disconnects cleanly.
 var ErrDisconnected = errors.New("disconnected")
 
-// TODO: needed?
+// TODO: ErrDisconnect needed?
+
+type messageWithAck struct {
+	msg *packet.Message
+	ack Ack
+}
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
@@ -50,8 +55,8 @@ type Client struct {
 	cleanSession bool
 	session      Session
 
-	inc chan packet.GenericPacket
-	fwd chan *packet.Message
+	incoming chan packet.GenericPacket
+	forward  chan messageWithAck
 
 	tomb   tomb.Tomb
 	mutex  sync.Mutex
@@ -62,12 +67,12 @@ type Client struct {
 func NewClient(backend Backend, logger Logger, conn transport.Conn) *Client {
 	// create client
 	c := &Client{
-		state:   clientConnecting,
-		backend: backend,
-		logger:  logger,
-		conn:    conn,
-		inc:     make(chan packet.GenericPacket),
-		fwd:     make(chan *packet.Message),
+		state:    clientConnecting,
+		backend:  backend,
+		logger:   logger,
+		conn:     conn,
+		incoming: make(chan packet.GenericPacket),
+		forward:  make(chan messageWithAck),
 	}
 
 	// start processor
@@ -119,7 +124,7 @@ func (c *Client) processor() error {
 
 	// get first packet from connection
 	select {
-	case pkt = <-c.inc:
+	case pkt = <-c.incoming:
 		// continue
 	case <-c.tomb.Dying():
 		return tomb.ErrDying
@@ -142,13 +147,13 @@ func (c *Client) processor() error {
 
 	for {
 		select {
-		case msg := <-c.fwd:
+		case msgWithAck := <-c.forward:
 			// forward message
-			err = c.forwardMessage(msg)
+			err = c.forwardMessage(msgWithAck)
 			if err != nil {
 				return err // error has already been cleaned
 			}
-		case pkt = <-c.inc:
+		case pkt = <-c.incoming:
 			// process packet
 			err = c.processPacket(pkt)
 			if err != nil {
@@ -171,9 +176,9 @@ func (c *Client) receiver() error {
 
 		// send packet
 		select {
-		case c.inc <- pkt:
+		case c.incoming <- pkt:
 			// continue
-		case c.tomb.Dying():
+		case <-c.tomb.Dying():
 			return tomb.ErrDying
 		}
 	}
@@ -181,11 +186,9 @@ func (c *Client) receiver() error {
 
 // message requester
 func (c *Client) requester() error {
-	// TODO: Remove goroutine by exposing channels?
-
 	for {
 		// request next message
-		msg, err := c.backend.Dequeue(c, c.tomb.Dying())
+		msg, ack, err := c.backend.Dequeue(c, c.tomb.Dying())
 		if err != nil {
 			return c.die(BackendError, err)
 		} else if msg == nil {
@@ -193,7 +196,12 @@ func (c *Client) requester() error {
 		}
 
 		// forward message
-		c.fwd <- msg
+		select {
+		case c.forward <- messageWithAck{msg, ack}:
+			// continue
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
+		}
 	}
 }
 
@@ -256,7 +264,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// reset the session if clean is requested
 	if pkt.CleanSession {
 		s.Reset()
-		// TODO: Needed?
+		// TODO: Session.Reset() needed?
 	}
 
 	// set session present
@@ -613,10 +621,10 @@ func (c *Client) handleMessage(msg *packet.Message) error {
 }
 
 // forward messages
-func (c *Client) forwardMessage(msg *packet.Message) error {
+func (c *Client) forwardMessage(msgWithAck messageWithAck) error {
 	// prepare publish packet
 	publish := packet.NewPublishPacket()
-	publish.Message = *msg
+	publish.Message = *msgWithAck.msg
 
 	// get stored subscription
 	sub, err := c.session.LookupSubscription(publish.Message.Topic)
@@ -645,13 +653,19 @@ func (c *Client) forwardMessage(msg *packet.Message) error {
 		}
 	}
 
+	// acknowledge message
+	if msgWithAck.ack != nil {
+		msgWithAck.ack(msgWithAck.msg)
+		c.log(MessageAcknowledged, c, nil, msgWithAck.msg, nil)
+	}
+
 	// send packet
 	err = c.send(publish, true)
 	if err != nil {
 		return c.die(TransportError, err)
 	}
 
-	c.log(MessageForwarded, c, nil, msg, nil)
+	c.log(MessageForwarded, c, nil, msgWithAck.msg, nil)
 
 	return nil
 }

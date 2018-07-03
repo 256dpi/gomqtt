@@ -62,6 +62,11 @@ type Session interface {
 	Reset() error
 }
 
+// Ack is executed by the Backend or Client to signal that a message will be
+// delivered under the selected qos level and is therefore safe to be deleted
+// from either queue.
+type Ack func(message *packet.Message)
+
 // A Backend provides the effective brokering functionality to its clients.
 type Backend interface {
 	// Authenticate should authenticate the client using the user and password
@@ -96,7 +101,7 @@ type Backend interface {
 	// Dequeue is called by the Client repeatedly to obtain the next message.
 	// If the call returns no message and no error, the client will be closed
 	// cleanly.
-	Dequeue(*Client, <-chan struct{}) (*packet.Message, error)
+	Dequeue(*Client, <-chan struct{}) (*packet.Message, Ack, error)
 
 	// StoreRetained should store the specified message.
 	StoreRetained(*Client, *packet.Message) error
@@ -348,20 +353,22 @@ func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 }
 
 // Dequeue will get the next message from the queue.
-func (m *MemoryBackend) Receive(client *Client, close <-chan struct{}) (*packet.Message, error) {
+func (m *MemoryBackend) Dequeue(client *Client, close <-chan struct{}) (*packet.Message, Ack, error) {
 	// mutex locking not needed
 
 	// get session
 	sess := client.Session().(*memorySession)
 
+	// TODO: Add ack.
+
 	// get next message from queue
 	select {
 	case msg := <-sess.queue:
-		return msg, nil
+		return msg, nil, nil
 	case <-close:
-		return nil, nil
+		return nil, nil, nil
 	case <-sess.kill:
-		return nil, ErrKilled
+		return nil, nil, ErrKilled
 	}
 }
 

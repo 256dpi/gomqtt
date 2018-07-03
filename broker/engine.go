@@ -25,6 +25,9 @@ const (
 	// MessagePublished is emitted after a message has been published.
 	MessagePublished LogEvent = "message published"
 
+	// MessageAcknowledged is emitted after a message has been acknowledged.
+	MessageAcknowledged LogEvent = "message acknowledged"
+
 	// MessageForwarded is emitted after a message has been forwarded.
 	MessageForwarded LogEvent = "message forwarded"
 
