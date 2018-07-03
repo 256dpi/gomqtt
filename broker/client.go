@@ -163,11 +163,6 @@ func (c *Client) processor() error {
 // packet receiver
 func (c *Client) receiver() error {
 	for {
-		// check if dying
-		if !c.tomb.Alive() {
-			return tomb.ErrDying
-		}
-
 		// receive next packet
 		pkt, err := c.conn.Receive()
 		if err != nil {
@@ -175,7 +170,12 @@ func (c *Client) receiver() error {
 		}
 
 		// send packet
-		c.inc <- pkt
+		select {
+		case c.inc <- pkt:
+			// continue
+		case c.tomb.Dying():
+			return tomb.ErrDying
+		}
 	}
 }
 
