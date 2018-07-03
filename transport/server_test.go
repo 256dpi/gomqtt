@@ -15,6 +15,8 @@ func abstractServerTest(t *testing.T, protocol string) {
 	server, err := testLauncher.Launch(protocol + "://localhost:0")
 	require.NoError(t, err)
 
+	wait := make(chan struct{})
+
 	go func() {
 		conn1, err := server.Accept()
 		require.NoError(t, err)
@@ -29,6 +31,8 @@ func abstractServerTest(t *testing.T, protocol string) {
 		pkt, err = conn1.Receive()
 		assert.Nil(t, pkt)
 		assert.Equal(t, io.EOF, err)
+
+		close(wait)
 	}()
 
 	conn2, err := testDialer.Dial(getURL(server, protocol))
@@ -43,6 +47,8 @@ func abstractServerTest(t *testing.T, protocol string) {
 
 	err = conn2.Close()
 	assert.NoError(t, err)
+
+	safeReceive(wait)
 
 	err = server.Close()
 	assert.NoError(t, err)

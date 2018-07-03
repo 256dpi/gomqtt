@@ -77,6 +77,8 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 	server, err := testLauncher.Launch(protocol + "://localhost:0")
 	require.NoError(t, err)
 
+	wait := make(chan struct{})
+
 	go func() {
 		conn, err := server.Accept()
 		require.NoError(t, err)
@@ -84,6 +86,8 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 		pkt, err := conn.Receive()
 		assert.Nil(t, pkt)
 		assert.Equal(t, io.EOF, err)
+
+		close(wait)
 	}()
 
 	dialer := NewDialer()
@@ -98,6 +102,8 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 
 	err = conn.Close()
 	assert.NoError(t, err)
+
+	safeReceive(wait)
 
 	err = server.Close()
 	assert.NoError(t, err)
