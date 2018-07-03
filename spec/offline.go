@@ -120,6 +120,8 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 	assert.NoError(t, err)
 
 	wait := make(chan struct{})
+	count := 0
+	last := false
 
 	offlineReceiver := client.New()
 	offlineReceiver.Callback = func(msg *packet.Message, err error) error {
@@ -127,9 +129,18 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
 		assert.Equal(t, uint8(qos), msg.QOS)
-		assert.False(t, msg.Retain)
 
-		close(wait)
+		if count == 0 {
+			last = msg.Retain
+		} else {
+			assert.NotEqual(t, last, msg.Retain)
+		}
+
+		count++
+		if count == 2 {
+			close(wait)
+		}
+
 		return nil
 	}
 
