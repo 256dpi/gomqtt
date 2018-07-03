@@ -325,7 +325,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		}
 
 		// begin with queueing offline messages
-		err = c.backend.QueueOffline(c)
+		err = c.backend.Restored(c)
 		if err != nil {
 			return c.die(BackendError, err)
 		}
@@ -595,13 +595,13 @@ func (c *Client) handleMessage(msg *packet.Message) error {
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
 			// retain message
-			err := c.backend.StoreRetained(c, msg)
+			err := c.backend.Retain(c, msg)
 			if err != nil {
 				return err
 			}
 		} else {
 			// clear already retained message
-			err := c.backend.ClearRetained(c, msg.Topic)
+			err := c.backend.Clear(c, msg.Topic)
 			if err != nil {
 				return err
 			}

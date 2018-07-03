@@ -83,42 +83,27 @@ type Backend interface {
 	//
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the client for further usage as the broker will acknowledge the
-	// connection when the call returns.
+	// connection when the call returns. The Terminate function is called for
+	// every client that Setup has been called for.
 	Setup(client *Client, id string) (Session, bool, error)
 
-	// QueueOffline is called after the clients stored subscriptions have been
-	// resubscribed. It should be used to trigger a background process that
-	// forwards all missed messages.
-	QueueOffline(*Client) error
-
-	// TODO: Rename to restored?
+	// Restored is called after the client has restored packets and
+	// subscriptions from the session. The client will begin with processing
+	// incoming packets and queued messages.
+	Restored(*Client) error
 
 	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages. The subscription will also be
 	// added to the session if the call returns without an error.
+	//
+	// Note: Subscribe is also called to resubscribe stored subscriptions
+	// between calls to Setup and Restored.
 	Subscribe(*Client, *packet.Subscription) error
 
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
 	// The subscription will also be removed from the session if the call returns
 	// without an error.
 	Unsubscribe(client *Client, topic string) error
-
-	// Dequeue is called by the Client repeatedly to obtain the next message.
-	// The backend must return no message and no error if the supplied channel
-	// is closed. The returned Ack is executed by the Backend to signal that the
-	// message is being delivered under the selected qos level and is therefore
-	// safe to be deleted from the queue.
-	Dequeue(*Client, <-chan struct{}) (*packet.Message, Ack, error)
-
-	// StoreRetained should store the specified message.
-	StoreRetained(*Client, *packet.Message) error
-
-	// ClearRetained should remove the stored messages for the given topic.
-	ClearRetained(client *Client, topic string) error
-
-	// QueueRetained is called after acknowledging a subscription and should be
-	// used to trigger a background process that forwards all retained messages.
-	QueueRetained(client *Client, topic string) error
 
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
@@ -129,6 +114,25 @@ type Backend interface {
 	Publish(*Client, *packet.Message) error
 
 	// TODO: Publish with ack.
+
+	// Dequeue is called by the Client repeatedly to obtain the next message.
+	// The backend must return no message and no error if the supplied channel
+	// is closed. The returned Ack is executed by the Backend to signal that the
+	// message is being delivered under the selected qos level and is therefore
+	// safe to be deleted from the queue.
+	Dequeue(*Client, <-chan struct{}) (*packet.Message, Ack, error)
+
+	// Retain should store the specified retained message for its topic.
+	Retain(*Client, *packet.Message) error
+
+	// Clear should remove the stored retained messages for the given topic.
+	Clear(client *Client, topic string) error
+
+	// QueueRetained is called after acknowledging a subscription and should be
+	// used to trigger a background process that forwards all retained messages.
+	QueueRetained(client *Client, topic string) error
+
+	// TODO: Rename QueueRetained.
 
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics. The
@@ -342,82 +346,21 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 	return storedSession, false, nil
 }
 
-// QueueOffline will begin with forwarding all missed messages in a separate
-// goroutine.
-func (m *MemoryBackend) QueueOffline(client *Client) error {
-	// not needed as missed messages are already added to the session queue
-
+// Restored is not needed as missed messages are already added to the session
+// queue.
+func (m *MemoryBackend) Restored(client *Client) error {
 	return nil
 }
 
-// Subscribe will subscribe the passed client to the specified topic.
+// Subscribe is not needed as the subscription will be added to the session by
+// the broker
 func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription) error {
-	// the subscription will be added to the session by the broker
-
 	return nil
 }
 
-// Unsubscribe will unsubscribe the passed client from the specified topic.
+// Unsubscribe is not needed as the subscription will be removed from the session
+// by the broker
 func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
-	// the subscription will be removed from the session by the broker
-
-	return nil
-}
-
-// Dequeue will get the next message from the queue.
-func (m *MemoryBackend) Dequeue(client *Client, close <-chan struct{}) (*packet.Message, Ack, error) {
-	// mutex locking not needed
-
-	// get session
-	sess := client.Session().(*memorySession)
-
-	// TODO: Add ack support.
-
-	// get next message from queue
-	select {
-	case msg := <-sess.queue:
-		return msg, nil, nil
-	case <-close:
-		return nil, nil, nil
-	case <-sess.kill:
-		return nil, nil, ErrKilled
-	}
-}
-
-// StoreRetained will store the specified message.
-func (m *MemoryBackend) StoreRetained(client *Client, msg *packet.Message) error {
-	// mutex locking not needed
-
-	// set retained message
-	m.retainedMessages.Set(msg.Topic, msg.Copy())
-
-	return nil
-}
-
-// ClearRetained will remove the stored messages for the given topic.
-func (m *MemoryBackend) ClearRetained(client *Client, topic string) error {
-	// mutex locking not needed
-
-	// clear retained message
-	m.retainedMessages.Empty(topic)
-
-	return nil
-}
-
-// QueueRetained will queue all retained messages matching the given topic.
-func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
-	// get retained messages
-	values := m.retainedMessages.Search(topic)
-
-	// publish messages
-	for _, value := range values {
-		select {
-		case client.Session().(*memorySession).queue <- value.(*packet.Message):
-		default:
-			return ErrQueueFull
-		}
-	}
-
 	return nil
 }
 
@@ -458,6 +401,63 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 			} else {
 				sess.queue <- msg
 			}
+		}
+	}
+
+	return nil
+}
+
+// Dequeue will get the next message from the queue.
+func (m *MemoryBackend) Dequeue(client *Client, close <-chan struct{}) (*packet.Message, Ack, error) {
+	// mutex locking not needed
+
+	// get session
+	sess := client.Session().(*memorySession)
+
+	// TODO: Add ack support.
+
+	// get next message from queue
+	select {
+	case msg := <-sess.queue:
+		return msg, nil, nil
+	case <-close:
+		return nil, nil, nil
+	case <-sess.kill:
+		return nil, nil, ErrKilled
+	}
+}
+
+// Retain will store the specified retained message for its topic..
+func (m *MemoryBackend) Retain(client *Client, msg *packet.Message) error {
+	// mutex locking not needed
+
+	// set retained message
+	m.retainedMessages.Set(msg.Topic, msg.Copy())
+
+	return nil
+}
+
+// Clear will remove the stored retained messages for the given topic.
+func (m *MemoryBackend) Clear(client *Client, topic string) error {
+	// mutex locking not needed
+
+	// clear retained message
+	m.retainedMessages.Empty(topic)
+
+	return nil
+}
+
+// QueueRetained will queue all retained messages matching the given topic.
+func (m *MemoryBackend) QueueRetained(client *Client, topic string) error {
+	// get retained messages
+	values := m.retainedMessages.Search(topic)
+
+	// publish messages
+	for _, value := range values {
+		select {
+		case client.Session().(*memorySession).queue <- value.(*packet.Message):
+		default:
+			return ErrQueueFull
 		}
 	}
 
