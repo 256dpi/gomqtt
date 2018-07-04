@@ -57,9 +57,6 @@ type Session interface {
 
 	// ClearWill should remove the will message from the store.
 	ClearWill() error
-
-	// Reset should completely reset the session.
-	Reset() error
 }
 
 // Ack is executed by the Backend or Client to signal that a message will be

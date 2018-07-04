@@ -261,12 +261,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// set state
 
-	// reset the session if clean is requested
-	if pkt.CleanSession {
-		s.Reset()
-		// TODO: Session.Reset() needed?
-	}
-
 	// set session present
 	connack.SessionPresent = !pkt.CleanSession && resumed
 
@@ -712,14 +706,6 @@ func (c *Client) cleanup() {
 		err := c.backend.Terminate(c)
 		if err != nil {
 			c.log(BackendError, c, nil, nil, err)
-		}
-
-		// reset the session if clean is requested
-		if c.session != nil && c.cleanSession {
-			err = c.session.Reset()
-			if err != nil {
-				c.log(SessionError, c, nil, nil, err)
-			}
 		}
 	}
 
