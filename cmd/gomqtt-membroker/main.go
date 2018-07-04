@@ -73,6 +73,11 @@ func main() {
 	finish := make(chan os.Signal, 1)
 	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
 
+	engine.OnError = func(err error) {
+		fmt.Println(err.Error())
+		finish <- nil
+	}
+
 	<-finish
 
 	backend.Close(5 * time.Second)
