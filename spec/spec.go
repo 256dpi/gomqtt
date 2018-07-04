@@ -283,12 +283,16 @@ func Run(t *testing.T, config *Config) {
 	}
 
 	if config.OfflineSubscriptions && config.RetainedMessages {
+		t.Run("OfflineSubscriptionRetainedQOS0", func(t *testing.T) {
+			OfflineSubscriptionRetainedTest(t, config, "offsubret/1", 0, 0, false)
+		})
+
 		t.Run("OfflineSubscriptionRetainedQOS1", func(t *testing.T) {
-			OfflineSubscriptionRetainedTest(t, config, "offsubret/1", 1)
+			OfflineSubscriptionRetainedTest(t, config, "offsubret/2", 1, 1, true)
 		})
 
 		t.Run("OfflineSubscriptionRetainedQOS2", func(t *testing.T) {
-			OfflineSubscriptionRetainedTest(t, config, "offsubret/2", 2)
+			OfflineSubscriptionRetainedTest(t, config, "offsubret/3", 2, 2, true)
 		})
 	}
 
