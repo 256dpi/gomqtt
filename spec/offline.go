@@ -12,7 +12,7 @@ import (
 
 // OfflineSubscriptionTest tests the broker for properly handling offline
 // subscriptions.
-func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos uint8) {
+func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos uint8, await bool) {
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
@@ -69,7 +69,9 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, qos
 	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
 	assert.True(t, connectFuture.SessionPresent())
 
-	safeReceive(wait)
+	if await {
+		safeReceive(wait)
+	}
 
 	time.Sleep(config.NoMessageWait)
 
@@ -120,8 +122,6 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 	assert.NoError(t, err)
 
 	wait := make(chan struct{})
-	count := 0
-	last := false
 
 	offlineReceiver := client.New()
 	offlineReceiver.Callback = func(msg *packet.Message, err error) error {
@@ -129,17 +129,9 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic str
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
 		assert.Equal(t, uint8(qos), msg.QOS)
+		assert.False(t, msg.Retain)
 
-		if count == 0 {
-			last = msg.Retain
-		} else {
-			assert.NotEqual(t, last, msg.Retain)
-		}
-
-		count++
-		if count == 2 {
-			close(wait)
-		}
+		close(wait)
 
 		return nil
 	}
