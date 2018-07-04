@@ -318,7 +318,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 		// resubscribe subscriptions
 		for _, sub := range subs {
-			err = c.backend.Subscribe(c, sub)
+			err = c.backend.Subscribe(c, sub, true)
 			if err != nil {
 				return c.die(BackendError, err)
 			}
@@ -398,7 +398,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 		}
 
 		// subscribe client to queue
-		err = c.backend.Subscribe(c, &subscription)
+		err = c.backend.Subscribe(c, &subscription, false)
 		if err != nil {
 			return c.die(BackendError, err)
 		}
@@ -583,26 +583,6 @@ func (c *Client) processDisconnect() error {
 
 // handle publish messages
 func (c *Client) handleMessage(msg *packet.Message) error {
-	// check retain flag
-	if msg.Retain {
-		if len(msg.Payload) > 0 {
-			// retain message
-			err := c.backend.Retain(c, msg)
-			if err != nil {
-				return err
-			}
-		} else {
-			// clear already retained message
-			err := c.backend.Clear(c, msg.Topic)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// reset an existing retain flag
-	msg.Retain = false
-
 	// message has been added to the session by now, if publish failed it will
 	// be retried the next time
 
