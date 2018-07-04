@@ -12,7 +12,9 @@ import (
 
 // OfflineSubscriptionTest tests the broker for properly handling offline
 // subscriptions.
-func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, sub, pub uint8, await bool) {
+func OfflineSubscriptionTest(t *testing.T, config *Config, topic string, sub, pub uint8, await bool) {
+	id := config.clientID()
+
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
@@ -81,7 +83,9 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, id, topic string, sub
 
 // OfflineSubscriptionRetainedTest tests the broker for properly handling
 // retained messages and offline subscriptions.
-func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, id, topic string, qos uint8) {
+func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string, qos uint8) {
+	id := config.clientID()
+
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 

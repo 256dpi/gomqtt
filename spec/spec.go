@@ -2,6 +2,7 @@
 package spec
 
 import (
+	"fmt"
 	"net/url"
 	"testing"
 	"time"
@@ -34,6 +35,8 @@ type Config struct {
 	// NoMessageWait defines the time some tests should wait for eventually
 	// receiving a wrongly sent message or an error.
 	NoMessageWait time.Duration
+
+	counter int
 }
 
 // AllFeatures returns a config that enables all features.
@@ -62,6 +65,11 @@ func (c *Config) usernamePassword() (string, string) {
 	pw, _ := uri.User.Password()
 
 	return uri.User.Username(), pw
+}
+
+func (c *Config) clientID() string {
+	c.counter++
+	return fmt.Sprintf("c%d", c.counter)
 }
 
 // Run will fully test a to support all specified features in the matrix.
@@ -218,69 +226,69 @@ func Run(t *testing.T, config *Config) {
 
 	if config.StoredPackets {
 		t.Run("PublishResendQOS1", func(t *testing.T) {
-			PublishResendQOS1Test(t, config, "c1", "pubres/1")
+			PublishResendQOS1Test(t, config, "pubres/1")
 		})
 
 		t.Run("PublishResendQOS2", func(t *testing.T) {
-			PublishResendQOS2Test(t, config, "c2", "pubres/2")
+			PublishResendQOS2Test(t, config, "pubres/2")
 		})
 
 		t.Run("PubrelResendQOS2", func(t *testing.T) {
-			PubrelResendQOS2Test(t, config, "c3", "pubres/3")
+			PubrelResendQOS2Test(t, config, "pubres/3")
 		})
 	}
 
 	if config.StoredSubscriptions {
 		t.Run("StoredSubscriptionsQOS0", func(t *testing.T) {
-			StoredSubscriptionsTest(t, config, "c4", "strdsub/1", 0)
+			StoredSubscriptionsTest(t, config, "strdsub/1", 0)
 		})
 
 		t.Run("StoredSubscriptionsQOS1", func(t *testing.T) {
-			StoredSubscriptionsTest(t, config, "c5", "strdsub/2", 1)
+			StoredSubscriptionsTest(t, config, "strdsub/2", 1)
 		})
 
 		t.Run("StoredSubscriptionsQOS2", func(t *testing.T) {
-			StoredSubscriptionsTest(t, config, "c6", "strdsub/3", 2)
+			StoredSubscriptionsTest(t, config, "strdsub/3", 2)
 		})
 
 		t.Run("CleanStoredSubscriptions", func(t *testing.T) {
-			CleanStoredSubscriptionsTest(t, config, "c7", "strdsub/4")
+			CleanStoredSubscriptionsTest(t, config, "strdsub/4")
 		})
 
 		t.Run("RemoveStoredSubscription", func(t *testing.T) {
-			RemoveStoredSubscriptionTest(t, config, "c8", "strdsub/5")
+			RemoveStoredSubscriptionTest(t, config, "strdsub/5")
 		})
 	}
 
 	if config.OfflineSubscriptions {
 		t.Run("OfflineSubscriptionQOS00", func(t *testing.T) {
-			OfflineSubscriptionTest(t, config, "c91", "offsub/1", 0,0, false)
+			OfflineSubscriptionTest(t, config, "offsub/1", 0, 0, false)
 		})
 
 		t.Run("OfflineSubscriptionQOS01", func(t *testing.T) {
-			OfflineSubscriptionTest(t, config, "c92", "offsub/2", 0,1, false)
+			OfflineSubscriptionTest(t, config, "offsub/2", 0, 1, false)
 		})
 
 		t.Run("OfflineSubscriptionQOS10", func(t *testing.T) {
-			OfflineSubscriptionTest(t, config, "c94", "offsub/3", 1, 0, false)
+			OfflineSubscriptionTest(t, config, "offsub/3", 1, 0, false)
 		})
 
 		t.Run("OfflineSubscriptionQOS11", func(t *testing.T) {
-			OfflineSubscriptionTest(t, config, "c93", "offsub/4", 1, 1, true)
+			OfflineSubscriptionTest(t, config, "offsub/4", 1, 1, true)
 		})
 
 		t.Run("OfflineSubscriptionQOS22", func(t *testing.T) {
-			OfflineSubscriptionTest(t, config, "c10", "offsub/5", 2, 2, true)
+			OfflineSubscriptionTest(t, config, "offsub/5", 2, 2, true)
 		})
 	}
 
 	if config.OfflineSubscriptions && config.RetainedMessages {
 		t.Run("OfflineSubscriptionRetainedQOS1", func(t *testing.T) {
-			OfflineSubscriptionRetainedTest(t, config, "c11", "offsubret/1", 1)
+			OfflineSubscriptionRetainedTest(t, config, "offsubret/1", 1)
 		})
 
 		t.Run("OfflineSubscriptionRetainedQOS2", func(t *testing.T) {
-			OfflineSubscriptionRetainedTest(t, config, "c12", "offsubret/2", 2)
+			OfflineSubscriptionRetainedTest(t, config, "offsubret/2", 2)
 		})
 	}
 
@@ -292,11 +300,11 @@ func Run(t *testing.T, config *Config) {
 
 	if config.UniqueClientIDs {
 		t.Run("UniqueClientIDUnclean", func(t *testing.T) {
-			UniqueClientIDUncleanTest(t, config, "c13")
+			UniqueClientIDUncleanTest(t, config)
 		})
 
 		t.Run("UniqueClientIDClean", func(t *testing.T) {
-			UniqueClientIDCleanTest(t, config, "c14")
+			UniqueClientIDCleanTest(t, config)
 		})
 	}
 

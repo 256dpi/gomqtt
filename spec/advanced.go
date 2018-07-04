@@ -37,7 +37,9 @@ func AuthenticationTest(t *testing.T, config *Config) {
 }
 
 // UniqueClientIDUncleanTest tests the broker for enforcing unique client ids.
-func UniqueClientIDUncleanTest(t *testing.T, config *Config, id string) {
+func UniqueClientIDUncleanTest(t *testing.T, config *Config) {
+	id := config.clientID()
+
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
@@ -72,7 +74,9 @@ func UniqueClientIDUncleanTest(t *testing.T, config *Config, id string) {
 }
 
 // UniqueClientIDCleanTest tests the broker for enforcing unique client ids.
-func UniqueClientIDCleanTest(t *testing.T, config *Config, id string) {
+func UniqueClientIDCleanTest(t *testing.T, config *Config) {
+	id := config.clientID()
+
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = true
 

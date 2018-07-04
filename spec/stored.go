@@ -14,7 +14,9 @@ import (
 
 // PublishResendQOS1Test tests the broker for properly retrying QOS1 publish
 // packets.
-func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
+func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
+	id := config.clientID()
+
 	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id), 10*time.Second))
 
 	username, password := config.usernamePassword()
@@ -81,7 +83,9 @@ func PublishResendQOS1Test(t *testing.T, config *Config, id, topic string) {
 
 // PublishResendQOS2Test tests the broker for properly retrying QOS2 Publish
 // packets.
-func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
+func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
+	id := config.clientID()
+
 	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id), 10*time.Second))
 
 	username, password := config.usernamePassword()
@@ -160,7 +164,9 @@ func PublishResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 // PubrelResendQOS2Test tests the broker for properly retrying QOS2 Pubrel
 // packets.
-func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
+func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
+	id := config.clientID()
+
 	assert.NoError(t, client.ClearSession(client.NewConfigWithClientID(config.URL, id), 10*time.Second))
 
 	username, password := config.usernamePassword()
@@ -241,7 +247,9 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, id, topic string) {
 
 // StoredSubscriptionsTest tests the broker for properly handling stored
 // subscriptions.
-func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos uint8) {
+func StoredSubscriptionsTest(t *testing.T, config *Config, topic string, qos uint8) {
+	id := config.clientID()
+
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
@@ -298,7 +306,9 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, id, topic string, qos
 
 // CleanStoredSubscriptionsTest tests the broker for properly clearing stored
 // subscriptions.
-func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string) {
+func CleanStoredSubscriptionsTest(t *testing.T, config *Config, topic string) {
+	id := config.clientID()
+
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
@@ -346,7 +356,9 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, id, topic string
 
 // RemoveStoredSubscriptionTest tests the broker for properly removing stored
 // subscriptions.
-func RemoveStoredSubscriptionTest(t *testing.T, config *Config, id, topic string) {
+func RemoveStoredSubscriptionTest(t *testing.T, config *Config, topic string) {
+	id := config.clientID()
+
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = false
 
