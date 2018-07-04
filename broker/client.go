@@ -33,8 +33,6 @@ var ErrMissingSession = errors.New("no session returned from Backend")
 // ErrDisconnected is returned if a client disconnects cleanly.
 var ErrDisconnected = errors.New("disconnected")
 
-// TODO: ErrDisconnect needed?
-
 type messageWithAck struct {
 	msg *packet.Message
 	ack Ack
@@ -444,13 +442,14 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// handle unacknowledged and directly acknowledged messages
 	if publish.Message.QOS <= 1 {
-		err := c.handleMessage(&publish.Message)
+		// publish message to others
+		err := c.backend.Publish(c, &publish.Message)
 		if err != nil {
 			return c.die(BackendError, err)
 		}
-	}
 
-	// TODO: What happens if delivering the qos 1 msg fails?
+		c.log(MessagePublished, c, nil, &publish.Message, nil)
+	}
 
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
@@ -529,11 +528,13 @@ func (c *Client) processPubrel(id packet.ID) error {
 		return nil // ignore a wrongly sent PubrelPacket
 	}
 
-	// publish packet to others
-	err = c.handleMessage(&publish.Message)
+	// publish message to others
+	err = c.backend.Publish(c, &publish.Message)
 	if err != nil {
 		return c.die(BackendError, err)
 	}
+
+	c.log(MessagePublished, c, nil, &publish.Message, nil)
 
 	// prepare pubcomp packet
 	pubcomp := packet.NewPubcompPacket()
@@ -574,22 +575,6 @@ func (c *Client) processDisconnect() error {
 }
 
 /* helpers */
-
-// handle publish messages
-func (c *Client) handleMessage(msg *packet.Message) error {
-	// message has been added to the session by now, if publish failed it will
-	// be retried the next time
-
-	// publish message to others
-	err := c.backend.Publish(c, msg)
-	if err != nil {
-		return err
-	}
-
-	c.log(MessagePublished, c, nil, msg, nil)
-
-	return nil
-}
 
 // forward messages
 func (c *Client) forwardMessage(msgWithAck messageWithAck) error {
@@ -694,10 +679,13 @@ func (c *Client) cleanup() {
 
 		// publish will message
 		if will != nil {
-			err = c.handleMessage(will)
+			// publish message to others
+			err := c.backend.Publish(c, will)
 			if err != nil {
 				c.log(BackendError, c, nil, nil, err)
 			}
+
+			c.log(MessagePublished, c, nil, will, nil)
 		}
 	}
 
