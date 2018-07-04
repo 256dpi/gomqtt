@@ -23,6 +23,7 @@ var workers = flag.Int("workers", 1, "number of workers")
 var duration = flag.Int("duration", 30, "duration in seconds")
 var publishRate = flag.Int("publish-rate", 0, "messages per second")
 var receiveRate = flag.Int("receive-rate", 0, "messages per second")
+var payloadSize = flag.Int("payload", 1, "message payload size")
 
 var sent int32
 var received int32
@@ -31,8 +32,12 @@ var total int32
 
 var wg sync.WaitGroup
 
+var payload []byte
+
 func main() {
 	flag.Parse()
+
+	payload = make([]byte, *payloadSize)
 
 	fmt.Printf("Start benchmark of %s using %d workers for %d seconds.\n", *urlString, *workers, *duration)
 
@@ -149,7 +154,7 @@ func publisher(id string) {
 
 	publish := packet.NewPublishPacket()
 	publish.Message.Topic = id
-	publish.Message.Payload = []byte("foo")
+	publish.Message.Payload = payload
 
 	var bucket *ratelimit.Bucket
 	if *publishRate > 0 {
