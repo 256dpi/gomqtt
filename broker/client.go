@@ -2,8 +2,8 @@ package broker
 
 import (
 	"errors"
+	"fmt"
 	"net"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -33,7 +33,11 @@ var ErrMissingSession = errors.New("no session returned from Backend")
 // ErrDisconnected is returned if a client disconnects cleanly.
 var ErrDisconnected = errors.New("disconnected")
 
-type messageWithAck struct {
+// ErrClosed is returned if a client is being closed by the broker.
+var ErrClosed = errors.New("closed")
+
+type outgoing struct {
+	pkt packet.GenericPacket
 	msg *packet.Message
 	ack Ack
 }
@@ -43,6 +47,19 @@ type Client struct {
 	// Ref can be used to store a custom reference to an object. This is usually
 	// used to attach a state object to client that is created in the Backend.
 	Ref interface{}
+
+	// PacketPrefetch may be set during Setup to control the number of packets
+	// that are read by Client and made available for processing. Will default
+	// to 10 if not set.
+	PacketPrefetch int
+
+	// ParallelPublishes may be set during Setup to control the number of
+	// parallel calls to Publish a client can perform. Will default to 10.
+	ParallelPublishes int
+
+	// ParallelDequeues may be set during Setup to control the number of
+	// parallel calls to Dequeue a client can perform. Will default to 10.
+	ParallelDequeues int
 
 	backend Backend
 	logger  Logger
@@ -54,23 +71,24 @@ type Client struct {
 	session      Session
 
 	incoming chan packet.GenericPacket
-	forward  chan messageWithAck
+	outgoing chan outgoing
 
-	tomb   tomb.Tomb
-	mutex  sync.Mutex
-	finish sync.Once
+	publishTokens chan struct{}
+	dequeueTokens chan struct{}
+
+	tomb tomb.Tomb
+	done chan struct{}
 }
 
 // NewClient takes over a connection and returns a Client.
 func NewClient(backend Backend, logger Logger, conn transport.Conn) *Client {
 	// create client
 	c := &Client{
-		state:    clientConnecting,
-		backend:  backend,
-		logger:   logger,
-		conn:     conn,
-		incoming: make(chan packet.GenericPacket),
-		forward:  make(chan messageWithAck),
+		state:   clientConnecting,
+		backend: backend,
+		logger:  logger,
+		conn:    conn,
+		done:    make(chan struct{}),
 	}
 
 	// start processor
@@ -81,6 +99,9 @@ func NewClient(backend Backend, logger Logger, conn transport.Conn) *Client {
 		// wait for death and cleanup
 		c.tomb.Wait()
 		c.cleanup()
+
+		// close channel
+		close(c.done)
 	}()
 
 	return c
@@ -108,24 +129,35 @@ func (c *Client) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
 }
 
+// Close will immediately close the client.
+func (c *Client) Close() {
+	c.tomb.Kill(ErrClosed)
+	c.conn.Close()
+}
+
+// Closing returns a channel that is closed when the client is closing.
+func (c *Client) Closing() <-chan struct{} {
+	return c.tomb.Dying()
+}
+
+// Closed returns a channel that is closed when the client is closed.
+func (c *Client) Closed() <-chan struct{} {
+	return c.done
+}
+
 /* goroutines */
 
 // main processor
 func (c *Client) processor() error {
 	c.log(NewConnection, c, nil, nil, nil)
 
-	// start receiver
-	c.tomb.Go(c.receiver)
-
 	// prepare packet
 	var pkt packet.GenericPacket
 
 	// get first packet from connection
-	select {
-	case pkt = <-c.incoming:
-		// continue
-	case <-c.tomb.Dying():
-		return tomb.ErrDying
+	pkt, err := c.conn.Receive()
+	if err != nil {
+		return c.die(TransportError, err)
 	}
 
 	// get connect
@@ -135,22 +167,20 @@ func (c *Client) processor() error {
 	}
 
 	// process connect
-	err := c.processConnect(connect)
+	err = c.processConnect(connect)
 	if err != nil {
 		return err // error has already been cleaned
 	}
 
-	// start requester
-	c.tomb.Go(c.requester)
+	// start receiver, dequeuer and sender
+	c.tomb.Go(c.receiver)
+	c.tomb.Go(c.dequeuer)
+	c.tomb.Go(c.sender)
+
+	// TODO: Possibly we could inline the receiver?
 
 	for {
 		select {
-		case msgWithAck := <-c.forward:
-			// forward message
-			err = c.forwardMessage(msgWithAck)
-			if err != nil {
-				return err // error has already been cleaned
-			}
 		case pkt = <-c.incoming:
 			// process packet
 			err = c.processPacket(pkt)
@@ -182,9 +212,17 @@ func (c *Client) receiver() error {
 	}
 }
 
-// message requester
-func (c *Client) requester() error {
+// message dequeuer
+func (c *Client) dequeuer() error {
 	for {
+		// acquire dequeue token
+		select {
+		case <-c.dequeueTokens:
+			// continue
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
+		}
+
 		// request next message
 		msg, ack, err := c.backend.Dequeue(c, c.tomb.Dying())
 		if err != nil {
@@ -193,10 +231,33 @@ func (c *Client) requester() error {
 			return tomb.ErrDying
 		}
 
-		// forward message
+		// queue message
 		select {
-		case c.forward <- messageWithAck{msg, ack}:
+		case c.outgoing <- outgoing{msg: msg, ack: ack}:
 			// continue
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
+		}
+	}
+}
+
+func (c *Client) sender() error {
+	for {
+		select {
+		case e := <-c.outgoing:
+			if e.pkt != nil {
+				// send acknowledgment
+				err := c.sendAck(e.pkt)
+				if err != nil {
+					return err // error has already been cleaned
+				}
+			} else if e.msg != nil {
+				// send message
+				err := c.sendMessage(e.msg, e.ack)
+				if err != nil {
+					return err // error has already been cleaned
+				}
+			}
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
 		}
@@ -257,13 +318,44 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		return c.die(BackendError, ErrMissingSession)
 	}
 
-	// set state
-
 	// set session present
 	connack.SessionPresent = !pkt.CleanSession && resumed
 
 	// assign session
 	c.session = s
+
+	// set default packet prefetch
+	if c.PacketPrefetch <= 0 {
+		c.PacketPrefetch = 10
+	}
+
+	// set default unacked publishes
+	if c.ParallelPublishes <= 0 {
+		c.ParallelPublishes = 10
+	}
+
+	// set default parallel dequeues
+	if c.ParallelDequeues <= 0 {
+		c.ParallelDequeues = 10
+	}
+
+	// prepare publish tokens
+	c.publishTokens = make(chan struct{}, c.ParallelPublishes)
+	for i := 0; i < c.ParallelPublishes; i++ {
+		c.publishTokens <- struct{}{}
+	}
+
+	// prepare dequeue tokens
+	c.dequeueTokens = make(chan struct{}, c.ParallelDequeues)
+	for i := 0; i < c.ParallelDequeues; i++ {
+		c.dequeueTokens <- struct{}{}
+	}
+
+	// crate incoming queue
+	c.incoming = make(chan packet.GenericPacket, c.PacketPrefetch)
+
+	// create outgoing queue
+	c.outgoing = make(chan outgoing, c.ParallelPublishes+c.ParallelDequeues)
 
 	// save will if present
 	if pkt.Will != nil {
@@ -301,7 +393,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// attempt to restore client if not clean
-	if !pkt.CleanSession {
+	if !pkt.CleanSession { // TODO: Do anyway.
 		// get stored subscriptions
 		subs, err := s.AllSubscriptions()
 		if err != nil {
@@ -440,10 +532,10 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 
 // handle an incoming PublishPacket
 func (c *Client) processPublish(publish *packet.PublishPacket) error {
-	// handle unacknowledged and directly acknowledged messages
-	if publish.Message.QOS <= 1 {
+	// handle qos 0 flow
+	if publish.Message.QOS == 0 {
 		// publish message to others
-		err := c.backend.Publish(c, &publish.Message)
+		err := c.backend.Publish(c, &publish.Message, nil)
 		if err != nil {
 			return c.die(BackendError, err)
 		}
@@ -451,16 +543,37 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		c.log(MessagePublished, c, nil, &publish.Message, nil)
 	}
 
+	// TODO: Client might deadlock if there are too many publishes and outgoing
+	// packets have not yet been sent out.
+
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
+		// prepare puback
 		puback := packet.NewPubackPacket()
 		puback.ID = publish.ID
 
-		// acknowledge qos 1 publish
-		err := c.send(puback, true)
-		if err != nil {
-			return c.die(TransportError, err)
+		// acquire publish  token
+		select {
+		case <-c.publishTokens:
+			// continue
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
 		}
+
+		// publish message to others and queue puback if ack is called
+		err := c.backend.Publish(c, &publish.Message, func(msg *packet.Message) {
+			select {
+			case c.outgoing <- outgoing{pkt: puback}:
+			case <-c.tomb.Dying():
+			default:
+				panic(fmt.Sprintf("o: %d, p: %d, d: %d", len(c.outgoing), len(c.dequeueTokens), len(c.publishTokens)))
+			}
+		})
+		if err != nil {
+			return c.die(BackendError, err)
+		}
+
+		c.log(MessagePublished, c, nil, &publish.Message, nil)
 	}
 
 	// handle qos 2 flow
@@ -475,7 +588,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		pubrec := packet.NewPubrecPacket()
 		pubrec.ID = publish.ID
 
-		// signal qos 2 publish
+		// signal qos 2 pubrec
 		err = c.send(pubrec, true)
 		if err != nil {
 			return c.die(TransportError, err)
@@ -492,6 +605,9 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	if err != nil {
 		return c.die(SessionError, err)
 	}
+
+	// put back dequeue token
+	c.dequeueTokens <- struct{}{}
 
 	return nil
 }
@@ -519,7 +635,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 
 // handle an incoming PubrelPacket
 func (c *Client) processPubrel(id packet.ID) error {
-	// get packet from store
+	// get publish packet from store
 	pkt, err := c.session.LookupPacket(session.Incoming, id)
 	if err != nil {
 		return c.die(SessionError, err)
@@ -531,29 +647,33 @@ func (c *Client) processPubrel(id packet.ID) error {
 		return nil // ignore a wrongly sent PubrelPacket
 	}
 
-	// publish message to others
-	err = c.backend.Publish(c, &publish.Message)
+	// prepare pubcomp packet
+	pubcomp := packet.NewPubcompPacket()
+	pubcomp.ID = publish.ID
+
+	// the pubrec packet will be cleared from the session once the pubcomp
+	// has been sent
+
+	// acquire publish token
+	select {
+	case <-c.publishTokens:
+		// continue
+	case <-c.tomb.Dying():
+		return tomb.ErrDying
+	}
+
+	// publish message to others and queue pubcomp if ack is called
+	err = c.backend.Publish(c, &publish.Message, func(msg *packet.Message) {
+		select {
+		case c.outgoing <- outgoing{pkt: pubcomp}:
+		case <-c.tomb.Dying():
+		}
+	})
 	if err != nil {
 		return c.die(BackendError, err)
 	}
 
 	c.log(MessagePublished, c, nil, &publish.Message, nil)
-
-	// prepare pubcomp packet
-	pubcomp := packet.NewPubcompPacket()
-	pubcomp.ID = publish.ID
-
-	// acknowledge PublishPacket
-	err = c.send(pubcomp, true)
-	if err != nil {
-		return c.die(TransportError, err)
-	}
-
-	// remove packet from store
-	err = c.session.DeletePacket(session.Incoming, id)
-	if err != nil {
-		return c.die(SessionError, err)
-	}
 
 	return nil
 }
@@ -579,11 +699,11 @@ func (c *Client) processDisconnect() error {
 
 /* helpers */
 
-// forward messages
-func (c *Client) forwardMessage(msgWithAck messageWithAck) error {
+// send messages
+func (c *Client) sendMessage(msg *packet.Message, ack Ack) error {
 	// prepare publish packet
 	publish := packet.NewPublishPacket()
-	publish.Message = *msgWithAck.msg
+	publish.Message = *msg
 
 	// get stored subscription
 	sub, err := c.session.LookupSubscription(publish.Message.Topic)
@@ -612,10 +732,12 @@ func (c *Client) forwardMessage(msgWithAck messageWithAck) error {
 		}
 	}
 
-	// acknowledge message
-	if msgWithAck.ack != nil {
-		msgWithAck.ack(msgWithAck.msg)
-		c.log(MessageAcknowledged, c, nil, msgWithAck.msg, nil)
+	// acknowledge message since it has been stored in the session if a quality
+	// of service > 0 is requested
+	if ack != nil {
+		ack(msg)
+
+		c.log(MessageAcknowledged, c, nil, msg, nil)
 	}
 
 	// send packet
@@ -624,16 +746,42 @@ func (c *Client) forwardMessage(msgWithAck messageWithAck) error {
 		return c.die(TransportError, err)
 	}
 
-	c.log(MessageForwarded, c, nil, msgWithAck.msg, nil)
+	// immediately put back dequeue token for qos 0 messages
+	if publish.Message.QOS == 0 {
+		c.dequeueTokens <- struct{}{}
+	}
+
+	c.log(MessageForwarded, c, nil, msg, nil)
+
+	return nil
+}
+
+// send an acknowledgment
+func (c *Client) sendAck(pkt packet.GenericPacket) error {
+	// send packet
+	err := c.send(pkt, true)
+	if err != nil {
+		return err // error already handled
+	}
+
+	// remove pubrec from session
+	if pubcomp, ok := pkt.(*packet.PubcompPacket); ok {
+		err = c.session.DeletePacket(session.Incoming, pubcomp.ID)
+		if err != nil {
+			return c.die(SessionError, err)
+		}
+	}
+
+	// put back publish token
+	c.publishTokens <- struct{}{}
 
 	return nil
 }
 
 // send a packet
 func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
-	var err error
-
 	// send packet
+	var err error
 	if buffered {
 		err = c.conn.BufferedSend(pkt)
 	} else {
@@ -683,7 +831,7 @@ func (c *Client) cleanup() {
 		// publish will message
 		if will != nil {
 			// publish message to others
-			err := c.backend.Publish(c, will)
+			err := c.backend.Publish(c, will, nil)
 			if err != nil {
 				c.log(BackendError, c, nil, nil, err)
 			}

@@ -69,7 +69,7 @@ type Backend interface {
 	// Authenticate should authenticate the client using the user and password
 	// values and return true if the client is eligible to continue or false
 	// when the broker should terminate the connection.
-	Authenticate(client *Client, user, password string) (bool, error)
+	Authenticate(client *Client, user, password string) (ok bool, err error)
 
 	// Setup is called when a new client comes online and is successfully
 	// authenticated. Setup should return the already stored session for the
@@ -82,7 +82,7 @@ type Backend interface {
 	// setup the client for further usage as the broker will acknowledge the
 	// connection when the call returns. The Terminate function is called for
 	// every client that Setup has been called for.
-	Setup(client *Client, id string) (Session, bool, error)
+	Setup(client *Client, id string) (a Session, resumed bool, err error)
 
 	// Restored is called after the client has restored packets and
 	// subscriptions from the session. The client will begin with processing
@@ -90,8 +90,8 @@ type Backend interface {
 	Restored(client *Client) error
 
 	// Subscribe should subscribe the passed client to the specified topic and
-	// call Publish with any incoming messages. The subscription will also be
-	// added to the session if the call returns without an error.
+	// call Publish with any incoming messages. The subscription will be
+	// acknowledged and added to the session if the call returns without an error.
 	//
 	// Retained messages that match the supplied subscription should be added to
 	// a temporary queue that is also drained when Dequeue is called. Retained
@@ -104,10 +104,14 @@ type Backend interface {
 	// set to false.
 	Subscribe(client *Client, sub *packet.Subscription, stored bool) error
 
+	// TODO: Add ack to subscribe?
+
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
-	// The subscription will also be removed from the session if the call returns
-	// without an error.
+	// The unsubscription will be acknowledged and removed from the session if
+	// the call returns without an error.
 	Unsubscribe(client *Client, topic string) error
+
+	// TODO: Add ack to Unsubscribe?
 
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
@@ -121,16 +125,17 @@ type Backend interface {
 	//
 	// Note: If the backend does not return an error the message will be
 	// immediately acknowledged by the client and removed from the session.
-	Publish(client *Client, msg *packet.Message) error
-
-	// TODO: Publish with ack.
+	Publish(client *Client, msg *packet.Message, ack Ack) error
 
 	// Dequeue is called by the Client repeatedly to obtain the next message.
-	// The backend must return no message and no error if the supplied channel
+	// The backend should return no message and no error if the supplied channel
 	// is closed. The returned Ack is executed by the Backend to signal that the
 	// message is being delivered under the selected qos level and is therefore
-	// safe to be deleted from the queue.
+	// safe to be deleted from the queue. The Client might dequeue other
+	// messages before acknowledging a message.
 	Dequeue(client *Client, close <-chan struct{}) (*packet.Message, Ack, error)
+
+	// TODO: Remove passed channel and encourage to use Client.Dying?
 
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics. The
@@ -149,8 +154,6 @@ type memorySession struct {
 	temporary chan *packet.Message
 
 	owner *Client
-	kill  chan struct{}
-	done  chan struct{}
 }
 
 func newMemorySession(backlog int) *memorySession {
@@ -158,23 +161,16 @@ func newMemorySession(backlog int) *memorySession {
 		MemorySession: session.NewMemorySession(),
 		stored:        make(chan *packet.Message, backlog),
 		temporary:     make(chan *packet.Message, backlog),
-		kill:          make(chan struct{}, 1),
-		done:          make(chan struct{}, 1),
 	}
 }
 
 func (s *memorySession) reuse() {
 	s.temporary = make(chan *packet.Message, cap(s.temporary))
-	s.kill = make(chan struct{}, 1)
-	s.done = make(chan struct{}, 1)
 }
 
 // ErrQueueFull is returned to a client that attempts two write to its own full
 // queue, which would result in a deadlock.
 var ErrQueueFull = errors.New("queue full")
-
-// ErrKilled is returned to a client that is killed by the broker.
-var ErrKilled = errors.New("killed")
 
 // ErrClosing is returned to a client if the backend is closing.
 var ErrClosing = errors.New("closing")
@@ -284,23 +280,29 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 
 	// kill existing client if session is taken
 	if ok && existingSession.owner != nil {
-		// send signal
-		close(existingSession.kill)
+		// close client
+		existingSession.owner.Close()
 
 		// release global mutex to allow publish and termination, but leave the
 		// setup mutex to prevent setups
 		m.globalMutex.Unlock()
 
 		// wait for client to close
+		var err error
 		select {
-		case <-existingSession.done:
+		case <-existingSession.owner.Closed():
 			// continue
 		case <-time.After(m.KillTimeout):
-			return nil, false, ErrKillTimeout
+			err = ErrKillTimeout
 		}
 
 		// acquire mutex again
 		m.globalMutex.Lock()
+
+		// return err if set
+		if err != nil {
+			return nil, false, err
+		}
 	}
 
 	// delete any stored session and return temporary if requested
@@ -389,7 +391,7 @@ func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 // Publish will forward the passed message to all other subscribed clients. It
 // will also add the message to all sessions that have a matching offline
 // subscription.
-func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
+func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) error {
 	// acquire global mutex
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
@@ -439,7 +441,10 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 					return ErrQueueFull
 				}
 			} else {
-				queue(sess) <- msg
+				select {
+				case queue(sess) <- msg:
+				case <-sess.owner.Closing():
+				}
 			}
 		}
 	}
@@ -447,17 +452,33 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message) error {
 	// add message to stored sessions
 	for _, sess := range m.storedSessions {
 		if sub, _ := sess.LookupSubscription(msg.Topic); sub != nil {
-			// detect deadlock when adding to own queue
 			if sess.owner == client {
+				// detect deadlock when adding to own queue
 				select {
 				case queue(sess) <- msg:
 				default:
 					return ErrQueueFull
 				}
+			} else if sess.owner != nil {
+				// wait for room if client is online
+				select {
+				case queue(sess) <- msg:
+				case <-sess.owner.Closing():
+				}
 			} else {
-				queue(sess) <- msg
+				// ignore message if queue is full
+				select {
+				case queue(sess) <- msg:
+					// TODO: Flag queue?
+				default:
+				}
 			}
 		}
+	}
+
+	// call ack if available
+	if ack != nil {
+		ack(msg)
 	}
 
 	return nil
@@ -480,8 +501,6 @@ func (m *MemoryBackend) Dequeue(client *Client, close <-chan struct{}) (*packet.
 		return msg, nil, nil
 	case <-close:
 		return nil, nil, nil
-	case <-sess.kill:
-		return nil, nil, ErrKilled
 	}
 }
 
@@ -494,20 +513,17 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
 
-	// get session
-	sess := client.Session().(*memorySession)
-
-	// release session
-	sess.owner = nil
+	// release session if available
+	sess, ok := client.Session().(*memorySession)
+	if ok && sess != nil {
+		sess.owner = nil
+	}
 
 	// remove any temporary session
 	delete(m.temporarySessions, client)
 
 	// remove any saved client
 	delete(m.activeClients, client.ClientID())
-
-	// signal exit
-	close(sess.done)
 
 	return nil
 }
@@ -521,20 +537,20 @@ func (m *MemoryBackend) Close(timeout time.Duration) bool {
 	// set closing
 	m.closing = true
 
-	// prepare channel list
-	var list []chan struct{}
+	// prepare list
+	var clients []*Client
 
 	// close temporary sessions
 	for _, sess := range m.temporarySessions {
-		close(sess.kill)
-		list = append(list, sess.done)
+		sess.owner.Close()
+		clients = append(clients, sess.owner)
 	}
 
 	// closed owned stored sessions
 	for _, sess := range m.storedSessions {
 		if sess.owner != nil {
-			close(sess.kill)
-			list = append(list, sess.done)
+			sess.owner.Close()
+			clients = append(clients, sess.owner)
 		}
 	}
 
@@ -542,7 +558,7 @@ func (m *MemoryBackend) Close(timeout time.Duration) bool {
 	m.globalMutex.Unlock()
 
 	// return early if empty
-	if len(list) == 0 {
+	if len(clients) == 0 {
 		return true
 	}
 
@@ -550,9 +566,9 @@ func (m *MemoryBackend) Close(timeout time.Duration) bool {
 	tm := time.After(timeout)
 
 	// wait for clients to close
-	for _, ch := range list {
+	for _, client := range clients {
 		select {
-		case <-ch:
+		case <-client.Closed():
 			continue
 		case <-tm:
 			return false

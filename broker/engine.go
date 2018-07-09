@@ -85,6 +85,9 @@ func NewEngine(backend Backend) *Engine {
 	return &Engine{
 		Backend:        backend,
 		ConnectTimeout: 10 * time.Second,
+		//Logger: func(e LogEvent, _ *Client, p packet.GenericPacket, m *packet.Message, err error) {
+		//	pretty.Println(e, p, m, err)
+		//},
 	}
 }
 
