@@ -140,6 +140,8 @@ type Backend interface {
 	Terminate(client *Client) error
 }
 
+// TODO: Improve thread-safety of memorySession and Backend.
+
 type memorySession struct {
 	*session.MemorySession
 
@@ -390,6 +392,8 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
 
+	// TODO: Remove mutex as it deadlocks if a Publish is waiting on a client.
+
 	// check retain flag
 	if msg.Retain {
 		if len(msg.Payload) > 0 {
@@ -464,7 +468,6 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 				// ignore message if queue is full
 				select {
 				case queue(sess) <- msg:
-					// TODO: Flag queue?
 				default:
 				}
 			}
