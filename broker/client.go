@@ -2,7 +2,6 @@ package broker
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"sync/atomic"
 	"time"
@@ -66,9 +65,8 @@ type Client struct {
 	state uint32
 
 	// set during connect
-	clientID     string
-	cleanSession bool
-	session      Session
+	id      string
+	session Session
 
 	incoming chan packet.GenericPacket
 	outgoing chan outgoing
@@ -114,7 +112,7 @@ func (c *Client) Session() Session {
 
 // ID returns the clients id that has been supplied during connect.
 func (c *Client) ID() string {
-	return c.clientID
+	return c.id
 }
 
 // RemoteAddr returns the client's remote net address from the underlying
@@ -145,9 +143,6 @@ func (c *Client) Closed() <-chan struct{} {
 func (c *Client) processor() error {
 	c.log(NewConnection, c, nil, nil, nil)
 
-	// prepare packet
-	var pkt packet.GenericPacket
-
 	// get first packet from connection
 	pkt, err := c.conn.Receive()
 	if err != nil {
@@ -166,42 +161,26 @@ func (c *Client) processor() error {
 		return err // error has already been cleaned
 	}
 
-	// start receiver, dequeuer and sender
-	c.tomb.Go(c.receiver)
+	// start dequeuer and sender
 	c.tomb.Go(c.dequeuer)
 	c.tomb.Go(c.sender)
 
-	// TODO: Possibly we could inline the receiver?
-
 	for {
-		select {
-		case pkt = <-c.incoming:
-			// process packet
-			err = c.processPacket(pkt)
-			if err != nil {
-				return err // error has already been cleaned
-			}
-		case <-c.tomb.Dying():
+		// check if still alive
+		if !c.tomb.Alive() {
 			return tomb.ErrDying
 		}
-	}
-}
 
-// packet receiver
-func (c *Client) receiver() error {
-	for {
 		// receive next packet
 		pkt, err := c.conn.Receive()
 		if err != nil {
 			return c.die(TransportError, err)
 		}
 
-		// send packet
-		select {
-		case c.incoming <- pkt:
-			// continue
-		case <-c.tomb.Dying():
-			return tomb.ErrDying
+		// process packet
+		err = c.processPacket(pkt)
+		if err != nil {
+			return err // error has already been cleaned
 		}
 	}
 }
@@ -235,6 +214,7 @@ func (c *Client) dequeuer() error {
 	}
 }
 
+// message and packet sender
 func (c *Client) sender() error {
 	for {
 		select {
@@ -264,9 +244,8 @@ func (c *Client) sender() error {
 func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.log(PacketReceived, c, pkt, nil, nil)
 
-	// set values
-	c.cleanSession = pkt.CleanSession
-	c.clientID = pkt.ClientID
+	// save id
+	c.id = pkt.ClientID
 
 	// authenticate
 	ok, err := c.backend.Authenticate(c, pkt.Username, pkt.Password)
@@ -400,7 +379,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		}
 	}
 
-	// begin with queueing offline messages
+	// signal restored client
 	err = c.backend.Restored(c)
 	if err != nil {
 		return c.die(BackendError, err)
@@ -534,16 +513,13 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		c.log(MessagePublished, c, nil, &publish.Message, nil)
 	}
 
-	// TODO: Client might deadlock if there are too many publishes and outgoing
-	// packets have not yet been sent out.
-
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		// prepare puback
 		puback := packet.NewPubackPacket()
 		puback.ID = publish.ID
 
-		// acquire publish  token
+		// acquire publish token
 		select {
 		case <-c.publishTokens:
 			// continue
@@ -556,8 +532,6 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 			select {
 			case c.outgoing <- outgoing{pkt: puback}:
 			case <-c.tomb.Dying():
-			default:
-				panic(fmt.Sprintf("o: %d, p: %d, d: %d", len(c.outgoing), len(c.dequeueTokens), len(c.publishTokens)))
 			}
 		})
 		if err != nil {
