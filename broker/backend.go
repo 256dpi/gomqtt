@@ -91,7 +91,7 @@ type Backend interface {
 
 	// Subscribe should subscribe the passed client to the specified topic and
 	// call Publish with any incoming messages. The subscription will be
-	// acknowledged and added to the session if the call returns without an error.
+	// acknowledged if the call returns without an error.
 	//
 	// Retained messages that match the supplied subscription should be added to
 	// a temporary queue that is also drained when Dequeue is called. Retained
@@ -104,27 +104,20 @@ type Backend interface {
 	// set to false.
 	Subscribe(client *Client, sub *packet.Subscription, stored bool) error
 
-	// TODO: Add ack to subscribe?
-
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
-	// The unsubscription will be acknowledged and removed from the session if
-	// the call returns without an error.
+	// The unsubscription will be acknowledged if the call returns without an error.
 	Unsubscribe(client *Client, topic string) error
-
-	// TODO: Add ack to Unsubscribe?
 
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
 	// message to all sessions that have a matching offline subscription. The
-	// later may only apply to messages with a QoS greater than 0.
+	// later may only apply to messages with a QoS greater than 0. If an Ack is
+	// specified, the message will be acknowledged when it is called.
 	//
 	// If the retained flag is set, messages with a payload should replace the
 	// currently retained message. Otherwise, the currently retained message
 	// should be removed. The flag should be cleared before publishing the
 	// message to subscribed clients.
-	//
-	// Note: If the backend does not return an error the message will be
-	// immediately acknowledged by the client and removed from the session.
 	Publish(client *Client, msg *packet.Message, ack Ack) error
 
 	// Dequeue is called by the Client repeatedly to obtain the next message.
