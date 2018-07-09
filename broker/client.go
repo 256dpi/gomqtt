@@ -488,7 +488,10 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 // handle an incoming PubackPacket or PubcompPacket
 func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// remove packet from store
-	c.session.DeletePacket(session.Outgoing, id)
+	err := c.session.DeletePacket(session.Outgoing, id)
+	if err != nil {
+		return c.die(SessionError, err)
+	}
 
 	return nil
 }
