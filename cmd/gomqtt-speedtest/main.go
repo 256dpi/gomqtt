@@ -11,7 +11,7 @@ import (
 	"github.com/beorn7/perks/quantile"
 )
 
-var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
+var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
 var topic = flag.String("topic", "speed-test", "the used topic")
 var qos = flag.Uint("qos", 0, "the qos level")
 var wait = flag.Int("wait", 0, "time to wait in milliseconds")
@@ -32,7 +32,7 @@ func main() {
 		return nil
 	}
 
-	cf, err := cl.Connect(client.NewConfig(*urlString))
+	cf, err := cl.Connect(client.NewConfig(*url))
 	if err != nil {
 		panic(err)
 	}
