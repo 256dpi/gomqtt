@@ -13,13 +13,13 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 )
 
-var url = flag.String("url", "tcp://0.0.0.0:1883", "the broker url")
-var sub = flag.String("sub", "#", "the subscription")
+var broker = flag.String("broker", "tcp://0.0.0.0:1883", "the broker url")
+var filter = flag.String("filter", "#", "the filter subscription")
 
 func main() {
 	flag.Parse()
 
-	fmt.Printf("Start analisys of %s\n", *url)
+	fmt.Printf("Starting analisys of %s with filter %s...\n", *broker, *filter)
 
 	go func() {
 		finish := make(chan os.Signal, 1)
@@ -44,7 +44,7 @@ func main() {
 		return nil
 	}
 
-	cf, err := c.Connect(client.NewConfig(*url))
+	cf, err := c.Connect(client.NewConfig(*broker))
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +54,7 @@ func main() {
 		panic(err)
 	}
 
-	sf, err := c.Subscribe(*sub, 0)
+	sf, err := c.Subscribe(*filter, 0)
 	if err != nil {
 		panic(err)
 	}

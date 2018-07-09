@@ -27,8 +27,6 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	// start
-
 	fmt.Printf("Starting broker on URL %s... ", *url)
 
 	server, err := transport.Launch(*url)
@@ -67,8 +65,6 @@ func main() {
 			atomic.StoreInt32(&forwarded, 0)
 		}
 	}()
-
-	// finish
 
 	finish := make(chan os.Signal, 1)
 	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)

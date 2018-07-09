@@ -18,12 +18,12 @@ import (
 	"github.com/juju/ratelimit"
 )
 
-var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
-var workers = flag.Int("workers", 1, "number of workers")
+var broker = flag.String("broker", "tcp://0.0.0.0:1883", "broker url")
+var pairs = flag.Int("pairs", 1, "number of pairs")
 var duration = flag.Int("duration", 30, "duration in seconds")
-var publishRate = flag.Int("publish-rate", 0, "messages per second")
+var sendRate = flag.Int("send-rate", 0, "messages per second")
 var receiveRate = flag.Int("receive-rate", 0, "messages per second")
-var payloadSize = flag.Int("payload", 1, "message payload size")
+var payloadSize = flag.Int("payload", 1, "payload size in bytes")
 
 var sent int32
 var received int32
@@ -39,7 +39,7 @@ func main() {
 
 	payload = make([]byte, *payloadSize)
 
-	fmt.Printf("Start benchmark of %s using %d workers for %d seconds.\n", *urlString, *workers, *duration)
+	fmt.Printf("Start benchmark of %s using %d pairs for %d seconds...\n", *broker, *pairs, *duration)
 
 	go func() {
 		finish := make(chan os.Signal, 1)
@@ -57,9 +57,9 @@ func main() {
 		})
 	}
 
-	wg.Add(*workers * 2)
+	wg.Add(*pairs * 2)
 
-	for i := 0; i < *workers; i++ {
+	for i := 0; i < *pairs; i++ {
 		id := strconv.Itoa(i)
 
 		go consumer(id)
@@ -72,12 +72,12 @@ func main() {
 }
 
 func connection(id string) transport.Conn {
-	conn, err := transport.Dial(*urlString)
+	conn, err := transport.Dial(*broker)
 	if err != nil {
 		panic(err)
 	}
 
-	mqttURL, err := url.Parse(*urlString)
+	mqttURL, err := url.Parse(*broker)
 	if err != nil {
 		panic(err)
 	}
@@ -157,8 +157,8 @@ func publisher(id string) {
 	publish.Message.Payload = payload
 
 	var bucket *ratelimit.Bucket
-	if *publishRate > 0 {
-		bucket = ratelimit.NewBucketWithRate(float64(*publishRate), int64(*publishRate))
+	if *sendRate > 0 {
+		bucket = ratelimit.NewBucketWithRate(float64(*sendRate), int64(*sendRate))
 	}
 
 	for {
