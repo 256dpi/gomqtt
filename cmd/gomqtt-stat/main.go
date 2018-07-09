@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"os/signal"
 	"sync/atomic"
@@ -14,17 +13,13 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 )
 
-var urlString = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
+var url = flag.String("url", "tcp://0.0.0.0:1883", "the broker url")
+var sub = flag.String("sub", "#", "the subscription")
 
 func main() {
 	flag.Parse()
 
-	mqttURL, err := url.Parse(*urlString)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Start analisys of %s\n", *urlString)
+	fmt.Printf("Start analisys of %s\n", *url)
 
 	go func() {
 		finish := make(chan os.Signal, 1)
@@ -49,7 +44,7 @@ func main() {
 		return nil
 	}
 
-	cf, err := c.Connect(client.NewConfig(*urlString))
+	cf, err := c.Connect(client.NewConfig(*url))
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +54,7 @@ func main() {
 		panic(err)
 	}
 
-	sf, err := c.Subscribe(mqttURL.Path, 0)
+	sf, err := c.Subscribe(*sub, 0)
 	if err != nil {
 		panic(err)
 	}
