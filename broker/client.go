@@ -112,14 +112,8 @@ func (c *Client) Session() Session {
 	return c.session
 }
 
-// CleanSession returns whether the client requested a clean session during
-// connect.
-func (c *Client) CleanSession() bool {
-	return c.cleanSession
-}
-
-// ClientID returns the supplied client id during connect.
-func (c *Client) ClientID() string {
+// ID returns the clients id that has been supplied during connect.
+func (c *Client) ID() string {
 	return c.clientID
 }
 
@@ -311,7 +305,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// retrieve session
-	s, resumed, err := c.backend.Setup(c, pkt.ClientID)
+	s, resumed, err := c.backend.Setup(c, pkt.ClientID, pkt.CleanSession)
 	if err != nil {
 		return c.die(BackendError, err)
 	} else if s == nil {
@@ -392,27 +386,24 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		}
 	}
 
-	// attempt to restore client if not clean
-	if !pkt.CleanSession { // TODO: Do anyway.
-		// get stored subscriptions
-		subs, err := s.AllSubscriptions()
-		if err != nil {
-			return c.die(SessionError, err)
-		}
+	// get stored subscriptions
+	subs, err := s.AllSubscriptions()
+	if err != nil {
+		return c.die(SessionError, err)
+	}
 
-		// resubscribe subscriptions
-		for _, sub := range subs {
-			err = c.backend.Subscribe(c, sub, true)
-			if err != nil {
-				return c.die(BackendError, err)
-			}
-		}
-
-		// begin with queueing offline messages
-		err = c.backend.Restored(c)
+	// resubscribe subscriptions
+	for _, sub := range subs {
+		err = c.backend.Subscribe(c, sub, true)
 		if err != nil {
 			return c.die(BackendError, err)
 		}
+	}
+
+	// begin with queueing offline messages
+	err = c.backend.Restored(c)
+	if err != nil {
+		return c.die(BackendError, err)
 	}
 
 	return nil

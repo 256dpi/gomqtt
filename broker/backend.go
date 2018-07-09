@@ -82,7 +82,7 @@ type Backend interface {
 	// setup the client for further usage as the broker will acknowledge the
 	// connection when the call returns. The Terminate function is called for
 	// every client that Setup has been called for.
-	Setup(client *Client, id string) (a Session, resumed bool, err error)
+	Setup(client *Client, id string, clean bool) (a Session, resumed bool, err error)
 
 	// Restored is called after the client has restored packets and
 	// subscriptions from the session. The client will begin with processing
@@ -242,7 +242,7 @@ func (m *MemoryBackend) Authenticate(client *Client, user, password string) (boo
 // returns a new one. If the supplied id has a zero length, a new session is
 // returned that is not stored further. Furthermore, it will disconnect any client
 // connected with the same client id.
-func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) {
+func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, bool, error) {
 	// acquire global mutex
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
@@ -305,8 +305,9 @@ func (m *MemoryBackend) Setup(client *Client, id string) (Session, bool, error) 
 		}
 	}
 
-	// delete any stored session and return temporary if requested
-	if client.CleanSession() {
+	// delete any stored session and return a temporary session if a clean
+	// session is requested
+	if clean {
 		// delete any stored session
 		delete(m.storedSessions, id)
 
@@ -523,7 +524,7 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	delete(m.temporarySessions, client)
 
 	// remove any saved client
-	delete(m.activeClients, client.ClientID())
+	delete(m.activeClients, client.ID())
 
 	return nil
 }
