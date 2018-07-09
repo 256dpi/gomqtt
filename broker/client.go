@@ -44,10 +44,6 @@ type outgoing struct {
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
-	// Ref can be used to store a custom reference to an object. This is usually
-	// used to attach a state object to client that is created in the Backend.
-	Ref interface{}
-
 	// PacketPrefetch may be set during Setup to control the number of packets
 	// that are read by Client and made available for processing. Will default
 	// to 10 if not set.
@@ -61,11 +57,15 @@ type Client struct {
 	// parallel calls to Dequeue a client can perform. Will default to 10.
 	ParallelDequeues int
 
+	// read-only
 	backend Backend
 	logger  Logger
 	conn    transport.Conn
 
-	state        uint32
+	// atomically written and read
+	state uint32
+
+	// set during connect
 	clientID     string
 	cleanSession bool
 	session      Session

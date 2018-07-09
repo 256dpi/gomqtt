@@ -434,14 +434,15 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 	// add message to temporary sessions
 	for _, sess := range m.temporarySessions {
 		if sub, _ := sess.LookupSubscription(msg.Topic); sub != nil {
-			// detect deadlock when adding to own queue
 			if sess.owner == client {
+				// detect deadlock when adding to own queue
 				select {
 				case queue(sess) <- msg:
 				default:
 					return ErrQueueFull
 				}
 			} else {
+				// wait for room since client is online
 				select {
 				case queue(sess) <- msg:
 				case <-sess.owner.Closing():
