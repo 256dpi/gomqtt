@@ -238,13 +238,13 @@ func (m *MemoryBackend) Authenticate(client *Client, user, password string) (boo
 // returned that is not stored further. Furthermore, it will disconnect any client
 // connected with the same client id.
 func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, bool, error) {
-	// acquire global mutex
-	m.globalMutex.Lock()
-	defer m.globalMutex.Unlock()
-
 	// acquire setup mutex
 	m.setupMutex.Lock()
 	defer m.setupMutex.Unlock()
+
+	// acquire global mutex
+	m.globalMutex.Lock()
+	defer m.globalMutex.Unlock()
 
 	// return error if closing
 	if m.closing {
