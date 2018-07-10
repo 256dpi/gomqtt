@@ -2,7 +2,6 @@ package broker
 
 import (
 	"errors"
-	"net"
 	"sync/atomic"
 	"time"
 
@@ -243,10 +242,10 @@ func (c *Client) ID() string {
 	return c.id
 }
 
-// RemoteAddr returns the client's remote net address from the underlying
-// connection.
-func (c *Client) RemoteAddr() net.Addr {
-	return c.conn.RemoteAddr()
+// Conn returns the client's underlying connection. Calls to SetReadLimit,
+// SetBuffers, LocalAddr and RemoteAddr are safe.
+func (c *Client) Conn() transport.Conn {
+	return c.conn
 }
 
 // Close will immediately close the client.
