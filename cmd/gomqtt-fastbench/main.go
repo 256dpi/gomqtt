@@ -20,7 +20,7 @@ import (
 
 var broker = flag.String("broker", "tcp://0.0.0.0:1883", "broker url")
 var pairs = flag.Int("pairs", 1, "number of pairs")
-var duration = flag.Int("duration", 30, "duration in seconds")
+var duration = flag.Int("duration", 0, "duration in seconds")
 var sendRate = flag.Int("send-rate", 0, "messages per second")
 var receiveRate = flag.Int("receive-rate", 0, "messages per second")
 var payloadSize = flag.Int("payload", 1, "payload size in bytes")
