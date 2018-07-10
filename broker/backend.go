@@ -10,8 +10,6 @@ import (
 	"github.com/256dpi/gomqtt/topic"
 )
 
-// TODO: Improve thread-safety of memorySession and Backend.
-
 type memorySession struct {
 	*session.MemorySession
 
@@ -40,17 +38,17 @@ var ErrQueueFull = errors.New("queue full")
 // ErrClosing is returned to a client if the backend is closing.
 var ErrClosing = errors.New("closing")
 
-// ErrKillTimeout is returned to a client if the killed existing client does not
-// close in time.
+// ErrKillTimeout is returned to a client if the existing client does not close
+// in time.
 var ErrKillTimeout = errors.New("kill timeout")
 
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
-	// The maximal size of the session queue.
+	// The maximal size of the session queue. Will default to 100 if not set.
 	SessionQueueSize int
 
 	// The time after an error is returned while waiting on an killed existing
-	// client to exit.
+	// client to exit. Will default to 5 seconds if not set.
 	KillTimeout time.Duration
 
 	// A map of username and passwords that grant read and write access.
@@ -78,8 +76,7 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-// Authenticate authenticates a clients credentials by matching them to the
-// saved Credentials map.
+// Authenticate will authenticates a clients credentials.
 func (m *MemoryBackend) Authenticate(client *Client, user, password string) (bool, error) {
 	// acquire global mutex
 	m.globalMutex.Lock()
@@ -103,10 +100,7 @@ func (m *MemoryBackend) Authenticate(client *Client, user, password string) (boo
 	return false, nil
 }
 
-// Setup returns the already stored session for the supplied id or creates and
-// returns a new one. If the supplied id has a zero length, a new session is
-// returned that is not stored further. Furthermore, it will disconnect any client
-// connected with the same client id.
+// Setup will close existing clients and return an appropriate session.
 func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, bool, error) {
 	// acquire setup mutex
 	m.setupMutex.Lock()
@@ -222,7 +216,12 @@ func (m *MemoryBackend) Restored(client *Client) error {
 
 // Subscribe will queue retained messages for the passed subscription.
 func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription, stored bool) error {
-	// mutex locking not needed
+	// acquire global mutex
+	m.globalMutex.Lock()
+	defer m.globalMutex.Unlock()
+
+	// get session
+	sess := client.Session().(*memorySession)
 
 	// get retained messages
 	values := m.retainedMessages.Search(sub.Topic)
@@ -238,8 +237,9 @@ func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription, stor
 			msg.Retain = false
 		}
 
+		// add to temporary queue or return error if queue is full
 		select {
-		case client.Session().(*memorySession).temporary <- msg:
+		case sess.temporary <- msg:
 		default:
 			return ErrQueueFull
 		}
@@ -248,21 +248,20 @@ func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription, stor
 	return nil
 }
 
-// Unsubscribe is not needed as the subscription will be removed from the session
-// by the broker
+// Unsubscribe is not needed at the moment.
 func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
 	return nil
 }
 
-// Publish will forward the passed message to all other subscribed clients. It
-// will also add the message to all sessions that have a matching offline
-// subscription.
+// Publish will handle retained messages and add the message to the session queues.
 func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) error {
 	// acquire global mutex
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
 
-	// TODO: Remove mutex as it deadlocks if a Publish is waiting on a client.
+	// this implementation is very basic and will block the backend on every
+	// publish. clients that stay connected but won't drain their queue will
+	// eventually deadlock the broker
 
 	// check retain flag
 	if msg.Retain {
@@ -275,28 +274,20 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 		}
 	}
 
-	// define default queue accessor
+	// use temporary queue by default
 	queue := func(s *memorySession) chan *packet.Message {
 		return s.temporary
 	}
 
-	// check qos flag
-	if msg.QOS > 0 {
+	// use stored queue if qos > 0 and not retained
+	if msg.QOS > 0 && !msg.Retain {
 		queue = func(s *memorySession) chan *packet.Message {
 			return s.stored
 		}
 	}
 
-	// check retained flag
-	if msg.Retain {
-		// redefine queue accessor
-		queue = func(s *memorySession) chan *packet.Message {
-			return s.temporary
-		}
-
-		// reset flag
-		msg.Retain = false
-	}
+	// reset retained flag
+	msg.Retain = false
 
 	// add message to temporary sessions
 	for _, sess := range m.temporarySessions {
@@ -337,7 +328,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 				case <-client.Closed():
 				}
 			} else {
-				// ignore message if queue is full
+				// ignore message if stored queue is full
 				select {
 				case queue(sess) <- msg:
 				default:
@@ -354,14 +345,15 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 	return nil
 }
 
-// Dequeue will get the next message from the queue.
+// Dequeue will get the next message from the queues.
 func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 	// mutex locking not needed
 
 	// get session
 	sess := client.Session().(*memorySession)
 
-	// TODO: Add ack support.
+	// this implementation is very basic and will dequeue messages immediately
+	// and not return no ack. messages are lost if clients fail to handle them
 
 	// get next message from queue
 	select {
@@ -374,10 +366,7 @@ func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 	}
 }
 
-// Terminate will unsubscribe the passed client from all previously subscribed
-// topics. If the client connect with clean=true it will also clean the session.
-// Otherwise it will create offline subscriptions for all QOS 1 and QOS 2
-// subscriptions.
+// Terminate will disassociate the session from the client.
 func (m *MemoryBackend) Terminate(client *Client) error {
 	// acquire global mutex
 	m.globalMutex.Lock()
