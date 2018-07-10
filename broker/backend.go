@@ -10,8 +10,8 @@ import (
 	"github.com/256dpi/gomqtt/topic"
 )
 
-// A Session is used to persist incoming/outgoing packets, subscriptions and the
-// will.
+// A Session is used to get packet ids, persist incoming/outgoing packets, store
+// subscriptions and the will.
 type Session interface {
 	// NextID should return the next id for outgoing packets.
 	NextID() packet.ID
@@ -27,8 +27,7 @@ type Session interface {
 	// not return an error if no packet with the specified id does exists.
 	DeletePacket(session.Direction, packet.ID) error
 
-	// AllPackets should return all packets currently saved in the session. This
-	// method is used to resend stored packets when the session is resumed.
+	// AllPackets should return all packets currently saved in the session.
 	AllPackets(session.Direction) ([]packet.GenericPacket, error)
 
 	// SaveSubscription should store the subscription in the session. An eventual
@@ -45,8 +44,7 @@ type Session interface {
 	DeleteSubscription(topic string) error
 
 	// AllSubscriptions should return all subscriptions currently saved in the
-	// session. This method is used to restore a clients subscriptions when the
-	// session is resumed.
+	// session.
 	AllSubscriptions() ([]*packet.Subscription, error)
 
 	// SaveWill should store the will message.
@@ -73,10 +71,10 @@ type Backend interface {
 
 	// Setup is called when a new client comes online and is successfully
 	// authenticated. Setup should return the already stored session for the
-	// supplied id or create and return a new one. If the supplied id has a zero
-	// length, a new temporary session should returned that is not stored
-	// further. The backend may also close any existing clients that use the
-	// same client id.
+	// supplied id or create and return a new one if it is missing or a clean
+	// session is requested. If the supplied id has a zero length, a new
+	// temporary session should returned that is not stored further. The backend
+	// should also close any existing clients that use the same client id.
 	//
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the client for further usage as the broker will acknowledge the
@@ -112,7 +110,8 @@ type Backend interface {
 	// a subscription that matches the messages topic. It should also add the
 	// message to all sessions that have a matching offline subscription. The
 	// later may only apply to messages with a QoS greater than 0. If an Ack is
-	// specified, the message will be acknowledged when it is called.
+	// provided, the message will be acknowledged when called during or after
+	// the call to Publish.
 	//
 	// If the retained flag is set, messages with a payload should replace the
 	// currently retained message. Otherwise, the currently retained message
@@ -120,15 +119,14 @@ type Backend interface {
 	// message to subscribed clients.
 	Publish(client *Client, msg *packet.Message, ack Ack) error
 
-	// Dequeue is called by the Client repeatedly to obtain the next message.
-	// The backend should return no message and no error if the supplied channel
-	// is closed. The returned Ack is executed by the Backend to signal that the
-	// message is being delivered under the selected qos level and is therefore
-	// safe to be deleted from the queue. The Client might dequeue other
-	// messages before acknowledging a message.
-	Dequeue(client *Client, close <-chan struct{}) (*packet.Message, Ack, error)
-
-	// TODO: Remove passed channel and encourage to use Client.Dying?
+	// Dequeue is called by the Client to obtain the next message from the queue
+	// and must return either a message or an error. The backend must only return
+	// no message and no error if the client's Closing channel has been closed.
+	// The Backend may return an Ack to receive a signal that the message is being
+	// delivered under the selected qos level and is therefore safe to be deleted
+	// from the queue. The Client might dequeue other messages before acknowledging
+	// a message.
+	Dequeue(client *Client) (*packet.Message, Ack, error)
 
 	// Terminate is called when the client goes offline. Terminate should
 	// unsubscribe the passed client from all previously subscribed topics. The
@@ -442,7 +440,8 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 				// wait for room since client is online
 				select {
 				case queue(sess) <- msg:
-				case <-sess.owner.Closing():
+				case <-sess.owner.Closed():
+				case <-client.Closed():
 				}
 			}
 		}
@@ -462,7 +461,8 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 				// wait for room if client is online
 				select {
 				case queue(sess) <- msg:
-				case <-sess.owner.Closing():
+				case <-sess.owner.Closed():
+				case <-client.Closed():
 				}
 			} else {
 				// ignore message if queue is full
@@ -483,7 +483,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 }
 
 // Dequeue will get the next message from the queue.
-func (m *MemoryBackend) Dequeue(client *Client, close <-chan struct{}) (*packet.Message, Ack, error) {
+func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 	// mutex locking not needed
 
 	// get session
@@ -497,7 +497,7 @@ func (m *MemoryBackend) Dequeue(client *Client, close <-chan struct{}) (*packet.
 		return msg, nil, nil
 	case msg := <-sess.stored:
 		return msg, nil, nil
-	case <-close:
+	case <-client.Closing():
 		return nil, nil, nil
 	}
 }

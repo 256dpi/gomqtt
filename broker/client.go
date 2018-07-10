@@ -197,7 +197,7 @@ func (c *Client) dequeuer() error {
 		}
 
 		// request next message
-		msg, ack, err := c.backend.Dequeue(c, c.tomb.Dying())
+		msg, ack, err := c.backend.Dequeue(c)
 		if err != nil {
 			return c.die(BackendError, err)
 		} else if msg == nil {
