@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -24,7 +23,7 @@ func main() {
 	flag.Parse()
 
 	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
+		panic(http.ListenAndServe("localhost:6060", nil))
 	}()
 
 	fmt.Printf("Starting broker on URL %s... ", *url)

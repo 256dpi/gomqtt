@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
+	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"os/signal"
@@ -36,6 +38,10 @@ var payload []byte
 
 func main() {
 	flag.Parse()
+
+	go func() {
+		panic(http.ListenAndServe("localhost:6061", nil))
+	}()
 
 	payload = make([]byte, *payloadSize)
 
