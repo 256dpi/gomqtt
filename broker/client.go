@@ -276,6 +276,8 @@ func (c *Client) processor() error {
 		return c.die(TransportError, err)
 	}
 
+	c.log(PacketReceived, c, pkt, nil, nil)
+
 	// get connect
 	connect, ok := pkt.(*packet.ConnectPacket)
 	if !ok {
@@ -304,6 +306,8 @@ func (c *Client) processor() error {
 			return c.die(TransportError, err)
 		}
 
+		c.log(PacketReceived, c, pkt, nil, nil)
+
 		// process packet
 		err = c.processPacket(pkt)
 		if err != nil {
@@ -330,6 +334,8 @@ func (c *Client) dequeuer() error {
 		} else if msg == nil {
 			return tomb.ErrDying
 		}
+
+		c.log(MessageDequeued, c, nil, msg, nil)
 
 		// queue message
 		select {
@@ -369,8 +375,6 @@ func (c *Client) sender() error {
 
 // handle an incoming ConnackPacket
 func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
-	c.log(PacketReceived, c, pkt, nil, nil)
-
 	// save id
 	c.id = pkt.ClientID
 
@@ -517,8 +521,6 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 // handle an incoming GenericPacket
 func (c *Client) processPacket(pkt packet.GenericPacket) error {
-	c.log(PacketReceived, c, pkt, nil, nil)
-
 	// prepare error
 	var err error
 
@@ -656,6 +658,8 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 
 		// publish message to others and queue puback if ack is called
 		err := c.backend.Publish(c, &publish.Message, func(msg *packet.Message) {
+			c.log(MessageAcknowledged, c, nil, msg, nil)
+
 			select {
 			case c.outgoing <- outgoing{pkt: puback}:
 			case <-c.tomb.Dying():
@@ -756,6 +760,8 @@ func (c *Client) processPubrel(id packet.ID) error {
 
 	// publish message to others and queue pubcomp if ack is called
 	err = c.backend.Publish(c, &publish.Message, func(msg *packet.Message) {
+		c.log(MessageAcknowledged, c, nil, msg, nil)
+
 		select {
 		case c.outgoing <- outgoing{pkt: pubcomp}:
 		case <-c.tomb.Dying():

@@ -28,6 +28,9 @@ const (
 	// MessageAcknowledged is emitted after a message has been acknowledged.
 	MessageAcknowledged LogEvent = "message acknowledged"
 
+	// MessageDequeued is emitted after a message has been dequeued.
+	MessageDequeued LogEvent = "message dequeued"
+
 	// MessageForwarded is emitted after a message has been forwarded.
 	MessageForwarded LogEvent = "message forwarded"
 
