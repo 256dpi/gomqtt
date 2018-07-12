@@ -12,7 +12,7 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// LogEvent are received by a Logger.
+// LogEvent denotes the class of an event passed to the logger.
 type LogEvent string
 
 const (
@@ -53,7 +53,7 @@ const (
 	LostConnection LogEvent = "lost connection"
 )
 
-// The Logger callback handles incoming log messages.
+// The Logger callback handles incoming log events.
 type Logger func(LogEvent, *Client, packet.GenericPacket, *packet.Message, error)
 
 // The Engine handles incoming connections and connects them to the backend.
@@ -85,9 +85,6 @@ func NewEngine(backend Backend) *Engine {
 	return &Engine{
 		Backend:        backend,
 		ConnectTimeout: 10 * time.Second,
-		//Logger: func(e LogEvent, _ *Client, p packet.GenericPacket, m *packet.Message, err error) {
-		//	pretty.Println(e, p, m, err)
-		//},
 	}
 }
 
@@ -155,8 +152,8 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 	return true
 }
 
-// Close will stop handling incoming connections and close all current clients.
-// The call will block until all clients are properly closed.
+// Close will stop handling incoming connections and close all acceptors. The
+// call will block until all acceptors returned.
 //
 // Note: All passed servers to Accept must be closed before calling this method.
 func (e *Engine) Close() {
