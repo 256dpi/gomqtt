@@ -394,8 +394,7 @@ func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic strin
 	assert.NoError(t, err)
 
 	receiver := client.New()
-
-	wait := make(chan struct{})
+	wait := make(chan struct{}, 1)
 
 	receiver.Callback = func(msg *packet.Message, err error) error {
 		assert.NoError(t, err)
