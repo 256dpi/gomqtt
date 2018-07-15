@@ -34,7 +34,7 @@ type Session interface {
 
 	// SaveSubscription should store the subscription in the session. An eventual
 	// subscription with the same topic should be quietly overwritten.
-	SaveSubscription(*packet.Subscription) error
+	SaveSubscription(packet.Subscription) error
 
 	// LookupSubscription should match a topic against the stored subscriptions
 	// and eventually return the first found subscription.
@@ -47,7 +47,7 @@ type Session interface {
 
 	// AllSubscriptions should return all subscriptions currently saved in the
 	// session.
-	AllSubscriptions() ([]*packet.Subscription, error)
+	AllSubscriptions() ([]packet.Subscription, error)
 
 	// SaveWill should store the will message.
 	SaveWill(*packet.Message) error
@@ -103,11 +103,11 @@ type Backend interface {
 	// to Setup and Restored. Retained messages that are delivered as a result of
 	// resubscribing a stored subscription must be delivered with the retain flag
 	// set to false.
-	Subscribe(client *Client, sub *packet.Subscription, stored bool) error
+	Subscribe(client *Client, subs []packet.Subscription, stored bool) error
 
 	// Unsubscribe should unsubscribe the passed client from the specified topic.
 	// The unsubscription will be acknowledged if the call returns without an error.
-	Unsubscribe(client *Client, topic string) error
+	Unsubscribe(client *Client, topics []string) error
 
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
@@ -504,11 +504,9 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// resubscribe subscriptions
-	for _, sub := range subs {
-		err = c.backend.Subscribe(c, sub, true)
-		if err != nil {
-			return c.die(BackendError, err)
-		}
+	err = c.backend.Subscribe(c, subs, true)
+	if err != nil {
+		return c.die(BackendError, err)
 	}
 
 	// signal restored client
@@ -576,23 +574,23 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	// handle contained subscriptions
 	for i, subscription := range pkt.Subscriptions {
 		// save subscription in session
-		err := c.session.SaveSubscription(&subscription)
+		err := c.session.SaveSubscription(subscription)
 		if err != nil {
 			return c.die(SessionError, err)
 		}
 
-		// subscribe client to queue
-		err = c.backend.Subscribe(c, &subscription, false)
-		if err != nil {
-			return c.die(BackendError, err)
-		}
-
-		// save granted qos
+		// save to be granted qos
 		suback.ReturnCodes[i] = subscription.QOS
 	}
 
+	// subscribe client to queue
+	err := c.backend.Subscribe(c, pkt.Subscriptions, false)
+	if err != nil {
+		return c.die(BackendError, err)
+	}
+
 	// send suback
-	err := c.send(suback, true)
+	err = c.send(suback, true)
 	if err != nil {
 		return c.die(TransportError, err)
 	}
@@ -602,14 +600,14 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 // handle an incoming UnsubscribePacket
 func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
+	// unsubscribe topics
+	err := c.backend.Unsubscribe(c, pkt.Topics)
+	if err != nil {
+		return c.die(BackendError, err)
+	}
+
 	// handle contained topics
 	for _, topic := range pkt.Topics {
-		// unsubscribe client from queue
-		err := c.backend.Unsubscribe(c, topic)
-		if err != nil {
-			return c.die(BackendError, err)
-		}
-
 		// remove subscription from session
 		err = c.session.DeleteSubscription(topic)
 		if err != nil {
@@ -622,7 +620,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	unsuback.ID = pkt.ID
 
 	// send packet
-	err := c.send(unsuback, true)
+	err = c.send(unsuback, true)
 	if err != nil {
 		return c.die(TransportError, err)
 	}

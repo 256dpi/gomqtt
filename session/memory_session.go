@@ -71,7 +71,7 @@ func (s *MemorySession) AllPackets(dir Direction) ([]packet.GenericPacket, error
 
 // SaveSubscription will store the subscription in the session. An eventual
 // subscription with the same topic gets quietly overwritten.
-func (s *MemorySession) SaveSubscription(sub *packet.Subscription) error {
+func (s *MemorySession) SaveSubscription(sub packet.Subscription) error {
 	s.subscriptions.Set(sub.Topic, sub)
 	return nil
 }
@@ -82,7 +82,8 @@ func (s *MemorySession) LookupSubscription(topic string) (*packet.Subscription, 
 	values := s.subscriptions.Match(topic)
 
 	if len(values) > 0 {
-		return values[0].(*packet.Subscription), nil
+		sub := values[0].(packet.Subscription)
+		return &sub, nil
 	}
 
 	return nil, nil
@@ -97,11 +98,11 @@ func (s *MemorySession) DeleteSubscription(topic string) error {
 }
 
 // AllSubscriptions will return all subscriptions currently saved in the session.
-func (s *MemorySession) AllSubscriptions() ([]*packet.Subscription, error) {
-	var all []*packet.Subscription
+func (s *MemorySession) AllSubscriptions() ([]packet.Subscription, error) {
+	var all []packet.Subscription
 
 	for _, value := range s.subscriptions.All() {
-		all = append(all, value.(*packet.Subscription))
+		all = append(all, value.(packet.Subscription))
 	}
 
 	return all, nil

@@ -215,7 +215,7 @@ func (m *MemoryBackend) Restored(client *Client) error {
 }
 
 // Subscribe will queue retained messages for the passed subscription.
-func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription, stored bool) error {
+func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, stored bool) error {
 	// acquire global mutex
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
@@ -223,25 +223,28 @@ func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription, stor
 	// get session
 	sess := client.Session().(*memorySession)
 
-	// get retained messages
-	values := m.retainedMessages.Search(sub.Topic)
+	// handle all subscriptions
+	for _, sub := range subs {
+		// get retained messages
+		values := m.retainedMessages.Search(sub.Topic)
 
-	// publish messages
-	for _, value := range values {
-		// get message
-		msg := value.(*packet.Message)
+		// publish messages
+		for _, value := range values {
+			// get message
+			msg := value.(*packet.Message)
 
-		// unset retained flag for stored subscriptions
-		if stored {
-			msg = msg.Copy()
-			msg.Retain = false
-		}
+			// unset retained flag for stored subscriptions
+			if stored {
+				msg = msg.Copy()
+				msg.Retain = false
+			}
 
-		// add to temporary queue or return error if queue is full
-		select {
-		case sess.temporary <- msg:
-		default:
-			return ErrQueueFull
+			// add to temporary queue or return error if queue is full
+			select {
+			case sess.temporary <- msg:
+			default:
+				return ErrQueueFull
+			}
 		}
 	}
 
@@ -249,7 +252,7 @@ func (m *MemoryBackend) Subscribe(client *Client, sub *packet.Subscription, stor
 }
 
 // Unsubscribe is not needed at the moment.
-func (m *MemoryBackend) Unsubscribe(client *Client, topic string) error {
+func (m *MemoryBackend) Unsubscribe(client *Client, topics []string) error {
 	return nil
 }
 

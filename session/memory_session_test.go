@@ -78,7 +78,7 @@ func TestMemorySessionPacketStore(t *testing.T) {
 func TestMemorySessionSubscriptionStore(t *testing.T) {
 	session := NewMemorySession()
 
-	subscription := &packet.Subscription{
+	subscription := packet.Subscription{
 		Topic: "+",
 		QOS:   1,
 	}
@@ -94,7 +94,7 @@ func TestMemorySessionSubscriptionStore(t *testing.T) {
 	assert.NoError(t, err)
 
 	sub, err = session.LookupSubscription("foo")
-	assert.Equal(t, subscription, sub)
+	assert.Equal(t, &subscription, sub)
 	assert.NoError(t, err)
 
 	subs, err = session.AllSubscriptions()
