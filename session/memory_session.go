@@ -47,13 +47,13 @@ func (s *MemorySession) NextID() packet.ID {
 
 // SavePacket will store a packet in the session. An eventual existing
 // packet with the same id gets quietly overwritten.
-func (s *MemorySession) SavePacket(dir Direction, pkt packet.GenericPacket) error {
+func (s *MemorySession) SavePacket(dir Direction, pkt packet.Generic) error {
 	s.storeForDirection(dir).Save(pkt)
 	return nil
 }
 
 // LookupPacket will retrieve a packet from the session using a packet id.
-func (s *MemorySession) LookupPacket(dir Direction, id packet.ID) (packet.GenericPacket, error) {
+func (s *MemorySession) LookupPacket(dir Direction, id packet.ID) (packet.Generic, error) {
 	return s.storeForDirection(dir).Lookup(id), nil
 }
 
@@ -65,7 +65,7 @@ func (s *MemorySession) DeletePacket(dir Direction, id packet.ID) error {
 }
 
 // AllPackets will return all packets currently saved in the session.
-func (s *MemorySession) AllPackets(dir Direction) ([]packet.GenericPacket, error) {
+func (s *MemorySession) AllPackets(dir Direction) ([]packet.Generic, error) {
 	return s.storeForDirection(dir).All(), nil
 }
 

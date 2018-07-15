@@ -20,17 +20,17 @@ type Session interface {
 
 	// SavePacket should store a packet in the session. An eventual existing
 	// packet with the same id should be quietly overwritten.
-	SavePacket(session.Direction, packet.GenericPacket) error
+	SavePacket(session.Direction, packet.Generic) error
 
 	// LookupPacket should retrieve a packet from the session using the packet id.
-	LookupPacket(session.Direction, packet.ID) (packet.GenericPacket, error)
+	LookupPacket(session.Direction, packet.ID) (packet.Generic, error)
 
 	// DeletePacket should remove a packet from the session. The method should
 	// not return an error if no packet with the specified id does exists.
 	DeletePacket(session.Direction, packet.ID) error
 
 	// AllPackets should return all packets currently saved in the session.
-	AllPackets(session.Direction) ([]packet.GenericPacket, error)
+	AllPackets(session.Direction) ([]packet.Generic, error)
 
 	// SaveSubscription should store the subscription in the session. An eventual
 	// subscription with the same topic should be quietly overwritten.
@@ -164,7 +164,7 @@ const (
 )
 
 type outgoing struct {
-	pkt packet.GenericPacket
+	pkt packet.Generic
 	msg *packet.Message
 	ack Ack
 }
@@ -196,7 +196,7 @@ type Client struct {
 	id      string
 	session Session
 
-	incoming chan packet.GenericPacket
+	incoming chan packet.Generic
 	outgoing chan outgoing
 
 	publishTokens chan struct{}
@@ -457,7 +457,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// crate incoming queue
-	c.incoming = make(chan packet.GenericPacket, c.PacketPrefetch)
+	c.incoming = make(chan packet.Generic, c.PacketPrefetch)
 
 	// create outgoing queue
 	c.outgoing = make(chan outgoing, c.ParallelPublishes+c.ParallelDequeues)
@@ -518,8 +518,8 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	return nil
 }
 
-// handle an incoming GenericPacket
-func (c *Client) processPacket(pkt packet.GenericPacket) error {
+// handle an incoming packet
+func (c *Client) processPacket(pkt packet.Generic) error {
 	// prepare error
 	var err error
 
@@ -854,7 +854,7 @@ func (c *Client) sendMessage(msg *packet.Message, ack Ack) error {
 }
 
 // send an acknowledgment
-func (c *Client) sendAck(pkt packet.GenericPacket) error {
+func (c *Client) sendAck(pkt packet.Generic) error {
 	// send packet
 	err := c.send(pkt, true)
 	if err != nil {
@@ -876,7 +876,7 @@ func (c *Client) sendAck(pkt packet.GenericPacket) error {
 }
 
 // send a packet
-func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
+func (c *Client) send(pkt packet.Generic, buffered bool) error {
 	// send packet
 	var err error
 	if buffered {
@@ -898,7 +898,7 @@ func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
 /* error handling and logging */
 
 // log a message
-func (c *Client) log(event LogEvent, client *Client, pkt packet.GenericPacket, msg *packet.Message, err error) {
+func (c *Client) log(event LogEvent, client *Client, pkt packet.Generic, msg *packet.Message, err error) {
 	if c.logger != nil {
 		c.logger(event, client, pkt, msg, err)
 	}

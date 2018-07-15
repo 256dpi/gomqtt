@@ -17,7 +17,7 @@ type Conn interface {
 	// underlying connection.
 	//
 	// Note: Only one goroutine can Send at the same time.
-	Send(pkt packet.GenericPacket) error
+	Send(pkt packet.Generic) error
 
 	// BufferedSend will write the packet to an internal buffer. It will flush
 	// the internal buffer automatically when it gets stale. Encoding errors are
@@ -25,14 +25,14 @@ type Conn interface {
 	// the buffer at a later time will be returned on the next call.
 	//
 	// Note: Only one goroutine can call BufferedSend at the same time.
-	BufferedSend(pkt packet.GenericPacket) error
+	BufferedSend(pkt packet.Generic) error
 
 	// Receive will read from the underlying connection and return a fully read
 	// packet. It will return an Error if there was an error while decoding or
 	// reading from the underlying connection.
 	//
 	// Note: Only one goroutine can Receive at the same time.
-	Receive() (packet.GenericPacket, error)
+	Receive() (packet.Generic, error)
 
 	// Close will close the underlying connection and cleanup resources. It will
 	// return an Error if there was an error while closing the underlying

@@ -106,7 +106,7 @@ func TestDetect7(t *testing.T) {
 
 func TestGetID(t *testing.T) {
 	type detail struct {
-		packet GenericPacket
+		packet Generic
 		ok     bool
 	}
 
