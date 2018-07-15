@@ -48,15 +48,6 @@ type Session interface {
 	// AllSubscriptions should return all subscriptions currently saved in the
 	// session.
 	AllSubscriptions() ([]packet.Subscription, error)
-
-	// SaveWill should store the will message.
-	SaveWill(*packet.Message) error
-
-	// LookupWill should retrieve the will message.
-	LookupWill() (*packet.Message, error)
-
-	// ClearWill should remove the will message from the store.
-	ClearWill() error
 }
 
 // Ack is executed by the Backend or Client to signal that a message will be
@@ -204,6 +195,7 @@ type Client struct {
 
 	// set during connect
 	id      string
+	will    *packet.Message
 	session Session
 
 	incoming chan packet.Generic
@@ -486,10 +478,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// save will if present
 	if pkt.Will != nil {
-		err = c.session.SaveWill(pkt.Will)
-		if err != nil {
-			return c.die(SessionError, err)
-		}
+		c.will = pkt.Will
 	}
 
 	// send connack
@@ -816,10 +805,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 // handle an incoming DisconnectPacket
 func (c *Client) processDisconnect() error {
 	// clear will
-	err := c.session.ClearWill()
-	if err != nil {
-		return c.die(SessionError, err)
-	}
+	c.will = nil
 
 	// mark client as cleanly disconnected
 	atomic.StoreUint32(&c.state, clientDisconnected)
@@ -962,24 +948,15 @@ func (c *Client) die(event LogEvent, err error) error {
 
 // will try to cleanup as many resources as possible
 func (c *Client) cleanup() {
-	// check session
-	if c.session != nil && atomic.LoadUint32(&c.state) == clientConnected {
-		// get will
-		will, err := c.session.LookupWill()
+	// check if not cleanly connected and will is present
+	if atomic.LoadUint32(&c.state) == clientConnected && c.will != nil {
+		// publish message to others
+		err := c.backend.Publish(c, c.will, nil)
 		if err != nil {
-			c.log(SessionError, c, nil, nil, err)
+			c.log(BackendError, c, nil, nil, err)
 		}
 
-		// publish will message
-		if will != nil {
-			// publish message to others
-			err := c.backend.Publish(c, will, nil)
-			if err != nil {
-				c.log(BackendError, c, nil, nil, err)
-			}
-
-			c.log(MessagePublished, c, nil, will, nil)
-		}
+		c.log(MessagePublished, c, nil, c.will, nil)
 	}
 
 	// remove client from the queue

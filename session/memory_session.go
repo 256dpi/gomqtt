@@ -3,8 +3,6 @@
 package session
 
 import (
-	"sync"
-
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/topic"
 )
@@ -26,8 +24,6 @@ type MemorySession struct {
 	incStore      *PacketStore
 	outStore      *PacketStore
 	subscriptions *topic.Tree
-	willMessage   *packet.Message
-	willMutex     sync.Mutex
 }
 
 // NewMemorySession returns a new MemorySession.
@@ -108,41 +104,12 @@ func (s *MemorySession) AllSubscriptions() ([]packet.Subscription, error) {
 	return all, nil
 }
 
-// SaveWill will store the will message.
-func (s *MemorySession) SaveWill(newWill *packet.Message) error {
-	s.willMutex.Lock()
-	defer s.willMutex.Unlock()
-
-	s.willMessage = newWill
-
-	return nil
-}
-
-// LookupWill will retrieve the will message.
-func (s *MemorySession) LookupWill() (*packet.Message, error) {
-	s.willMutex.Lock()
-	defer s.willMutex.Unlock()
-
-	return s.willMessage, nil
-}
-
-// ClearWill will remove the will message from the store.
-func (s *MemorySession) ClearWill() error {
-	s.willMutex.Lock()
-	defer s.willMutex.Unlock()
-
-	s.willMessage = nil
-
-	return nil
-}
-
 // Reset will completely reset the session.
 func (s *MemorySession) Reset() error {
 	s.counter.Reset()
 	s.incStore.Reset()
 	s.outStore.Reset()
 	s.subscriptions.Reset()
-	s.ClearWill()
 
 	return nil
 }
