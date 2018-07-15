@@ -14,27 +14,27 @@ import (
 
 // A Conn defines an abstract interface for connections used with a Flow.
 type Conn interface {
-	Send(pkt packet.Generic) error
-	Receive() (packet.Generic, error)
+	Send(pkt packet.GenericPacket) error
+	Receive() (packet.GenericPacket, error)
 	Close() error
 }
 
 // The Pipe pipes packets from Send to Receive.
 type Pipe struct {
-	pipe  chan packet.Generic
+	pipe  chan packet.GenericPacket
 	close chan struct{}
 }
 
 // NewPipe returns a new Pipe.
 func NewPipe() *Pipe {
 	return &Pipe{
-		pipe:  make(chan packet.Generic),
+		pipe:  make(chan packet.GenericPacket),
 		close: make(chan struct{}),
 	}
 }
 
 // Send returns packet on next Receive call.
-func (conn *Pipe) Send(pkt packet.Generic) error {
+func (conn *Pipe) Send(pkt packet.GenericPacket) error {
 	select {
 	case conn.pipe <- pkt:
 		return nil
@@ -44,7 +44,7 @@ func (conn *Pipe) Send(pkt packet.Generic) error {
 }
 
 // Receive returns the packet being sent with Send.
-func (conn *Pipe) Receive() (packet.Generic, error) {
+func (conn *Pipe) Receive() (packet.GenericPacket, error) {
 	select {
 	case pkt := <-conn.pipe:
 		return pkt, nil
@@ -74,7 +74,7 @@ const (
 // An Action is a step in a flow.
 type action struct {
 	kind     byte
-	packet   packet.Generic
+	packet   packet.GenericPacket
 	fn       func()
 	ch       chan struct{}
 	duration time.Duration
@@ -100,7 +100,7 @@ func (f *Flow) Debug() *Flow {
 }
 
 // Send will send and one packet.
-func (f *Flow) Send(pkt packet.Generic) *Flow {
+func (f *Flow) Send(pkt packet.GenericPacket) *Flow {
 	f.add(&action{
 		kind:   actionSend,
 		packet: pkt,
@@ -110,7 +110,7 @@ func (f *Flow) Send(pkt packet.Generic) *Flow {
 }
 
 // Receive will receive and match one packet.
-func (f *Flow) Receive(pkt packet.Generic) *Flow {
+func (f *Flow) Receive(pkt packet.GenericPacket) *Flow {
 	f.add(&action{
 		kind:   actionReceive,
 		packet: pkt,
@@ -120,7 +120,7 @@ func (f *Flow) Receive(pkt packet.Generic) *Flow {
 }
 
 // Skip will receive one packet without matching it.
-func (f *Flow) Skip(pkt packet.Generic) *Flow {
+func (f *Flow) Skip(pkt packet.GenericPacket) *Flow {
 	f.add(&action{
 		kind:   actionSkip,
 		packet: pkt,

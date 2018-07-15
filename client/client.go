@@ -74,17 +74,17 @@ type Session interface {
 
 	// SavePacket will store a packet in the session. An eventual existing
 	// packet with the same id gets quietly overwritten.
-	SavePacket(session.Direction, packet.Generic) error
+	SavePacket(session.Direction, packet.GenericPacket) error
 
 	// LookupPacket will retrieve a packet from the session using a packet id.
-	LookupPacket(session.Direction, packet.ID) (packet.Generic, error)
+	LookupPacket(session.Direction, packet.ID) (packet.GenericPacket, error)
 
 	// DeletePacket will remove a packet from the session. The method must not
 	// return an error if no packet with the specified id does exists.
 	DeletePacket(session.Direction, packet.ID) error
 
 	// AllPackets will return all packets currently saved in the session.
-	AllPackets(session.Direction) ([]packet.Generic, error)
+	AllPackets(session.Direction) ([]packet.GenericPacket, error)
 
 	// Reset will completely reset the session.
 	Reset() error
@@ -785,7 +785,7 @@ func (c *Client) pinger() error {
 /* helpers */
 
 // sends packet and updates lastSend
-func (c *Client) send(pkt packet.Generic, buffered bool) error {
+func (c *Client) send(pkt packet.GenericPacket, buffered bool) error {
 	// reset keep alive tracker
 	c.tracker.reset()
 

@@ -8,20 +8,20 @@ import (
 
 // PacketStore is a goroutine safe packet store.
 type PacketStore struct {
-	packets map[packet.ID]packet.Generic
+	packets map[packet.ID]packet.GenericPacket
 	mutex   sync.RWMutex
 }
 
 // NewPacketStore returns a new PacketStore.
 func NewPacketStore() *PacketStore {
 	return &PacketStore{
-		packets: make(map[packet.ID]packet.Generic),
+		packets: make(map[packet.ID]packet.GenericPacket),
 	}
 }
 
 // Save will store a packet in the store. An eventual existing packet with the
 // same id gets quietly overwritten.
-func (s *PacketStore) Save(pkt packet.Generic) {
+func (s *PacketStore) Save(pkt packet.GenericPacket) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -32,7 +32,7 @@ func (s *PacketStore) Save(pkt packet.Generic) {
 }
 
 // Lookup will retrieve a packet from the store.
-func (s *PacketStore) Lookup(id packet.ID) packet.Generic {
+func (s *PacketStore) Lookup(id packet.ID) packet.GenericPacket {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -48,11 +48,11 @@ func (s *PacketStore) Delete(id packet.ID) {
 }
 
 // All will return all packets currently saved in the store.
-func (s *PacketStore) All() []packet.Generic {
+func (s *PacketStore) All() []packet.GenericPacket {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	var all []packet.Generic
+	var all []packet.GenericPacket
 
 	for _, pkt := range s.packets {
 		all = append(all, pkt)
@@ -66,5 +66,5 @@ func (s *PacketStore) Reset() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.packets = make(map[packet.ID]packet.Generic)
+	s.packets = make(map[packet.ID]packet.GenericPacket)
 }

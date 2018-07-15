@@ -97,7 +97,7 @@ func (t Type) defaultFlags() byte {
 
 // New creates a new packet based on the type. It is a shortcut to call one of
 // the New*Packet functions. An error is returned if the type is invalid.
-func (t Type) New() (Generic, error) {
+func (t Type) New() (GenericPacket, error) {
 	switch t {
 	case CONNECT:
 		return NewConnectPacket(), nil

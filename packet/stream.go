@@ -31,7 +31,7 @@ func NewEncoder(writer io.Writer) *Encoder {
 }
 
 // Write encodes and writes the passed packet to the write buffer.
-func (e *Encoder) Write(pkt Generic) error {
+func (e *Encoder) Write(pkt GenericPacket) error {
 	// reset and eventually grow buffer
 	packetLength := pkt.Len()
 	e.buffer.Reset()
@@ -74,7 +74,7 @@ func NewDecoder(reader io.Reader) *Decoder {
 }
 
 // Read reads the next packet from the buffered reader.
-func (d *Decoder) Read() (Generic, error) {
+func (d *Decoder) Read() (GenericPacket, error) {
 	// initial detection length
 	detectionLength := 2
 
