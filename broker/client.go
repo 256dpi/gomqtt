@@ -89,8 +89,9 @@ type Backend interface {
 	// incoming packets and queued messages.
 	Restored(client *Client) error
 
-	// Subscribe should subscribe the passed client to the specified topic and
-	// call Publish with any incoming messages. The subscription will be
+	// Subscribe should subscribe the passed client to the specified topic.
+	// Incoming messages that match the supplied subscription should be added to
+	// queue that is drained when Dequeue is called. The subscription will be
 	// acknowledged if the call returns without an error.
 	//
 	// Retained messages that match the supplied subscription should be added to
