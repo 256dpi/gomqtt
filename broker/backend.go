@@ -215,10 +215,15 @@ func (m *MemoryBackend) Restored(client *Client) error {
 }
 
 // Subscribe will queue retained messages for the passed subscription.
-func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, stored bool) error {
+func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, stored bool, ack Ack) error {
 	// acquire global mutex
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
+
+	// call ack if provided
+	if ack != nil {
+		ack()
+	}
 
 	// get session
 	sess := client.Session().(*memorySession)
@@ -252,7 +257,12 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, st
 }
 
 // Unsubscribe is not needed at the moment.
-func (m *MemoryBackend) Unsubscribe(client *Client, topics []string) error {
+func (m *MemoryBackend) Unsubscribe(client *Client, topics []string, ack Ack) error {
+	// call ack if provided
+	if ack != nil {
+		ack()
+	}
+
 	return nil
 }
 
@@ -342,7 +352,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 
 	// call ack if available
 	if ack != nil {
-		ack(msg)
+		ack()
 	}
 
 	return nil

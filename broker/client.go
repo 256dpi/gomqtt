@@ -62,7 +62,7 @@ type Session interface {
 // Ack is executed by the Backend or Client to signal that a message will be
 // delivered under the selected qos level and is therefore safe to be deleted
 // from either queue.
-type Ack func(message *packet.Message)
+type Ack func()
 
 // A Backend provides the effective brokering functionality to its clients.
 type Backend interface {
@@ -89,25 +89,30 @@ type Backend interface {
 	// incoming packets and queued messages.
 	Restored(client *Client) error
 
-	// Subscribe should subscribe the passed client to the specified topic.
+	// Subscribe should subscribe the passed client to the specified topics.
+	// Subscriptions are added to the session when the call returns without
+	// errors. If an Ack is provided, the subscription will be acknowledged
+	// when called during or after the call to Subscribe.
+	//
 	// Incoming messages that match the supplied subscription should be added to
-	// queue that is drained when Dequeue is called. The subscription will be
-	// acknowledged if the call returns without an error.
+	// a temporary or persistent queue that is drained when Dequeue is called.
 	//
 	// Retained messages that match the supplied subscription should be added to
 	// a temporary queue that is also drained when Dequeue is called. Retained
-	// messages are not part of the stored session queue as they are anyway
+	// messages are not part of the stored session state as they are anyway
 	// redelivered using the stored subscription mechanism.
 	//
 	// Subscribe is also called to resubscribe stored subscriptions between calls
 	// to Setup and Restored. Retained messages that are delivered as a result of
 	// resubscribing a stored subscription must be delivered with the retain flag
 	// set to false.
-	Subscribe(client *Client, subs []packet.Subscription, stored bool) error
+	Subscribe(client *Client, subs []packet.Subscription, stored bool, ack Ack) error
 
-	// Unsubscribe should unsubscribe the passed client from the specified topic.
-	// The unsubscription will be acknowledged if the call returns without an error.
-	Unsubscribe(client *Client, topics []string) error
+	// Unsubscribe should unsubscribe the passed client from the specified topics.
+	// Subscriptions are removed from the session when the call returns without
+	// errors. If an Ack is provided, the unsubscription will be acknowledged
+	// when called during or after the call to Unsubscribe.
+	Unsubscribe(client *Client, topics []string, ack Ack) error
 
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
@@ -180,6 +185,11 @@ type Client struct {
 	// parallel calls to Publish a client can perform. Will default to 10.
 	ParallelPublishes int
 
+	// ParallelSubscribes may be set during Setup to control the number of
+	// parallel calls to Subscribe and Unsubscribe a client can perform.
+	// Will default to 10.
+	ParallelSubscribes int
+
 	// ParallelDequeues may be set during Setup to control the number of
 	// parallel calls to Dequeue a client can perform. Will default to 10.
 	ParallelDequeues int
@@ -199,8 +209,9 @@ type Client struct {
 	incoming chan packet.Generic
 	outgoing chan outgoing
 
-	publishTokens chan struct{}
-	dequeueTokens chan struct{}
+	publishTokens   chan struct{}
+	subscribeTokens chan struct{}
+	dequeueTokens   chan struct{}
 
 	tomb tomb.Tomb
 	done chan struct{}
@@ -434,9 +445,14 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		c.PacketPrefetch = 10
 	}
 
-	// set default unacked publishes
+	// set default parallel publishes
 	if c.ParallelPublishes <= 0 {
 		c.ParallelPublishes = 10
+	}
+
+	// set default parallel subscribes
+	if c.ParallelSubscribes <= 0 {
+		c.ParallelSubscribes = 5
 	}
 
 	// set default parallel dequeues
@@ -448,6 +464,12 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.publishTokens = make(chan struct{}, c.ParallelPublishes)
 	for i := 0; i < c.ParallelPublishes; i++ {
 		c.publishTokens <- struct{}{}
+	}
+
+	// prepare subscribe tokens
+	c.subscribeTokens = make(chan struct{}, c.ParallelSubscribes)
+	for i := 0; i < c.ParallelSubscribes; i++ {
+		c.subscribeTokens <- struct{}{}
 	}
 
 	// prepare dequeue tokens
@@ -504,7 +526,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// resubscribe subscriptions
-	err = c.backend.Subscribe(c, subs, true)
+	err = c.backend.Subscribe(c, subs, true, nil)
 	if err != nil {
 		return c.die(BackendError, err)
 	}
@@ -566,33 +588,42 @@ func (c *Client) processPingreq() error {
 
 // handle an incoming SubscribePacket
 func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
+	// acquire subscribe token
+	select {
+	case <-c.subscribeTokens:
+		// continue
+	case <-c.tomb.Dying():
+		return tomb.ErrDying
+	}
+
 	// prepare suback packet
 	suback := packet.NewSubackPacket()
 	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
 	suback.ID = pkt.ID
 
-	// handle contained subscriptions
+	// set granted qos
 	for i, subscription := range pkt.Subscriptions {
+		suback.ReturnCodes[i] = subscription.QOS
+	}
+
+	// subscribe client to queue
+	err := c.backend.Subscribe(c, pkt.Subscriptions, false, func() {
+		select {
+		case c.outgoing <- outgoing{pkt: suback}:
+		case <-c.tomb.Dying():
+		}
+	})
+	if err != nil {
+		return c.die(BackendError, err)
+	}
+
+	// save subscriptions in session
+	for _, subscription := range pkt.Subscriptions {
 		// save subscription in session
 		err := c.session.SaveSubscription(subscription)
 		if err != nil {
 			return c.die(SessionError, err)
 		}
-
-		// save to be granted qos
-		suback.ReturnCodes[i] = subscription.QOS
-	}
-
-	// subscribe client to queue
-	err := c.backend.Subscribe(c, pkt.Subscriptions, false)
-	if err != nil {
-		return c.die(BackendError, err)
-	}
-
-	// send suback
-	err = c.send(suback, true)
-	if err != nil {
-		return c.die(TransportError, err)
 	}
 
 	return nil
@@ -600,29 +631,36 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 
 // handle an incoming UnsubscribePacket
 func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
-	// unsubscribe topics
-	err := c.backend.Unsubscribe(c, pkt.Topics)
-	if err != nil {
-		return c.die(BackendError, err)
-	}
-
-	// handle contained topics
-	for _, topic := range pkt.Topics {
-		// remove subscription from session
-		err = c.session.DeleteSubscription(topic)
-		if err != nil {
-			return c.die(SessionError, err)
-		}
+	// acquire subscribe token
+	select {
+	case <-c.subscribeTokens:
+		// continue
+	case <-c.tomb.Dying():
+		return tomb.ErrDying
 	}
 
 	// prepare unsuback packet
 	unsuback := packet.NewUnsubackPacket()
 	unsuback.ID = pkt.ID
 
-	// send packet
-	err = c.send(unsuback, true)
+	// unsubscribe topics
+	err := c.backend.Unsubscribe(c, pkt.Topics, func() {
+		select {
+		case c.outgoing <- outgoing{pkt: unsuback}:
+		case <-c.tomb.Dying():
+		}
+	})
 	if err != nil {
-		return c.die(TransportError, err)
+		return c.die(BackendError, err)
+	}
+
+	// remove subscriptions from session
+	for _, topic := range pkt.Topics {
+		// remove subscription from session
+		err = c.session.DeleteSubscription(topic)
+		if err != nil {
+			return c.die(SessionError, err)
+		}
 	}
 
 	return nil
@@ -656,8 +694,8 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 
 		// publish message to others and queue puback if ack is called
-		err := c.backend.Publish(c, &publish.Message, func(msg *packet.Message) {
-			c.log(MessageAcknowledged, c, nil, msg, nil)
+		err := c.backend.Publish(c, &publish.Message, func() {
+			c.log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
 			select {
 			case c.outgoing <- outgoing{pkt: puback}:
@@ -758,8 +796,8 @@ func (c *Client) processPubrel(id packet.ID) error {
 	}
 
 	// publish message to others and queue pubcomp if ack is called
-	err = c.backend.Publish(c, &publish.Message, func(msg *packet.Message) {
-		c.log(MessageAcknowledged, c, nil, msg, nil)
+	err = c.backend.Publish(c, &publish.Message, func() {
+		c.log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
 		select {
 		case c.outgoing <- outgoing{pkt: pubcomp}:
@@ -832,7 +870,7 @@ func (c *Client) sendMessage(msg *packet.Message, ack Ack) error {
 	// acknowledge message since it has been stored in the session if a quality
 	// of service > 0 is requested
 	if ack != nil {
-		ack(msg)
+		ack()
 
 		c.log(MessageAcknowledged, c, nil, msg, nil)
 	}
@@ -869,8 +907,15 @@ func (c *Client) sendAck(pkt packet.Generic) error {
 		}
 	}
 
-	// put back publish token
-	c.publishTokens <- struct{}{}
+	// check ack type
+	switch pkt.(type) {
+	case *packet.SubackPacket, *packet.UnsubackPacket:
+		// put back subscribe token
+		c.subscribeTokens <- struct{}{}
+	case *packet.PubackPacket, *packet.PubcompPacket:
+		// put back publish token
+		c.publishTokens <- struct{}{}
+	}
 
 	return nil
 }
