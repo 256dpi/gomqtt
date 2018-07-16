@@ -6,14 +6,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPacketHeaderDecodeError1(t *testing.T) {
+func TestHeaderDecodeError1(t *testing.T) {
 	buf := []byte{0x6f, 193, 2} // < not enough bytes
 
 	_, _, _, err := headerDecode(buf, 0)
 	assert.Error(t, err)
 }
 
-func TestPacketHeaderDecodeError2(t *testing.T) {
+func TestHeaderDecodeError2(t *testing.T) {
 	// source to small
 	buf := []byte{0x62}
 
@@ -21,14 +21,14 @@ func TestPacketHeaderDecodeError2(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPacketHeaderDecodeError3(t *testing.T) {
+func TestHeaderDecodeError3(t *testing.T) {
 	buf := []byte{0x62, 0xff} // < invalid packet type
 
 	_, _, _, err := headerDecode(buf, 0)
 	assert.Error(t, err)
 }
 
-func TestPacketHeaderDecodeError4(t *testing.T) {
+func TestHeaderDecodeError4(t *testing.T) {
 	// remaining length to big
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0xff}
 
@@ -38,7 +38,7 @@ func TestPacketHeaderDecodeError4(t *testing.T) {
 	assert.Equal(t, 1, n)
 }
 
-func TestPacketHeaderDecodeError5(t *testing.T) {
+func TestHeaderDecodeError5(t *testing.T) {
 	buf := []byte{0x66, 0x00, 0x01} // < wrong flags
 
 	n, _, _, err := headerDecode(buf, 6)
@@ -46,7 +46,7 @@ func TestPacketHeaderDecodeError5(t *testing.T) {
 	assert.Equal(t, 1, n)
 }
 
-func TestPacketHeaderEncode1(t *testing.T) {
+func TestHeaderEncode1(t *testing.T) {
 	headerBytes := []byte{0x62, 193, 2}
 
 	buf := make([]byte, 3)
@@ -57,7 +57,7 @@ func TestPacketHeaderEncode1(t *testing.T) {
 	assert.Equal(t, headerBytes, buf)
 }
 
-func TestPacketHeaderEncode2(t *testing.T) {
+func TestHeaderEncode2(t *testing.T) {
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
 	buf := make([]byte, 5)
@@ -68,7 +68,7 @@ func TestPacketHeaderEncode2(t *testing.T) {
 	assert.Equal(t, headerBytes, buf)
 }
 
-func TestPacketHeaderEncodeError1(t *testing.T) {
+func TestHeaderEncodeError1(t *testing.T) {
 	headerBytes := []byte{0x00}
 
 	buf := make([]byte, 1) // < wrong buffer size
@@ -79,7 +79,7 @@ func TestPacketHeaderEncodeError1(t *testing.T) {
 	assert.Equal(t, headerBytes, buf)
 }
 
-func TestPacketHeaderEncodeError2(t *testing.T) {
+func TestHeaderEncodeError2(t *testing.T) {
 	headerBytes := []byte{0x00, 0x00}
 
 	buf := make([]byte, 2)
@@ -91,7 +91,7 @@ func TestPacketHeaderEncodeError2(t *testing.T) {
 	assert.Equal(t, headerBytes, buf)
 }
 
-func TestPacketHeaderEncodeError3(t *testing.T) {
+func TestHeaderEncodeError3(t *testing.T) {
 	headerBytes := []byte{0x00, 0x00}
 
 	buf := make([]byte, 2)

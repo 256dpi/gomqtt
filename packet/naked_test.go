@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNakedPacketDecode(t *testing.T) {
+func TestNakedDecode(t *testing.T) {
 	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
@@ -19,7 +19,7 @@ func TestNakedPacketDecode(t *testing.T) {
 	assert.Equal(t, 2, n)
 }
 
-func TestNakedPacketDecodeError1(t *testing.T) {
+func TestNakedDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		1, // < wrong remaining length
@@ -32,7 +32,7 @@ func TestNakedPacketDecodeError1(t *testing.T) {
 	assert.Equal(t, 2, n)
 }
 
-func TestNakedPacketEncode(t *testing.T) {
+func TestNakedEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
@@ -46,7 +46,7 @@ func TestNakedPacketEncode(t *testing.T) {
 	assert.Equal(t, pktBytes, dst[:n])
 }
 
-func TestNakedPacketEqualDecodeEncode(t *testing.T) {
+func TestNakedEqualDecodeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
@@ -70,7 +70,7 @@ func TestNakedPacketEqualDecodeEncode(t *testing.T) {
 	assert.Equal(t, 2, n3)
 }
 
-func BenchmarkNakedPacketEncode(b *testing.B) {
+func BenchmarkNakedEncode(b *testing.B) {
 	buf := make([]byte, nakedLen())
 
 	for i := 0; i < b.N; i++ {
@@ -81,7 +81,7 @@ func BenchmarkNakedPacketEncode(b *testing.B) {
 	}
 }
 
-func BenchmarkNakedPacketDecode(b *testing.B) {
+func BenchmarkNakedDecode(b *testing.B) {
 	pktBytes := []byte{
 		byte(DISCONNECT << 4),
 		0,
@@ -95,7 +95,7 @@ func BenchmarkNakedPacketDecode(b *testing.B) {
 	}
 }
 
-func testNakedPacketImplementation(t *testing.T, _t Type) {
+func testNakedImplementation(t *testing.T, _t Type) {
 	pkt, err := _t.New()
 	assert.NoError(t, err)
 	assert.Equal(t, _t, pkt.Type())
@@ -112,13 +112,13 @@ func testNakedPacketImplementation(t *testing.T, _t Type) {
 }
 
 func TestDisconnectImplementation(t *testing.T) {
-	testNakedPacketImplementation(t, DISCONNECT)
+	testNakedImplementation(t, DISCONNECT)
 }
 
 func TestPingreqImplementation(t *testing.T) {
-	testNakedPacketImplementation(t, PINGREQ)
+	testNakedImplementation(t, PINGREQ)
 }
 
 func TestPingrespImplementation(t *testing.T) {
-	testNakedPacketImplementation(t, PINGRESP)
+	testNakedImplementation(t, PINGRESP)
 }

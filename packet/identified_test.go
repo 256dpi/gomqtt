@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIdentifiedPacketDecode(t *testing.T) {
+func TestIdentifiedDecode(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
@@ -21,7 +21,7 @@ func TestIdentifiedPacketDecode(t *testing.T) {
 	assert.Equal(t, ID(7), pid)
 }
 
-func TestIdentifiedPacketDecodeError1(t *testing.T) {
+func TestIdentifiedDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
 		1, // < wrong remaining length
@@ -35,7 +35,7 @@ func TestIdentifiedPacketDecodeError1(t *testing.T) {
 	assert.Equal(t, ID(0), pid)
 }
 
-func TestIdentifiedPacketDecodeError2(t *testing.T) {
+func TestIdentifiedDecodeError2(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
@@ -49,7 +49,7 @@ func TestIdentifiedPacketDecodeError2(t *testing.T) {
 	assert.Equal(t, ID(0), pid)
 }
 
-func TestIdentifiedPacketDecodeError3(t *testing.T) {
+func TestIdentifiedDecodeError3(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
@@ -63,7 +63,7 @@ func TestIdentifiedPacketDecodeError3(t *testing.T) {
 	assert.Equal(t, ID(0), pid)
 }
 
-func TestIdentifiedPacketEncode(t *testing.T) {
+func TestIdentifiedEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
@@ -79,7 +79,7 @@ func TestIdentifiedPacketEncode(t *testing.T) {
 	assert.Equal(t, pktBytes, dst[:n])
 }
 
-func TestIdentifiedPacketEncodeError1(t *testing.T) {
+func TestIdentifiedEncodeError1(t *testing.T) {
 	dst := make([]byte, 3) // < insufficient buffer
 	n, err := identifiedEncode(dst, 7, PUBACK)
 
@@ -87,7 +87,7 @@ func TestIdentifiedPacketEncodeError1(t *testing.T) {
 	assert.Equal(t, 0, n)
 }
 
-func TestIdentifiedPacketEncodeError2(t *testing.T) {
+func TestIdentifiedEncodeError2(t *testing.T) {
 	dst := make([]byte, identifiedLen())
 	n, err := identifiedEncode(dst, 0, PUBACK) // < zero id
 
@@ -95,7 +95,7 @@ func TestIdentifiedPacketEncodeError2(t *testing.T) {
 	assert.Equal(t, 0, n)
 }
 
-func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
+func TestIdentifiedEqualDecodeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
@@ -122,7 +122,7 @@ func TestIdentifiedPacketEqualDecodeEncode(t *testing.T) {
 	assert.Equal(t, ID(7), pid)
 }
 
-func BenchmarkIdentifiedPacketEncode(b *testing.B) {
+func BenchmarkIdentifiedEncode(b *testing.B) {
 	pkt := &Puback{}
 	pkt.ID = 1
 
@@ -136,7 +136,7 @@ func BenchmarkIdentifiedPacketEncode(b *testing.B) {
 	}
 }
 
-func BenchmarkIdentifiedPacketDecode(b *testing.B) {
+func BenchmarkIdentifiedDecode(b *testing.B) {
 	pktBytes := []byte{
 		byte(PUBACK << 4),
 		2,
@@ -154,7 +154,7 @@ func BenchmarkIdentifiedPacketDecode(b *testing.B) {
 	}
 }
 
-func testIdentifiedPacketImplementation(t *testing.T, pkt Generic) {
+func testIdentifiedImplementation(t *testing.T, pkt Generic) {
 	assert.Equal(t, fmt.Sprintf("<%s ID=1>", pkt.Type().String()), pkt.String())
 
 	buf := make([]byte, pkt.Len())
@@ -171,33 +171,33 @@ func TestPubackImplementation(t *testing.T) {
 	pkt := NewPuback()
 	pkt.ID = 1
 
-	testIdentifiedPacketImplementation(t, pkt)
+	testIdentifiedImplementation(t, pkt)
 }
 
 func TestPubcompImplementation(t *testing.T) {
 	pkt := NewPubcomp()
 	pkt.ID = 1
 
-	testIdentifiedPacketImplementation(t, pkt)
+	testIdentifiedImplementation(t, pkt)
 }
 
 func TestPubrecImplementation(t *testing.T) {
 	pkt := NewPubrec()
 	pkt.ID = 1
 
-	testIdentifiedPacketImplementation(t, pkt)
+	testIdentifiedImplementation(t, pkt)
 }
 
 func TestPubrelImplementation(t *testing.T) {
 	pkt := NewPubrel()
 	pkt.ID = 1
 
-	testIdentifiedPacketImplementation(t, pkt)
+	testIdentifiedImplementation(t, pkt)
 }
 
 func TestUnsubackImplementation(t *testing.T) {
 	pkt := NewUnsuback()
 	pkt.ID = 1
 
-	testIdentifiedPacketImplementation(t, pkt)
+	testIdentifiedImplementation(t, pkt)
 }

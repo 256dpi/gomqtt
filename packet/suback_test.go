@@ -14,7 +14,7 @@ func TestSubackInterface(t *testing.T) {
 	assert.Equal(t, "<Suback ID=0 ReturnCodes=[0, 1]>", pkt.String())
 }
 
-func TestSubackPacketDecode(t *testing.T) {
+func TestSubackDecode(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBACK << 4),
 		6,
@@ -34,7 +34,7 @@ func TestSubackPacketDecode(t *testing.T) {
 	assert.Equal(t, 4, len(pkt.ReturnCodes))
 }
 
-func TestSubackPacketDecodeError1(t *testing.T) {
+func TestSubackDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBACK << 4),
 		1, // < wrong remaining length
@@ -49,7 +49,7 @@ func TestSubackPacketDecodeError1(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestSubackPacketDecodeError2(t *testing.T) {
+func TestSubackDecodeError2(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBACK << 4),
 		6,
@@ -67,7 +67,7 @@ func TestSubackPacketDecodeError2(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestSubackPacketDecodeError3(t *testing.T) {
+func TestSubackDecodeError3(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBACK << 4),
 		1, // < wrong remaining length
@@ -80,7 +80,7 @@ func TestSubackPacketDecodeError3(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestSubackPacketDecodeError4(t *testing.T) {
+func TestSubackDecodeError4(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBCOMP << 4), // < wrong packet type
 		3,
@@ -95,7 +95,7 @@ func TestSubackPacketDecodeError4(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestSubackPacketDecodeError5(t *testing.T) {
+func TestSubackDecodeError5(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBACK << 4),
 		3,
@@ -110,7 +110,7 @@ func TestSubackPacketDecodeError5(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestSubackPacketEncode(t *testing.T) {
+func TestSubackEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBACK << 4),
 		6,
@@ -134,7 +134,7 @@ func TestSubackPacketEncode(t *testing.T) {
 	assert.Equal(t, pktBytes, dst[:n])
 }
 
-func TestSubackPacketEncodeError1(t *testing.T) {
+func TestSubackEncodeError1(t *testing.T) {
 	pkt := NewSuback()
 	pkt.ID = 7
 	pkt.ReturnCodes = []byte{0x81}
@@ -146,7 +146,7 @@ func TestSubackPacketEncodeError1(t *testing.T) {
 	assert.Equal(t, 0, n)
 }
 
-func TestSubackPacketEncodeError2(t *testing.T) {
+func TestSubackEncodeError2(t *testing.T) {
 	pkt := NewSuback()
 	pkt.ID = 7
 	pkt.ReturnCodes = []byte{0x80}
@@ -158,7 +158,7 @@ func TestSubackPacketEncodeError2(t *testing.T) {
 	assert.Equal(t, 0, n)
 }
 
-func TestSubackPacketEncodeError3(t *testing.T) {
+func TestSubackEncodeError3(t *testing.T) {
 	pkt := NewSuback()
 	pkt.ID = 0 // < zero packet id
 	pkt.ReturnCodes = []byte{0x80}

@@ -23,7 +23,7 @@ func TestConnackInterface(t *testing.T) {
 	assert.Equal(t, "<Connack SessionPresent=false ReturnCode=0>", pkt.String())
 }
 
-func TestConnackPacketDecode(t *testing.T) {
+func TestConnackDecode(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -41,7 +41,7 @@ func TestConnackPacketDecode(t *testing.T) {
 	assert.Equal(t, ConnectionAccepted, pkt.ReturnCode)
 }
 
-func TestConnackPacketDecodeError1(t *testing.T) {
+func TestConnackDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNACK << 4),
 		3, // < wrong size
@@ -55,7 +55,7 @@ func TestConnackPacketDecodeError1(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestConnackPacketDecodeError2(t *testing.T) {
+func TestConnackDecodeError2(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -69,7 +69,7 @@ func TestConnackPacketDecodeError2(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestConnackPacketDecodeError3(t *testing.T) {
+func TestConnackDecodeError3(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -83,7 +83,7 @@ func TestConnackPacketDecodeError3(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestConnackPacketDecodeError4(t *testing.T) {
+func TestConnackDecodeError4(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -97,7 +97,7 @@ func TestConnackPacketDecodeError4(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestConnackPacketDecodeError5(t *testing.T) {
+func TestConnackDecodeError5(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNACK << 4),
 		1, // < wrong remaining length
@@ -111,7 +111,7 @@ func TestConnackPacketDecodeError5(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestConnackPacketEncode(t *testing.T) {
+func TestConnackEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(CONNACK << 4),
 		2,
@@ -131,7 +131,7 @@ func TestConnackPacketEncode(t *testing.T) {
 	assert.Equal(t, pktBytes, dst[:n])
 }
 
-func TestConnackPacketEncodeError1(t *testing.T) {
+func TestConnackEncodeError1(t *testing.T) {
 	pkt := NewConnack()
 
 	dst := make([]byte, 3) // < wrong buffer size
@@ -141,7 +141,7 @@ func TestConnackPacketEncodeError1(t *testing.T) {
 	assert.Equal(t, 0, n)
 }
 
-func TestConnackPacketEncodeError2(t *testing.T) {
+func TestConnackEncodeError2(t *testing.T) {
 	pkt := NewConnack()
 	pkt.ReturnCode = 11 // < wrong return code
 

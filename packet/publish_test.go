@@ -13,7 +13,7 @@ func TestPublishInterface(t *testing.T) {
 	assert.Equal(t, "<Publish ID=0 Message=<Message Topic=\"\" QOS=0 Retain=false Payload=[]> Dup=false>", pkt.String())
 }
 
-func TestPublishPacketDecode1(t *testing.T) {
+func TestPublishDecode1(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 11,
 		22,
@@ -38,7 +38,7 @@ func TestPublishPacketDecode1(t *testing.T) {
 	assert.Equal(t, true, pkt.Dup)
 }
 
-func TestPublishPacketDecode2(t *testing.T) {
+func TestPublishDecode2(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH << 4),
 		20,
@@ -61,7 +61,7 @@ func TestPublishPacketDecode2(t *testing.T) {
 	assert.Equal(t, false, pkt.Dup)
 }
 
-func TestPublishPacketDecodeError1(t *testing.T) {
+func TestPublishDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH << 4),
 		2, // < too much
@@ -73,7 +73,7 @@ func TestPublishPacketDecodeError1(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketDecodeError2(t *testing.T) {
+func TestPublishDecodeError2(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 6, // < wrong qos
 		0,
@@ -85,7 +85,7 @@ func TestPublishPacketDecodeError2(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketDecodeError3(t *testing.T) {
+func TestPublishDecodeError3(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH << 4),
 		0,
@@ -98,7 +98,7 @@ func TestPublishPacketDecodeError3(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketDecodeError4(t *testing.T) {
+func TestPublishDecodeError4(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH << 4),
 		2,
@@ -113,7 +113,7 @@ func TestPublishPacketDecodeError4(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketDecodeError5(t *testing.T) {
+func TestPublishDecodeError5(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		2,
@@ -129,7 +129,7 @@ func TestPublishPacketDecodeError5(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketDecodeError6(t *testing.T) {
+func TestPublishDecodeError6(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 2,
 		2,
@@ -146,7 +146,7 @@ func TestPublishPacketDecodeError6(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketEncode1(t *testing.T) {
+func TestPublishEncode1(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH<<4) | 11,
 		22,
@@ -174,7 +174,7 @@ func TestPublishPacketEncode1(t *testing.T) {
 	assert.Equal(t, pktBytes, dst[:n])
 }
 
-func TestPublishPacketEncode2(t *testing.T) {
+func TestPublishEncode2(t *testing.T) {
 	pktBytes := []byte{
 		byte(PUBLISH << 4),
 		20,
@@ -196,7 +196,7 @@ func TestPublishPacketEncode2(t *testing.T) {
 	assert.Equal(t, pktBytes, dst[:n])
 }
 
-func TestPublishPacketEncodeError1(t *testing.T) {
+func TestPublishEncodeError1(t *testing.T) {
 	pkt := NewPublish()
 	pkt.Message.Topic = "" // < empty topic
 
@@ -206,7 +206,7 @@ func TestPublishPacketEncodeError1(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketEncodeError2(t *testing.T) {
+func TestPublishEncodeError2(t *testing.T) {
 	pkt := NewPublish()
 	pkt.Message.Topic = "t"
 	pkt.Message.QOS = 3 // < wrong qos
@@ -217,7 +217,7 @@ func TestPublishPacketEncodeError2(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketEncodeError3(t *testing.T) {
+func TestPublishEncodeError3(t *testing.T) {
 	pkt := NewPublish()
 	pkt.Message.Topic = "t"
 
@@ -227,7 +227,7 @@ func TestPublishPacketEncodeError3(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketEncodeError4(t *testing.T) {
+func TestPublishEncodeError4(t *testing.T) {
 	pkt := NewPublish()
 	pkt.Message.Topic = string(make([]byte, 65536)) // < too big
 
@@ -237,7 +237,7 @@ func TestPublishPacketEncodeError4(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestPublishPacketEncodeError5(t *testing.T) {
+func TestPublishEncodeError5(t *testing.T) {
 	pkt := NewPublish()
 	pkt.Message.Topic = "test"
 	pkt.Message.QOS = 1

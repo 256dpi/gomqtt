@@ -14,7 +14,7 @@ func TestUnsubscribeInterface(t *testing.T) {
 	assert.Equal(t, "<Unsubscribe Topics=[\"foo\", \"bar\"]>", pkt.String())
 }
 
-func TestUnsubscribePacketDecode(t *testing.T) {
+func TestUnsubscribeDecode(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		32,
@@ -42,7 +42,7 @@ func TestUnsubscribePacketDecode(t *testing.T) {
 	assert.Equal(t, "/a/b/#/cdd", pkt.Topics[2])
 }
 
-func TestUnsubscribePacketDecodeError1(t *testing.T) {
+func TestUnsubscribeDecodeError1(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		2,
@@ -57,7 +57,7 @@ func TestUnsubscribePacketDecodeError1(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUnsubscribePacketDecodeError2(t *testing.T) {
+func TestUnsubscribeDecodeError2(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		6, // < wrong remaining length
@@ -71,7 +71,7 @@ func TestUnsubscribePacketDecodeError2(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUnsubscribePacketDecodeError3(t *testing.T) {
+func TestUnsubscribeDecodeError3(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		0,
@@ -84,7 +84,7 @@ func TestUnsubscribePacketDecodeError3(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUnsubscribePacketDecodeError4(t *testing.T) {
+func TestUnsubscribeDecodeError4(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		10,
@@ -101,7 +101,7 @@ func TestUnsubscribePacketDecodeError4(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUnsubscribePacketDecodeError5(t *testing.T) {
+func TestUnsubscribeDecodeError5(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		10,
@@ -118,7 +118,7 @@ func TestUnsubscribePacketDecodeError5(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUnsubscribePacketEncode(t *testing.T) {
+func TestUnsubscribeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		32,
@@ -151,7 +151,7 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 	assert.Equal(t, pktBytes, dst[:n])
 }
 
-func TestUnsubscribePacketEncodeError1(t *testing.T) {
+func TestUnsubscribeEncodeError1(t *testing.T) {
 	pkt := NewUnsubscribe()
 	pkt.ID = 7
 	pkt.Topics = []string{"gomqtt"}
@@ -163,7 +163,7 @@ func TestUnsubscribePacketEncodeError1(t *testing.T) {
 	assert.Equal(t, 0, n)
 }
 
-func TestUnsubscribePacketEncodeError2(t *testing.T) {
+func TestUnsubscribeEncodeError2(t *testing.T) {
 	pkt := NewUnsubscribe()
 	pkt.ID = 7
 	pkt.Topics = []string{string(make([]byte, 65536))}
@@ -175,7 +175,7 @@ func TestUnsubscribePacketEncodeError2(t *testing.T) {
 	assert.Equal(t, 6, n)
 }
 
-func TestUnsubscribePacketEncodeError3(t *testing.T) {
+func TestUnsubscribeEncodeError3(t *testing.T) {
 	pkt := NewUnsubscribe()
 	pkt.ID = 0 // < zero packet id
 
