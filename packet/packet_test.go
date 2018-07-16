@@ -112,7 +112,7 @@ func TestGetID(t *testing.T) {
 
 	details := map[Type]detail{
 		CONNECT:     {NewConnectPacket(), false},
-		CONNACK:     {NewConnackPacket(), false},
+		CONNACK:     {NewConnack(), false},
 		PUBLISH:     {NewPublishPacket(), true},
 		PUBACK:      {NewPubackPacket(), true},
 		PUBREC:      {NewPubrecPacket(), true},

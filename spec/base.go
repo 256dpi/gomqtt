@@ -550,7 +550,7 @@ func KeepAliveTimeoutTest(t *testing.T, config *Config) {
 	connect.Username = username
 	connect.Password = password
 
-	connack := packet.NewConnackPacket()
+	connack := packet.NewConnack()
 
 	c := flow.New().
 		Send(connect).

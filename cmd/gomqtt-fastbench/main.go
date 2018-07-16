@@ -107,7 +107,7 @@ func connection(id string) transport.Conn {
 		panic(err)
 	}
 
-	if connack, ok := pkt.(*packet.ConnackPacket); ok {
+	if connack, ok := pkt.(*packet.Connack); ok {
 		if connack.ReturnCode == packet.ConnectionAccepted {
 			fmt.Printf("Connected: %s\n", id)
 

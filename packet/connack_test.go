@@ -17,10 +17,10 @@ func TestConnackReturnCodes(t *testing.T) {
 }
 
 func TestConnackInterface(t *testing.T) {
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	assert.Equal(t, pkt.Type(), CONNACK)
-	assert.Equal(t, "<ConnackPacket SessionPresent=false ReturnCode=0>", pkt.String())
+	assert.Equal(t, "<Connack SessionPresent=false ReturnCode=0>", pkt.String())
 }
 
 func TestConnackPacketDecode(t *testing.T) {
@@ -31,7 +31,7 @@ func TestConnackPacketDecode(t *testing.T) {
 		0, // connection accepted
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	n, err := pkt.Decode(pktBytes)
 
@@ -49,7 +49,7 @@ func TestConnackPacketDecodeError1(t *testing.T) {
 		0, // connection accepted
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	_, err := pkt.Decode(pktBytes)
 	assert.Error(t, err)
@@ -63,7 +63,7 @@ func TestConnackPacketDecodeError2(t *testing.T) {
 		// < wrong packet size
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	_, err := pkt.Decode(pktBytes)
 	assert.Error(t, err)
@@ -77,7 +77,7 @@ func TestConnackPacketDecodeError3(t *testing.T) {
 		0,  // connection accepted
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	_, err := pkt.Decode(pktBytes)
 	assert.Error(t, err)
@@ -91,7 +91,7 @@ func TestConnackPacketDecodeError4(t *testing.T) {
 		6, // < wrong code
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	_, err := pkt.Decode(pktBytes)
 	assert.Error(t, err)
@@ -105,7 +105,7 @@ func TestConnackPacketDecodeError5(t *testing.T) {
 		6,
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	_, err := pkt.Decode(pktBytes)
 	assert.Error(t, err)
@@ -119,7 +119,7 @@ func TestConnackPacketEncode(t *testing.T) {
 		0, // connection accepted
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 	pkt.ReturnCode = ConnectionAccepted
 	pkt.SessionPresent = true
 
@@ -132,7 +132,7 @@ func TestConnackPacketEncode(t *testing.T) {
 }
 
 func TestConnackPacketEncodeError1(t *testing.T) {
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	dst := make([]byte, 3) // < wrong buffer size
 	n, err := pkt.Encode(dst)
@@ -142,7 +142,7 @@ func TestConnackPacketEncodeError1(t *testing.T) {
 }
 
 func TestConnackPacketEncodeError2(t *testing.T) {
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 	pkt.ReturnCode = 11 // < wrong return code
 
 	dst := make([]byte, pkt.Len())
@@ -160,7 +160,7 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 		0, // connection accepted
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 	n, err := pkt.Decode(pktBytes)
 
 	assert.NoError(t, err)
@@ -180,7 +180,7 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkConnackEncode(b *testing.B) {
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 	pkt.ReturnCode = ConnectionAccepted
 	pkt.SessionPresent = true
 
@@ -202,7 +202,7 @@ func BenchmarkConnackDecode(b *testing.B) {
 		0, // connection accepted
 	}
 
-	pkt := NewConnackPacket()
+	pkt := NewConnack()
 
 	for i := 0; i < b.N; i++ {
 		_, err := pkt.Decode(pktBytes)

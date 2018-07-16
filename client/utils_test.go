@@ -64,8 +64,8 @@ func connectPacket() *packet.ConnectPacket {
 	return pkt
 }
 
-func connackPacket() *packet.ConnackPacket {
-	pkt := packet.NewConnackPacket()
+func connackPacket() *packet.Connack {
+	pkt := packet.NewConnack()
 	pkt.ReturnCode = packet.ConnectionAccepted
 	pkt.SessionPresent = false
 	return pkt

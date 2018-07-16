@@ -11,7 +11,7 @@ import (
 
 func TestFlow(t *testing.T) {
 	connect := packet.NewConnectPacket()
-	connack := packet.NewConnackPacket()
+	connack := packet.NewConnack()
 
 	subscribe := packet.NewSubscribePacket()
 	subscribe.Subscriptions = []packet.Subscription{

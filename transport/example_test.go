@@ -29,7 +29,7 @@ func Example() {
 		// check packet type
 		if _, ok := pkt.(*packet.ConnectPacket); ok {
 			// send a connack packet
-			err = conn.Send(packet.NewConnackPacket())
+			err = conn.Send(packet.NewConnack())
 			if err != nil {
 				panic(err)
 			}
@@ -57,7 +57,7 @@ func Example() {
 	}
 
 	// check packet type
-	if connackPacket, ok := pkt.(*packet.ConnackPacket); ok {
+	if connackPacket, ok := pkt.(*packet.Connack); ok {
 		fmt.Println(connackPacket)
 
 		// close connection
@@ -76,5 +76,5 @@ func Example() {
 	}
 
 	// Output:
-	// <ConnackPacket SessionPresent=false ReturnCode=0>
+	// <Connack SessionPresent=false ReturnCode=0>
 }

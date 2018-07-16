@@ -25,7 +25,7 @@ func abstractServerTest(t *testing.T, protocol string) {
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
 
-		err = conn1.Send(packet.NewConnackPacket())
+		err = conn1.Send(packet.NewConnack())
 		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()

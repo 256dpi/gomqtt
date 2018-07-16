@@ -736,7 +736,7 @@ func TestClientInvalidPackets(t *testing.T) {
 	c := New()
 
 	// state not connecting
-	err := c.processConnack(packet.NewConnackPacket())
+	err := c.processConnack(packet.NewConnack())
 	assert.NoError(t, err)
 
 	c.state = clientConnecting

@@ -360,7 +360,7 @@ func (c *Client) sender() error {
 
 /* packet handling */
 
-// handle an incoming ConnackPacket
+// handle an incoming ConnectPacket
 func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	// save id
 	c.id = pkt.ClientID
@@ -372,7 +372,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	}
 
 	// prepare connack packet
-	connack := packet.NewConnackPacket()
+	connack := packet.NewConnack()
 	connack.ReturnCode = packet.ConnectionAccepted
 	connack.SessionPresent = false
 

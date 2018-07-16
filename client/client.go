@@ -39,7 +39,7 @@ var ErrClientConnectionDenied = errors.New("client connection denied")
 var ErrClientMissingPong = errors.New("client missing pong")
 
 // ErrClientExpectedConnack is returned when the first received packet is not a
-// ConnackPacket.
+// Connack.
 var ErrClientExpectedConnack = errors.New("client expected connack")
 
 // ErrFailedSubscription is returned when a submitted subscription is marked as
@@ -140,7 +140,7 @@ func New() *Client {
 }
 
 // Connect opens the connection to the broker and sends a ConnectPacket. It will
-// return a ConnectFuture that gets completed once a ConnackPacket has been
+// return a ConnectFuture that gets completed once a Connack has been
 // received. If the ConnectPacket couldn't be transmitted it will return an error.
 func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	if config == nil {
@@ -462,7 +462,7 @@ func (c *Client) processor() error {
 
 		if first {
 			// get connack
-			connack, ok := pkt.(*packet.ConnackPacket)
+			connack, ok := pkt.(*packet.Connack)
 			if !ok {
 				return c.die(ErrClientExpectedConnack, true, false)
 			}
@@ -502,11 +502,11 @@ func (c *Client) processor() error {
 	}
 }
 
-// handle the incoming ConnackPacket
-func (c *Client) processConnack(connack *packet.ConnackPacket) error {
+// handle the incoming Connack packet
+func (c *Client) processConnack(connack *packet.Connack) error {
 	// check state
 	if atomic.LoadUint32(&c.state) != clientConnecting {
-		return nil // ignore wrongly sent ConnackPacket
+		return nil // ignore wrongly sent Connack packet
 	}
 
 	// set state

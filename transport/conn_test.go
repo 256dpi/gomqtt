@@ -17,7 +17,7 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
 
-		err = conn1.Send(packet.NewConnackPacket())
+		err = conn1.Send(packet.NewConnack())
 		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()
@@ -53,7 +53,7 @@ func abstractConnCloseTest(t *testing.T, protocol string) {
 
 func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		pkt := packet.NewConnackPacket()
+		pkt := packet.NewConnack()
 		pkt.ReturnCode = 11 // < invalid return code
 
 		err := conn1.Send(pkt)
@@ -233,7 +233,7 @@ func abstractConnBufferedSendTest(t *testing.T, protocol string) {
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
 
-		err = conn1.BufferedSend(packet.NewConnackPacket())
+		err = conn1.BufferedSend(packet.NewConnack())
 		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()
@@ -260,10 +260,10 @@ func abstractConnSendAfterBufferedSendTest(t *testing.T, protocol string) {
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
 
-		err = conn1.BufferedSend(packet.NewConnackPacket())
+		err = conn1.BufferedSend(packet.NewConnack())
 		assert.NoError(t, err)
 
-		err = conn1.Send(packet.NewConnackPacket())
+		err = conn1.Send(packet.NewConnack())
 		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()

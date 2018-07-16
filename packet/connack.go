@@ -2,7 +2,7 @@ package packet
 
 import "fmt"
 
-// The ConnackCode represents the return code in a ConnackPacket.
+// The ConnackCode represents the return code in a Connack packet.
 type ConnackCode uint8
 
 // All available ConnackCodes.
@@ -40,9 +40,9 @@ func (cc ConnackCode) Error() string {
 	return "unknown error"
 }
 
-// A ConnackPacket is sent by the server in response to a ConnectPacket
+// A Connack packet is sent by the server in response to a ConnectPacket
 // received from a client.
-type ConnackPacket struct {
+type Connack struct {
 	// The SessionPresent flag enables a client to establish whether the
 	// client and server have a consistent view about whether there is already
 	// stored session state.
@@ -50,34 +50,34 @@ type ConnackPacket struct {
 
 	// If a well formed ConnectPacket is received by the server, but the server
 	// is unable to process it for some reason, then the server should attempt
-	// to send a ConnackPacket containing a non-zero ReturnCode.
+	// to send a Connack containing a non-zero ReturnCode.
 	ReturnCode ConnackCode
 }
 
-// NewConnackPacket creates a new ConnackPacket.
-func NewConnackPacket() *ConnackPacket {
-	return &ConnackPacket{}
+// NewConnack creates a new Connack packet.
+func NewConnack() *Connack {
+	return &Connack{}
 }
 
 // Type returns the packets type.
-func (cp *ConnackPacket) Type() Type {
+func (cp *Connack) Type() Type {
 	return CONNACK
 }
 
 // String returns a string representation of the packet.
-func (cp *ConnackPacket) String() string {
-	return fmt.Sprintf("<ConnackPacket SessionPresent=%t ReturnCode=%d>",
+func (cp *Connack) String() string {
+	return fmt.Sprintf("<Connack SessionPresent=%t ReturnCode=%d>",
 		cp.SessionPresent, cp.ReturnCode)
 }
 
 // Len returns the byte length of the encoded packet.
-func (cp *ConnackPacket) Len() int {
+func (cp *Connack) Len() int {
 	return headerLen(2) + 2
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (cp *ConnackPacket) Decode(src []byte) (int, error) {
+func (cp *Connack) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -117,7 +117,7 @@ func (cp *ConnackPacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (cp *ConnackPacket) Encode(dst []byte) (int, error) {
+func (cp *Connack) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header

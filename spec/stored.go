@@ -54,7 +54,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(&packet.ConnackPacket{}).
+		Skip(&packet.Connack{}).
 		Send(subscribe).
 		Skip(&packet.SubackPacket{}).
 		Send(publishOut).
@@ -72,7 +72,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(&packet.ConnackPacket{}).
+		Skip(&packet.Connack{}).
 		Receive(publishIn).
 		Send(pubackIn).
 		Send(disconnect).
@@ -129,7 +129,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(&packet.ConnackPacket{}).
+		Skip(&packet.Connack{}).
 		Send(subscribe).
 		Skip(&packet.SubackPacket{}).
 		Send(publishOut).
@@ -151,7 +151,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(&packet.ConnackPacket{}).
+		Skip(&packet.Connack{}).
 		Receive(publishIn).
 		Send(pubrecIn).
 		Skip(&packet.PubrelPacket{}).
@@ -213,7 +213,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(&packet.ConnackPacket{}).
+		Skip(&packet.Connack{}).
 		Send(subscribe).
 		Skip(&packet.SubackPacket{}).
 		Send(publishOut).
@@ -236,7 +236,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	err = flow.New().
 		Send(connect).
-		Skip(&packet.ConnackPacket{}).
+		Skip(&packet.Connack{}).
 		Receive(pubrelIn).
 		Send(pubcompIn).
 		Send(disconnect).

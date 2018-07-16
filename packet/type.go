@@ -102,7 +102,7 @@ func (t Type) New() (GenericPacket, error) {
 	case CONNECT:
 		return NewConnectPacket(), nil
 	case CONNACK:
-		return NewConnackPacket(), nil
+		return NewConnack(), nil
 	case PUBLISH:
 		return NewPublishPacket(), nil
 	case PUBACK:
