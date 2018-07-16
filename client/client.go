@@ -307,7 +307,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 }
 
 // Subscribe will send a SubscribePacket containing one topic to subscribe. It
-// will return a SubscribeFuture that gets completed once a SubackPacket has
+// will return a SubscribeFuture that gets completed once a Suback packet has
 // been received.
 func (c *Client) Subscribe(topic string, qos uint8) (SubscribeFuture, error) {
 	return c.SubscribeMultiple([]packet.Subscription{
@@ -317,7 +317,7 @@ func (c *Client) Subscribe(topic string, qos uint8) (SubscribeFuture, error) {
 
 // SubscribeMultiple will send a SubscribePacket containing multiple topics to
 // subscribe. It will return a SubscribeFuture that gets completed once a
-// SubackPacket has been received.
+// Suback packet has been received.
 func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (SubscribeFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -477,7 +477,7 @@ func (c *Client) processor() error {
 
 		// call handlers for packet types and ignore other packets
 		switch typedPkt := pkt.(type) {
-		case *packet.SubackPacket:
+		case *packet.Suback:
 			err = c.processSuback(typedPkt)
 		case *packet.Unsuback:
 			err = c.processUnsuback(typedPkt)
@@ -554,8 +554,8 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 	return nil
 }
 
-// handle an incoming SubackPacket
-func (c *Client) processSuback(suback *packet.SubackPacket) error {
+// handle an incoming Suback packet
+func (c *Client) processSuback(suback *packet.Suback) error {
 	// remove packet from store
 	err := c.Session.DeletePacket(session.Outgoing, suback.ID)
 	if err != nil {
@@ -565,7 +565,7 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	// get future
 	subscribeFuture := c.futureStore.Get(suback.ID)
 	if subscribeFuture == nil {
-		return nil // ignore a wrongly sent SubackPacket
+		return nil // ignore a wrongly sent Suback packet
 	}
 
 	// remove future from store

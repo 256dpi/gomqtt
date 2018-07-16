@@ -15,7 +15,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.ID = 1
 
-	suback := packet.NewSubackPacket()
+	suback := packet.NewSuback()
 	suback.ReturnCodes = []uint8{0}
 	suback.ID = 1
 
@@ -79,7 +79,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.ID = 1
 
-	suback := packet.NewSubackPacket()
+	suback := packet.NewSuback()
 	suback.ReturnCodes = []uint8{0}
 	suback.ID = 1
 

@@ -347,7 +347,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.ID = 1
 
-	suback := packet.NewSubackPacket()
+	suback := packet.NewSuback()
 	suback.ReturnCodes = []uint8{0}
 	suback.ID = 1
 
@@ -416,7 +416,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 1}}
 	subscribe.ID = 1
 
-	suback := packet.NewSubackPacket()
+	suback := packet.NewSuback()
 	suback.ReturnCodes = []uint8{1}
 	suback.ID = 1
 
@@ -492,7 +492,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 2}}
 	subscribe.ID = 1
 
-	suback := packet.NewSubackPacket()
+	suback := packet.NewSuback()
 	suback.ReturnCodes = []uint8{2}
 	suback.ID = 1
 
@@ -742,7 +742,7 @@ func TestClientInvalidPackets(t *testing.T) {
 	c.state = clientConnecting
 
 	// missing future
-	err = c.processSuback(packet.NewSubackPacket())
+	err = c.processSuback(packet.NewSuback())
 	assert.NoError(t, err)
 
 	// missing future
@@ -933,7 +933,7 @@ func TestClientLogger(t *testing.T) {
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.ID = 1
 
-	suback := packet.NewSubackPacket()
+	suback := packet.NewSuback()
 	suback.ReturnCodes = []uint8{0}
 	suback.ID = 1
 

@@ -557,7 +557,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	}
 
 	// prepare suback packet
-	suback := packet.NewSubackPacket()
+	suback := packet.NewSuback()
 	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
 	suback.ID = pkt.ID
 
@@ -834,7 +834,7 @@ func (c *Client) sendAck(pkt packet.Generic) error {
 
 	// check ack type
 	switch pkt.(type) {
-	case *packet.SubackPacket, *packet.Unsuback:
+	case *packet.Suback, *packet.Unsuback:
 		// put back subscribe token
 		c.subscribeTokens <- struct{}{}
 	case *packet.Puback, *packet.Pubcomp:

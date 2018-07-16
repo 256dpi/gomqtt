@@ -116,7 +116,7 @@ func (t Type) New() (Generic, error) {
 	case SUBSCRIBE:
 		return NewSubscribePacket(), nil
 	case SUBACK:
-		return NewSubackPacket(), nil
+		return NewSuback(), nil
 	case UNSUBSCRIBE:
 		return NewUnsubscribePacket(), nil
 	case UNSUBACK:

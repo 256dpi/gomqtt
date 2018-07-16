@@ -6,10 +6,10 @@ import (
 	"strings"
 )
 
-// A SubackPacket is sent by the server to the client to confirm receipt and
-// processing of a SubscribePacket. The SubackPacket contains a list of return
+// A Suback packet is sent by the server to the client to confirm receipt and
+// processing of a SubscribePacket. The Suback packet contains a list of return
 // codes, that specify the maximum QOS levels that have been granted.
-type SubackPacket struct {
+type Suback struct {
 	// The granted QOS levels for the requested subscriptions.
 	ReturnCodes []uint8
 
@@ -17,37 +17,37 @@ type SubackPacket struct {
 	ID ID
 }
 
-// NewSubackPacket creates a new SubackPacket.
-func NewSubackPacket() *SubackPacket {
-	return &SubackPacket{}
+// NewSuback creates a new Suback packet.
+func NewSuback() *Suback {
+	return &Suback{}
 }
 
 // Type returns the packets type.
-func (sp *SubackPacket) Type() Type {
+func (sp *Suback) Type() Type {
 	return SUBACK
 }
 
 // String returns a string representation of the packet.
-func (sp *SubackPacket) String() string {
+func (sp *Suback) String() string {
 	var codes []string
 
 	for _, c := range sp.ReturnCodes {
 		codes = append(codes, fmt.Sprintf("%d", c))
 	}
 
-	return fmt.Sprintf("<SubackPacket ID=%d ReturnCodes=[%s]>",
+	return fmt.Sprintf("<Suback ID=%d ReturnCodes=[%s]>",
 		sp.ID, strings.Join(codes, ", "))
 }
 
 // Len returns the byte length of the encoded packet.
-func (sp *SubackPacket) Len() int {
+func (sp *Suback) Len() int {
 	ml := sp.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (sp *SubackPacket) Decode(src []byte) (int, error) {
+func (sp *Suback) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -97,7 +97,7 @@ func (sp *SubackPacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (sp *SubackPacket) Encode(dst []byte) (int, error) {
+func (sp *Suback) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check return codes
@@ -131,6 +131,6 @@ func (sp *SubackPacket) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (sp *SubackPacket) len() int {
+func (sp *Suback) len() int {
 	return 2 + len(sp.ReturnCodes)
 }

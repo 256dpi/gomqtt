@@ -79,7 +79,7 @@ func TestReceiveMessage(t *testing.T) {
 		{Topic: "test"},
 	}
 
-	suback := packet.NewSubackPacket()
+	suback := packet.NewSuback()
 	suback.ID = 1
 	suback.ReturnCodes = []uint8{0}
 

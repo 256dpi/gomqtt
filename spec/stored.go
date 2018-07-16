@@ -56,7 +56,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 		Send(connect).
 		Skip(&packet.Connack{}).
 		Send(subscribe).
-		Skip(&packet.SubackPacket{}).
+		Skip(&packet.Suback{}).
 		Send(publishOut).
 		Skip(&packet.Puback{}).
 		Receive(publishIn).
@@ -131,7 +131,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 		Send(connect).
 		Skip(&packet.Connack{}).
 		Send(subscribe).
-		Skip(&packet.SubackPacket{}).
+		Skip(&packet.Suback{}).
 		Send(publishOut).
 		Skip(&packet.Pubrec{}).
 		Send(pubrelOut).
@@ -215,7 +215,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 		Send(connect).
 		Skip(&packet.Connack{}).
 		Send(subscribe).
-		Skip(&packet.SubackPacket{}).
+		Skip(&packet.Suback{}).
 		Send(publishOut).
 		Skip(&packet.Pubrec{}).
 		Send(pubrelOut).

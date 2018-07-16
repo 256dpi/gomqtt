@@ -81,7 +81,7 @@ func GetID(pkt Generic) (ID, bool) {
 	case SUBSCRIBE:
 		return pkt.(*SubscribePacket).ID, true
 	case SUBACK:
-		return pkt.(*SubackPacket).ID, true
+		return pkt.(*Suback).ID, true
 	case UNSUBSCRIBE:
 		return pkt.(*UnsubscribePacket).ID, true
 	case UNSUBACK:
