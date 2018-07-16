@@ -29,7 +29,7 @@ func TestClearSession(t *testing.T) {
 }
 
 func TestClearRetainedMessage(t *testing.T) {
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = nil
 	publish.Message.Retain = true
@@ -50,7 +50,7 @@ func TestClearRetainedMessage(t *testing.T) {
 }
 
 func TestPublishMessage(t *testing.T) {
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message = packet.Message{
 		Topic:   "test",
 		Payload: []byte("test"),
@@ -83,7 +83,7 @@ func TestReceiveMessage(t *testing.T) {
 	suback.ID = 1
 	suback.ReturnCodes = []uint8{0}
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message = packet.Message{
 		Topic:   "test",
 		Payload: []byte("test"),

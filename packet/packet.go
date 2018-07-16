@@ -69,7 +69,7 @@ func DetectPacket(src []byte) (int, Type) {
 func GetID(pkt Generic) (ID, bool) {
 	switch pkt.Type() {
 	case PUBLISH:
-		return pkt.(*PublishPacket).ID, true
+		return pkt.(*Publish).ID, true
 	case PUBACK:
 		return pkt.(*Puback).ID, true
 	case PUBREC:

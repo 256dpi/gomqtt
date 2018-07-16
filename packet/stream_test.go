@@ -38,7 +38,7 @@ func TestEncoderWriterError(t *testing.T) {
 		err: errors.New("foo"),
 	})
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = "foo"
 	pkt.Message.Payload = make([]byte, 4096)
 

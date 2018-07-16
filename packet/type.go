@@ -104,7 +104,7 @@ func (t Type) New() (Generic, error) {
 	case CONNACK:
 		return NewConnack(), nil
 	case PUBLISH:
-		return NewPublishPacket(), nil
+		return NewPublish(), nil
 	case PUBACK:
 		return NewPuback(), nil
 	case PUBREC:

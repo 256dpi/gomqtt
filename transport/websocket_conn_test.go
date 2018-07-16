@@ -93,7 +93,7 @@ func TestWebSocketBadFrameError(t *testing.T) {
 }
 
 func TestWebSocketChunkedMessage(t *testing.T) {
-	pkt := packet.NewPublishPacket()
+	pkt := packet.NewPublish()
 	pkt.Message.Topic = "hello"
 	pkt.Message.Payload = []byte("world")
 
@@ -123,7 +123,7 @@ func TestWebSocketChunkedMessage(t *testing.T) {
 }
 
 func TestWebSocketCoalescedMessage(t *testing.T) {
-	pkt := packet.NewPublishPacket()
+	pkt := packet.NewPublish()
 	pkt.Message.Topic = "hello"
 	pkt.Message.Payload = []byte("world")
 
@@ -155,7 +155,7 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 }
 
 func TestWebSocketNotBinaryMessage(t *testing.T) {
-	pkt := packet.NewPublishPacket()
+	pkt := packet.NewPublish()
 	pkt.Message.Topic = "hello"
 	pkt.Message.Payload = []byte("world")
 
@@ -172,7 +172,7 @@ func TestWebSocketNotBinaryMessage(t *testing.T) {
 }
 
 func BenchmarkWebSocketConn(b *testing.B) {
-	pkt := packet.NewPublishPacket()
+	pkt := packet.NewPublish()
 	pkt.Message.Topic = "foo/bar/baz"
 
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
@@ -197,7 +197,7 @@ func BenchmarkWebSocketConn(b *testing.B) {
 }
 
 func BenchmarkWebSocketConnBuffered(b *testing.B) {
-	pkt := packet.NewPublishPacket()
+	pkt := packet.NewPublish()
 	pkt.Message.Topic = "foo/bar/baz"
 
 	conn2, done := connectionPair("ws", func(conn1 Conn) {

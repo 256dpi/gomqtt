@@ -351,7 +351,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	suback.ReturnCodes = []uint8{0}
 	suback.ID = 1
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
@@ -420,7 +420,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	suback.ReturnCodes = []uint8{1}
 	suback.ID = 1
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
@@ -496,7 +496,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	suback.ReturnCodes = []uint8{2}
 	suback.ID = 1
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 2
@@ -615,7 +615,7 @@ func TestClientHardDisconnect(t *testing.T) {
 	connect.ClientID = "test"
 	connect.CleanSession = false
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
@@ -660,7 +660,7 @@ func TestClientHardDisconnect(t *testing.T) {
 }
 
 func TestClientDisconnectWithTimeout(t *testing.T) {
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
@@ -763,7 +763,7 @@ func TestClientSessionResumption(t *testing.T) {
 	connect.ClientID = "test"
 	connect.CleanSession = false
 
-	publish1 := packet.NewPublishPacket()
+	publish1 := packet.NewPublish()
 	publish1.Message.Topic = "test"
 	publish1.Message.Payload = []byte("test")
 	publish1.Message.QOS = 1
@@ -863,7 +863,7 @@ func TestClientConnackFutureCancellation(t *testing.T) {
 }
 
 func TestClientFutureCancellation(t *testing.T) {
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
@@ -898,7 +898,7 @@ func TestClientFutureCancellation(t *testing.T) {
 }
 
 func TestClientErrorCallback(t *testing.T) {
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 	publish.Message.QOS = 1
@@ -937,7 +937,7 @@ func TestClientLogger(t *testing.T) {
 	suback.ReturnCodes = []uint8{0}
 	suback.ID = 1
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 

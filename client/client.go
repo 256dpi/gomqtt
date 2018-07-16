@@ -242,7 +242,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	return wrappedFuture, nil
 }
 
-// Publish will send a PublishPacket containing the passed parameters. It will
+// Publish will send a Publish packet containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (c *Client) Publish(topic string, payload []byte, qos uint8, retain bool) (GenericFuture, error) {
@@ -256,7 +256,7 @@ func (c *Client) Publish(topic string, payload []byte, qos uint8, retain bool) (
 	return c.PublishMessage(msg)
 }
 
-// PublishMessage will send a PublishPacket containing the passed message. It will
+// PublishMessage will send a Publish containing the passed message. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
@@ -268,8 +268,8 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 		return nil, ErrClientNotConnected
 	}
 
-	// allocate packet
-	publish := packet.NewPublishPacket()
+	// allocate publish packet
+	publish := packet.NewPublish()
 	publish.Message = *msg
 
 	// set packet id
@@ -483,7 +483,7 @@ func (c *Client) processor() error {
 			err = c.processUnsuback(typedPkt)
 		case *packet.Pingresp:
 			c.tracker.pong()
-		case *packet.PublishPacket:
+		case *packet.Publish:
 			err = c.processPublish(typedPkt)
 		case *packet.Puback:
 			err = c.processPubackAndPubcomp(typedPkt.ID)
@@ -538,7 +538,7 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 	// resend stored packets
 	for _, pkt := range packets {
 		// check for publish packets
-		publish, ok := pkt.(*packet.PublishPacket)
+		publish, ok := pkt.(*packet.Publish)
 		if ok {
 			// set the dup flag on a publish packet
 			publish.Dup = true
@@ -611,8 +611,8 @@ func (c *Client) processUnsuback(unsuback *packet.Unsuback) error {
 	return nil
 }
 
-// handle an incoming PublishPacket
-func (c *Client) processPublish(publish *packet.PublishPacket) error {
+// handle an incoming Publish packet
+func (c *Client) processPublish(publish *packet.Publish) error {
 	// call callback for unacknowledged and directly acknowledged messages
 	if publish.Message.QOS <= 1 {
 		if c.Callback != nil {
@@ -687,7 +687,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 	pubrel := packet.NewPubrel()
 	pubrel.ID = id
 
-	// overwrite stored PublishPacket with the Pubrel packet
+	// overwrite stored Publish with the Pubrel packet
 	err := c.Session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
 		return c.die(err, true, false)
@@ -711,7 +711,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	}
 
 	// get packet from store
-	publish, ok := pkt.(*packet.PublishPacket)
+	publish, ok := pkt.(*packet.Publish)
 	if !ok {
 		return nil // ignore a wrongly sent Pubrel packet
 	}
@@ -728,7 +728,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	pubcomp := packet.NewPubcomp()
 	pubcomp.ID = publish.ID
 
-	// acknowledge PublishPacket
+	// acknowledge Publish packet
 	err = c.send(pubcomp, true)
 	if err != nil {
 		return c.die(err, false, false)

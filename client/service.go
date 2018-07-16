@@ -173,7 +173,7 @@ func (s *Service) Start(config *Config) {
 	s.tomb.Go(s.supervisor)
 }
 
-// Publish will send a PublishPacket containing the passed parameters. It will
+// Publish will send a Publish packet containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) GenericFuture {
@@ -187,7 +187,7 @@ func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) 
 	return s.PublishMessage(msg)
 }
 
-// PublishMessage will send a PublishPacket containing the passed message. It will
+// PublishMessage will send a Publish packet containing the passed message. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (s *Service) PublishMessage(msg *packet.Message) GenericFuture {

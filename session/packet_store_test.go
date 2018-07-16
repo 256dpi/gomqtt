@@ -11,7 +11,7 @@ import (
 func TestPacketStore(t *testing.T) {
 	store := NewPacketStore()
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.ID = 1
 
 	pkt := store.Lookup(1)

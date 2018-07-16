@@ -19,7 +19,7 @@ func TestFlow(t *testing.T) {
 	}
 	subscribe.ID = 1
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 
 	wait := make(chan struct{})

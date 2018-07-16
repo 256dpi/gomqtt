@@ -158,7 +158,7 @@ func publisher(id string) {
 	name := "publisher/" + id
 	conn := connection(name)
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = id
 	publish.Message.Payload = payload
 

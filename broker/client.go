@@ -479,7 +479,7 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	// resend stored packets
 	for _, pkt := range packets {
 		// set the dup flag on a publish packet
-		publish, ok := pkt.(*packet.PublishPacket)
+		publish, ok := pkt.(*packet.Publish)
 		if ok {
 			publish.Dup = true
 		}
@@ -511,7 +511,7 @@ func (c *Client) processPacket(pkt packet.Generic) error {
 		err = c.processSubscribe(typedPkt)
 	case *packet.UnsubscribePacket:
 		err = c.processUnsubscribe(typedPkt)
-	case *packet.PublishPacket:
+	case *packet.Publish:
 		err = c.processPublish(typedPkt)
 	case *packet.Puback:
 		err = c.processPubackAndPubcomp(typedPkt.ID)
@@ -608,8 +608,8 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	return nil
 }
 
-// handle an incoming PublishPacket
-func (c *Client) processPublish(publish *packet.PublishPacket) error {
+// handle an incoming Publish packet
+func (c *Client) processPublish(publish *packet.Publish) error {
 	// handle qos 0 flow
 	if publish.Message.QOS == 0 {
 		// publish message to others
@@ -693,7 +693,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 	pubrel := packet.NewPubrel()
 	pubrel.ID = id
 
-	// overwrite stored PublishPacket with the Pubrel packet
+	// overwrite stored Publish with the Pubrel packet
 	err := c.session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
 		return c.die(SessionError, err)
@@ -717,7 +717,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	}
 
 	// get packet from store
-	publish, ok := pkt.(*packet.PublishPacket)
+	publish, ok := pkt.(*packet.Publish)
 	if !ok {
 		return nil // ignore a wrongly sent Pubrel packet
 	}
@@ -776,7 +776,7 @@ func (c *Client) processDisconnect() error {
 // send messages
 func (c *Client) sendMessage(msg *packet.Message, ack Ack) error {
 	// prepare publish packet
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message = *msg
 
 	// set packet id

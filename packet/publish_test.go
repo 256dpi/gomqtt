@@ -7,10 +7,10 @@ import (
 )
 
 func TestPublishInterface(t *testing.T) {
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 
 	assert.Equal(t, pkt.Type(), PUBLISH)
-	assert.Equal(t, "<PublishPacket ID=0 Message=<Message Topic=\"\" QOS=0 Retain=false Payload=[]> Dup=false>", pkt.String())
+	assert.Equal(t, "<Publish ID=0 Message=<Message Topic=\"\" QOS=0 Retain=false Payload=[]> Dup=false>", pkt.String())
 }
 
 func TestPublishPacketDecode1(t *testing.T) {
@@ -25,7 +25,7 @@ func TestPublishPacketDecode1(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	n, err := pkt.Decode(pktBytes)
 
 	assert.NoError(t, err)
@@ -48,7 +48,7 @@ func TestPublishPacketDecode2(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	n, err := pkt.Decode(pktBytes)
 
 	assert.NoError(t, err)
@@ -67,7 +67,7 @@ func TestPublishPacketDecodeError1(t *testing.T) {
 		2, // < too much
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -79,7 +79,7 @@ func TestPublishPacketDecodeError2(t *testing.T) {
 		0,
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -92,7 +92,7 @@ func TestPublishPacketDecodeError3(t *testing.T) {
 		// < missing topic stuff
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -107,7 +107,7 @@ func TestPublishPacketDecodeError4(t *testing.T) {
 		// < missing topic string
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -123,7 +123,7 @@ func TestPublishPacketDecodeError5(t *testing.T) {
 		// < missing packet id
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -140,7 +140,7 @@ func TestPublishPacketDecodeError6(t *testing.T) {
 		0, // < zero packet id
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -158,7 +158,7 @@ func TestPublishPacketEncode1(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = "gomqtt"
 	pkt.Message.QOS = QOSAtLeastOnce
 	pkt.Message.Retain = true
@@ -184,7 +184,7 @@ func TestPublishPacketEncode2(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = "gomqtt"
 	pkt.Message.Payload = []byte("send me home")
 
@@ -197,7 +197,7 @@ func TestPublishPacketEncode2(t *testing.T) {
 }
 
 func TestPublishPacketEncodeError1(t *testing.T) {
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = "" // < empty topic
 
 	dst := make([]byte, pkt.Len())
@@ -207,7 +207,7 @@ func TestPublishPacketEncodeError1(t *testing.T) {
 }
 
 func TestPublishPacketEncodeError2(t *testing.T) {
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = "t"
 	pkt.Message.QOS = 3 // < wrong qos
 
@@ -218,7 +218,7 @@ func TestPublishPacketEncodeError2(t *testing.T) {
 }
 
 func TestPublishPacketEncodeError3(t *testing.T) {
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = "t"
 
 	dst := make([]byte, 1) // < too small
@@ -228,7 +228,7 @@ func TestPublishPacketEncodeError3(t *testing.T) {
 }
 
 func TestPublishPacketEncodeError4(t *testing.T) {
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = string(make([]byte, 65536)) // < too big
 
 	dst := make([]byte, pkt.Len())
@@ -238,7 +238,7 @@ func TestPublishPacketEncodeError4(t *testing.T) {
 }
 
 func TestPublishPacketEncodeError5(t *testing.T) {
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = "test"
 	pkt.Message.QOS = 1
 	pkt.ID = 0 // < zero packet id
@@ -261,7 +261,7 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	n, err := pkt.Decode(pktBytes)
 
 	assert.NoError(t, err)
@@ -281,7 +281,7 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkPublishEncode(b *testing.B) {
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 	pkt.Message.Topic = "t"
 	pkt.Message.QOS = QOSAtLeastOnce
 	pkt.ID = 1
@@ -309,7 +309,7 @@ func BenchmarkPublishDecode(b *testing.B) {
 		'p',
 	}
 
-	pkt := NewPublishPacket()
+	pkt := NewPublish()
 
 	for i := 0; i < b.N; i++ {
 		_, err := pkt.Decode(pktBytes)

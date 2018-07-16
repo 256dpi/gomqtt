@@ -61,7 +61,7 @@ func identifiedEncode(dst []byte, id ID, t Type) (int, error) {
 	return total, nil
 }
 
-// A Puback packet is the response to a PublishPacket with QOS level 1.
+// A Puback packet is the response to a Publish packet with QOS level 1.
 type Puback struct {
 	// The packet identifier.
 	ID ID
@@ -146,7 +146,7 @@ func (pp *Pubcomp) String() string {
 	return fmt.Sprintf("<Pubcomp ID=%d>", pp.ID)
 }
 
-// A Pubrec packet is the response to a PublishPacket with QOS 2. It is the
+// A Pubrec packet is the response to a Publish packet with QOS 2. It is the
 // second packet of the QOS 2 protocol exchange.
 type Pubrec struct {
 	// Shared packet identifier.

@@ -19,7 +19,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 	suback.ReturnCodes = []uint8{0}
 	suback.ID = 1
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
@@ -83,7 +83,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 	suback.ReturnCodes = []uint8{0}
 	suback.ID = 1
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
@@ -271,13 +271,13 @@ func TestServiceFutureSurvival(t *testing.T) {
 	connack := connackPacket()
 	connack.SessionPresent = true
 
-	publish1 := packet.NewPublishPacket()
+	publish1 := packet.NewPublish()
 	publish1.Message.Topic = "test"
 	publish1.Message.Payload = []byte("test")
 	publish1.Message.QOS = 1
 	publish1.ID = 1
 
-	publish2 := packet.NewPublishPacket()
+	publish2 := packet.NewPublish()
 	publish2.Message.Topic = "test"
 	publish2.Message.Payload = []byte("test")
 	publish2.Message.QOS = 1

@@ -5,15 +5,15 @@ import (
 	"fmt"
 )
 
-// A PublishPacket is sent from a client to a server or from server to a client
+// A Publish packet is sent from a client to a server or from server to a client
 // to transport an application message.
-type PublishPacket struct {
+type Publish struct {
 	// The message to publish.
 	Message Message
 
 	// If the Dup flag is set to false, it indicates that this is the first
 	// occasion that the client or server has attempted to send this
-	// PublishPacket. If the dup flag is set to true, it indicates that this
+	// Publish packet. If the dup flag is set to true, it indicates that this
 	// might be re-delivery of an earlier attempt to send the packet.
 	Dup bool
 
@@ -21,31 +21,31 @@ type PublishPacket struct {
 	ID ID
 }
 
-// NewPublishPacket creates a new PublishPacket.
-func NewPublishPacket() *PublishPacket {
-	return &PublishPacket{}
+// NewPublish creates a new Publish packet.
+func NewPublish() *Publish {
+	return &Publish{}
 }
 
 // Type returns the packets type.
-func (pp *PublishPacket) Type() Type {
+func (pp *Publish) Type() Type {
 	return PUBLISH
 }
 
 // String returns a string representation of the packet.
-func (pp *PublishPacket) String() string {
-	return fmt.Sprintf("<PublishPacket ID=%d Message=%s Dup=%t>",
+func (pp *Publish) String() string {
+	return fmt.Sprintf("<Publish ID=%d Message=%s Dup=%t>",
 		pp.ID, pp.Message.String(), pp.Dup)
 }
 
 // Len returns the byte length of the encoded packet.
-func (pp *PublishPacket) Len() int {
+func (pp *Publish) Len() int {
 	ml := pp.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (pp *PublishPacket) Decode(src []byte) (int, error) {
+func (pp *Publish) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -111,7 +111,7 @@ func (pp *PublishPacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pp *PublishPacket) Encode(dst []byte) (int, error) {
+func (pp *Publish) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check topic length
@@ -176,7 +176,7 @@ func (pp *PublishPacket) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (pp *PublishPacket) len() int {
+func (pp *Publish) len() int {
 	total := 2 + len(pp.Message.Topic) + len(pp.Message.Payload)
 	if pp.Message.QOS != 0 {
 		total += 2

@@ -75,7 +75,7 @@ func TestNetConnBigBufferedSendAfterClose(t *testing.T) {
 
 func TestNetConnCloseWhileReadError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
-		pkt := packet.NewPublishPacket()
+		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
 		pkt.Encode(buf)
@@ -97,7 +97,7 @@ func TestNetConnCloseWhileReadError(t *testing.T) {
 
 func TestNetConnCloseWhileDetectError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
-		pkt := packet.NewPublishPacket()
+		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
 		pkt.Encode(buf)
@@ -119,7 +119,7 @@ func TestNetConnCloseWhileDetectError(t *testing.T) {
 
 func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
-		pkt := packet.NewPublishPacket()
+		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
 		pkt.Encode(buf)
@@ -139,7 +139,7 @@ func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 }
 
 func BenchmarkNetConn(b *testing.B) {
-	pkt := packet.NewPublishPacket()
+	pkt := packet.NewPublish()
 	pkt.Message.Topic = "foo/bar/baz"
 
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
@@ -164,7 +164,7 @@ func BenchmarkNetConn(b *testing.B) {
 }
 
 func BenchmarkNetConnBuffered(b *testing.B) {
-	pkt := packet.NewPublishPacket()
+	pkt := packet.NewPublish()
 	pkt.Message.Topic = "foo/bar/baz"
 
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {

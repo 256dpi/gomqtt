@@ -31,7 +31,7 @@ func TestMemorySessionNextID(t *testing.T) {
 func TestMemorySessionPacketStore(t *testing.T) {
 	session := NewMemorySession()
 
-	publish := packet.NewPublishPacket()
+	publish := packet.NewPublish()
 	publish.ID = 1
 
 	pkt, err := session.LookupPacket(Incoming, 1)

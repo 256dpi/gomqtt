@@ -339,7 +339,7 @@ func abstractConnBigBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	assert.Nil(t, pkt)
 	assert.Equal(t, io.EOF, err)
 
-	pub := packet.NewPublishPacket()
+	pub := packet.NewPublish()
 	pub.Message.Topic = "hello"
 	pub.Message.Payload = make([]byte, 6400) // < bigger than write buffer
 
