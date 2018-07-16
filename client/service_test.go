@@ -175,7 +175,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 	unsubscribe.Topics = []string{"test"}
 	unsubscribe.ID = 1
 
-	unsuback := packet.NewUnsubackPacket()
+	unsuback := packet.NewUnsuback()
 	unsuback.ID = 1
 
 	broker := flow.New().
@@ -284,7 +284,7 @@ func TestServiceFutureSurvival(t *testing.T) {
 	publish2.Dup = true
 	publish2.ID = 1
 
-	puback := packet.NewPubackPacket()
+	puback := packet.NewPuback()
 	puback.ID = 1
 
 	broker1 := flow.New().

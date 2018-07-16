@@ -513,13 +513,13 @@ func (c *Client) processPacket(pkt packet.GenericPacket) error {
 		err = c.processUnsubscribe(typedPkt)
 	case *packet.PublishPacket:
 		err = c.processPublish(typedPkt)
-	case *packet.PubackPacket:
+	case *packet.Puback:
 		err = c.processPubackAndPubcomp(typedPkt.ID)
-	case *packet.PubcompPacket:
+	case *packet.Pubcomp:
 		err = c.processPubackAndPubcomp(typedPkt.ID)
-	case *packet.PubrecPacket:
+	case *packet.Pubrec:
 		err = c.processPubrec(typedPkt.ID)
-	case *packet.PubrelPacket:
+	case *packet.Pubrel:
 		err = c.processPubrel(typedPkt.ID)
 	case *packet.PingreqPacket:
 		err = c.processPingreq()
@@ -591,7 +591,7 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	}
 
 	// prepare unsuback packet
-	unsuback := packet.NewUnsubackPacket()
+	unsuback := packet.NewUnsuback()
 	unsuback.ID = pkt.ID
 
 	// unsubscribe topics
@@ -624,7 +624,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		// prepare puback
-		puback := packet.NewPubackPacket()
+		puback := packet.NewPuback()
 		puback.ID = publish.ID
 
 		// acquire publish token
@@ -660,7 +660,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 
 		// prepare pubrec packet
-		pubrec := packet.NewPubrecPacket()
+		pubrec := packet.NewPubrec()
 		pubrec.ID = publish.ID
 
 		// signal qos 2 pubrec
@@ -673,7 +673,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	return nil
 }
 
-// handle an incoming PubackPacket or PubcompPacket
+// handle an incoming Puback or Pubcomp packet
 func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// remove packet from store
 	err := c.session.DeletePacket(session.Outgoing, id)
@@ -687,13 +687,13 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	return nil
 }
 
-// handle an incoming PubrecPacket
+// handle an incoming Pubrec packet
 func (c *Client) processPubrec(id packet.ID) error {
 	// allocate packet
-	pubrel := packet.NewPubrelPacket()
+	pubrel := packet.NewPubrel()
 	pubrel.ID = id
 
-	// overwrite stored PublishPacket with PubrelPacket
+	// overwrite stored PublishPacket with the Pubrel packet
 	err := c.session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
 		return c.die(SessionError, err)
@@ -708,7 +708,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 	return nil
 }
 
-// handle an incoming PubrelPacket
+// handle an incoming Pubrel packet
 func (c *Client) processPubrel(id packet.ID) error {
 	// get publish packet from store
 	pkt, err := c.session.LookupPacket(session.Incoming, id)
@@ -719,11 +719,11 @@ func (c *Client) processPubrel(id packet.ID) error {
 	// get packet from store
 	publish, ok := pkt.(*packet.PublishPacket)
 	if !ok {
-		return nil // ignore a wrongly sent PubrelPacket
+		return nil // ignore a wrongly sent Pubrel packet
 	}
 
 	// prepare pubcomp packet
-	pubcomp := packet.NewPubcompPacket()
+	pubcomp := packet.NewPubcomp()
 	pubcomp.ID = publish.ID
 
 	// the pubrec packet will be cleared from the session once the pubcomp
@@ -825,7 +825,7 @@ func (c *Client) sendAck(pkt packet.GenericPacket) error {
 	}
 
 	// remove pubrec from session
-	if pubcomp, ok := pkt.(*packet.PubcompPacket); ok {
+	if pubcomp, ok := pkt.(*packet.Pubcomp); ok {
 		err = c.session.DeletePacket(session.Incoming, pubcomp.ID)
 		if err != nil {
 			return c.die(SessionError, err)
@@ -834,10 +834,10 @@ func (c *Client) sendAck(pkt packet.GenericPacket) error {
 
 	// check ack type
 	switch pkt.(type) {
-	case *packet.SubackPacket, *packet.UnsubackPacket:
+	case *packet.SubackPacket, *packet.Unsuback:
 		// put back subscribe token
 		c.subscribeTokens <- struct{}{}
-	case *packet.PubackPacket, *packet.PubcompPacket:
+	case *packet.Puback, *packet.Pubcomp:
 		// put back publish token
 		c.publishTokens <- struct{}{}
 	}

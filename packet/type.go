@@ -106,13 +106,13 @@ func (t Type) New() (GenericPacket, error) {
 	case PUBLISH:
 		return NewPublishPacket(), nil
 	case PUBACK:
-		return NewPubackPacket(), nil
+		return NewPuback(), nil
 	case PUBREC:
-		return NewPubrecPacket(), nil
+		return NewPubrec(), nil
 	case PUBREL:
-		return NewPubrelPacket(), nil
+		return NewPubrel(), nil
 	case PUBCOMP:
-		return NewPubcompPacket(), nil
+		return NewPubcomp(), nil
 	case SUBSCRIBE:
 		return NewSubscribePacket(), nil
 	case SUBACK:
@@ -120,7 +120,7 @@ func (t Type) New() (GenericPacket, error) {
 	case UNSUBSCRIBE:
 		return NewUnsubscribePacket(), nil
 	case UNSUBACK:
-		return NewUnsubackPacket(), nil
+		return NewUnsuback(), nil
 	case PINGREQ:
 		return NewPingreqPacket(), nil
 	case PINGRESP:

@@ -71,13 +71,13 @@ func GetID(packet GenericPacket) (ID, bool) {
 	case PUBLISH:
 		return packet.(*PublishPacket).ID, true
 	case PUBACK:
-		return packet.(*PubackPacket).ID, true
+		return packet.(*Puback).ID, true
 	case PUBREC:
-		return packet.(*PubrecPacket).ID, true
+		return packet.(*Pubrec).ID, true
 	case PUBREL:
-		return packet.(*PubrelPacket).ID, true
+		return packet.(*Pubrel).ID, true
 	case PUBCOMP:
-		return packet.(*PubcompPacket).ID, true
+		return packet.(*Pubcomp).ID, true
 	case SUBSCRIBE:
 		return packet.(*SubscribePacket).ID, true
 	case SUBACK:
@@ -85,7 +85,7 @@ func GetID(packet GenericPacket) (ID, bool) {
 	case UNSUBSCRIBE:
 		return packet.(*UnsubscribePacket).ID, true
 	case UNSUBACK:
-		return packet.(*UnsubackPacket).ID, true
+		return packet.(*Unsuback).ID, true
 	}
 
 	return 0, false

@@ -351,7 +351,7 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (Subscri
 }
 
 // Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
-// It will return a UnsubscribeFuture that gets completed once a UnsubackPacket
+// It will return a UnsubscribeFuture that gets completed once an Unsuback packet
 // has been received.
 func (c *Client) Unsubscribe(topic string) (GenericFuture, error) {
 	return c.UnsubscribeMultiple([]string{topic})
@@ -359,7 +359,7 @@ func (c *Client) Unsubscribe(topic string) (GenericFuture, error) {
 
 // UnsubscribeMultiple will send a UnsubscribePacket containing multiple
 // topics to unsubscribe. It will return a UnsubscribeFuture that gets completed
-// once a UnsubackPacket has been received.
+// once an Unsuback packet has been received.
 func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -479,19 +479,19 @@ func (c *Client) processor() error {
 		switch typedPkt := pkt.(type) {
 		case *packet.SubackPacket:
 			err = c.processSuback(typedPkt)
-		case *packet.UnsubackPacket:
+		case *packet.Unsuback:
 			err = c.processUnsuback(typedPkt)
 		case *packet.PingrespPacket:
 			c.tracker.pong()
 		case *packet.PublishPacket:
 			err = c.processPublish(typedPkt)
-		case *packet.PubackPacket:
+		case *packet.Puback:
 			err = c.processPubackAndPubcomp(typedPkt.ID)
-		case *packet.PubcompPacket:
+		case *packet.Pubcomp:
 			err = c.processPubackAndPubcomp(typedPkt.ID)
-		case *packet.PubrecPacket:
+		case *packet.Pubrec:
 			err = c.processPubrec(typedPkt.ID)
-		case *packet.PubrelPacket:
+		case *packet.Pubrel:
 			err = c.processPubrel(typedPkt.ID)
 		}
 
@@ -588,8 +588,8 @@ func (c *Client) processSuback(suback *packet.SubackPacket) error {
 	return nil
 }
 
-// handle an incoming UnsubackPacket
-func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
+// handle an incoming Unsuback packet
+func (c *Client) processUnsuback(unsuback *packet.Unsuback) error {
 	// remove packet from store
 	err := c.Session.DeletePacket(session.Outgoing, unsuback.ID)
 	if err != nil {
@@ -599,7 +599,7 @@ func (c *Client) processUnsuback(unsuback *packet.UnsubackPacket) error {
 	// get future
 	unsubscribeFuture := c.futureStore.Get(unsuback.ID)
 	if unsubscribeFuture == nil {
-		return nil // ignore a wrongly sent UnsubackPacket
+		return nil // ignore a wrongly sent Unsuback packet
 	}
 
 	// complete future
@@ -626,7 +626,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		// prepare puback packet
-		puback := packet.NewPubackPacket()
+		puback := packet.NewPuback()
 		puback.ID = publish.ID
 
 		// acknowledge qos 1 publish
@@ -645,7 +645,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 		}
 
 		// prepare pubrec packet
-		pubrec := packet.NewPubrecPacket()
+		pubrec := packet.NewPubrec()
 		pubrec.ID = publish.ID
 
 		// acknowledge qos 2 publish
@@ -658,7 +658,7 @@ func (c *Client) processPublish(publish *packet.PublishPacket) error {
 	return nil
 }
 
-// handle an incoming PubackPacket or PubcompPacket
+// handle an incoming Puback or Pubcomp packet
 func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// remove packet from store
 	err := c.Session.DeletePacket(session.Outgoing, id)
@@ -669,7 +669,7 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// get future
 	publishFuture := c.futureStore.Get(id)
 	if publishFuture == nil {
-		return nil // ignore a wrongly sent PubackPacket or PubcompPacket
+		return nil // ignore a wrongly sent Puback or Pubcomp packet
 	}
 
 	// complete future
@@ -681,13 +681,13 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	return nil
 }
 
-// handle an incoming PubrecPacket
+// handle an incoming Pubrec packet
 func (c *Client) processPubrec(id packet.ID) error {
 	// prepare pubrel packet
-	pubrel := packet.NewPubrelPacket()
+	pubrel := packet.NewPubrel()
 	pubrel.ID = id
 
-	// overwrite stored PublishPacket with PubrelPacket
+	// overwrite stored PublishPacket with the Pubrel packet
 	err := c.Session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
 		return c.die(err, true, false)
@@ -702,7 +702,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 	return nil
 }
 
-// handle an incoming PubrelPacket
+// handle an incoming Pubrel packet
 func (c *Client) processPubrel(id packet.ID) error {
 	// get packet from store
 	pkt, err := c.Session.LookupPacket(session.Incoming, id)
@@ -713,7 +713,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	// get packet from store
 	publish, ok := pkt.(*packet.PublishPacket)
 	if !ok {
-		return nil // ignore a wrongly sent PubrelPacket
+		return nil // ignore a wrongly sent Pubrel packet
 	}
 
 	// call callback
@@ -725,7 +725,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	}
 
 	// prepare pubcomp packet
-	pubcomp := packet.NewPubcompPacket()
+	pubcomp := packet.NewPubcomp()
 	pubcomp.ID = publish.ID
 
 	// acknowledge PublishPacket

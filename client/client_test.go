@@ -426,7 +426,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	publish.Message.QOS = 1
 	publish.ID = 2
 
-	puback := packet.NewPubackPacket()
+	puback := packet.NewPuback()
 	puback.ID = 2
 
 	broker := flow.New().
@@ -502,13 +502,13 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	publish.Message.QOS = 2
 	publish.ID = 2
 
-	pubrec := packet.NewPubrecPacket()
+	pubrec := packet.NewPubrec()
 	pubrec.ID = 2
 
-	pubrel := packet.NewPubrelPacket()
+	pubrel := packet.NewPubrel()
 	pubrel.ID = 2
 
-	pubcomp := packet.NewPubcompPacket()
+	pubcomp := packet.NewPubcomp()
 	pubcomp.ID = 2
 
 	broker := flow.New().
@@ -578,7 +578,7 @@ func TestClientUnsubscribe(t *testing.T) {
 	unsubscribe.Topics = []string{"test"}
 	unsubscribe.ID = 1
 
-	unsuback := packet.NewUnsubackPacket()
+	unsuback := packet.NewUnsuback()
 	unsuback.ID = 1
 
 	broker := flow.New().
@@ -666,7 +666,7 @@ func TestClientDisconnectWithTimeout(t *testing.T) {
 	publish.Message.QOS = 1
 	publish.ID = 1
 
-	puback := packet.NewPubackPacket()
+	puback := packet.NewPuback()
 	puback.ID = 1
 
 	wait := func() {
@@ -746,7 +746,7 @@ func TestClientInvalidPackets(t *testing.T) {
 	assert.NoError(t, err)
 
 	// missing future
-	err = c.processUnsuback(packet.NewUnsubackPacket())
+	err = c.processUnsuback(packet.NewUnsuback())
 	assert.NoError(t, err)
 
 	// missing future
@@ -769,7 +769,7 @@ func TestClientSessionResumption(t *testing.T) {
 	publish1.Message.QOS = 1
 	publish1.ID = 1
 
-	puback1 := packet.NewPubackPacket()
+	puback1 := packet.NewPuback()
 	puback1.ID = 1
 
 	broker := flow.New().
