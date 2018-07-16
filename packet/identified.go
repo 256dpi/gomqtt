@@ -109,7 +109,7 @@ type Pubcomp struct {
 	ID ID
 }
 
-var _ GenericPacket = (*Pubcomp)(nil)
+var _ Generic = (*Pubcomp)(nil)
 
 // NewPubcomp creates a new Pubcomp packet.
 func NewPubcomp() *Pubcomp {
@@ -195,7 +195,7 @@ type Pubrel struct {
 	ID ID
 }
 
-var _ GenericPacket = (*Pubrel)(nil)
+var _ Generic = (*Pubrel)(nil)
 
 // NewPubrel creates a new Pubrel packet.
 func NewPubrel() *Pubrel {

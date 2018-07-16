@@ -50,7 +50,7 @@ func TestDecoder(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
 
-	var pkt GenericPacket = NewConnect()
+	var pkt Generic = NewConnect()
 	b := make([]byte, pkt.Len())
 	pkt.Encode(b)
 	buf.Write(b)

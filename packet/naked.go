@@ -103,7 +103,7 @@ func (pp *Pingreq) String() string {
 // Pingreq. It indicates that the server is alive.
 type Pingresp struct{}
 
-var _ GenericPacket = (*Pingresp)(nil)
+var _ Generic = (*Pingresp)(nil)
 
 // NewPingresp creates a new Pingresp packet.
 func NewPingresp() *Pingresp {

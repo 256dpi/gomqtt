@@ -22,9 +22,9 @@ const (
 // ID is the type used to store packet ids.
 type ID uint16
 
-// A GenericPacket is an MQTT control packet that can be encoded to a buffer or decoded
+//Generic is an MQTT control packet that can be encoded to a buffer or decoded
 // from a buffer.
-type GenericPacket interface {
+type Generic interface {
 	// Type returns the packets type.
 	Type() Type
 
@@ -66,26 +66,26 @@ func DetectPacket(src []byte) (int, Type) {
 
 // GetID checks the packets type and returns its ID and true, or if it
 // does not have a ID, zero and false.
-func GetID(packet GenericPacket) (ID, bool) {
-	switch packet.Type() {
+func GetID(pkt Generic) (ID, bool) {
+	switch pkt.Type() {
 	case PUBLISH:
-		return packet.(*PublishPacket).ID, true
+		return pkt.(*PublishPacket).ID, true
 	case PUBACK:
-		return packet.(*Puback).ID, true
+		return pkt.(*Puback).ID, true
 	case PUBREC:
-		return packet.(*Pubrec).ID, true
+		return pkt.(*Pubrec).ID, true
 	case PUBREL:
-		return packet.(*Pubrel).ID, true
+		return pkt.(*Pubrel).ID, true
 	case PUBCOMP:
-		return packet.(*Pubcomp).ID, true
+		return pkt.(*Pubcomp).ID, true
 	case SUBSCRIBE:
-		return packet.(*SubscribePacket).ID, true
+		return pkt.(*SubscribePacket).ID, true
 	case SUBACK:
-		return packet.(*SubackPacket).ID, true
+		return pkt.(*SubackPacket).ID, true
 	case UNSUBSCRIBE:
-		return packet.(*UnsubscribePacket).ID, true
+		return pkt.(*UnsubscribePacket).ID, true
 	case UNSUBACK:
-		return packet.(*Unsuback).ID, true
+		return pkt.(*Unsuback).ID, true
 	}
 
 	return 0, false
