@@ -7,11 +7,11 @@ import (
 )
 
 func TestUnsubscribeInterface(t *testing.T) {
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	pkt.Topics = []string{"foo", "bar"}
 
 	assert.Equal(t, pkt.Type(), UNSUBSCRIBE)
-	assert.Equal(t, "<UnsubscribePacket Topics=[\"foo\", \"bar\"]>", pkt.String())
+	assert.Equal(t, "<Unsubscribe Topics=[\"foo\", \"bar\"]>", pkt.String())
 }
 
 func TestUnsubscribePacketDecode(t *testing.T) {
@@ -31,7 +31,7 @@ func TestUnsubscribePacketDecode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	n, err := pkt.Decode(pktBytes)
 
 	assert.NoError(t, err)
@@ -51,7 +51,7 @@ func TestUnsubscribePacketDecodeError1(t *testing.T) {
 		// empty topic list
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -65,7 +65,7 @@ func TestUnsubscribePacketDecodeError2(t *testing.T) {
 		7, // packet ID LSB
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -78,7 +78,7 @@ func TestUnsubscribePacketDecodeError3(t *testing.T) {
 		// missing packet id
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -95,7 +95,7 @@ func TestUnsubscribePacketDecodeError4(t *testing.T) {
 		'g', 'o', 'm', 'q', 't', 't',
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -112,7 +112,7 @@ func TestUnsubscribePacketDecodeError5(t *testing.T) {
 		'g', 'o', 'm', 'q', 't', 't',
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -135,7 +135,7 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	pkt.ID = 7
 	pkt.Topics = []string{
 		"gomqtt",
@@ -152,7 +152,7 @@ func TestUnsubscribePacketEncode(t *testing.T) {
 }
 
 func TestUnsubscribePacketEncodeError1(t *testing.T) {
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	pkt.ID = 7
 	pkt.Topics = []string{"gomqtt"}
 
@@ -164,7 +164,7 @@ func TestUnsubscribePacketEncodeError1(t *testing.T) {
 }
 
 func TestUnsubscribePacketEncodeError2(t *testing.T) {
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	pkt.ID = 7
 	pkt.Topics = []string{string(make([]byte, 65536))}
 
@@ -176,7 +176,7 @@ func TestUnsubscribePacketEncodeError2(t *testing.T) {
 }
 
 func TestUnsubscribePacketEncodeError3(t *testing.T) {
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	pkt.ID = 0 // < zero packet id
 
 	dst := make([]byte, pkt.Len())
@@ -203,7 +203,7 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	n, err := pkt.Decode(pktBytes)
 
 	assert.NoError(t, err)
@@ -223,7 +223,7 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 	pkt.ID = 1
 	pkt.Topics = []string{"t"}
 
@@ -248,7 +248,7 @@ func BenchmarkUnsubscribeDecode(b *testing.B) {
 		't',
 	}
 
-	pkt := NewUnsubscribePacket()
+	pkt := NewUnsubscribe()
 
 	for i := 0; i < b.N; i++ {
 		_, err := pkt.Decode(pktBytes)

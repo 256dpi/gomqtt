@@ -171,7 +171,7 @@ func TestStartStopVariations(t *testing.T) {
 }
 
 func TestServiceUnsubscribe(t *testing.T) {
-	unsubscribe := packet.NewUnsubscribePacket()
+	unsubscribe := packet.NewUnsubscribe()
 	unsubscribe.Topics = []string{"test"}
 	unsubscribe.ID = 1
 

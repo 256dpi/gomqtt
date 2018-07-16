@@ -350,14 +350,14 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (Subscri
 	return wrappedFuture, nil
 }
 
-// Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
+// Unsubscribe will send a Unsubscribe packet containing one topic to unsubscribe.
 // It will return a UnsubscribeFuture that gets completed once an Unsuback packet
 // has been received.
 func (c *Client) Unsubscribe(topic string) (GenericFuture, error) {
 	return c.UnsubscribeMultiple([]string{topic})
 }
 
-// UnsubscribeMultiple will send a UnsubscribePacket containing multiple
+// UnsubscribeMultiple will send a Unsubscribe packet containing multiple
 // topics to unsubscribe. It will return a UnsubscribeFuture that gets completed
 // once an Unsuback packet has been received.
 func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
@@ -369,8 +369,8 @@ func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 		return nil, ErrClientNotConnected
 	}
 
-	// allocate packet
-	unsubscribe := packet.NewUnsubscribePacket()
+	// allocate unsubscribe packet
+	unsubscribe := packet.NewUnsubscribe()
 	unsubscribe.Topics = topics
 	unsubscribe.ID = c.Session.NextID()
 

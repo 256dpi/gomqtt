@@ -233,7 +233,7 @@ func (pp *Pubrel) String() string {
 }
 
 // An Unsuback packet is sent by the server to the client to confirm receipt of
-// an UnsubscribePacket.
+// an Unsubscribe packet.
 type Unsuback struct {
 	// Shared packet identifier.
 	ID ID

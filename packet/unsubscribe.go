@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// An UnsubscribePacket is sent by the client to the server.
-type UnsubscribePacket struct {
+// An Unsubscribe packet is sent by the client to the server.
+type Unsubscribe struct {
 	// The topics to unsubscribe from.
 	Topics []string
 
@@ -15,37 +15,37 @@ type UnsubscribePacket struct {
 	ID ID
 }
 
-// NewUnsubscribePacket creates a new UnsubscribePacket.
-func NewUnsubscribePacket() *UnsubscribePacket {
-	return &UnsubscribePacket{}
+// NewUnsubscribe creates a new Unsubscribe packet.
+func NewUnsubscribe() *Unsubscribe {
+	return &Unsubscribe{}
 }
 
 // Type returns the packets type.
-func (up *UnsubscribePacket) Type() Type {
+func (up *Unsubscribe) Type() Type {
 	return UNSUBSCRIBE
 }
 
 // String returns a string representation of the packet.
-func (up *UnsubscribePacket) String() string {
+func (up *Unsubscribe) String() string {
 	var topics []string
 
 	for _, t := range up.Topics {
 		topics = append(topics, fmt.Sprintf("%q", t))
 	}
 
-	return fmt.Sprintf("<UnsubscribePacket Topics=[%s]>",
+	return fmt.Sprintf("<Unsubscribe Topics=[%s]>",
 		strings.Join(topics, ", "))
 }
 
 // Len returns the byte length of the encoded packet.
-func (up *UnsubscribePacket) Len() int {
+func (up *Unsubscribe) Len() int {
 	ml := up.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
+func (up *Unsubscribe) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -101,7 +101,7 @@ func (up *UnsubscribePacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (up *UnsubscribePacket) Encode(dst []byte) (int, error) {
+func (up *Unsubscribe) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check packet id
@@ -133,7 +133,7 @@ func (up *UnsubscribePacket) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (up *UnsubscribePacket) len() int {
+func (up *Unsubscribe) len() int {
 	// packet ID
 	total := 2
 

@@ -236,14 +236,14 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) Subscri
 	return &subscribeFuture{f}
 }
 
-// Unsubscribe will send a UnsubscribePacket containing one topic to unsubscribe.
+// Unsubscribe will send a Unsubscribe packet containing one topic to unsubscribe.
 // It will return a SubscribeFuture that gets completed once the acknowledgements
 // have been received.
 func (s *Service) Unsubscribe(topic string) GenericFuture {
 	return s.UnsubscribeMultiple([]string{topic})
 }
 
-// UnsubscribeMultiple will send a UnsubscribePacket containing multiple
+// UnsubscribeMultiple will send a Unsubscribe packet containing multiple
 // topics to unsubscribe. It will return a SubscribeFuture that gets completed
 // once the acknowledgements have been received.
 func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {

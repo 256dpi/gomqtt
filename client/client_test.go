@@ -574,7 +574,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 }
 
 func TestClientUnsubscribe(t *testing.T) {
-	unsubscribe := packet.NewUnsubscribePacket()
+	unsubscribe := packet.NewUnsubscribe()
 	unsubscribe.Topics = []string{"test"}
 	unsubscribe.ID = 1
 
