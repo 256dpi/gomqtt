@@ -99,7 +99,7 @@ func testNakedPacketImplementation(t *testing.T, _t Type) {
 	pkt, err := _t.New()
 	assert.NoError(t, err)
 	assert.Equal(t, _t, pkt.Type())
-	assert.Equal(t, fmt.Sprintf("<%sPacket>", pkt.Type().String()), pkt.String())
+	assert.Equal(t, fmt.Sprintf("<%s>", pkt.Type().String()), pkt.String())
 
 	buf := make([]byte, pkt.Len())
 	n, err := pkt.Encode(buf)
