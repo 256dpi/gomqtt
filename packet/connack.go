@@ -40,7 +40,7 @@ func (cc ConnackCode) Error() string {
 	return "unknown error"
 }
 
-// A Connack packet is sent by the server in response to a ConnectPacket
+// A Connack packet is sent by the server in response to a Connect packet
 // received from a client.
 type Connack struct {
 	// The SessionPresent flag enables a client to establish whether the
@@ -48,7 +48,7 @@ type Connack struct {
 	// stored session state.
 	SessionPresent bool
 
-	// If a well formed ConnectPacket is received by the server, but the server
+	// If a well formed Connect packet is received by the server, but the server
 	// is unable to process it for some reason, then the server should attempt
 	// to send a Connack containing a non-zero ReturnCode.
 	ReturnCode ConnackCode

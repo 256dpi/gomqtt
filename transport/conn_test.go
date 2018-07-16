@@ -25,7 +25,7 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	})
 
-	err := conn2.Send(packet.NewConnectPacket())
+	err := conn2.Send(packet.NewConnect())
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
@@ -99,7 +99,7 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 	assert.Nil(t, pkt)
 	assert.Equal(t, io.EOF, err)
 
-	err = conn2.Send(packet.NewConnectPacket())
+	err = conn2.Send(packet.NewConnect())
 	assert.Error(t, err)
 
 	safeReceive(done)
@@ -107,7 +107,7 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 
 func abstractConnCloseWhileSendTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		err := conn1.Send(packet.NewConnectPacket())
+		err := conn1.Send(packet.NewConnect())
 		assert.NoError(t, err)
 
 		err = conn1.Close()
@@ -120,7 +120,7 @@ func abstractConnCloseWhileSendTest(t *testing.T, protocol string) {
 
 	for {
 		// keep writing
-		err := conn2.Send(packet.NewConnectPacket())
+		err := conn2.Send(packet.NewConnect())
 		if err != nil {
 			assert.Error(t, err)
 			break
@@ -134,7 +134,7 @@ func abstractConnSendAndCloseTest(t *testing.T, protocol string) {
 	wait := make(chan struct{})
 
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		err := conn1.Send(packet.NewConnectPacket())
+		err := conn1.Send(packet.NewConnect())
 		assert.NoError(t, err)
 
 		err = conn1.Close()
@@ -166,7 +166,7 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 		assert.Equal(t, packet.ErrReadLimitExceeded, err)
 	})
 
-	err := conn2.Send(packet.NewConnectPacket())
+	err := conn2.Send(packet.NewConnect())
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
@@ -241,7 +241,7 @@ func abstractConnBufferedSendTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	})
 
-	err := conn2.BufferedSend(packet.NewConnectPacket())
+	err := conn2.BufferedSend(packet.NewConnect())
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
@@ -271,7 +271,7 @@ func abstractConnSendAfterBufferedSendTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	})
 
-	err := conn2.BufferedSend(packet.NewConnectPacket())
+	err := conn2.BufferedSend(packet.NewConnect())
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
@@ -298,12 +298,12 @@ func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	assert.Nil(t, pkt)
 	assert.Equal(t, io.EOF, err)
 
-	err = conn2.BufferedSend(packet.NewConnectPacket())
+	err = conn2.BufferedSend(packet.NewConnect())
 	assert.NoError(t, err)
 
 	<-time.After(2 * flushTimeout)
 
-	err = conn2.BufferedSend(packet.NewConnectPacket())
+	err = conn2.BufferedSend(packet.NewConnect())
 	assert.Error(t, err)
 
 	safeReceive(done)
@@ -320,7 +320,7 @@ func abstractConnCloseAfterBufferedSendTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	})
 
-	err := conn2.BufferedSend(packet.NewConnectPacket())
+	err := conn2.BufferedSend(packet.NewConnect())
 	assert.NoError(t, err)
 
 	err = conn2.Close()

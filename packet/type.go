@@ -100,7 +100,7 @@ func (t Type) defaultFlags() byte {
 func (t Type) New() (GenericPacket, error) {
 	switch t {
 	case CONNECT:
-		return NewConnectPacket(), nil
+		return NewConnect(), nil
 	case CONNACK:
 		return NewConnack(), nil
 	case PUBLISH:

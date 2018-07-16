@@ -10,7 +10,7 @@ import (
 )
 
 func TestFlow(t *testing.T) {
-	connect := packet.NewConnectPacket()
+	connect := packet.NewConnect()
 	connack := packet.NewConnack()
 
 	subscribe := packet.NewSubscribePacket()

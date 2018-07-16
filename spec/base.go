@@ -545,7 +545,7 @@ func KeepAliveTest(t *testing.T, config *Config) {
 func KeepAliveTimeoutTest(t *testing.T, config *Config) {
 	username, password := config.usernamePassword()
 
-	connect := packet.NewConnectPacket()
+	connect := packet.NewConnect()
 	connect.KeepAlive = 1
 	connect.Username = username
 	connect.Password = password

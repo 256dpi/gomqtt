@@ -13,7 +13,7 @@ func TestEncoder(t *testing.T) {
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
 
-	err := enc.Write(NewConnectPacket())
+	err := enc.Write(NewConnect())
 	assert.NoError(t, err)
 
 	err = enc.Flush()
@@ -50,7 +50,7 @@ func TestDecoder(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
 
-	var pkt GenericPacket = NewConnectPacket()
+	var pkt GenericPacket = NewConnect()
 	b := make([]byte, pkt.Len())
 	pkt.Encode(b)
 	buf.Write(b)
@@ -144,7 +144,7 @@ func TestStream(t *testing.T) {
 
 	s := NewStream(in, out)
 
-	err := s.Write(NewConnectPacket())
+	err := s.Write(NewConnect())
 	assert.NoError(t, err)
 
 	err = s.Flush()

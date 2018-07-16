@@ -88,7 +88,7 @@ func connection(id string) transport.Conn {
 		panic(err)
 	}
 
-	connect := packet.NewConnectPacket()
+	connect := packet.NewConnect()
 	connect.ClientID = "gomqtt-benchmark/" + id
 
 	if mqttURL.User != nil {

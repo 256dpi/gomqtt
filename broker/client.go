@@ -121,8 +121,8 @@ type Backend interface {
 }
 
 // ErrExpectedConnect is returned when the first received packet is not a
-// ConnectPacket.
-var ErrExpectedConnect = errors.New("expected a ConnectPacket as the first packet")
+// Connect.
+var ErrExpectedConnect = errors.New("expected a Connect as the first packet")
 
 // ErrNotAuthorized is returned when a client is not authorized.
 var ErrNotAuthorized = errors.New("client is not authorized")
@@ -266,7 +266,7 @@ func (c *Client) processor() error {
 	c.log(PacketReceived, c, pkt, nil, nil)
 
 	// get connect
-	connect, ok := pkt.(*packet.ConnectPacket)
+	connect, ok := pkt.(*packet.Connect)
 	if !ok {
 		return c.die(ClientError, ErrExpectedConnect)
 	}
@@ -360,8 +360,8 @@ func (c *Client) sender() error {
 
 /* packet handling */
 
-// handle an incoming ConnectPacket
-func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
+// handle an incoming Connect packet
+func (c *Client) processConnect(pkt *packet.Connect) error {
 	// save id
 	c.id = pkt.ClientID
 

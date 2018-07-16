@@ -21,7 +21,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 
 	username, password := config.usernamePassword()
 
-	connect := packet.NewConnectPacket()
+	connect := packet.NewConnect()
 	connect.CleanSession = false
 	connect.ClientID = id
 	connect.Username = username
@@ -90,7 +90,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	username, password := config.usernamePassword()
 
-	connect := packet.NewConnectPacket()
+	connect := packet.NewConnect()
 	connect.CleanSession = false
 	connect.ClientID = id
 	connect.Username = username
@@ -171,7 +171,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	username, password := config.usernamePassword()
 
-	connect := packet.NewConnectPacket()
+	connect := packet.NewConnect()
 	connect.CleanSession = false
 	connect.ClientID = id
 	connect.Username = username

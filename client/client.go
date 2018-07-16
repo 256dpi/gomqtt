@@ -139,9 +139,9 @@ func New() *Client {
 	}
 }
 
-// Connect opens the connection to the broker and sends a ConnectPacket. It will
+// Connect opens the connection to the broker and sends a Connect packet. It will
 // return a ConnectFuture that gets completed once a Connack has been
-// received. If the ConnectPacket couldn't be transmitted it will return an error.
+// received. If the Connect packet couldn't be transmitted it will return an error.
 func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	if config == nil {
 		panic("no config specified")
@@ -210,7 +210,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	}
 
 	// allocate packet
-	connect := packet.NewConnectPacket()
+	connect := packet.NewConnect()
 	connect.ClientID = config.ClientID
 	connect.KeepAlive = uint16(keepAlive.Seconds())
 	connect.CleanSession = config.CleanSession

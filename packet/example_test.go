@@ -6,7 +6,7 @@ func Example() {
 	/* Packet Encoding */
 
 	// Create new packet.
-	pkt1 := NewConnectPacket()
+	pkt1 := NewConnect()
 	pkt1.Username = "gomqtt"
 	pkt1.Password = "amazing!"
 
@@ -42,7 +42,7 @@ func Example() {
 
 	switch pkt2.Type() {
 	case CONNECT:
-		c := pkt2.(*ConnectPacket)
+		c := pkt2.(*Connect)
 		fmt.Println(c.Username)
 		fmt.Println(c.Password)
 	}

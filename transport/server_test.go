@@ -38,7 +38,7 @@ func abstractServerTest(t *testing.T, protocol string) {
 	conn2, err := testDialer.Dial(getURL(server, protocol))
 	require.NoError(t, err)
 
-	err = conn2.Send(packet.NewConnectPacket())
+	err = conn2.Send(packet.NewConnect())
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()

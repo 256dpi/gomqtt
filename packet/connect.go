@@ -15,9 +15,9 @@ const (
 var version311Name = []byte("MQTT")
 var version31Name = []byte("MQIsdp")
 
-// A ConnectPacket is sent by a client to the server after a network
+// A Connect packet is sent by a client to the server after a network
 // connection has been established.
-type ConnectPacket struct {
+type Connect struct {
 	// The clients client id.
 	ClientID string
 
@@ -40,28 +40,28 @@ type ConnectPacket struct {
 	Version byte
 }
 
-// NewConnectPacket creates a new ConnectPacket.
-func NewConnectPacket() *ConnectPacket {
-	return &ConnectPacket{
+// NewConnect creates a new Connect packet.
+func NewConnect() *Connect {
+	return &Connect{
 		CleanSession: true,
 		Version:      4,
 	}
 }
 
 // Type returns the packets type.
-func (cp *ConnectPacket) Type() Type {
+func (cp *Connect) Type() Type {
 	return CONNECT
 }
 
 // String returns a string representation of the packet.
-func (cp *ConnectPacket) String() string {
+func (cp *Connect) String() string {
 	will := "nil"
 
 	if cp.Will != nil {
 		will = cp.Will.String()
 	}
 
-	return fmt.Sprintf("<ConnectPacket ClientID=%q KeepAlive=%d Username=%q "+
+	return fmt.Sprintf("<Connect ClientID=%q KeepAlive=%d Username=%q "+
 		"Password=%q CleanSession=%t Will=%s Version=%d>",
 		cp.ClientID,
 		cp.KeepAlive,
@@ -74,14 +74,14 @@ func (cp *ConnectPacket) String() string {
 }
 
 // Len returns the byte length of the encoded packet.
-func (cp *ConnectPacket) Len() int {
+func (cp *Connect) Len() int {
 	ml := cp.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (cp *ConnectPacket) Decode(src []byte) (int, error) {
+func (cp *Connect) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -222,7 +222,7 @@ func (cp *ConnectPacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
+func (cp *Connect) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// encode header
@@ -367,7 +367,7 @@ func (cp *ConnectPacket) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (cp *ConnectPacket) len() int {
+func (cp *Connect) len() int {
 	total := 0
 
 	if cp.Version == Version31 {
