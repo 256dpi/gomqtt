@@ -246,13 +246,13 @@ func (m *MemoryBackend) Restore(client *Client) error {
 	sess := client.Session().(*memorySession)
 
 	// restore stored subscriptions
-	for _, sub := range client.Session().(*memorySession).subscriptions.All() {
+	for _, sub := range sess.subscriptions.All() {
 		// get retained messages
 		values := m.retainedMessages.Search(sub.(packet.Subscription).Topic)
 
 		// publish messages
 		for _, value := range values {
-			// copy message message
+			// copy message
 			msg := value.(*packet.Message).Copy()
 			msg.Retain = false
 

@@ -32,9 +32,9 @@ type Session interface {
 	AllPackets(session.Direction) ([]packet.GenericPacket, error)
 }
 
-// Ack is executed by the Backend or Client to signal that a message will be
-// delivered under the selected qos level and is therefore safe to be deleted
-// from either queue.
+// Ack is executed by the Backend or Client to signal either that a message will
+// be delivered under the selected qos level and is therefore safe to be deleted
+// from either queue or the successful handling of subscriptions.
 type Ack func()
 
 // A Backend provides the effective brokering functionality to its clients.
@@ -427,7 +427,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 
 	// set default parallel subscribes
 	if c.ParallelSubscribes <= 0 {
-		c.ParallelSubscribes = 5
+		c.ParallelSubscribes = 10
 	}
 
 	// set default parallel dequeues
@@ -457,7 +457,7 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 	c.incoming = make(chan packet.GenericPacket, c.PacketPrefetch)
 
 	// create outgoing queue
-	c.outgoing = make(chan outgoing, c.ParallelPublishes+c.ParallelDequeues)
+	c.outgoing = make(chan outgoing, c.ParallelPublishes+c.ParallelDequeues+c.ParallelSubscribes)
 
 	// save will if present
 	if pkt.Will != nil {
