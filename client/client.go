@@ -35,7 +35,7 @@ var ErrClientMissingID = errors.New("client missing id")
 var ErrClientConnectionDenied = errors.New("client connection denied")
 
 // ErrClientMissingPong is returned in the Callback if the broker did not respond
-// in time to a PingreqPacket.
+// in time to a Pingreq.
 var ErrClientMissingPong = errors.New("client missing pong")
 
 // ErrClientExpectedConnack is returned when the first received packet is not a
@@ -389,7 +389,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 	return unsubscribeFuture, nil
 }
 
-// Disconnect will send a DisconnectPacket and close the connection.
+// Disconnect will send a Disconnect packet and close the connection.
 //
 // If a timeout is specified, the client will wait the specified amount of time
 // for all queued futures to complete or cancel. If no timeout is specified it
@@ -412,12 +412,12 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	atomic.StoreUint32(&c.state, clientDisconnecting)
 
 	// send disconnect packet
-	err := c.send(packet.NewDisconnectPacket(), false)
+	err := c.send(packet.NewDisconnect(), false)
 
 	return c.end(err, true)
 }
 
-// Close closes the client immediately without sending a DisconnectPacket and
+// Close closes the client immediately without sending a Disconnect packet and
 // waiting for outgoing transmissions to finish.
 func (c *Client) Close() error {
 	c.mutex.Lock()
@@ -481,7 +481,7 @@ func (c *Client) processor() error {
 			err = c.processSuback(typedPkt)
 		case *packet.Unsuback:
 			err = c.processUnsuback(typedPkt)
-		case *packet.PingrespPacket:
+		case *packet.Pingresp:
 			c.tracker.pong()
 		case *packet.PublishPacket:
 			err = c.processPublish(typedPkt)
@@ -759,7 +759,7 @@ func (c *Client) pinger() error {
 			}
 
 			// send pingreq packet
-			err := c.send(packet.NewPingreqPacket(), true)
+			err := c.send(packet.NewPingreq(), true)
 			if err != nil {
 				return c.die(err, false, false)
 			}

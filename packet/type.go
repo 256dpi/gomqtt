@@ -122,11 +122,11 @@ func (t Type) New() (GenericPacket, error) {
 	case UNSUBACK:
 		return NewUnsuback(), nil
 	case PINGREQ:
-		return NewPingreqPacket(), nil
+		return NewPingreq(), nil
 	case PINGRESP:
-		return NewPingrespPacket(), nil
+		return NewPingresp(), nil
 	case DISCONNECT:
-		return NewDisconnectPacket(), nil
+		return NewDisconnect(), nil
 	}
 
 	return nil, fmt.Errorf("[Unknown] invalid packet type %d", t)

@@ -46,7 +46,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 	pubackIn := packet.NewPuback()
 	pubackIn.ID = 1
 
-	disconnect := packet.NewDisconnectPacket()
+	disconnect := packet.NewDisconnect()
 
 	conn1, err := transport.Dial(config.URL)
 	assert.NoError(t, err)
@@ -121,7 +121,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 	pubcompIn := packet.NewPubcomp()
 	pubcompIn.ID = 1
 
-	disconnect := packet.NewDisconnectPacket()
+	disconnect := packet.NewDisconnect()
 
 	conn1, err := transport.Dial(config.URL)
 	assert.NoError(t, err)
@@ -205,7 +205,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 	pubcompIn := packet.NewPubcomp()
 	pubcompIn.ID = 1
 
-	disconnect := packet.NewDisconnectPacket()
+	disconnect := packet.NewDisconnect()
 
 	conn1, err := transport.Dial(config.URL)
 	assert.NoError(t, err)

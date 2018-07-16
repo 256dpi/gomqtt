@@ -521,9 +521,9 @@ func (c *Client) processPacket(pkt packet.GenericPacket) error {
 		err = c.processPubrec(typedPkt.ID)
 	case *packet.Pubrel:
 		err = c.processPubrel(typedPkt.ID)
-	case *packet.PingreqPacket:
+	case *packet.Pingreq:
 		err = c.processPingreq()
-	case *packet.DisconnectPacket:
+	case *packet.Disconnect:
 		err = c.processDisconnect()
 	}
 
@@ -535,10 +535,10 @@ func (c *Client) processPacket(pkt packet.GenericPacket) error {
 	return nil
 }
 
-// handle an incoming PingreqPacket
+// handle an incoming Pingreq packet
 func (c *Client) processPingreq() error {
 	// send a pingresp packet
-	err := c.send(packet.NewPingrespPacket(), true)
+	err := c.send(packet.NewPingresp(), true)
 	if err != nil {
 		return c.die(TransportError, err)
 	}
@@ -755,7 +755,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	return nil
 }
 
-// handle an incoming DisconnectPacket
+// handle an incoming Disconnect packet
 func (c *Client) processDisconnect() error {
 	// clear will
 	c.will = nil

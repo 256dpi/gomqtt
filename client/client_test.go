@@ -229,7 +229,7 @@ func TestClientConnectionDenied(t *testing.T) {
 func TestClientExpectedConnack(t *testing.T) {
 	broker := flow.New().
 		Receive(connectPacket()).
-		Send(packet.NewPingrespPacket()).
+		Send(packet.NewPingresp()).
 		End()
 
 	done, port := fakeBroker(t, broker)
@@ -256,8 +256,8 @@ func TestClientKeepAlive(t *testing.T) {
 	connect := connectPacket()
 	connect.KeepAlive = 0
 
-	pingreq := packet.NewPingreqPacket()
-	pingresp := packet.NewPingrespPacket()
+	pingreq := packet.NewPingreq()
+	pingresp := packet.NewPingresp()
 
 	broker := flow.New().
 		Receive(connect).
@@ -309,7 +309,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 	connect := connectPacket()
 	connect.KeepAlive = 0
 
-	pingreq := packet.NewPingreqPacket()
+	pingreq := packet.NewPingreq()
 
 	broker := flow.New().
 		Receive(connect).

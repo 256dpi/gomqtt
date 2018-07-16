@@ -2,13 +2,13 @@ package packet
 
 import "fmt"
 
-// Returns the byte length of a naked packet.
-func nakedPacketLen() int {
+// returns the byte length of a naked packet
+func nakedLen() int {
 	return headerLen(0)
 }
 
-// Decodes a naked packet.
-func nakedPacketDecode(src []byte, t Type) (int, error) {
+// decodes a naked packet
+func nakedDecode(src []byte, t Type) (int, error) {
 	// decode header
 	hl, _, rl, err := headerDecode(src, t)
 
@@ -20,120 +20,120 @@ func nakedPacketDecode(src []byte, t Type) (int, error) {
 	return hl, err
 }
 
-// Encodes a naked packet.
-func nakedPacketEncode(dst []byte, t Type) (int, error) {
+// encodes a naked packet
+func nakedEncode(dst []byte, t Type) (int, error) {
 	// encode header
-	return headerEncode(dst, 0, 0, nakedPacketLen(), t)
+	return headerEncode(dst, 0, 0, nakedLen(), t)
 }
 
-// A DisconnectPacket is sent from the client to the server.
+// A Disconnect packet is sent from the client to the server.
 // It indicates that the client is disconnecting cleanly.
-type DisconnectPacket struct{}
+type Disconnect struct{}
 
-// NewDisconnectPacket creates a new DisconnectPacket.
-func NewDisconnectPacket() *DisconnectPacket {
-	return &DisconnectPacket{}
+// NewDisconnect creates a new Disconnect packet.
+func NewDisconnect() *Disconnect {
+	return &Disconnect{}
 }
 
 // Type returns the packets type.
-func (dp *DisconnectPacket) Type() Type {
+func (dp *Disconnect) Type() Type {
 	return DISCONNECT
 }
 
 // Len returns the byte length of the encoded packet.
-func (dp *DisconnectPacket) Len() int {
-	return nakedPacketLen()
+func (dp *Disconnect) Len() int {
+	return nakedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (dp *DisconnectPacket) Decode(src []byte) (int, error) {
-	return nakedPacketDecode(src, DISCONNECT)
+func (dp *Disconnect) Decode(src []byte) (int, error) {
+	return nakedDecode(src, DISCONNECT)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (dp *DisconnectPacket) Encode(dst []byte) (int, error) {
-	return nakedPacketEncode(dst, DISCONNECT)
+func (dp *Disconnect) Encode(dst []byte) (int, error) {
+	return nakedEncode(dst, DISCONNECT)
 }
 
 // String returns a string representation of the packet.
-func (dp *DisconnectPacket) String() string {
-	return "<DisconnectPacket>"
+func (dp *Disconnect) String() string {
+	return "<Disconnect>"
 }
 
-// A PingreqPacket is sent from a client to the server.
-type PingreqPacket struct{}
+// A Pingreq packet is sent from a client to the server.
+type Pingreq struct{}
 
-// NewPingreqPacket creates a new PingreqPacket.
-func NewPingreqPacket() *PingreqPacket {
-	return &PingreqPacket{}
+// NewPingreq creates a new Pingreq packet.
+func NewPingreq() *Pingreq {
+	return &Pingreq{}
 }
 
 // Type returns the packets type.
-func (pp *PingreqPacket) Type() Type {
+func (pp *Pingreq) Type() Type {
 	return PINGREQ
 }
 
 // Len returns the byte length of the encoded packet.
-func (pp *PingreqPacket) Len() int {
-	return nakedPacketLen()
+func (pp *Pingreq) Len() int {
+	return nakedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (pp *PingreqPacket) Decode(src []byte) (int, error) {
-	return nakedPacketDecode(src, PINGREQ)
+func (pp *Pingreq) Decode(src []byte) (int, error) {
+	return nakedDecode(src, PINGREQ)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pp *PingreqPacket) Encode(dst []byte) (int, error) {
-	return nakedPacketEncode(dst, PINGREQ)
+func (pp *Pingreq) Encode(dst []byte) (int, error) {
+	return nakedEncode(dst, PINGREQ)
 }
 
 // String returns a string representation of the packet.
-func (pp *PingreqPacket) String() string {
-	return "<PingreqPacket>"
+func (pp *Pingreq) String() string {
+	return "<Pingreq>"
 }
 
-// A PingrespPacket is sent by the server to the client in response to a
-// PingreqPacket. It indicates that the server is alive.
-type PingrespPacket struct{}
+// A Pingresp packet is sent by the server to the client in response to a
+// Pingreq. It indicates that the server is alive.
+type Pingresp struct{}
 
-var _ GenericPacket = (*PingrespPacket)(nil)
+var _ GenericPacket = (*Pingresp)(nil)
 
-// NewPingrespPacket creates a new PingrespPacket.
-func NewPingrespPacket() *PingrespPacket {
-	return &PingrespPacket{}
+// NewPingresp creates a new Pingresp packet.
+func NewPingresp() *Pingresp {
+	return &Pingresp{}
 }
 
 // Type returns the packets type.
-func (pp *PingrespPacket) Type() Type {
+func (pp *Pingresp) Type() Type {
 	return PINGRESP
 }
 
 // Len returns the byte length of the encoded packet.
-func (pp *PingrespPacket) Len() int {
-	return nakedPacketLen()
+func (pp *Pingresp) Len() int {
+	return nakedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (pp *PingrespPacket) Decode(src []byte) (int, error) {
-	return nakedPacketDecode(src, PINGRESP)
+func (pp *Pingresp) Decode(src []byte) (int, error) {
+	return nakedDecode(src, PINGRESP)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pp *PingrespPacket) Encode(dst []byte) (int, error) {
-	return nakedPacketEncode(dst, PINGRESP)
+func (pp *Pingresp) Encode(dst []byte) (int, error) {
+	return nakedEncode(dst, PINGRESP)
 }
 
 // String returns a string representation of the packet.
-func (pp *PingrespPacket) String() string {
-	return "<PingrespPacket>"
+func (pp *Pingresp) String() string {
+	return "<Pingresp>"
 }

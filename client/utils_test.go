@@ -71,6 +71,6 @@ func connackPacket() *packet.Connack {
 	return pkt
 }
 
-func disconnectPacket() *packet.DisconnectPacket {
-	return packet.NewDisconnectPacket()
+func disconnectPacket() *packet.Disconnect {
+	return packet.NewDisconnect()
 }

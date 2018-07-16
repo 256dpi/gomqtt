@@ -122,9 +122,9 @@ func TestGetID(t *testing.T) {
 		SUBACK:      {NewSubackPacket(), true},
 		UNSUBSCRIBE: {NewUnsubscribePacket(), true},
 		UNSUBACK:    {NewUnsuback(), true},
-		PINGREQ:     {NewPingreqPacket(), false},
-		PINGRESP:    {NewPingrespPacket(), false},
-		DISCONNECT:  {NewDisconnectPacket(), false},
+		PINGREQ:     {NewPingreq(), false},
+		PINGRESP:    {NewPingresp(), false},
+		DISCONNECT:  {NewDisconnect(), false},
 	}
 
 	for _, d := range details {
