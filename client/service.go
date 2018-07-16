@@ -207,7 +207,7 @@ func (s *Service) PublishMessage(msg *packet.Message) GenericFuture {
 	return f
 }
 
-// Subscribe will send a SubscribePacket containing one topic to subscribe. It
+// Subscribe will send a Subscribe packet containing one topic to subscribe. It
 // will return a SubscribeFuture that gets completed once the acknowledgements
 // have been received.
 func (s *Service) Subscribe(topic string, qos uint8) SubscribeFuture {
@@ -216,7 +216,7 @@ func (s *Service) Subscribe(topic string, qos uint8) SubscribeFuture {
 	})
 }
 
-// SubscribeMultiple will send a SubscribePacket containing multiple topics to
+// SubscribeMultiple will send a Subscribe packet containing multiple topics to
 // subscribe. It will return a SubscribeFuture that gets completed once the
 // acknowledgements have been received.
 func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) SubscribeFuture {

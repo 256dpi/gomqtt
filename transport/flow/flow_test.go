@@ -13,7 +13,7 @@ func TestFlow(t *testing.T) {
 	connect := packet.NewConnect()
 	connack := packet.NewConnack()
 
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: "test"},
 	}
@@ -31,7 +31,7 @@ func TestFlow(t *testing.T) {
 		Receive(connect).
 		Send(connack).
 		Run(cb).
-		Skip(&packet.SubscribePacket{}).
+		Skip(&packet.Subscribe{}).
 		Receive(publish).
 		Close()
 

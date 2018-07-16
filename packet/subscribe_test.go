@@ -7,14 +7,14 @@ import (
 )
 
 func TestSubscribeInterface(t *testing.T) {
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	pkt.Subscriptions = []Subscription{
 		{Topic: "foo", QOS: QOSAtMostOnce},
 		{Topic: "bar", QOS: QOSAtLeastOnce},
 	}
 
 	assert.Equal(t, pkt.Type(), SUBSCRIBE)
-	assert.Equal(t, "<SubscribePacket ID=0 Subscriptions=[\"foo\"=>0, \"bar\"=>1]>", pkt.String())
+	assert.Equal(t, "<Subscribe ID=0 Subscriptions=[\"foo\"=>0, \"bar\"=>1]>", pkt.String())
 }
 
 func TestSubscribePacketDecode(t *testing.T) {
@@ -37,7 +37,7 @@ func TestSubscribePacketDecode(t *testing.T) {
 		2, // QOS
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	n, err := pkt.Decode(pktBytes)
 
 	assert.NoError(t, err)
@@ -57,7 +57,7 @@ func TestSubscribePacketDecodeError1(t *testing.T) {
 		9, // < too much
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -70,7 +70,7 @@ func TestSubscribePacketDecodeError2(t *testing.T) {
 		// < missing packet id
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -85,7 +85,7 @@ func TestSubscribePacketDecodeError3(t *testing.T) {
 		// < missing subscription
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -102,7 +102,7 @@ func TestSubscribePacketDecodeError4(t *testing.T) {
 		's',
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -120,7 +120,7 @@ func TestSubscribePacketDecodeError5(t *testing.T) {
 		// < missing qos
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -138,7 +138,7 @@ func TestSubscribePacketDecodeError6(t *testing.T) {
 		0,
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	_, err := pkt.Decode(pktBytes)
 
 	assert.Error(t, err)
@@ -164,7 +164,7 @@ func TestSubscribePacketEncode(t *testing.T) {
 		2, // QOS
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
 		{"gomqtt", 0},
@@ -181,7 +181,7 @@ func TestSubscribePacketEncode(t *testing.T) {
 }
 
 func TestSubscribePacketEncodeError1(t *testing.T) {
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	pkt.ID = 7
 
 	dst := make([]byte, 1) // < too small
@@ -191,7 +191,7 @@ func TestSubscribePacketEncodeError1(t *testing.T) {
 }
 
 func TestSubscribePacketEncodeError2(t *testing.T) {
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
 		{string(make([]byte, 65536)), 0}, // too big
@@ -204,7 +204,7 @@ func TestSubscribePacketEncodeError2(t *testing.T) {
 }
 
 func TestSubscribePacketEncodeError3(t *testing.T) {
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	pkt.ID = 0 // < zero packet id
 
 	dst := make([]byte, pkt.Len())
@@ -233,7 +233,7 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 		2, // QOS
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	n, err := pkt.Decode(pktBytes)
 
 	assert.NoError(t, err)
@@ -253,7 +253,7 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkSubscribeEncode(b *testing.B) {
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
 		{"t", 0},
@@ -281,7 +281,7 @@ func BenchmarkSubscribeDecode(b *testing.B) {
 		0, // QOS
 	}
 
-	pkt := NewSubscribePacket()
+	pkt := NewSubscribe()
 
 	for i := 0; i < b.N; i++ {
 		_, err := pkt.Decode(pktBytes)

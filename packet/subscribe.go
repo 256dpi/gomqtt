@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// A Subscription is a single subscription in a SubscribePacket.
+// A Subscription is a single subscription in a Subscribe packet.
 type Subscription struct {
 	// The topic to subscribe.
 	Topic string
@@ -19,10 +19,10 @@ func (s *Subscription) String() string {
 	return fmt.Sprintf("%q=>%d", s.Topic, s.QOS)
 }
 
-// A SubscribePacket is sent from the client to the server to create one or
+// A Subscribe packet is sent from the client to the server to create one or
 // more Subscriptions. The server will forward application messages that match
 // these subscriptions using PublishPackets.
-type SubscribePacket struct {
+type Subscribe struct {
 	// The subscriptions.
 	Subscriptions []Subscription
 
@@ -30,37 +30,37 @@ type SubscribePacket struct {
 	ID ID
 }
 
-// NewSubscribePacket creates a new SUBSCRIBE packet.
-func NewSubscribePacket() *SubscribePacket {
-	return &SubscribePacket{}
+// NewSubscribe creates a new Subscribe packet.
+func NewSubscribe() *Subscribe {
+	return &Subscribe{}
 }
 
 // Type returns the packets type.
-func (sp *SubscribePacket) Type() Type {
+func (sp *Subscribe) Type() Type {
 	return SUBSCRIBE
 }
 
 // String returns a string representation of the packet.
-func (sp *SubscribePacket) String() string {
+func (sp *Subscribe) String() string {
 	var subscriptions []string
 
 	for _, t := range sp.Subscriptions {
 		subscriptions = append(subscriptions, t.String())
 	}
 
-	return fmt.Sprintf("<SubscribePacket ID=%d Subscriptions=[%s]>",
+	return fmt.Sprintf("<Subscribe ID=%d Subscriptions=[%s]>",
 		sp.ID, strings.Join(subscriptions, ", "))
 }
 
 // Len returns the byte length of the encoded packet.
-func (sp *SubscribePacket) Len() int {
+func (sp *Subscribe) Len() int {
 	ml := sp.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (sp *SubscribePacket) Decode(src []byte) (int, error) {
+func (sp *Subscribe) Decode(src []byte) (int, error) {
 	total := 0
 
 	// decode header
@@ -122,7 +122,7 @@ func (sp *SubscribePacket) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
+func (sp *Subscribe) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check packet id
@@ -159,7 +159,7 @@ func (sp *SubscribePacket) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (sp *SubscribePacket) len() int {
+func (sp *Subscribe) len() int {
 	// packet ID
 	total := 2
 

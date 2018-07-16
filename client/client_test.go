@@ -343,7 +343,7 @@ func TestClientKeepAliveTimeout(t *testing.T) {
 }
 
 func TestClientPublishSubscribeQOS0(t *testing.T) {
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.ID = 1
 
@@ -412,7 +412,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 }
 
 func TestClientPublishSubscribeQOS1(t *testing.T) {
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 1}}
 	subscribe.ID = 1
 
@@ -488,7 +488,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 }
 
 func TestClientPublishSubscribeQOS2(t *testing.T) {
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 2}}
 	subscribe.ID = 1
 
@@ -929,7 +929,7 @@ func TestClientErrorCallback(t *testing.T) {
 }
 
 func TestClientLogger(t *testing.T) {
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.ID = 1
 

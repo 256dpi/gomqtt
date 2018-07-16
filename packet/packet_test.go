@@ -118,7 +118,7 @@ func TestGetID(t *testing.T) {
 		PUBREC:      {NewPubrec(), true},
 		PUBREL:      {NewPubrel(), true},
 		PUBCOMP:     {NewPubcomp(), true},
-		SUBSCRIBE:   {NewSubscribePacket(), true},
+		SUBSCRIBE:   {NewSubscribe(), true},
 		SUBACK:      {NewSuback(), true},
 		UNSUBSCRIBE: {NewUnsubscribePacket(), true},
 		UNSUBACK:    {NewUnsuback(), true},

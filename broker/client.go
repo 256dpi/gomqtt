@@ -507,7 +507,7 @@ func (c *Client) processPacket(pkt packet.Generic) error {
 
 	// handle individual packets
 	switch typedPkt := pkt.(type) {
-	case *packet.SubscribePacket:
+	case *packet.Subscribe:
 		err = c.processSubscribe(typedPkt)
 	case *packet.UnsubscribePacket:
 		err = c.processUnsubscribe(typedPkt)
@@ -546,8 +546,8 @@ func (c *Client) processPingreq() error {
 	return nil
 }
 
-// handle an incoming SubscribePacket
-func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
+// handle an incoming Subscribe packet
+func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
 	// acquire subscribe token
 	select {
 	case <-c.subscribeTokens:

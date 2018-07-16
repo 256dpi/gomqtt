@@ -11,7 +11,7 @@ import (
 )
 
 func TestServicePublishSubscribe(t *testing.T) {
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.ID = 1
 
@@ -75,7 +75,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 }
 
 func TestServiceCommandsInCallback(t *testing.T) {
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
 	subscribe.ID = 1
 

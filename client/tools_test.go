@@ -73,7 +73,7 @@ func TestPublishMessage(t *testing.T) {
 }
 
 func TestReceiveMessage(t *testing.T) {
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: "test"},

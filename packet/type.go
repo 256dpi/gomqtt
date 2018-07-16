@@ -114,7 +114,7 @@ func (t Type) New() (Generic, error) {
 	case PUBCOMP:
 		return NewPubcomp(), nil
 	case SUBSCRIBE:
-		return NewSubscribePacket(), nil
+		return NewSubscribe(), nil
 	case SUBACK:
 		return NewSuback(), nil
 	case UNSUBSCRIBE:

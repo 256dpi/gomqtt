@@ -306,7 +306,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 	return publishFuture, nil
 }
 
-// Subscribe will send a SubscribePacket containing one topic to subscribe. It
+// Subscribe will send a Subscribe packet containing one topic to subscribe. It
 // will return a SubscribeFuture that gets completed once a Suback packet has
 // been received.
 func (c *Client) Subscribe(topic string, qos uint8) (SubscribeFuture, error) {
@@ -315,7 +315,7 @@ func (c *Client) Subscribe(topic string, qos uint8) (SubscribeFuture, error) {
 	})
 }
 
-// SubscribeMultiple will send a SubscribePacket containing multiple topics to
+// SubscribeMultiple will send a Subscribe packet containing multiple topics to
 // subscribe. It will return a SubscribeFuture that gets completed once a
 // Suback packet has been received.
 func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (SubscribeFuture, error) {
@@ -327,8 +327,8 @@ func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (Subscri
 		return nil, ErrClientNotConnected
 	}
 
-	// allocate packet
-	subscribe := packet.NewSubscribePacket()
+	// allocate subscribe packet
+	subscribe := packet.NewSubscribe()
 	subscribe.ID = c.Session.NextID()
 	subscribe.Subscriptions = subscriptions
 

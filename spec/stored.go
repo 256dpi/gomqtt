@@ -27,7 +27,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 	connect.Username = username
 	connect.Password = password
 
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: topic, QOS: 1},
@@ -96,7 +96,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 	connect.Username = username
 	connect.Password = password
 
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: topic, QOS: 2},
@@ -177,7 +177,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 	connect.Username = username
 	connect.Password = password
 
-	subscribe := packet.NewSubscribePacket()
+	subscribe := packet.NewSubscribe()
 	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: topic, QOS: 2},

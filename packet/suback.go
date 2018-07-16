@@ -7,7 +7,7 @@ import (
 )
 
 // A Suback packet is sent by the server to the client to confirm receipt and
-// processing of a SubscribePacket. The Suback packet contains a list of return
+// processing of a Subscribe packet. The Suback packet contains a list of return
 // codes, that specify the maximum QOS levels that have been granted.
 type Suback struct {
 	// The granted QOS levels for the requested subscriptions.
