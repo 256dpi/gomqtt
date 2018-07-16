@@ -13,8 +13,9 @@ import (
 type memorySession struct {
 	*session.MemorySession
 
-	stored    chan *packet.Message
-	temporary chan *packet.Message
+	subscriptions *topic.Tree
+	stored        chan *packet.Message
+	temporary     chan *packet.Message
 
 	owner *Client
 }
@@ -22,9 +23,35 @@ type memorySession struct {
 func newMemorySession(backlog int) *memorySession {
 	return &memorySession{
 		MemorySession: session.NewMemorySession(),
+		subscriptions: topic.NewTree(),
 		stored:        make(chan *packet.Message, backlog),
 		temporary:     make(chan *packet.Message, backlog),
 	}
+}
+
+func (s *memorySession) lookupSubscription(topic string) *packet.Subscription {
+	values := s.subscriptions.Match(topic)
+
+	if len(values) > 0 {
+		sub := values[0].(packet.Subscription)
+		return &sub
+	}
+
+	return nil
+}
+
+func (s *memorySession) applyQoS(msg *packet.Message) *packet.Message {
+	// get subscription
+	sub := s.lookupSubscription(msg.Topic)
+	if sub != nil {
+		// respect maximum qos
+		if msg.QOS > sub.QOS {
+			msg = msg.Copy()
+			msg.QOS = sub.QOS
+		}
+	}
+
+	return msg
 }
 
 func (s *memorySession) reuse() {
@@ -209,16 +236,48 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	return storedSession, false, nil
 }
 
-// Restored is not needed at the moment.
-func (m *MemoryBackend) Restored(client *Client) error {
+// Restore is not needed at the moment.
+func (m *MemoryBackend) Restore(client *Client) error {
+	// acquire global mutex
+	m.globalMutex.Lock()
+	defer m.globalMutex.Unlock()
+
+	// get session
+	sess := client.Session().(*memorySession)
+
+	// restore stored subscriptions
+	for _, sub := range client.Session().(*memorySession).subscriptions.All() {
+		// get retained messages
+		values := m.retainedMessages.Search(sub.(packet.Subscription).Topic)
+
+		// publish messages
+		for _, value := range values {
+			// copy message message
+			msg := value.(*packet.Message).Copy()
+			msg.Retain = false
+
+			// add to temporary queue or return error if queue is full
+			select {
+			case sess.temporary <- msg:
+			default:
+				return ErrQueueFull
+			}
+		}
+	}
+
 	return nil
 }
 
 // Subscribe will queue retained messages for the passed subscription.
-func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, stored bool, ack Ack) error {
+func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, ack Ack) error {
 	// acquire global mutex
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
+
+	// save subscription
+	for _, sub := range subs {
+		client.Session().(*memorySession).subscriptions.Set(sub.Topic, sub)
+	}
 
 	// call ack if provided
 	if ack != nil {
@@ -235,18 +294,9 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, st
 
 		// publish messages
 		for _, value := range values {
-			// get message
-			msg := value.(*packet.Message)
-
-			// unset retained flag for stored subscriptions
-			if stored {
-				msg = msg.Copy()
-				msg.Retain = false
-			}
-
 			// add to temporary queue or return error if queue is full
 			select {
-			case sess.temporary <- msg:
+			case sess.temporary <- value.(*packet.Message):
 			default:
 				return ErrQueueFull
 			}
@@ -258,6 +308,11 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, st
 
 // Unsubscribe is not needed at the moment.
 func (m *MemoryBackend) Unsubscribe(client *Client, topics []string, ack Ack) error {
+	// delete subscriptions
+	for _, topic := range topics {
+		client.Session().(*memorySession).subscriptions.Empty(topic)
+	}
+
 	// call ack if provided
 	if ack != nil {
 		ack()
@@ -304,7 +359,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 
 	// add message to temporary sessions
 	for _, sess := range m.temporarySessions {
-		if sub, _ := sess.LookupSubscription(msg.Topic); sub != nil {
+		if sub := sess.lookupSubscription(msg.Topic); sub != nil {
 			if sess.owner == client {
 				// detect deadlock when adding to own queue
 				select {
@@ -325,7 +380,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 
 	// add message to stored sessions
 	for _, sess := range m.storedSessions {
-		if sub, _ := sess.LookupSubscription(msg.Topic); sub != nil {
+		if sub := sess.lookupSubscription(msg.Topic); sub != nil {
 			if sess.owner == client {
 				// detect deadlock when adding to own queue
 				select {
@@ -371,9 +426,9 @@ func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 	// get next message from queue
 	select {
 	case msg := <-sess.temporary:
-		return msg, nil, nil
+		return sess.applyQoS(msg), nil, nil
 	case msg := <-sess.stored:
-		return msg, nil, nil
+		return sess.applyQoS(msg), nil, nil
 	case <-client.Closing():
 		return nil, nil, nil
 	}

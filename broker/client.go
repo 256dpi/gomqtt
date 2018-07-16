@@ -12,8 +12,7 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// A Session is used to get packet ids, persist incoming/outgoing packets, store
-// subscriptions and the will.
+// A Session is used to get packet ids and persist incoming/outgoing packets.
 type Session interface {
 	// NextID should return the next id for outgoing packets.
 	NextID() packet.ID
@@ -31,23 +30,6 @@ type Session interface {
 
 	// AllPackets should return all packets currently saved in the session.
 	AllPackets(session.Direction) ([]packet.GenericPacket, error)
-
-	// SaveSubscription should store the subscription in the session. An eventual
-	// subscription with the same topic should be quietly overwritten.
-	SaveSubscription(packet.Subscription) error
-
-	// LookupSubscription should match a topic against the stored subscriptions
-	// and eventually return the first found subscription.
-	LookupSubscription(topic string) (*packet.Subscription, error)
-
-	// DeleteSubscription should remove the subscription from the session. The
-	// method should not return an error if no subscription with the specified
-	// topic does exist.
-	DeleteSubscription(topic string) error
-
-	// AllSubscriptions should return all subscriptions currently saved in the
-	// session.
-	AllSubscriptions() ([]packet.Subscription, error)
 }
 
 // Ack is executed by the Backend or Client to signal that a message will be
@@ -75,15 +57,17 @@ type Backend interface {
 	// every client that Setup has been called for.
 	Setup(client *Client, id string, clean bool) (a Session, resumed bool, err error)
 
-	// Restored is called after the client has restored packets and
-	// subscriptions from the session. The client will begin with processing
-	// incoming packets and queued messages.
-	Restored(client *Client) error
+	// Restore is called after the client has restored packets from the session.
+	//
+	// The Backend should resubscribe stored subscriptions. Retained messages
+	// that are delivered as a result of resubscribing a stored subscription
+	// must be queued with the retain flag set to false.
+	Restore(client *Client) error
 
-	// Subscribe should subscribe the passed client to the specified topics.
-	// Subscriptions are added to the session when the call returns without
-	// errors. If an Ack is provided, the subscription will be acknowledged
-	// when called during or after the call to Subscribe.
+	// Subscribe should subscribe the passed client to the specified topics and
+	// store the subscription in the session. If an Ack is provided, the
+	// subscription will be acknowledged when called during or after the call to
+	// Subscribe.
 	//
 	// Incoming messages that match the supplied subscription should be added to
 	// a temporary or persistent queue that is drained when Dequeue is called.
@@ -92,17 +76,12 @@ type Backend interface {
 	// a temporary queue that is also drained when Dequeue is called. Retained
 	// messages are not part of the stored session state as they are anyway
 	// redelivered using the stored subscription mechanism.
-	//
-	// Subscribe is also called to resubscribe stored subscriptions between calls
-	// to Setup and Restored. Retained messages that are delivered as a result of
-	// resubscribing a stored subscription must be delivered with the retain flag
-	// set to false.
-	Subscribe(client *Client, subs []packet.Subscription, stored bool, ack Ack) error
+	Subscribe(client *Client, subs []packet.Subscription, ack Ack) error
 
-	// Unsubscribe should unsubscribe the passed client from the specified topics.
-	// Subscriptions are removed from the session when the call returns without
-	// errors. If an Ack is provided, the unsubscription will be acknowledged
-	// when called during or after the call to Unsubscribe.
+	// Unsubscribe should unsubscribe the passed client from the specified topics
+	// and remove the subscriptions from the session. If an Ack is provided, the
+	// unsubscription will be acknowledged when called during or after the call
+	// to Unsubscribe.
 	Unsubscribe(client *Client, topics []string, ack Ack) error
 
 	// Publish should forward the passed message to all other clients that hold
@@ -121,10 +100,14 @@ type Backend interface {
 	// Dequeue is called by the Client to obtain the next message from the queue
 	// and must return either a message or an error. The backend must only return
 	// no message and no error if the client's Closing channel has been closed.
+	//
 	// The Backend may return an Ack to receive a signal that the message is being
 	// delivered under the selected qos level and is therefore safe to be deleted
 	// from the queue. The Client might dequeue other messages before acknowledging
 	// a message.
+	//
+	// The returned message must have a QoS set that respects the QoS set by
+	// the matching subscription.
 	Dequeue(client *Client) (*packet.Message, Ack, error)
 
 	// Terminate is called when the client goes offline. Terminate should
@@ -508,20 +491,8 @@ func (c *Client) processConnect(pkt *packet.ConnectPacket) error {
 		}
 	}
 
-	// get stored subscriptions
-	subs, err := s.AllSubscriptions()
-	if err != nil {
-		return c.die(SessionError, err)
-	}
-
-	// resubscribe subscriptions
-	err = c.backend.Subscribe(c, subs, true, nil)
-	if err != nil {
-		return c.die(BackendError, err)
-	}
-
-	// signal restored client
-	err = c.backend.Restored(c)
+	// restore client
+	err = c.backend.Restore(c)
 	if err != nil {
 		return c.die(BackendError, err)
 	}
@@ -596,7 +567,7 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	}
 
 	// subscribe client to queue
-	err := c.backend.Subscribe(c, pkt.Subscriptions, false, func() {
+	err := c.backend.Subscribe(c, pkt.Subscriptions, func() {
 		select {
 		case c.outgoing <- outgoing{pkt: suback}:
 		case <-c.tomb.Dying():
@@ -604,15 +575,6 @@ func (c *Client) processSubscribe(pkt *packet.SubscribePacket) error {
 	})
 	if err != nil {
 		return c.die(BackendError, err)
-	}
-
-	// save subscriptions in session
-	for _, subscription := range pkt.Subscriptions {
-		// save subscription in session
-		err := c.session.SaveSubscription(subscription)
-		if err != nil {
-			return c.die(SessionError, err)
-		}
 	}
 
 	return nil
@@ -641,15 +603,6 @@ func (c *Client) processUnsubscribe(pkt *packet.UnsubscribePacket) error {
 	})
 	if err != nil {
 		return c.die(BackendError, err)
-	}
-
-	// remove subscriptions from session
-	for _, topic := range pkt.Topics {
-		// remove subscription from session
-		err = c.session.DeleteSubscription(topic)
-		if err != nil {
-			return c.die(SessionError, err)
-		}
 	}
 
 	return nil
@@ -826,20 +779,6 @@ func (c *Client) sendMessage(msg *packet.Message, ack Ack) error {
 	publish := packet.NewPublishPacket()
 	publish.Message = *msg
 
-	// get stored subscription
-	sub, err := c.session.LookupSubscription(publish.Message.Topic)
-	if err != nil {
-		return c.die(SessionError, err)
-	}
-
-	// check subscription
-	if sub != nil {
-		// respect maximum qos
-		if publish.Message.QOS > sub.QOS {
-			publish.Message.QOS = sub.QOS
-		}
-	}
-
 	// set packet id
 	if publish.Message.QOS > 0 {
 		publish.ID = c.session.NextID()
@@ -862,7 +801,7 @@ func (c *Client) sendMessage(msg *packet.Message, ack Ack) error {
 	}
 
 	// send packet
-	err = c.send(publish, true)
+	err := c.send(publish, true)
 	if err != nil {
 		return c.die(TransportError, err)
 	}
