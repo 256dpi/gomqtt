@@ -6,66 +6,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
 
 	"gopkg.in/tomb.v2"
 )
 
-// LogEvent denotes the class of an event passed to the logger.
-type LogEvent string
-
-const (
-	// NewConnection is emitted when a client comes online.
-	NewConnection LogEvent = "new connection"
-
-	// PacketReceived is emitted when a packet has been received.
-	PacketReceived LogEvent = "packet received"
-
-	// MessagePublished is emitted after a message has been published.
-	MessagePublished LogEvent = "message published"
-
-	// MessageAcknowledged is emitted after a message has been acknowledged.
-	MessageAcknowledged LogEvent = "message acknowledged"
-
-	// MessageDequeued is emitted after a message has been dequeued.
-	MessageDequeued LogEvent = "message dequeued"
-
-	// MessageForwarded is emitted after a message has been forwarded.
-	MessageForwarded LogEvent = "message forwarded"
-
-	// PacketSent is emitted when a packet has been sent.
-	PacketSent LogEvent = "packet sent"
-
-	// ClientDisconnected is emitted when a client disconnects cleanly.
-	ClientDisconnected LogEvent = "client disconnected"
-
-	// TransportError is emitted when an underlying transport error occurs.
-	TransportError LogEvent = "transport error"
-
-	// SessionError is emitted when a call to the session fails.
-	SessionError LogEvent = "session error"
-
-	// BackendError is emitted when a call to the backend fails.
-	BackendError LogEvent = "backend error"
-
-	// ClientError is emitted when the client violates the protocol.
-	ClientError LogEvent = "client error"
-
-	// LostConnection is emitted when the connection has been terminated.
-	LostConnection LogEvent = "lost connection"
-)
-
-// The Logger callback handles incoming log events.
-type Logger func(LogEvent, *Client, packet.Generic, *packet.Message, error)
-
 // The Engine handles incoming connections and connects them to the backend.
 type Engine struct {
 	// The Backend that will passed to accepted clients.
 	Backend Backend
-
-	// The logger that will be passed to accepted clients.
-	Logger Logger
 
 	// ConnectTimeout defines the timeout to receive the first packet.
 	ConnectTimeout time.Duration
@@ -150,7 +99,7 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 	conn.SetReadTimeout(e.ConnectTimeout)
 
 	// handle client
-	NewClient(e.Backend, e.Logger, conn)
+	NewClient(e.Backend, conn)
 
 	return true
 }

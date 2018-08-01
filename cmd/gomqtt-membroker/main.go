@@ -38,14 +38,11 @@ func main() {
 	backend := broker.NewMemoryBackend()
 	backend.SessionQueueSize = *sqz
 
-	engine := broker.NewEngine(backend)
-	engine.Accept(server)
-
 	var published int32
 	var forwarded int32
 	var clients int32
 
-	engine.Logger = func(event broker.LogEvent, client *broker.Client, pkt packet.Generic, msg *packet.Message, err error) {
+	backend.Logger = func(event broker.LogEvent, client *broker.Client, pkt packet.Generic, msg *packet.Message, err error) {
 		if event == broker.NewConnection {
 			atomic.AddInt32(&clients, 1)
 		} else if event == broker.MessagePublished {
@@ -56,6 +53,9 @@ func main() {
 			atomic.AddInt32(&clients, -1)
 		}
 	}
+
+	engine := broker.NewEngine(backend)
+	engine.Accept(server)
 
 	go func() {
 		for {

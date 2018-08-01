@@ -81,6 +81,9 @@ type MemoryBackend struct {
 	// A map of username and passwords that grant read and write access.
 	Credentials map[string]string
 
+	// The Logger callback handles incoming log events.
+	Logger func(LogEvent, *Client, packet.Generic, *packet.Message, error)
+
 	activeClients     map[string]*Client
 	storedSessions    map[string]*memorySession
 	temporarySessions map[*Client]*memorySession
@@ -453,6 +456,14 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	delete(m.activeClients, client.ID())
 
 	return nil
+}
+
+// Log will call the associated logger.
+func (m *MemoryBackend) Log(event LogEvent, client *Client, pkt packet.Generic, msg *packet.Message, err error) {
+	// call logger if available
+	if m.Logger != nil {
+		m.Logger(event, client, pkt, msg, err)
+	}
 }
 
 // Close will close all active clients and close the backend. The return value
