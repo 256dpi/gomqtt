@@ -15,6 +15,8 @@ func Example() {
 		panic(err)
 	}
 
+	done := make(chan struct{})
+
 	backend := NewMemoryBackend()
 	backend.Logger = func(e LogEvent, c *Client, pkt packet.Generic, msg *packet.Message, err error) {
 		if err != nil {
@@ -25,6 +27,10 @@ func Example() {
 			fmt.Printf("B [%s] %s\n", e, pkt.String())
 		} else {
 			fmt.Printf("B [%s]\n", e)
+		}
+
+		if e == LostConnection {
+			close(done)
 		}
 	}
 
@@ -80,6 +86,8 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
+
+	<-done
 
 	err = server.Close()
 	if err != nil {
