@@ -15,7 +15,20 @@ func Example() {
 		panic(err)
 	}
 
-	engine := NewEngine(NewMemoryBackend())
+	backend := NewMemoryBackend()
+	backend.Logger = func(e LogEvent, c *Client, pkt packet.Generic, msg *packet.Message, err error) {
+		if err != nil {
+			fmt.Printf("B [%s] %s\n", e, err.Error())
+		} else if msg != nil {
+			fmt.Printf("B [%s] %s\n", e, msg.String())
+		} else if pkt != nil {
+			fmt.Printf("B [%s] %s\n", e, pkt.String())
+		} else {
+			fmt.Printf("B [%s]\n", e)
+		}
+	}
+
+	engine := NewEngine(backend)
 	engine.Accept(server)
 
 	c := client.New()
@@ -26,7 +39,7 @@ func Example() {
 			panic(err)
 		}
 
-		fmt.Println(msg.String())
+		fmt.Printf("C [message] %s\n", msg.String())
 		close(wait)
 		return nil
 	}
@@ -36,21 +49,30 @@ func Example() {
 		panic(err)
 	}
 
-	cf.Wait(10 * time.Second)
+	err = cf.Wait(10 * time.Second)
+	if err != nil {
+		panic(err)
+	}
 
 	sf, err := c.Subscribe("test", 0)
 	if err != nil {
 		panic(err)
 	}
 
-	sf.Wait(10 * time.Second)
+	err = sf.Wait(10 * time.Second)
+	if err != nil {
+		panic(err)
+	}
 
 	pf, err := c.Publish("test", []byte("test"), 0, false)
 	if err != nil {
 		panic(err)
 	}
 
-	pf.Wait(10 * time.Second)
+	err = pf.Wait(10 * time.Second)
+	if err != nil {
+		panic(err)
+	}
 
 	<-wait
 
@@ -67,5 +89,18 @@ func Example() {
 	engine.Close()
 
 	// Output:
-	// <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
+	// B [new connection]
+	// B [packet received] <Connect ClientID="" KeepAlive=30 Username="" Password="" CleanSession=true Will=nil Version=4>
+	// B [packet sent] <Connack SessionPresent=false ReturnCode=0>
+	// B [packet received] <Subscribe ID=1 Subscriptions=["test"=>0]>
+	// B [packet sent] <Suback ID=1 ReturnCodes=[0]>
+	// B [packet received] <Publish ID=0 Message=<Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]> Dup=false>
+	// B [message published] <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
+	// B [message dequeued] <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
+	// B [packet sent] <Publish ID=0 Message=<Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]> Dup=false>
+	// B [message forwarded] <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
+	// C [message] <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
+	// B [packet received] <Disconnect>
+	// B [client disconnected]
+	// B [lost connection]
 }
