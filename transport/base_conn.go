@@ -104,18 +104,6 @@ func (c *BaseConn) write(pkt packet.Generic) error {
 	return nil
 }
 
-func (c *BaseConn) flush() error {
-	err := c.stream.Flush()
-	if err != nil {
-		// ensure connection gets closed
-		c.carrier.Close()
-
-		return err
-	}
-
-	return nil
-}
-
 func (c *BaseConn) asyncFlush() {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
@@ -128,6 +116,18 @@ func (c *BaseConn) asyncFlush() {
 	if err != nil {
 		c.flushError = err
 	}
+}
+
+func (c *BaseConn) flush() error {
+	err := c.stream.Flush()
+	if err != nil {
+		// ensure connection gets closed
+		c.carrier.Close()
+
+		return err
+	}
+
+	return nil
 }
 
 // Receive will read from the underlying connection and return a fully read
