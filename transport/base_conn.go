@@ -48,6 +48,13 @@ func (c *BaseConn) Send(pkt packet.Generic) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
+	// clear and return any error from asyncFlush
+	if c.flushError != nil {
+		err := c.flushError
+		c.flushError = nil
+		return err
+	}
+
 	// write packet
 	err := c.write(pkt)
 	if err != nil {
