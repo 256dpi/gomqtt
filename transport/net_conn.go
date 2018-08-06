@@ -6,7 +6,7 @@ import (
 
 // A NetConn is a wrapper around a basic TCP connection.
 type NetConn struct {
-	BaseConn
+	*BaseConn
 
 	conn net.Conn
 }
@@ -14,7 +14,7 @@ type NetConn struct {
 // NewNetConn returns a new NetConn.
 func NewNetConn(conn net.Conn) *NetConn {
 	return &NetConn{
-		BaseConn: *NewBaseConn(conn),
+		BaseConn: NewBaseConn(conn),
 		conn:     conn,
 	}
 }

@@ -97,7 +97,7 @@ func (s *wsStream) SetReadDeadline(t time.Time) error {
 // that are chunked over several WebSocket messages and packets that are coalesced
 // to one WebSocket message.
 type WebSocketConn struct {
-	BaseConn
+	*BaseConn
 
 	conn *websocket.Conn
 }
@@ -105,7 +105,7 @@ type WebSocketConn struct {
 // NewWebSocketConn returns a new WebSocketConn.
 func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 	return &WebSocketConn{
-		BaseConn: *NewBaseConn(&wsStream{conn: conn}),
+		BaseConn: NewBaseConn(&wsStream{conn: conn}),
 		conn:     conn,
 	}
 }
