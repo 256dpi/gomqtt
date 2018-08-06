@@ -161,16 +161,17 @@ func (c *BaseConn) Close() error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
-	// flush any cached writes
-	err := c.flush()
-	if err != nil {
-		return err
-	}
+	// flush buffered writes
+	err1 := c.flush()
 
 	// close carrier
-	err = c.carrier.Close()
-	if err != nil {
-		return err
+	err2 := c.carrier.Close()
+
+	// handle errors
+	if err1 != nil {
+		return err1
+	} else if err2 != nil {
+		return err2
 	}
 
 	return nil
