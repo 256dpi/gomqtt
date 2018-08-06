@@ -73,11 +73,6 @@ func (c *BaseConn) BufferedSend(pkt packet.Generic) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
-	// create the timer if missing
-	if c.flushTimer == nil {
-		c.flushTimer = time.AfterFunc(flushTimeout, c.asyncFlush)
-	}
-
 	// return any error from asyncFlush
 	if c.flushError != nil {
 		return c.flushError
@@ -87,6 +82,11 @@ func (c *BaseConn) BufferedSend(pkt packet.Generic) error {
 	err := c.write(pkt)
 	if err != nil {
 		return err
+	}
+
+	// create the timer if missing
+	if c.flushTimer == nil {
+		c.flushTimer = time.AfterFunc(flushTimeout, c.asyncFlush)
 	}
 
 	return nil
