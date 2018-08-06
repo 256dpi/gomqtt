@@ -73,9 +73,11 @@ func (c *BaseConn) BufferedSend(pkt packet.Generic) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
-	// return any error from asyncFlush
+	// clear and return any error from asyncFlush
 	if c.flushError != nil {
-		return c.flushError
+		err := c.flushError
+		c.flushError = nil
+		return err
 	}
 
 	// write packet
@@ -113,7 +115,7 @@ func (c *BaseConn) asyncFlush() {
 
 	// flush buffer and save an eventual error
 	err := c.flush()
-	if err != nil {
+	if err != nil && c.flushError == nil {
 		c.flushError = err
 	}
 }
