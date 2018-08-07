@@ -8,6 +8,9 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 )
 
+// FlushTimeout is the time after any async writes are flushed asynchronously.
+const FlushTimeout = time.Millisecond
+
 // A Carrier is a generalized stream that can be used with BaseConn.
 type Carrier interface {
 	io.ReadWriteCloser
@@ -88,7 +91,7 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 
 	// setup the timer if missing
 	if c.flushTimer == nil {
-		c.flushTimer = time.AfterFunc(flushTimeout, c.asyncFlush)
+		c.flushTimer = time.AfterFunc(FlushTimeout, c.asyncFlush)
 	}
 
 	return nil

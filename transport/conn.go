@@ -7,8 +7,6 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 )
 
-var flushTimeout = time.Millisecond
-
 // A Conn is a connection between a client and a broker. It abstracts an
 // existing underlying stream connection.
 type Conn interface {
