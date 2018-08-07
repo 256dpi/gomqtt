@@ -58,8 +58,11 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 	}
 
 	// write packet
-	err := c.write(pkt)
+	err := c.stream.Write(pkt)
 	if err != nil {
+		// ensure connection gets closed
+		c.carrier.Close()
+
 		return err
 	}
 
@@ -72,8 +75,11 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 		}
 
 		// perform flush
-		err = c.flush()
+		err = c.stream.Flush()
 		if err != nil {
+			// ensure connection gets closed
+			c.carrier.Close()
+
 			return err
 		}
 
@@ -88,18 +94,6 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 	return nil
 }
 
-func (c *BaseConn) write(pkt packet.Generic) error {
-	err := c.stream.Write(pkt)
-	if err != nil {
-		// ensure connection gets closed
-		c.carrier.Close()
-
-		return err
-	}
-
-	return nil
-}
-
 func (c *BaseConn) asyncFlush() {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
@@ -107,23 +101,17 @@ func (c *BaseConn) asyncFlush() {
 	// clear timer
 	c.flushTimer = nil
 
-	// flush buffer and save an eventual error
-	err := c.flush()
-	if err != nil && c.flushError == nil {
-		c.flushError = err
-	}
-}
-
-func (c *BaseConn) flush() error {
+	// flush buffer
 	err := c.stream.Flush()
 	if err != nil {
 		// ensure connection gets closed
 		c.carrier.Close()
 
-		return err
+		// save error if not yet existing
+		if c.flushError != nil {
+			c.flushError = err
+		}
 	}
-
-	return nil
 }
 
 // Receive will read from the underlying connection and return a fully read
@@ -157,8 +145,8 @@ func (c *BaseConn) Close() error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
-	// flush buffered writes
-	err1 := c.flush()
+	// flush buffer
+	err1 := c.stream.Flush()
 
 	// close carrier
 	err2 := c.carrier.Close()
