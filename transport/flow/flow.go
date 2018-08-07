@@ -14,7 +14,7 @@ import (
 
 // A Conn defines an abstract interface for connections used with a Flow.
 type Conn interface {
-	Send(pkt packet.Generic) error
+	Send(pkt packet.Generic, async bool) error
 	Receive() (packet.Generic, error)
 	Close() error
 }
@@ -34,7 +34,7 @@ func NewPipe() *Pipe {
 }
 
 // Send returns packet on next Receive call.
-func (conn *Pipe) Send(pkt packet.Generic) error {
+func (conn *Pipe) Send(pkt packet.Generic, _ bool) error {
 	select {
 	case conn.pipe <- pkt:
 		return nil
@@ -186,7 +186,7 @@ func (f *Flow) Test(conn Conn) error {
 				fmt.Printf("sending packet: %s...\n", action.packet.String())
 			}
 
-			err := conn.Send(action.packet)
+			err := conn.Send(action.packet, false)
 			if err != nil {
 				return fmt.Errorf("error sending packet: %v", err)
 			}

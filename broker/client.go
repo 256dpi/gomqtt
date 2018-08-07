@@ -892,16 +892,9 @@ func (c *Client) sendAck(pkt packet.Generic) error {
 }
 
 // send a packet
-func (c *Client) send(pkt packet.Generic, buffered bool) error {
+func (c *Client) send(pkt packet.Generic, async bool) error {
 	// send packet
-	var err error
-	if buffered {
-		err = c.conn.BufferedSend(pkt)
-	} else {
-		err = c.conn.Send(pkt)
-	}
-
-	// check error
+	err := c.conn.Send(pkt, async)
 	if err != nil {
 		return err
 	}

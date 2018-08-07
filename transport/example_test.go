@@ -29,7 +29,7 @@ func Example() {
 		// check packet type
 		if _, ok := pkt.(*packet.Connect); ok {
 			// send a connack packet
-			err = conn.Send(packet.NewConnack())
+			err = conn.Send(packet.NewConnack(), false)
 			if err != nil {
 				panic(err)
 			}
@@ -45,7 +45,7 @@ func Example() {
 	}
 
 	// send connect packet
-	err = conn.Send(packet.NewConnect())
+	err = conn.Send(packet.NewConnect(), false)
 	if err != nil {
 		panic(err)
 	}

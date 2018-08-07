@@ -39,12 +39,14 @@ func NewBaseConn(c Carrier) *BaseConn {
 	}
 }
 
-// Send will write the packet to the underlying connection. It will return
-// an Error if there was an error while encoding or writing to the
-// underlying connection.
+// Send will write the packet to an internal buffer. It will either flush the
+// internal buffer immediately if requested or asynchronously in the background
+// when it gets stale. Encoding errors are directly returned, but any network
+// errors caught while flushing the buffer asynchronously will be returned on
+// the next call.
 //
 // Note: Only one goroutine can Send at the same time.
-func (c *BaseConn) Send(pkt packet.Generic) error {
+func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
@@ -61,39 +63,24 @@ func (c *BaseConn) Send(pkt packet.Generic) error {
 		return err
 	}
 
-	// stop the timer if existing
-	if c.flushTimer != nil {
-		c.flushTimer.Stop()
+	// flush immediately if requested
+	if !async {
+		// stop the timer if existing
+		if c.flushTimer != nil {
+			c.flushTimer.Stop()
+			c.flushTimer = nil
+		}
+
+		// perform flush
+		err = c.flush()
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	// flush buffer
-	return c.flush()
-}
-
-// BufferedSend will write the packet to an internal buffer. It will flush
-// the internal buffer automatically when it gets stale. Encoding errors are
-// directly returned as in Send, but any network errors caught while flushing
-// the buffer at a later time will be returned on the next call.
-//
-// Note: Only one goroutine can call BufferedSend at the same time.
-func (c *BaseConn) BufferedSend(pkt packet.Generic) error {
-	c.sMutex.Lock()
-	defer c.sMutex.Unlock()
-
-	// clear and return any error from asyncFlush
-	if c.flushError != nil {
-		err := c.flushError
-		c.flushError = nil
-		return err
-	}
-
-	// write packet
-	err := c.write(pkt)
-	if err != nil {
-		return err
-	}
-
-	// create the timer if missing
+	// setup the timer if missing
 	if c.flushTimer == nil {
 		c.flushTimer = time.AfterFunc(flushTimeout, c.asyncFlush)
 	}

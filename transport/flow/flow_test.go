@@ -59,6 +59,6 @@ func TestAlreadyClosedError(t *testing.T) {
 	pipe := NewPipe()
 	pipe.Close()
 
-	err := pipe.Send(nil)
+	err := pipe.Send(nil, false)
 	assert.Error(t, err)
 }

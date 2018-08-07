@@ -97,7 +97,7 @@ func connection(id string) transport.Conn {
 		connect.Password = pw
 	}
 
-	err = conn.Send(connect)
+	err = conn.Send(connect, false)
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +128,12 @@ func consumer(id string) {
 		{Topic: id, QOS: 0},
 	}
 
-	err := conn.Send(subscribe)
+	err := conn.Send(subscribe, false)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = conn.Receive()
 	if err != nil {
 		panic(err)
 	}
@@ -172,7 +177,7 @@ func publisher(id string) {
 			bucket.Wait(1)
 		}
 
-		err := conn.BufferedSend(publish)
+		err := conn.Send(publish, true)
 		if err != nil {
 			panic(err)
 		}

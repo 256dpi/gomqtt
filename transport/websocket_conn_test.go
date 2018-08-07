@@ -54,24 +54,24 @@ func TestWebSocketConnAddr(t *testing.T) {
 	abstractConnAddrTest(t, "ws")
 }
 
-func TestWebSocketConnBufferedSend(t *testing.T) {
-	abstractConnBufferedSendTest(t, "ws")
+func TestWebSocketConnAsyncSend(t *testing.T) {
+	abstractConnAsyncSendTest(t, "ws")
 }
 
-func TestWebSocketConnSendAfterBufferedSend(t *testing.T) {
-	abstractConnSendAfterBufferedSendTest(t, "ws")
+func TestWebSocketConnSendAfterAsyncSend(t *testing.T) {
+	abstractConnSendAfterAsyncSendTest(t, "ws")
 }
 
-func TestWebSocketConnBufferedSendAfterClose(t *testing.T) {
-	abstractConnBufferedSendAfterCloseTest(t, "ws")
+func TestWebSocketConnAsyncSendAfterClose(t *testing.T) {
+	abstractConnAsyncSendAfterCloseTest(t, "ws")
 }
 
-func TestWebSocketConnCloseAfterBufferedSend(t *testing.T) {
-	abstractConnCloseAfterBufferedSendTest(t, "ws")
+func TestWebSocketConnCloseAfterAsyncSend(t *testing.T) {
+	abstractConnCloseAfterAsyncSendTest(t, "ws")
 }
 
-func TestWebSocketConnBigBufferedSendAfterClose(t *testing.T) {
-	abstractConnBigBufferedSendAfterCloseTest(t, "ws")
+func TestWebSocketConnBigAsyncSendAfterClose(t *testing.T) {
+	abstractConnBigAsyncSendAfterCloseTest(t, "ws")
 }
 
 func TestWebSocketBadFrameError(t *testing.T) {
@@ -177,7 +177,7 @@ func BenchmarkWebSocketConn(b *testing.B) {
 
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		for i := 0; i < b.N; i++ {
-			err := conn1.Send(pkt)
+			err := conn1.Send(pkt, false)
 			if err != nil {
 				panic(err)
 			}
@@ -196,13 +196,13 @@ func BenchmarkWebSocketConn(b *testing.B) {
 	safeReceive(done)
 }
 
-func BenchmarkWebSocketConnBuffered(b *testing.B) {
+func BenchmarkWebSocketConnAsync(b *testing.B) {
 	pkt := packet.NewPublish()
 	pkt.Message.Topic = "foo/bar/baz"
 
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		for i := 0; i < b.N; i++ {
-			err := conn1.BufferedSend(pkt)
+			err := conn1.Send(pkt, true)
 			if err != nil {
 				panic(err)
 			}

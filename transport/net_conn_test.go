@@ -53,24 +53,24 @@ func TestNetConnAddr(t *testing.T) {
 	abstractConnAddrTest(t, "tcp")
 }
 
-func TestNetConnBufferedSend(t *testing.T) {
-	abstractConnBufferedSendTest(t, "tcp")
+func TestNetConnAsyncSend(t *testing.T) {
+	abstractConnAsyncSendTest(t, "tcp")
 }
 
-func TestNetConnSendAfterBufferedSend(t *testing.T) {
-	abstractConnSendAfterBufferedSendTest(t, "tcp")
+func TestNetConnSendAfterAsyncSend(t *testing.T) {
+	abstractConnSendAfterAsyncSendTest(t, "tcp")
 }
 
-func TestNetConnBufferedSendAfterClose(t *testing.T) {
-	abstractConnBufferedSendAfterCloseTest(t, "tcp")
+func TestNetConnAsyncSendAfterClose(t *testing.T) {
+	abstractConnAsyncSendAfterCloseTest(t, "tcp")
 }
 
-func TestNetConnCloseAfterBufferedSend(t *testing.T) {
-	abstractConnCloseAfterBufferedSendTest(t, "tcp")
+func TestNetConnCloseAfterAsyncSend(t *testing.T) {
+	abstractConnCloseAfterAsyncSendTest(t, "tcp")
 }
 
-func TestNetConnBigBufferedSendAfterClose(t *testing.T) {
-	abstractConnBigBufferedSendAfterCloseTest(t, "tcp")
+func TestNetConnBigAsyncSendAfterClose(t *testing.T) {
+	abstractConnBigAsyncSendAfterCloseTest(t, "tcp")
 }
 
 func TestNetConnCloseWhileReadError(t *testing.T) {
@@ -144,7 +144,7 @@ func BenchmarkNetConn(b *testing.B) {
 
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		for i := 0; i < b.N; i++ {
-			err := conn1.Send(pkt)
+			err := conn1.Send(pkt, false)
 			if err != nil {
 				panic(err)
 			}
@@ -163,13 +163,13 @@ func BenchmarkNetConn(b *testing.B) {
 	safeReceive(done)
 }
 
-func BenchmarkNetConnBuffered(b *testing.B) {
+func BenchmarkNetConnAsync(b *testing.B) {
 	pkt := packet.NewPublish()
 	pkt.Message.Topic = "foo/bar/baz"
 
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		for i := 0; i < b.N; i++ {
-			err := conn1.BufferedSend(pkt)
+			err := conn1.Send(pkt, true)
 			if err != nil {
 				panic(err)
 			}

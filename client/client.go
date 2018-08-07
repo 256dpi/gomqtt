@@ -785,17 +785,12 @@ func (c *Client) pinger() error {
 /* helpers */
 
 // sends packet and updates lastSend
-func (c *Client) send(pkt packet.Generic, buffered bool) error {
+func (c *Client) send(pkt packet.Generic, async bool) error {
 	// reset keep alive tracker
 	c.tracker.reset()
 
 	// send packet
-	var err error
-	if buffered {
-		err = c.conn.BufferedSend(pkt)
-	} else {
-		err = c.conn.Send(pkt)
-	}
+	err := c.conn.Send(pkt, async)
 	if err != nil {
 		return err
 	}

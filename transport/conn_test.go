@@ -17,7 +17,7 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
 
-		err = conn1.Send(packet.NewConnack())
+		err = conn1.Send(packet.NewConnack(), false)
 		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()
@@ -25,7 +25,7 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	})
 
-	err := conn2.Send(packet.NewConnect())
+	err := conn2.Send(packet.NewConnect(), false)
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
@@ -56,7 +56,7 @@ func abstractConnEncodeErrorTest(t *testing.T, protocol string) {
 		pkt := packet.NewConnack()
 		pkt.ReturnCode = 11 // < invalid return code
 
-		err := conn1.Send(pkt)
+		err := conn1.Send(pkt, false)
 		assert.Error(t, err)
 	})
 
@@ -99,7 +99,7 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 	assert.Nil(t, pkt)
 	assert.Equal(t, io.EOF, err)
 
-	err = conn2.Send(packet.NewConnect())
+	err = conn2.Send(packet.NewConnect(), false)
 	assert.Error(t, err)
 
 	safeReceive(done)
@@ -107,7 +107,7 @@ func abstractConnSendAfterCloseTest(t *testing.T, protocol string) {
 
 func abstractConnCloseWhileSendTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		err := conn1.Send(packet.NewConnect())
+		err := conn1.Send(packet.NewConnect(), false)
 		assert.NoError(t, err)
 
 		err = conn1.Close()
@@ -120,7 +120,7 @@ func abstractConnCloseWhileSendTest(t *testing.T, protocol string) {
 
 	for {
 		// keep writing
-		err := conn2.Send(packet.NewConnect())
+		err := conn2.Send(packet.NewConnect(), false)
 		if err != nil {
 			assert.Error(t, err)
 			break
@@ -134,7 +134,7 @@ func abstractConnSendAndCloseTest(t *testing.T, protocol string) {
 	wait := make(chan struct{})
 
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		err := conn1.Send(packet.NewConnect())
+		err := conn1.Send(packet.NewConnect(), false)
 		assert.NoError(t, err)
 
 		err = conn1.Close()
@@ -166,7 +166,7 @@ func abstractConnReadLimitTest(t *testing.T, protocol string) {
 		assert.Equal(t, packet.ErrReadLimitExceeded, err)
 	})
 
-	err := conn2.Send(packet.NewConnect())
+	err := conn2.Send(packet.NewConnect(), false)
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
@@ -227,13 +227,13 @@ func abstractConnAddrTest(t *testing.T, protocol string) {
 	safeReceive(done)
 }
 
-func abstractConnBufferedSendTest(t *testing.T, protocol string) {
+func abstractConnAsyncSendTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
 
-		err = conn1.BufferedSend(packet.NewConnack())
+		err = conn1.Send(packet.NewConnack(), true)
 		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()
@@ -241,7 +241,7 @@ func abstractConnBufferedSendTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	})
 
-	err := conn2.BufferedSend(packet.NewConnect())
+	err := conn2.Send(packet.NewConnect(), true)
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
@@ -254,16 +254,16 @@ func abstractConnBufferedSendTest(t *testing.T, protocol string) {
 	safeReceive(done)
 }
 
-func abstractConnSendAfterBufferedSendTest(t *testing.T, protocol string) {
+func abstractConnSendAfterAsyncSendTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
 
-		err = conn1.BufferedSend(packet.NewConnack())
+		err = conn1.Send(packet.NewConnack(), true)
 		assert.NoError(t, err)
 
-		err = conn1.Send(packet.NewConnack())
+		err = conn1.Send(packet.NewConnack(), false)
 		assert.NoError(t, err)
 
 		pkt, err = conn1.Receive()
@@ -271,7 +271,7 @@ func abstractConnSendAfterBufferedSendTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	})
 
-	err := conn2.BufferedSend(packet.NewConnect())
+	err := conn2.Send(packet.NewConnect(), true)
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
@@ -288,7 +288,7 @@ func abstractConnSendAfterBufferedSendTest(t *testing.T, protocol string) {
 	safeReceive(done)
 }
 
-func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
+func abstractConnAsyncSendAfterCloseTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		err := conn1.Close()
 		assert.NoError(t, err)
@@ -298,18 +298,18 @@ func abstractConnBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	assert.Nil(t, pkt)
 	assert.Equal(t, io.EOF, err)
 
-	err = conn2.BufferedSend(packet.NewConnect())
+	err = conn2.Send(packet.NewConnect(), true)
 	assert.NoError(t, err)
 
 	<-time.After(2 * flushTimeout)
 
-	err = conn2.BufferedSend(packet.NewConnect())
+	err = conn2.Send(packet.NewConnect(), true)
 	assert.Error(t, err)
 
 	safeReceive(done)
 }
 
-func abstractConnCloseAfterBufferedSendTest(t *testing.T, protocol string) {
+func abstractConnCloseAfterAsyncSendTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
@@ -320,7 +320,7 @@ func abstractConnCloseAfterBufferedSendTest(t *testing.T, protocol string) {
 		assert.Equal(t, io.EOF, err)
 	})
 
-	err := conn2.BufferedSend(packet.NewConnect())
+	err := conn2.Send(packet.NewConnect(), true)
 	assert.NoError(t, err)
 
 	err = conn2.Close()
@@ -329,7 +329,7 @@ func abstractConnCloseAfterBufferedSendTest(t *testing.T, protocol string) {
 	safeReceive(done)
 }
 
-func abstractConnBigBufferedSendAfterCloseTest(t *testing.T, protocol string) {
+func abstractConnBigAsyncSendAfterCloseTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		err := conn1.Close()
 		assert.NoError(t, err)
@@ -343,7 +343,7 @@ func abstractConnBigBufferedSendAfterCloseTest(t *testing.T, protocol string) {
 	pub.Message.Topic = "hello"
 	pub.Message.Payload = make([]byte, 6400) // < bigger than write buffer
 
-	err = conn2.BufferedSend(pub)
+	err = conn2.Send(pub, true)
 	assert.Error(t, err)
 
 	safeReceive(done)

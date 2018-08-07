@@ -12,20 +12,14 @@ var flushTimeout = time.Millisecond
 // A Conn is a connection between a client and a broker. It abstracts an
 // existing underlying stream connection.
 type Conn interface {
-	// Send will write the packet to the underlying connection. It will return
-	// an Error if there was an error while encoding or writing to the
-	// underlying connection.
+	// Send will write the packet to an internal buffer. It will either flush the
+	// internal buffer immediately if requested or asynchronously in the background
+	// when it gets stale. Encoding errors are directly returned, but any network
+	// errors caught while flushing the buffer asynchronously will be returned on
+	// the next call.
 	//
 	// Note: Only one goroutine can Send at the same time.
-	Send(pkt packet.Generic) error
-
-	// BufferedSend will write the packet to an internal buffer. It will flush
-	// the internal buffer automatically when it gets stale. Encoding errors are
-	// directly returned as in Send, but any network errors caught while flushing
-	// the buffer at a later time will be returned on the next call.
-	//
-	// Note: Only one goroutine can call BufferedSend at the same time.
-	BufferedSend(pkt packet.Generic) error
+	Send(pkt packet.Generic, async bool) error
 
 	// Receive will read from the underlying connection and return a fully read
 	// packet. It will return an Error if there was an error while decoding or
