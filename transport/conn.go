@@ -11,10 +11,9 @@ import (
 // existing underlying stream connection.
 type Conn interface {
 	// Send will write the packet to an internal buffer. It will either flush the
-	// internal buffer immediately if requested or asynchronously in the background
-	// when it gets stale. Encoding errors are directly returned, but any network
-	// errors caught while flushing the buffer asynchronously will be returned on
-	// the next call.
+	// internal buffer immediately or asynchronously in the background when it gets
+	// stale. Encoding errors are directly returned, but any network errors caught
+	// while flushing the buffer asynchronously will be returned on the next call.
 	//
 	// Note: Only one goroutine can Send at the same time.
 	Send(pkt packet.Generic, async bool) error

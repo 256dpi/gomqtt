@@ -43,10 +43,9 @@ func NewBaseConn(c Carrier) *BaseConn {
 }
 
 // Send will write the packet to an internal buffer. It will either flush the
-// internal buffer immediately if requested or asynchronously in the background
-// when it gets stale. Encoding errors are directly returned, but any network
-// errors caught while flushing the buffer asynchronously will be returned on
-// the next call.
+// internal buffer immediately or asynchronously in the background when it gets
+// stale. Encoding errors are directly returned, but any network errors caught
+// while flushing the buffer asynchronously will be returned on the next call.
 //
 // Note: Only one goroutine can Send at the same time.
 func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
@@ -69,7 +68,7 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 		return err
 	}
 
-	// flush immediately if requested
+	// flush immediately if not async
 	if !async {
 		// stop the timer if existing
 		if c.flushTimer != nil {
