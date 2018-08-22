@@ -191,36 +191,48 @@ func Run(t *testing.T, config *Config) {
 			RetainedMessageTest(t, config, "retained/3", "retained/3", 2, 2)
 		})
 
+		t.Run("RetainedMessageDowngrade1To0", func(t *testing.T) {
+			RetainedMessageTest(t, config, "retained/4", "retained/4", 0, 1)
+		})
+
+		t.Run("RetainedMessageDowngrade2To0", func(t *testing.T) {
+			RetainedMessageTest(t, config, "retained/5", "retained/5", 0, 2)
+		})
+
+		t.Run("RetainedMessageDowngrade2To1", func(t *testing.T) {
+			RetainedMessageTest(t, config, "retained/6", "retained/6", 1, 2)
+		})
+
 		t.Run("RetainedMessageWildcardOne", func(t *testing.T) {
-			RetainedMessageTest(t, config, "retained/4/foo/bar", "retained/4/foo/+", 0, 0)
+			RetainedMessageTest(t, config, "retained/7/foo/bar", "retained/7/foo/+", 0, 0)
 		})
 
 		t.Run("RetainedMessageWildcardSome", func(t *testing.T) {
-			RetainedMessageTest(t, config, "retained/5/foo/bar", "retained/5/#", 0, 0)
+			RetainedMessageTest(t, config, "retained/8/foo/bar", "retained/8/#", 0, 0)
 		})
 
 		t.Run("RetainedMessageReplace", func(t *testing.T) {
-			RetainedMessageReplaceTest(t, config, "retained/6")
+			RetainedMessageReplaceTest(t, config, "retained/9")
 		})
 
 		t.Run("ClearRetainedMessage", func(t *testing.T) {
-			ClearRetainedMessageTest(t, config, "retained/7")
+			ClearRetainedMessageTest(t, config, "retained/10")
 		})
 
 		t.Run("DirectRetainedMessage", func(t *testing.T) {
-			DirectRetainedMessageTest(t, config, "retained/8")
+			DirectRetainedMessageTest(t, config, "retained/11")
 		})
 
 		t.Run("DirectClearRetainedMessage", func(t *testing.T) {
-			DirectClearRetainedMessageTest(t, config, "retained/9")
+			DirectClearRetainedMessageTest(t, config, "retained/12")
 		})
 
 		t.Run("RetainedWill", func(t *testing.T) {
-			RetainedWillTest(t, config, "retained/10")
+			RetainedWillTest(t, config, "retained/13")
 		})
 
 		t.Run("RetainedMessageResubscription", func(t *testing.T) {
-			RetainedMessageResubscriptionTest(t, config, "retained/11")
+			RetainedMessageResubscriptionTest(t, config, "retained/14")
 		})
 	}
 
