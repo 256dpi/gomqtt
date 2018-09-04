@@ -8,19 +8,19 @@ import (
 )
 
 func TestTracker(t *testing.T) {
-	tracker := newTracker(10 * time.Millisecond)
-	assert.False(t, tracker.pending())
-	assert.True(t, tracker.window() > 0)
+	tracker := NewTracker(10 * time.Millisecond)
+	assert.False(t, tracker.Pending())
+	assert.True(t, tracker.Window() > 0)
 
 	time.Sleep(10 * time.Millisecond)
-	assert.True(t, tracker.window() <= 0)
+	assert.True(t, tracker.Window() <= 0)
 
-	tracker.reset()
-	assert.True(t, tracker.window() > 0)
+	tracker.Reset()
+	assert.True(t, tracker.Window() > 0)
 
-	tracker.ping()
-	assert.True(t, tracker.pending())
+	tracker.Ping()
+	assert.True(t, tracker.Pending())
 
-	tracker.pong()
-	assert.False(t, tracker.pending())
+	tracker.Pong()
+	assert.False(t, tracker.Pending())
 }
