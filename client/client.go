@@ -121,7 +121,7 @@ type Client struct {
 	clean bool
 
 	keepAlive     time.Duration
-	tracker       *tracker
+	tracker       *Tracker
 	futureStore   *future.Store
 	connectFuture *future.Future
 
@@ -177,7 +177,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 
 	// allocate and initialize tracker
 	c.keepAlive = keepAlive
-	c.tracker = newTracker(keepAlive)
+	c.tracker = NewTracker(keepAlive)
 
 	// dial broker (with custom dialer if present)
 	if config.Dialer != nil {
@@ -482,7 +482,7 @@ func (c *Client) processor() error {
 		case *packet.Unsuback:
 			err = c.processUnsuback(typedPkt)
 		case *packet.Pingresp:
-			c.tracker.pong()
+			c.tracker.Pong()
 		case *packet.Publish:
 			err = c.processPublish(typedPkt)
 		case *packet.Puback:
@@ -749,12 +749,12 @@ func (c *Client) processPubrel(id packet.ID) error {
 func (c *Client) pinger() error {
 	for {
 		// get current window
-		window := c.tracker.window()
+		window := c.tracker.Window()
 
 		// check if ping is due
 		if window < 0 {
 			// check if a pong has already been sent
-			if c.tracker.pending() {
+			if c.tracker.Pending() {
 				return c.die(ErrClientMissingPong, true, false)
 			}
 
@@ -765,7 +765,7 @@ func (c *Client) pinger() error {
 			}
 
 			// save ping attempt
-			c.tracker.ping()
+			c.tracker.Ping()
 		} else {
 			// log keep alive delay
 			if c.Logger != nil {
@@ -787,7 +787,7 @@ func (c *Client) pinger() error {
 // sends packet and updates lastSend
 func (c *Client) send(pkt packet.Generic, async bool) error {
 	// reset keep alive tracker
-	c.tracker.reset()
+	c.tracker.Reset()
 
 	// send packet
 	err := c.conn.Send(pkt, async)
