@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Tracker a tracker keeps track of keep alive intervals
+// A Tracker keeps track of keep alive intervals.
 type Tracker struct {
 	sync.RWMutex
 
@@ -14,7 +14,7 @@ type Tracker struct {
 	timeout time.Duration
 }
 
-// NewTracker returns a new tracker
+// NewTracker returns a new tracker.
 func NewTracker(timeout time.Duration) *Tracker {
 	return &Tracker{
 		last:    time.Now(),
@@ -22,7 +22,7 @@ func NewTracker(timeout time.Duration) *Tracker {
 	}
 }
 
-// Reset updates the tracker
+// Reset will reset the tracker.
 func (t *Tracker) Reset() {
 	t.Lock()
 	defer t.Unlock()
@@ -30,7 +30,7 @@ func (t *Tracker) Reset() {
 	t.last = time.Now()
 }
 
-// Window returns the current time window
+// Window returns the time until a new ping should be sent.
 func (t *Tracker) Window() time.Duration {
 	t.RLock()
 	defer t.RUnlock()
@@ -38,7 +38,7 @@ func (t *Tracker) Window() time.Duration {
 	return t.timeout - time.Since(t.last)
 }
 
-// Ping mark ping
+// Ping marks a ping.
 func (t *Tracker) Ping() {
 	t.Lock()
 	defer t.Unlock()
@@ -46,7 +46,7 @@ func (t *Tracker) Ping() {
 	t.pings++
 }
 
-// Pong mark pong
+// Pong marks a pong.
 func (t *Tracker) Pong() {
 	t.Lock()
 	defer t.Unlock()
@@ -54,7 +54,7 @@ func (t *Tracker) Pong() {
 	t.pings--
 }
 
-// Pending returns if pings are pending
+// Pending returns if pings are pending.
 func (t *Tracker) Pending() bool {
 	t.RLock()
 	defer t.RUnlock()
