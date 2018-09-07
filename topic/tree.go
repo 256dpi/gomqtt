@@ -364,17 +364,20 @@ func (t *Tree) Count() int {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 
-	return t.count(0, t.root)
+	return t.count(t.root)
 }
 
-func (t *Tree) count(counter int, node *node) int {
+func (t *Tree) count(node *node) int {
+	// prepare total
+	total := 0
+
 	// add children to results
 	for _, child := range node.children {
-		counter += t.count(counter, child)
+		total += t.count(child)
 	}
 
 	// add values to result
-	return counter + len(node.values)
+	return total + len(node.values)
 }
 
 // All will return all stored values in the tree.
