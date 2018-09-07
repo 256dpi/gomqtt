@@ -14,6 +14,14 @@ type Config struct {
 	KeepAlive    string
 	WillMessage  *packet.Message
 	ValidateSubs bool
+
+	// Custom methods
+	// Unless you understand these behaviors, do not change them.
+	ProcessPublish func(*packet.Publish) error
+	ProcessPuback  func(*packet.Puback) error
+	ProcessPubcomp func(*packet.Pubcomp) error
+	ProcessPubrec  func(*packet.Pubrec) error
+	ProcessPubrel  func(*packet.Pubrel) error
 }
 
 // NewConfig creates a new Config using the specified URL.

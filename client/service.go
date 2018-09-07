@@ -18,9 +18,11 @@ type command struct {
 	publish     bool
 	subscribe   bool
 	unsubscribe bool
+	passthrough bool
 
 	future        *future.Future
 	message       *packet.Message
+	packet        packet.Generic
 	subscriptions []packet.Subscription
 	topics        []string
 }
@@ -263,6 +265,19 @@ func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	return f
 }
 
+// Send will send the packet directly
+// Unless you understand these behaviors, do not use them.
+func (s *Service) Send(pkt packet.Generic) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	// queue passthrough packet
+	s.commandQueue <- &command{
+		passthrough: true,
+		packet:      pkt,
+	}
+}
+
 // Stop will disconnect the client if online and cancel all futures if requested.
 // After the service is stopped in can be started again.
 //
@@ -457,6 +472,15 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 				// bind future in a own goroutine. the goroutine will be
 				// ultimately collected when the service is stopped
 				go cmd.future.Bind(f2.(*future.Future))
+			}
+
+			// handle passthrough command
+			if cmd.passthrough {
+				err := client.Send(cmd.packet)
+				if err != nil {
+					s.err("Send", err)
+					return false
+				}
 			}
 		case <-s.tomb.Dying():
 			// disconnect client on Stop

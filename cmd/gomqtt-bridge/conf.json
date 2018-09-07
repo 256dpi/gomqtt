@@ -1,0 +1,22 @@
+{
+  "local": {
+    "address": "tcp://test:hahaha@127.0.0.1:1883",
+    "clientid": "clientid-local",
+    "subscriptions": [
+      {
+        "topic": "t1",
+        "qos": 1
+      }
+    ]
+  },
+  "remote": {
+    "address": "tcp://test:hahaha@127.0.0.1:2883",
+    "clientid": "clientid-remote",
+    "subscriptions": [
+      {
+        "topic": "t2",
+        "qos": 1
+      }
+    ]
+  }
+}

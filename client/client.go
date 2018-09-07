@@ -113,6 +113,14 @@ type Client struct {
 	// encountering an error while processing incoming packets.
 	Callback Callback
 
+	// Custom methods
+	// Unless you understand these behaviors, do not change them.
+	processPublish func(*packet.Publish) error
+	processPuback  func(*packet.Puback) error
+	processPubcomp func(*packet.Pubcomp) error
+	processPubrec  func(*packet.Pubrec) error
+	processPubrel  func(*packet.Pubrel) error
+
 	// The logger that is used to log low level information about packets
 	// that have been successfully sent and received and details about the
 	// automatic keep alive handler.
@@ -132,11 +140,17 @@ type Client struct {
 
 // New returns a new client that by default uses a fresh MemorySession.
 func New() *Client {
-	return &Client{
+	c := &Client{
 		state:       clientInitialized,
 		Session:     session.NewMemorySession(),
 		futureStore: future.NewStore(),
 	}
+	c.processPublish = c.processPublishDefault
+	c.processPuback = c.processPubackDefault
+	c.processPubcomp = c.processPubcompDefault
+	c.processPubrec = c.processPubrecDefault
+	c.processPubrel = c.processPubrelDefault
+	return c
 }
 
 // Connect opens the connection to the broker and sends a Connect packet. It will
@@ -152,6 +166,23 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 
 	// save config
 	c.config = config
+
+	// set custom methods
+	if config.ProcessPublish != nil {
+		c.processPublish = config.ProcessPublish
+	}
+	if config.ProcessPuback != nil {
+		c.processPuback = config.ProcessPuback
+	}
+	if config.ProcessPubcomp != nil {
+		c.processPubcomp = config.ProcessPubcomp
+	}
+	if config.ProcessPubrec != nil {
+		c.processPubrec = config.ProcessPubrec
+	}
+	if config.ProcessPubrel != nil {
+		c.processPubrel = config.ProcessPubrel
+	}
 
 	// check if already connecting
 	if atomic.LoadUint32(&c.state) >= clientConnecting {
@@ -417,6 +448,26 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 	return c.end(err, true)
 }
 
+// Send will send the packet directly
+// Unless you understand these behaviors, do not use them.
+func (c *Client) Send(pkt packet.Generic) error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	// check if connected
+	if atomic.LoadUint32(&c.state) != clientConnected {
+		return ErrClientNotConnected
+	}
+
+	// send generic packet
+	err := c.send(pkt, false)
+	if err != nil {
+		return c.cleanup(err, false, false)
+	}
+
+	return nil
+}
+
 // Close closes the client immediately without sending a Disconnect packet and
 // waiting for outgoing transmissions to finish.
 func (c *Client) Close() error {
@@ -486,13 +537,13 @@ func (c *Client) processor() error {
 		case *packet.Publish:
 			err = c.processPublish(typedPkt)
 		case *packet.Puback:
-			err = c.processPubackAndPubcomp(typedPkt.ID)
+			err = c.processPuback(typedPkt)
 		case *packet.Pubcomp:
-			err = c.processPubackAndPubcomp(typedPkt.ID)
+			err = c.processPubcomp(typedPkt)
 		case *packet.Pubrec:
-			err = c.processPubrec(typedPkt.ID)
+			err = c.processPubrec(typedPkt)
 		case *packet.Pubrel:
-			err = c.processPubrel(typedPkt.ID)
+			err = c.processPubrel(typedPkt)
 		}
 
 		// return eventual error
@@ -612,7 +663,7 @@ func (c *Client) processUnsuback(unsuback *packet.Unsuback) error {
 }
 
 // handle an incoming Publish packet
-func (c *Client) processPublish(publish *packet.Publish) error {
+func (c *Client) processPublishDefault(publish *packet.Publish) error {
 	// call callback for unacknowledged and directly acknowledged messages
 	if publish.Message.QOS <= 1 {
 		if c.Callback != nil {
@@ -658,6 +709,16 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 	return nil
 }
 
+// handle an incoming Puback packet
+func (c *Client) processPubackDefault(puback *packet.Puback) error {
+	return c.processPubackAndPubcomp(puback.ID)
+}
+
+// handle an incoming Pubcomp packet
+func (c *Client) processPubcompDefault(pubcomp *packet.Pubcomp) error {
+	return c.processPubackAndPubcomp(pubcomp.ID)
+}
+
 // handle an incoming Puback or Pubcomp packet
 func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// remove packet from store
@@ -682,10 +743,10 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 }
 
 // handle an incoming Pubrec packet
-func (c *Client) processPubrec(id packet.ID) error {
+func (c *Client) processPubrecDefault(pubrec *packet.Pubrec) error {
 	// prepare pubrel packet
 	pubrel := packet.NewPubrel()
-	pubrel.ID = id
+	pubrel.ID = pubrec.ID
 
 	// overwrite stored Publish with the Pubrel packet
 	err := c.Session.SavePacket(session.Outgoing, pubrel)
@@ -703,9 +764,9 @@ func (c *Client) processPubrec(id packet.ID) error {
 }
 
 // handle an incoming Pubrel packet
-func (c *Client) processPubrel(id packet.ID) error {
+func (c *Client) processPubrelDefault(pubrel *packet.Pubrel) error {
 	// get packet from store
-	pkt, err := c.Session.LookupPacket(session.Incoming, id)
+	pkt, err := c.Session.LookupPacket(session.Incoming, pubrel.ID)
 	if err != nil {
 		return c.die(err, true, false)
 	}
@@ -735,7 +796,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	}
 
 	// remove packet from store
-	err = c.Session.DeletePacket(session.Incoming, id)
+	err = c.Session.DeletePacket(session.Incoming, pubrel.ID)
 	if err != nil {
 		return c.die(err, true, false)
 	}

@@ -750,7 +750,7 @@ func TestClientInvalidPackets(t *testing.T) {
 	assert.NoError(t, err)
 
 	// missing future
-	err = c.processPubrel(0)
+	err = c.processPubrel(packet.NewPubrel())
 	assert.NoError(t, err)
 
 	// missing future
