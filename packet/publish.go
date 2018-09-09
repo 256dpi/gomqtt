@@ -62,12 +62,12 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 
 	// check qos
 	if !validQOS(pp.Message.QOS) {
-		return total, fmt.Errorf("[%s] invalid QOS level (%d)", pp.Type(), pp.Message.QOS)
+		return total, makeError("[%s] invalid QOS level (%d)", pp.Type(), pp.Message.QOS)
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("[%s] insufficient buffer size, expected %d, got %d", pp.Type(), total+2, len(src))
+		return total, makeError("[%s] insufficient buffer size, expected %d, got %d", pp.Type(), total+2, len(src))
 	}
 
 	n := 0
@@ -82,7 +82,7 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 	if pp.Message.QOS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
-			return total, fmt.Errorf("[%s] insufficient buffer size, expected %d, got %d", pp.Type(), total+2, len(src))
+			return total, makeError("[%s] insufficient buffer size, expected %d, got %d", pp.Type(), total+2, len(src))
 		}
 
 		// read packet id
@@ -91,7 +91,7 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 
 		// check packet id
 		if pp.ID == 0 {
-			return total, fmt.Errorf("[%s] packet id must be grater than zero", pp.Type())
+			return total, makeError("[%s] packet id must be grater than zero", pp.Type())
 		}
 	}
 
@@ -116,7 +116,7 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 
 	// check topic length
 	if len(pp.Message.Topic) == 0 {
-		return total, fmt.Errorf("[%s] topic name is empty", pp.Type())
+		return total, makeError("[%s] topic name is empty", pp.Type())
 	}
 
 	flags := byte(0)
@@ -137,12 +137,12 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 
 	// check qos
 	if !validQOS(pp.Message.QOS) {
-		return 0, fmt.Errorf("[%s] invalid QOS level %d", pp.Type(), pp.Message.QOS)
+		return 0, makeError("[%s] invalid QOS level %d", pp.Type(), pp.Message.QOS)
 	}
 
 	// check packet id
 	if pp.Message.QOS > 0 && pp.ID == 0 {
-		return total, fmt.Errorf("[%s] packet id must be grater than zero", pp.Type())
+		return total, makeError("[%s] packet id must be grater than zero", pp.Type())
 	}
 
 	// set qos
