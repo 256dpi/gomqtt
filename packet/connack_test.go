@@ -13,7 +13,7 @@ func TestConnackReturnCodes(t *testing.T) {
 	assert.Equal(t, ServerUnavailable.String(), ConnackCode(3).String())
 	assert.Equal(t, BadUsernameOrPassword.String(), ConnackCode(4).String())
 	assert.Equal(t, NotAuthorized.String(), ConnackCode(5).String())
-	assert.Equal(t, "unknown error", ConnackCode(6).String())
+	assert.Equal(t, "invalid connack code", ConnackCode(6).String())
 }
 
 func TestConnackInterface(t *testing.T) {
