@@ -8,11 +8,11 @@ import (
 
 func TestConnackReturnCodes(t *testing.T) {
 	assert.Equal(t, ConnectionAccepted.String(), ConnackCode(0).String())
-	assert.Equal(t, ErrInvalidProtocolVersion.String(), ConnackCode(1).String())
-	assert.Equal(t, ErrIdentifierRejected.String(), ConnackCode(2).String())
-	assert.Equal(t, ErrServerUnavailable.String(), ConnackCode(3).String())
-	assert.Equal(t, ErrBadUsernameOrPassword.String(), ConnackCode(4).String())
-	assert.Equal(t, ErrNotAuthorized.String(), ConnackCode(5).String())
+	assert.Equal(t, InvalidProtocolVersion.String(), ConnackCode(1).String())
+	assert.Equal(t, IdentifierRejected.String(), ConnackCode(2).String())
+	assert.Equal(t, ServerUnavailable.String(), ConnackCode(3).String())
+	assert.Equal(t, BadUsernameOrPassword.String(), ConnackCode(4).String())
+	assert.Equal(t, NotAuthorized.String(), ConnackCode(5).String())
 	assert.Equal(t, "unknown error", ConnackCode(6).String())
 }
 

@@ -8,11 +8,11 @@ type ConnackCode uint8
 // All available ConnackCodes.
 const (
 	ConnectionAccepted ConnackCode = iota
-	ErrInvalidProtocolVersion
-	ErrIdentifierRejected
-	ErrServerUnavailable
-	ErrBadUsernameOrPassword
-	ErrNotAuthorized
+	InvalidProtocolVersion
+	IdentifierRejected
+	ServerUnavailable
+	BadUsernameOrPassword
+	NotAuthorized
 )
 
 // Valid checks if the ConnackCode is valid.
@@ -25,15 +25,15 @@ func (cc ConnackCode) String() string {
 	switch cc {
 	case ConnectionAccepted:
 		return "connection accepted"
-	case ErrInvalidProtocolVersion:
+	case InvalidProtocolVersion:
 		return "connection refused: unacceptable protocol version"
-	case ErrIdentifierRejected:
+	case IdentifierRejected:
 		return "connection refused: identifier rejected"
-	case ErrServerUnavailable:
+	case ServerUnavailable:
 		return "connection refused: server unavailable"
-	case ErrBadUsernameOrPassword:
+	case BadUsernameOrPassword:
 		return "connection refused: bad user name or password"
-	case ErrNotAuthorized:
+	case NotAuthorized:
 		return "connection refused: not authorized"
 	}
 
