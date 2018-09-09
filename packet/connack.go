@@ -20,8 +20,8 @@ func (cc ConnackCode) Valid() bool {
 	return cc <= 5
 }
 
-// Error returns the corresponding error string for the ConnackCode.
-func (cc ConnackCode) Error() string {
+// String returns the corresponding error string for the ConnackCode.
+func (cc ConnackCode) String() string {
 	switch cc {
 	case ConnectionAccepted:
 		return "connection accepted"
@@ -37,7 +37,7 @@ func (cc ConnackCode) Error() string {
 		return "connection refused: not authorized"
 	}
 
-	return "unknown error"
+	return "invalid connack code"
 }
 
 // A Connack packet is sent by the server in response to a Connect packet

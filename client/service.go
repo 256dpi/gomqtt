@@ -391,14 +391,6 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		return nil, false
 	}
 
-	// check return code
-	if connectFuture.ReturnCode() != packet.ConnectionAccepted {
-		client.Close()
-
-		s.err("Connect", connectFuture.ReturnCode())
-		return nil, false
-	}
-
 	return client, connectFuture.SessionPresent()
 }
 
