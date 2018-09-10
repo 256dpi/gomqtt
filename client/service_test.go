@@ -74,6 +74,76 @@ func TestServicePublishSubscribe(t *testing.T) {
 	safeReceive(done)
 }
 
+func TestServicePublishSubscribePassthrough(t *testing.T) {
+	subscribe := packet.NewSubscribe()
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
+	subscribe.ID = 1
+
+	suback := packet.NewSuback()
+	suback.ReturnCodes = []uint8{0}
+	suback.ID = 1
+
+	publish := packet.NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	online := make(chan struct{})
+	message := make(chan struct{})
+	offline := make(chan struct{})
+
+	s := NewService()
+
+	s.OnlineCallback = func(resumed bool) {
+		assert.False(t, resumed)
+		close(online)
+	}
+
+	s.OfflineCallback = func() {
+		close(offline)
+	}
+
+	s.MessageCallback = func(msg *packet.Message) error {
+		assert.FailNow(t, "Callback unexpected")
+		return nil
+	}
+
+	cc := NewConfig("tcp://localhost:" + port)
+	cc.ProcessPublish = func(p *packet.Publish) error {
+		assert.Equal(t, "test", p.Message.Topic)
+		assert.Equal(t, []byte("test"), p.Message.Payload)
+		assert.Equal(t, uint8(0), p.Message.QOS)
+		assert.False(t, p.Message.Retain)
+		close(message)
+		return nil
+	}
+
+	s.Start(cc)
+
+	safeReceive(online)
+
+	assert.NoError(t, s.Subscribe("test", 0).Wait(1*time.Second))
+	s.Send(publish)
+
+	safeReceive(message)
+
+	s.Stop(true)
+
+	safeReceive(offline)
+	safeReceive(done)
+}
+
 func TestServiceCommandsInCallback(t *testing.T) {
 	subscribe := packet.NewSubscribe()
 	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}

@@ -573,6 +573,291 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	assert.Equal(t, 0, len(out))
 }
 
+func TestClientPassthroughQOS0(t *testing.T) {
+	subscribe := packet.NewSubscribe()
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test"}}
+	subscribe.ID = 1
+
+	suback := packet.NewSuback()
+	suback.ReturnCodes = []uint8{0}
+	suback.ID = 1
+
+	publish := packet.NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	waitPublish := make(chan struct{})
+
+	c := New()
+	c.Callback = func(msg *packet.Message, err error) error {
+		assert.FailNow(t, "Callback unexpected")
+		return nil
+	}
+
+	cc := NewConfig("tcp://localhost:" + port)
+	cc.ProcessPublish = func(p *packet.Publish) error {
+		assert.Equal(t, "test", p.Message.Topic)
+		assert.Equal(t, []byte("test"), p.Message.Payload)
+		assert.Equal(t, uint8(0), p.Message.QOS)
+		assert.False(t, p.Message.Retain)
+		close(waitPublish)
+		return nil
+	}
+	connectFuture, err := c.Connect(cc)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
+	assert.False(t, connectFuture.SessionPresent())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
+
+	subscribeFuture, err := c.Subscribe("test", 0)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
+	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+
+	err = c.Send(publish)
+	assert.NoError(t, err)
+
+	safeReceive(waitPublish)
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	safeReceive(done)
+
+	in, err := c.Session.AllPackets(session.Incoming)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(in))
+
+	out, err := c.Session.AllPackets(session.Outgoing)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(out))
+}
+
+func TestClientPassthroughQOS1(t *testing.T) {
+	subscribe := packet.NewSubscribe()
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 1}}
+	subscribe.ID = 1
+
+	suback := packet.NewSuback()
+	suback.ReturnCodes = []uint8{1}
+	suback.ID = 1
+
+	publish := packet.NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 1
+	publish.ID = 2
+
+	puback := packet.NewPuback()
+	puback.ID = 2
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(puback).
+		Send(publish).
+		Receive(puback).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	waitPuback := make(chan struct{})
+	waitPublish := make(chan struct{})
+
+	c := New()
+	c.Callback = func(msg *packet.Message, err error) error {
+		assert.FailNow(t, "Callback unexpected")
+		return nil
+	}
+
+	cc := NewConfig("tcp://localhost:" + port)
+	cc.ProcessPuback = func(p *packet.Puback) error {
+		assert.Equal(t, packet.ID(2), p.ID)
+		close(waitPuback)
+		return nil
+	}
+	cc.ProcessPublish = func(p *packet.Publish) error {
+		assert.Equal(t, "test", p.Message.Topic)
+		assert.Equal(t, []byte("test"), p.Message.Payload)
+		assert.Equal(t, uint8(1), p.Message.QOS)
+		assert.False(t, p.Message.Retain)
+		close(waitPublish)
+		return nil
+	}
+
+	connectFuture, err := c.Connect(cc)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
+	assert.False(t, connectFuture.SessionPresent())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
+
+	subscribeFuture, err := c.Subscribe("test", 1)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
+	assert.Equal(t, []uint8{1}, subscribeFuture.ReturnCodes())
+
+	err = c.Send(publish)
+	assert.NoError(t, err)
+
+	safeReceive(waitPuback)
+
+	safeReceive(waitPublish)
+
+	err = c.Send(puback)
+	assert.NoError(t, err)
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	safeReceive(done)
+
+	in, err := c.Session.AllPackets(session.Incoming)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(in))
+
+	out, err := c.Session.AllPackets(session.Outgoing)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(out))
+}
+
+func TestClientPassthroughQOS2(t *testing.T) {
+	subscribe := packet.NewSubscribe()
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 2}}
+	subscribe.ID = 1
+
+	suback := packet.NewSuback()
+	suback.ReturnCodes = []uint8{2}
+	suback.ID = 1
+
+	publish := packet.NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 2
+	publish.ID = 2
+
+	pubrec := packet.NewPubrec()
+	pubrec.ID = 2
+
+	pubrel := packet.NewPubrel()
+	pubrel.ID = 2
+
+	pubcomp := packet.NewPubcomp()
+	pubcomp.ID = 2
+
+	broker := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(pubrec).
+		Receive(pubrel).
+		Send(pubcomp).
+		Send(publish).
+		Receive(pubrec).
+		Send(pubrel).
+		Receive(pubcomp).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	waitPubrec := make(chan struct{})
+	waitPubcomp := make(chan struct{})
+	waitPublish := make(chan struct{})
+	waitPubrel := make(chan struct{})
+
+	c := New()
+	c.Callback = func(msg *packet.Message, err error) error {
+		assert.FailNow(t, "Callback unexpected")
+		return nil
+	}
+
+	cc := NewConfig("tcp://localhost:" + port)
+	cc.ProcessPubrec = func(p *packet.Pubrec) error {
+		assert.Equal(t, packet.ID(2), p.ID)
+		close(waitPubrec)
+		return nil
+	}
+	cc.ProcessPubcomp = func(p *packet.Pubcomp) error {
+		assert.Equal(t, packet.ID(2), p.ID)
+		close(waitPubcomp)
+		return nil
+	}
+	cc.ProcessPublish = func(p *packet.Publish) error {
+		assert.Equal(t, "test", p.Message.Topic)
+		assert.Equal(t, []byte("test"), p.Message.Payload)
+		assert.Equal(t, uint8(2), p.Message.QOS)
+		assert.False(t, p.Message.Retain)
+		close(waitPublish)
+		return nil
+	}
+	cc.ProcessPubrel = func(p *packet.Pubrel) error {
+		assert.Equal(t, packet.ID(2), p.ID)
+		close(waitPubrel)
+		return nil
+	}
+	connectFuture, err := c.Connect(cc)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
+	assert.False(t, connectFuture.SessionPresent())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
+
+	subscribeFuture, err := c.Subscribe("test", 2)
+	assert.NoError(t, err)
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
+	assert.Equal(t, []uint8{2}, subscribeFuture.ReturnCodes())
+
+	err = c.Send(publish)
+	assert.NoError(t, err)
+
+	safeReceive(waitPubrec)
+
+	err = c.Send(pubrel)
+	assert.NoError(t, err)
+
+	safeReceive(waitPubcomp)
+
+	safeReceive(waitPublish)
+
+	err = c.Send(pubrec)
+	assert.NoError(t, err)
+
+	safeReceive(waitPubrel)
+
+	err = c.Send(pubcomp)
+	assert.NoError(t, err)
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	safeReceive(done)
+
+	in, err := c.Session.AllPackets(session.Incoming)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(in))
+
+	out, err := c.Session.AllPackets(session.Outgoing)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(out))
+}
+
 func TestClientUnsubscribe(t *testing.T) {
 	unsubscribe := packet.NewUnsubscribe()
 	unsubscribe.Topics = []string{"test"}
