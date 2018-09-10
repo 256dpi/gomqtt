@@ -7,13 +7,13 @@ import (
 )
 
 func TestConnackReturnCodes(t *testing.T) {
-	assert.Equal(t, ConnectionAccepted.Error(), ConnackCode(0).Error())
-	assert.Equal(t, ErrInvalidProtocolVersion.Error(), ConnackCode(1).Error())
-	assert.Equal(t, ErrIdentifierRejected.Error(), ConnackCode(2).Error())
-	assert.Equal(t, ErrServerUnavailable.Error(), ConnackCode(3).Error())
-	assert.Equal(t, ErrBadUsernameOrPassword.Error(), ConnackCode(4).Error())
-	assert.Equal(t, ErrNotAuthorized.Error(), ConnackCode(5).Error())
-	assert.Equal(t, "unknown error", ConnackCode(6).Error())
+	assert.Equal(t, ConnectionAccepted.String(), ConnackCode(0).String())
+	assert.Equal(t, InvalidProtocolVersion.String(), ConnackCode(1).String())
+	assert.Equal(t, IdentifierRejected.String(), ConnackCode(2).String())
+	assert.Equal(t, ServerUnavailable.String(), ConnackCode(3).String())
+	assert.Equal(t, BadUsernameOrPassword.String(), ConnackCode(4).String())
+	assert.Equal(t, NotAuthorized.String(), ConnackCode(5).String())
+	assert.Equal(t, "invalid connack code", ConnackCode(6).String())
 }
 
 func TestConnackInterface(t *testing.T) {

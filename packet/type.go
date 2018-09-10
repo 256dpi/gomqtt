@@ -1,7 +1,5 @@
 package packet
 
-import "fmt"
-
 // Type represents the MQTT packet types.
 type Type byte
 
@@ -129,7 +127,7 @@ func (t Type) New() (Generic, error) {
 		return NewDisconnect(), nil
 	}
 
-	return nil, fmt.Errorf("[Unknown] invalid packet type %d", t)
+	return nil, makeError("[Unknown] invalid packet type %d", t)
 }
 
 // Valid returns a boolean indicating whether the type is valid or not.

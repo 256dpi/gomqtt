@@ -1,7 +1,5 @@
 package packet
 
-import "fmt"
-
 // returns the byte length of a naked packet
 func nakedLen() int {
 	return headerLen(0)
@@ -14,7 +12,7 @@ func nakedDecode(src []byte, t Type) (int, error) {
 
 	// check remaining length
 	if rl != 0 {
-		return hl, fmt.Errorf("[%s] expected zero remaining length", t)
+		return hl, makeError("[%s] expected zero remaining length", t)
 	}
 
 	return hl, err

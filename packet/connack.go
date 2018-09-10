@@ -8,11 +8,11 @@ type ConnackCode uint8
 // All available ConnackCodes.
 const (
 	ConnectionAccepted ConnackCode = iota
-	ErrInvalidProtocolVersion
-	ErrIdentifierRejected
-	ErrServerUnavailable
-	ErrBadUsernameOrPassword
-	ErrNotAuthorized
+	InvalidProtocolVersion
+	IdentifierRejected
+	ServerUnavailable
+	BadUsernameOrPassword
+	NotAuthorized
 )
 
 // Valid checks if the ConnackCode is valid.
@@ -20,24 +20,24 @@ func (cc ConnackCode) Valid() bool {
 	return cc <= 5
 }
 
-// Error returns the corresponding error string for the ConnackCode.
-func (cc ConnackCode) Error() string {
+// String returns the corresponding error string for the ConnackCode.
+func (cc ConnackCode) String() string {
 	switch cc {
 	case ConnectionAccepted:
 		return "connection accepted"
-	case ErrInvalidProtocolVersion:
+	case InvalidProtocolVersion:
 		return "connection refused: unacceptable protocol version"
-	case ErrIdentifierRejected:
+	case IdentifierRejected:
 		return "connection refused: identifier rejected"
-	case ErrServerUnavailable:
+	case ServerUnavailable:
 		return "connection refused: server unavailable"
-	case ErrBadUsernameOrPassword:
+	case BadUsernameOrPassword:
 		return "connection refused: bad user name or password"
-	case ErrNotAuthorized:
+	case NotAuthorized:
 		return "connection refused: not authorized"
 	}
 
-	return "unknown error"
+	return "invalid connack code"
 }
 
 // A Connack packet is sent by the server in response to a Connect packet
@@ -89,7 +89,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, fmt.Errorf("[%s] expected remaining length to be 2", cp.Type())
+		return total, makeError("[%s] expected remaining length to be 2", cp.Type())
 	}
 
 	// read connack flags
@@ -99,7 +99,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 
 	// check flags
 	if connackFlags&254 != 0 {
-		return 0, fmt.Errorf("[%s] bits 7-1 in acknowledge flags are not 0", cp.Type())
+		return 0, makeError("[%s] bits 7-1 in acknowledge flags are not 0", cp.Type())
 	}
 
 	// read return code
@@ -108,7 +108,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 
 	// check return code
 	if !cp.ReturnCode.Valid() {
-		return 0, fmt.Errorf("[%s] invalid return code (%d)", cp.Type(), cp.ReturnCode)
+		return 0, makeError("[%s] invalid return code (%d)", cp.Type(), cp.ReturnCode)
 	}
 
 	return total, nil
@@ -137,7 +137,7 @@ func (cp *Connack) Encode(dst []byte) (int, error) {
 
 	// check return code
 	if !cp.ReturnCode.Valid() {
-		return total, fmt.Errorf("[%s] invalid return code (%d)", cp.Type(), cp.ReturnCode)
+		return total, makeError("[%s] invalid return code (%d)", cp.Type(), cp.ReturnCode)
 	}
 
 	// set return code

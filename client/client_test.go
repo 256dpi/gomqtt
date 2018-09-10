@@ -197,7 +197,7 @@ func TestClientNotConnected(t *testing.T) {
 
 func TestClientConnectionDenied(t *testing.T) {
 	connack := connackPacket()
-	connack.ReturnCode = packet.ErrNotAuthorized
+	connack.ReturnCode = packet.NotAuthorized
 
 	broker := flow.New().
 		Receive(connectPacket()).
@@ -220,7 +220,7 @@ func TestClientConnectionDenied(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Error(t, connectFuture.Wait(1*time.Second))
 	assert.False(t, connectFuture.SessionPresent())
-	assert.Equal(t, packet.ErrNotAuthorized, connectFuture.ReturnCode())
+	assert.Equal(t, packet.NotAuthorized, connectFuture.ReturnCode())
 
 	safeReceive(done)
 	safeReceive(wait)

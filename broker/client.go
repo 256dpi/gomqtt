@@ -425,7 +425,7 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	// check authentication
 	if !ok {
 		// set return code
-		connack.ReturnCode = packet.ErrNotAuthorized
+		connack.ReturnCode = packet.NotAuthorized
 
 		// send connack
 		err = c.send(connack, false)

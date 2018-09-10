@@ -72,7 +72,7 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("[%s] insufficient buffer size, expected %d, got %d", sp.Type(), total+2, len(src))
+		return total, makeError("[%s] insufficient buffer size, expected %d, got %d", sp.Type(), total+2, len(src))
 	}
 
 	// read packet id
@@ -81,7 +81,7 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 
 	// check packet id
 	if sp.ID == 0 {
-		return total, fmt.Errorf("[%s] packet id must be grater than zero", sp.Type())
+		return total, makeError("[%s] packet id must be grater than zero", sp.Type())
 	}
 
 	// reset subscriptions
@@ -100,7 +100,7 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 
 		// check buffer length
 		if len(src) < total+1 {
-			return total, fmt.Errorf("[%s] insufficient buffer size, expected %d, got %d", sp.Type(), total+1, len(src))
+			return total, makeError("[%s] insufficient buffer size, expected %d, got %d", sp.Type(), total+1, len(src))
 		}
 
 		// read qos and add subscription
@@ -113,7 +113,7 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 
 	// check for empty subscription list
 	if len(sp.Subscriptions) == 0 {
-		return total, fmt.Errorf("[%s] empty subscription list", sp.Type())
+		return total, makeError("[%s] empty subscription list", sp.Type())
 	}
 
 	return total, nil
@@ -127,7 +127,7 @@ func (sp *Subscribe) Encode(dst []byte) (int, error) {
 
 	// check packet id
 	if sp.ID == 0 {
-		return total, fmt.Errorf("[%s] packet id must be grater than zero", sp.Type())
+		return total, makeError("[%s] packet id must be grater than zero", sp.Type())
 	}
 
 	// encode header

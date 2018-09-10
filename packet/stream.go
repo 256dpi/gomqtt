@@ -13,8 +13,6 @@ var ErrDetectionOverflow = errors.New("detection overflow")
 
 // ErrReadLimitExceeded can be returned during a Receive if the connection
 // exceeded its read limit.
-//
-// Note: this error is wrapped in an Error with a NetworkError code.
 var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
 // An Encoder wraps a Writer and continuously encodes packets.

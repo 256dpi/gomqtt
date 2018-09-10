@@ -59,12 +59,12 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, fmt.Errorf("[%s] insufficient buffer size, expected %d, got %d", sp.Type(), total+2, len(src))
+		return total, makeError("[%s] insufficient buffer size, expected %d, got %d", sp.Type(), total+2, len(src))
 	}
 
 	// check remaining length
 	if rl <= 2 {
-		return total, fmt.Errorf("[%s] expected remaining length to be greater than 2, got %d", sp.Type(), rl)
+		return total, makeError("[%s] expected remaining length to be greater than 2, got %d", sp.Type(), rl)
 	}
 
 	// read packet id
@@ -73,7 +73,7 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 
 	// check packet id
 	if sp.ID == 0 {
-		return total, fmt.Errorf("[%s] packet id must be grater than zero", sp.Type())
+		return total, makeError("[%s] packet id must be grater than zero", sp.Type())
 	}
 
 	// calculate number of return codes
@@ -87,7 +87,7 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 	// validate return codes
 	for i, code := range sp.ReturnCodes {
 		if !validQOS(code) && code != QOSFailure {
-			return total, fmt.Errorf("[%s] invalid return code %d for topic %d", sp.Type(), code, i)
+			return total, makeError("[%s] invalid return code %d for topic %d", sp.Type(), code, i)
 		}
 	}
 
@@ -103,13 +103,13 @@ func (sp *Suback) Encode(dst []byte) (int, error) {
 	// check return codes
 	for i, code := range sp.ReturnCodes {
 		if !validQOS(code) && code != QOSFailure {
-			return total, fmt.Errorf("[%s] invalid return code %d for topic %d", sp.Type(), code, i)
+			return total, makeError("[%s] invalid return code %d for topic %d", sp.Type(), code, i)
 		}
 	}
 
 	// check packet id
 	if sp.ID == 0 {
-		return total, fmt.Errorf("[%s] packet id must be grater than zero", sp.Type())
+		return total, makeError("[%s] packet id must be grater than zero", sp.Type())
 	}
 
 	// encode header

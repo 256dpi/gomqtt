@@ -36,13 +36,8 @@ func TestFixedHeaderFlags(t *testing.T) {
 	}
 
 	for m, d := range details {
-		if m.String() != d.name {
-			t.Errorf("Expected %s, got %s", d.name, m)
-		}
-
-		if m.defaultFlags() != d.flags {
-			t.Errorf("Expected %d, got %d", d.flags, m.defaultFlags())
-		}
+		assert.Equal(t, d.name, m.String())
+		assert.Equal(t, d.flags, m.defaultFlags())
 	}
 }
 
