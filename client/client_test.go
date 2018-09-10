@@ -176,6 +176,10 @@ func TestClientNotConnected(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)
 
+	publish := packet.NewPublish()
+	err := c.Send(publish)
+	assert.Equal(t, ErrClientNotConnected, err)
+
 	future1, err := c.Publish("test", []byte("test"), 0, false)
 	assert.Nil(t, future1)
 	assert.Equal(t, ErrClientNotConnected, err)
