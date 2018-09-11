@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	// func TestBridge(t *testing.T) {
 	o, err := parseFlag()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Parse argument failed:", err)

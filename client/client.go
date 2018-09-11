@@ -251,6 +251,12 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 		connect.Username = urlParts.User.Username()
 		connect.Password, _ = urlParts.User.Password()
 	}
+	if config.Username != "" {
+		connect.Username = config.Username
+	}
+	if config.Password != "" {
+		connect.Password = config.Password
+	}
 
 	// set will
 	connect.Will = config.WillMessage

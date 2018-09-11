@@ -10,6 +10,8 @@ type Config struct {
 	Dialer       *transport.Dialer
 	BrokerURL    string
 	ClientID     string
+	Username     string
+	Password     string
 	CleanSession bool
 	KeepAlive    string
 	WillMessage  *packet.Message
