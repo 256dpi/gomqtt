@@ -386,7 +386,7 @@ func TestServiceReconnectResubscrube(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	firstClose := flow.New().Debug().
+	firstClose := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe1).
@@ -399,7 +399,7 @@ func TestServiceReconnectResubscrube(t *testing.T) {
 		Send(suback4).
 		Close()
 
-	noClose := flow.New().Debug().
+	noClose := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(resubscribe).
