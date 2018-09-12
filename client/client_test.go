@@ -172,6 +172,37 @@ func TestClientConnectWithCredentials(t *testing.T) {
 	safeReceive(done)
 }
 
+func TestClientConnectWithCredentials2(t *testing.T) {
+	connect := connectPacket()
+	connect.Username = "test2"
+	connect.Password = "test2"
+
+	broker := flow.New().
+		Receive(connect).
+		Send(connackPacket()).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	c := New()
+	c.Callback = errorCallback(t)
+
+	cc := NewConfig(fmt.Sprintf("tcp://test:test@localhost:%s/", port))
+	cc.Username = "test2"
+	cc.Password = "test2"
+	connectFuture, err := c.Connect(cc)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
+	assert.False(t, connectFuture.SessionPresent())
+	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	safeReceive(done)
+}
+
 func TestClientNotConnected(t *testing.T) {
 	c := New()
 	c.Callback = errorCallback(t)

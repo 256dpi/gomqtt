@@ -1,6 +1,8 @@
 package client
 
 import (
+	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -261,6 +263,147 @@ func TestServiceReconnect(t *testing.T) {
 	safeReceive(done)
 
 	assert.Equal(t, 4, i)
+}
+
+func TestServiceReconnectResubscrube(t *testing.T) {
+
+	subscribe1 := packet.NewSubscribe()
+	subscribe1.Subscriptions = []packet.Subscription{{Topic: "overlap/#", QOS: 0}}
+	subscribe1.ID = 1
+
+	subscribe2 := packet.NewSubscribe()
+	subscribe2.Subscriptions = []packet.Subscription{{Topic: "overlap/a", QOS: 1}}
+	subscribe2.ID = 2
+
+	subscribe3 := packet.NewSubscribe()
+	subscribe3.Subscriptions = []packet.Subscription{{Topic: "identical/a", QOS: 1}}
+	subscribe3.ID = 3
+
+	subscribe4 := packet.NewSubscribe()
+	subscribe4.Subscriptions = []packet.Subscription{{Topic: "identical/a", QOS: 0}}
+	subscribe4.ID = 4
+
+	suback1 := packet.NewSuback()
+	suback1.ReturnCodes = []uint8{0}
+	suback1.ID = 1
+
+	suback2 := packet.NewSuback()
+	suback2.ReturnCodes = []uint8{1}
+	suback2.ID = 2
+
+	suback3 := packet.NewSuback()
+	suback3.ReturnCodes = []uint8{1}
+	suback3.ID = 3
+
+	suback4 := packet.NewSuback()
+	suback4.ReturnCodes = []uint8{0}
+	suback4.ID = 4
+
+	resubscribe := packet.NewSubscribe()
+	resubscribe.Subscriptions = []packet.Subscription{
+		{Topic: "overlap/#", QOS: 0},
+		{Topic: "overlap/a", QOS: 1},
+		{Topic: "identical/a", QOS: 1},
+		{Topic: "identical/a", QOS: 0},
+	}
+	resubscribe.ID = 1
+
+	resuback := packet.NewSuback()
+	resuback.ReturnCodes = []uint8{0, 1, 0, 0}
+	resuback.ID = 1
+
+	publish := packet.NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+
+	firstClose := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe1).
+		Send(suback1).
+		Receive(subscribe2).
+		Send(suback2).
+		Receive(subscribe3).
+		Send(suback3).
+		Receive(subscribe4).
+		Send(suback4).
+		Close()
+
+	noClose := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(resubscribe).
+		Send(resuback).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, firstClose, noClose)
+
+	online1 := make(chan struct{})
+	online2 := make(chan struct{})
+	message := make(chan struct{})
+	offline := make(chan struct{})
+
+	s := NewService()
+	s.MinReconnectDelay = 50 * time.Millisecond
+	s.ConnectTimeout = 50 * time.Millisecond
+	s.Logger = func(msg string) {
+		fmt.Println(msg)
+	}
+
+	i := uint32(0)
+	s.Logger = func(msg string) {
+		if msg == "Next Reconnect" {
+			atomic.AddUint32(&i, 1)
+		}
+	}
+
+	s.OnlineCallback = func(resumed bool) {
+		fmt.Println("online")
+		assert.False(t, resumed)
+		if atomic.LoadUint32(&i) == 1 {
+			close(online1)
+		} else if atomic.LoadUint32(&i) == 2 {
+			close(online2)
+		}
+	}
+
+	s.OfflineCallback = func() {
+		fmt.Println("offline")
+		if atomic.LoadUint32(&i) == 2 {
+			close(offline)
+		}
+	}
+
+	s.MessageCallback = func(m *packet.Message) error {
+		assert.Equal(t, "test", m.Topic)
+		assert.Equal(t, []byte("test"), m.Payload)
+		assert.Equal(t, uint8(0), m.QOS)
+		assert.False(t, m.Retain)
+		close(message)
+		return nil
+	}
+
+	s.Start(NewConfig("tcp://localhost:" + port))
+
+	safeReceive(online1)
+
+	assert.NoError(t, s.SubscribeMultiple(subscribe1.Subscriptions).Wait(time.Second))
+	assert.NoError(t, s.SubscribeMultiple(subscribe2.Subscriptions).Wait(time.Second))
+	assert.NoError(t, s.SubscribeMultiple(subscribe3.Subscriptions).Wait(time.Second))
+	assert.NoError(t, s.SubscribeMultiple(subscribe4.Subscriptions).Wait(time.Second))
+
+	safeReceive(online2)
+
+	safeReceive(message)
+
+	s.Stop(true)
+
+	safeReceive(offline)
+	safeReceive(done)
+
+	assert.Equal(t, uint32(2), i)
 }
 
 func TestServiceFutureSurvival(t *testing.T) {

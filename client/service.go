@@ -71,6 +71,8 @@ type Service struct {
 
 	backoff *backoff.Backoff
 
+	subscriptions []packet.Subscription
+
 	// The session used by the client to store unacknowledged packets.
 	Session Session
 
@@ -132,6 +134,7 @@ func NewService(queueSize ...int) *Service {
 		DisconnectTimeout: 10 * time.Second,
 		commandQueue:      make(chan *command, qs),
 		futureStore:       future.NewStore(),
+		subscriptions:     make([]packet.Subscription, 0),
 	}
 }
 
@@ -223,6 +226,10 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) Subscri
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	for _, v := range subscriptions {
+		s.subscriptions = append(s.subscriptions, v)
+	}
+
 	// allocate future
 	f := future.New()
 
@@ -249,6 +256,17 @@ func (s *Service) Unsubscribe(topic string) GenericFuture {
 func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
+	tmp := make([]packet.Subscription, 0)
+	for _, s := range s.subscriptions {
+		for _, v := range topics {
+			if s.Topic == v {
+				continue
+			}
+		}
+		tmp = append(tmp, s)
+	}
+	s.subscriptions = tmp
 
 	// allocate future
 	f := future.New()
@@ -391,6 +409,32 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		return nil, false
 	}
 
+	// attempt to re-subcribe
+	if subs := s.subs(); len(subs) != 0 {
+		subscrubeFuture, err := client.SubscribeMultiple(subs)
+		if err != nil {
+			s.err("Subscribe", err)
+			return nil, false
+		}
+
+		// wait for suback. TODO: use SubscribeTimeout?
+		err = subscrubeFuture.Wait(s.ConnectTimeout)
+
+		// check if future has been canceled
+		if err == future.ErrCanceled {
+			s.err("Subscribe", err)
+			return nil, false
+		}
+
+		// check if future has timed out
+		if err == future.ErrTimeout {
+			client.Close()
+
+			s.err("Subscribe", err)
+			return nil, false
+		}
+	}
+
 	return client, connectFuture.SessionPresent()
 }
 
@@ -462,6 +506,17 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			return false
 		}
 	}
+}
+
+func (s *Service) subs() []packet.Subscription {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	subs := make([]packet.Subscription, 0)
+	for _, v := range s.subscriptions {
+		subs = append(subs, v)
+	}
+	return subs
 }
 
 func (s *Service) err(sys string, err error) {
