@@ -258,10 +258,11 @@ func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	defer s.mutex.Unlock()
 
 	tmp := make([]packet.Subscription, 0)
+LOOP:
 	for _, s := range s.subscriptions {
 		for _, v := range topics {
 			if s.Topic == v {
-				continue
+				continue LOOP
 			}
 		}
 		tmp = append(tmp, s)
