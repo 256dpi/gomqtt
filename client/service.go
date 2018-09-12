@@ -9,6 +9,7 @@ import (
 	"github.com/256dpi/gomqtt/client/future"
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/session"
+	"github.com/256dpi/gomqtt/topic"
 
 	"github.com/jpillora/backoff"
 	"gopkg.in/tomb.v2"
@@ -71,6 +72,8 @@ type Service struct {
 
 	backoff *backoff.Backoff
 
+	subscriptions *topic.Tree
+
 	// The session used by the client to store unacknowledged packets.
 	Session Session
 
@@ -107,6 +110,12 @@ type Service struct {
 	// The allowed timeout until a connection is forcefully closed.
 	DisconnectTimeout time.Duration
 
+	// The allowed timeout until a subcribe action is forcefully closed during reconnnect.
+	ResubscribeTimeout time.Duration
+
+	// Whether re-subscribe all subscriptions during reconnnect.
+	ResubscribeAllSubscriptions bool
+
 	commandQueue chan *command
 	futureStore  *future.Store
 
@@ -124,14 +133,17 @@ func NewService(queueSize ...int) *Service {
 	}
 
 	return &Service{
-		state:             serviceStopped,
-		Session:           session.NewMemorySession(),
-		MinReconnectDelay: 1 * time.Second,
-		MaxReconnectDelay: 32 * time.Second,
-		ConnectTimeout:    5 * time.Second,
-		DisconnectTimeout: 10 * time.Second,
-		commandQueue:      make(chan *command, qs),
-		futureStore:       future.NewStore(),
+		state:                       serviceStopped,
+		Session:                     session.NewMemorySession(),
+		MinReconnectDelay:           1 * time.Second,
+		MaxReconnectDelay:           32 * time.Second,
+		ConnectTimeout:              5 * time.Second,
+		DisconnectTimeout:           10 * time.Second,
+		ResubscribeTimeout:          5 * time.Second,
+		ResubscribeAllSubscriptions: true,
+		commandQueue:                make(chan *command, qs),
+		futureStore:                 future.NewStore(),
+		subscriptions:               topic.NewTree(),
 	}
 }
 
@@ -223,6 +235,10 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) Subscri
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	for _, v := range subscriptions {
+		s.subscriptions.Set(v.Topic, v)
+	}
+
 	// allocate future
 	f := future.New()
 
@@ -249,6 +265,10 @@ func (s *Service) Unsubscribe(topic string) GenericFuture {
 func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
+	for _, v := range topics {
+		s.subscriptions.Remove(v, nil)
+	}
 
 	// allocate future
 	f := future.New()
@@ -391,6 +411,34 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		return nil, false
 	}
 
+	// attempt to re-subcribe
+	if s.ResubscribeAllSubscriptions {
+		if subs := s.subs(); len(subs) != 0 {
+			subscrubeFuture, err := client.SubscribeMultiple(subs)
+			if err != nil {
+				s.err("Subscribe", err)
+				return nil, false
+			}
+
+			// wait for suback.
+			err = subscrubeFuture.Wait(s.ResubscribeTimeout)
+
+			// check if future has been canceled
+			if err == future.ErrCanceled {
+				s.err("Subscribe", err)
+				return nil, false
+			}
+
+			// check if future has timed out
+			if err == future.ErrTimeout {
+				client.Close()
+
+				s.err("Subscribe", err)
+				return nil, false
+			}
+		}
+	}
+
 	return client, connectFuture.SessionPresent()
 }
 
@@ -462,6 +510,17 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			return false
 		}
 	}
+}
+
+func (s *Service) subs() []packet.Subscription {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	subs := make([]packet.Subscription, 0)
+	for _, v := range s.subscriptions.All() {
+		subs = append(subs, v.(packet.Subscription))
+	}
+	return subs
 }
 
 func (s *Service) err(sys string, err error) {
