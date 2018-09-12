@@ -265,7 +265,7 @@ func TestServiceReconnect(t *testing.T) {
 	assert.Equal(t, 4, i)
 }
 
-func TestServiceReconnectResubscrube(t *testing.T) {
+func TestServiceReconnectResubscribe(t *testing.T) {
 
 	subscribe1 := packet.NewSubscribe()
 	subscribe1.Subscriptions = []packet.Subscription{{Topic: "overlap/#", QOS: 0}}
