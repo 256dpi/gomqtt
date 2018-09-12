@@ -330,7 +330,7 @@ func TestServiceReconnectResubscrube(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	firstClose := flow.New().Debug().
+	firstClose := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe1).
@@ -347,7 +347,7 @@ func TestServiceReconnectResubscrube(t *testing.T) {
 		Send(unsuback).
 		Close()
 
-	noClose := flow.New().Debug().
+	noClose := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(resubscribe).
@@ -435,20 +435,20 @@ func TestServiceReconnectResubscribeTimeout(t *testing.T) {
 	suback1.ReturnCodes = []uint8{0}
 	suback1.ID = 1
 
-	broker1 := flow.New().Debug().
+	broker1 := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe1).
 		Send(suback1).
 		Close()
 
-	broker2 := flow.New().Debug().
+	broker2 := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe1).
 		End()
 
-	broker3 := flow.New().Debug().
+	broker3 := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe1).
@@ -524,14 +524,14 @@ func TestServiceReconnectResubscribeClosed(t *testing.T) {
 	publish.Message.Topic = "test"
 	publish.Message.Payload = []byte("test")
 
-	broker1 := flow.New().Debug().
+	broker1 := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Receive(subscribe1).
 		Send(suback1).
 		Close()
 
-	broker2 := flow.New().Debug().
+	broker2 := flow.New().
 		Receive(connectPacket()).
 		Send(connackPacket()).
 		Send(publish).
