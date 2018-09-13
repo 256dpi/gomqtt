@@ -600,6 +600,80 @@ func TestServiceReconnectResubscribeClosed(t *testing.T) {
 	assert.Equal(t, uint32(2), i)
 }
 
+func IgnoreTestServiceReconnectResubscribeError(t *testing.T) {
+	subscribe := packet.NewSubscribe()
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 3}}
+	subscribe.ID = 1
+
+	suback := packet.NewSuback()
+	suback.ReturnCodes = []uint8{packet.QOSFailure}
+	suback.ID = 1
+
+	broker1 := flow.New().Debug().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		End()
+
+	broker2 := flow.New().Debug().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		End()
+
+	done, port := fakeBroker(t, broker1, broker2)
+
+	online := make(chan struct{})
+
+	s := NewService()
+	s.MinReconnectDelay = 50 * time.Millisecond
+	s.ConnectTimeout = 50 * time.Millisecond
+	s.ResubscribeTimeout = 55 * time.Millisecond
+
+	i := uint32(0)
+	s.Logger = func(msg string) {
+		fmt.Println(msg)
+		if msg == "Next Reconnect" {
+			atomic.AddUint32(&i, 1)
+		}
+	}
+
+	s.OnlineCallback = func(resumed bool) {
+		fmt.Println("OnlineCallback")
+		assert.False(t, resumed)
+		if atomic.LoadUint32(&i) == 1 {
+			close(online)
+		}
+	}
+
+	s.OfflineCallback = func() {
+		fmt.Println("OfflineCallback")
+	}
+
+	s.MessageCallback = func(msg *packet.Message) error {
+		assert.FailNow(t, "MessageCallback not expected")
+		return nil
+	}
+
+	s.ErrorCallback = func(err error) {
+		fmt.Println("ErrorCallback", err)
+		assert.EqualError(t, err, "failed subscription")
+	}
+
+	s.Start(NewConfig("tcp://localhost:" + port))
+
+	safeReceive(online)
+
+	err := s.SubscribeMultiple(subscribe.Subscriptions).Wait(time.Second)
+	assert.EqualError(t, err, "future canceled")
+
+	safeReceive(done)
+
+	assert.Equal(t, uint32(2), i)
+}
+
 func TestServiceFutureSurvival(t *testing.T) {
 	connect := connectPacket()
 	connect.ClientID = "test"

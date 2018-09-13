@@ -110,10 +110,13 @@ type Service struct {
 	// The allowed timeout until a connection is forcefully closed.
 	DisconnectTimeout time.Duration
 
-	// The allowed timeout until a subcribe action is forcefully closed during reconnnect.
+	// The allowed timeout until a subcribe action is forcefully closed during
+	// reconnnect.
 	ResubscribeTimeout time.Duration
 
 	// Whether re-subscribe all subscriptions during reconnnect.
+	// This can be disabled if the broker supports persistent sessions and the
+	// client is configured to request one.
 	ResubscribeAllSubscriptions bool
 
 	commandQueue chan *command
@@ -267,7 +270,7 @@ func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	defer s.mutex.Unlock()
 
 	for _, v := range topics {
-		s.subscriptions.Remove(v, nil)
+		s.subscriptions.Empty(v)
 	}
 
 	// allocate future
@@ -413,15 +416,20 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 	// attempt to re-subcribe
 	if s.ResubscribeAllSubscriptions {
-		if subs := s.subs(); len(subs) != 0 {
-			subscrubeFuture, err := client.SubscribeMultiple(subs)
+		items := s.subscriptions.All()
+		if len(items) != 0 {
+			subs := make([]packet.Subscription, 0)
+			for _, v := range items {
+				subs = append(subs, v.(packet.Subscription))
+			}
+			subscribeFuture, err := client.SubscribeMultiple(subs)
 			if err != nil {
 				s.err("Subscribe", err)
 				return nil, false
 			}
 
 			// wait for suback.
-			err = subscrubeFuture.Wait(s.ResubscribeTimeout)
+			err = subscribeFuture.Wait(s.ResubscribeTimeout)
 
 			// check if future has been canceled
 			if err == future.ErrCanceled {
@@ -510,17 +518,6 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			return false
 		}
 	}
-}
-
-func (s *Service) subs() []packet.Subscription {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	subs := make([]packet.Subscription, 0)
-	for _, v := range s.subscriptions.All() {
-		subs = append(subs, v.(packet.Subscription))
-	}
-	return subs
 }
 
 func (s *Service) err(sys string, err error) {
