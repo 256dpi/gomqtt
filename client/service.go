@@ -70,10 +70,6 @@ type Service struct {
 
 	config *Config
 
-	backoff *backoff.Backoff
-
-	subscriptions *topic.Tree
-
 	// The session used by the client to store unacknowledged packets.
 	Session Session
 
@@ -110,17 +106,19 @@ type Service struct {
 	// The allowed timeout until a connection is forcefully closed.
 	DisconnectTimeout time.Duration
 
-	// The allowed timeout until a subcribe action is forcefully closed during
-	// reconnnect.
+	// The allowed timeout until a subscribe action is forcefully closed during
+	// reconnect.
 	ResubscribeTimeout time.Duration
 
-	// Whether re-subscribe all subscriptions during reconnnect.
-	// This can be disabled if the broker supports persistent sessions and the
-	// client is configured to request one.
+	// Whether to resubscribe all subscriptions after reconnecting. Can be
+	// disabled if the broker supports persistent sessions and the client is
+	// configured to request one.
 	ResubscribeAllSubscriptions bool
 
-	commandQueue chan *command
-	futureStore  *future.Store
+	backoff       *backoff.Backoff
+	subscriptions *topic.Tree
+	commandQueue  chan *command
+	futureStore   *future.Store
 
 	mutex sync.Mutex
 	tomb  *tomb.Tomb
@@ -144,9 +142,9 @@ func NewService(queueSize ...int) *Service {
 		DisconnectTimeout:           10 * time.Second,
 		ResubscribeTimeout:          5 * time.Second,
 		ResubscribeAllSubscriptions: true,
+		subscriptions:               topic.NewTree(),
 		commandQueue:                make(chan *command, qs),
 		futureStore:                 future.NewStore(),
-		subscriptions:               topic.NewTree(),
 	}
 }
 
@@ -238,6 +236,7 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) Subscri
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	// save subscription
 	for _, v := range subscriptions {
 		s.subscriptions.Set(v.Topic, v)
 	}
@@ -269,6 +268,7 @@ func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	// remove subscription
 	for _, v := range topics {
 		s.subscriptions.Empty(v)
 	}
@@ -414,37 +414,45 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		return nil, false
 	}
 
-	// attempt to re-subcribe
-	if s.ResubscribeAllSubscriptions {
-		items := s.subscriptions.All()
-		if len(items) != 0 {
-			subs := make([]packet.Subscription, 0)
-			for _, v := range items {
-				subs = append(subs, v.(packet.Subscription))
-			}
-			subscribeFuture, err := client.SubscribeMultiple(subs)
-			if err != nil {
-				s.err("Subscribe", err)
-				return nil, false
-			}
+	// return client if resubscription is not enabled
+	if !s.ResubscribeAllSubscriptions {
+		return client, connectFuture.SessionPresent()
+	}
 
-			// wait for suback.
-			err = subscribeFuture.Wait(s.ResubscribeTimeout)
+	// get all subscriptions and return if empty
+	items := s.subscriptions.All()
+	if len(items) == 0 {
+		return client, connectFuture.SessionPresent()
+	}
 
-			// check if future has been canceled
-			if err == future.ErrCanceled {
-				s.err("Subscribe", err)
-				return nil, false
-			}
+	// prepare subscriptions
+	subs := make([]packet.Subscription, 0, len(items))
+	for _, v := range items {
+		subs = append(subs, v.(packet.Subscription))
+	}
 
-			// check if future has timed out
-			if err == future.ErrTimeout {
-				client.Close()
+	// resubscribe all subscriptions
+	subscribeFuture, err := client.SubscribeMultiple(subs)
+	if err != nil {
+		s.err("Subscribe", err)
+		return nil, false
+	}
 
-				s.err("Subscribe", err)
-				return nil, false
-			}
-		}
+	// wait for suback.
+	err = subscribeFuture.Wait(s.ResubscribeTimeout)
+
+	// check if future has been canceled
+	if err == future.ErrCanceled {
+		s.err("Subscribe", err)
+		return nil, false
+	}
+
+	// check if future has timed out
+	if err == future.ErrTimeout {
+		client.Close()
+
+		s.err("Subscribe", err)
+		return nil, false
 	}
 
 	return client, connectFuture.SessionPresent()
