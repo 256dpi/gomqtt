@@ -199,7 +199,9 @@ func (f *Flow) Test(conn Conn) error {
 			if err != nil {
 				return fmt.Errorf("expected to receive a packet but got error: %v", err)
 			}
-
+			if f.debug {
+				fmt.Println("received packet:", pkt)
+			}
 			if want, got := action.packet.String(), pkt.String(); want != got {
 				return fmt.Errorf("expected packet of %q but got %q", want, got)
 			}
