@@ -351,6 +351,15 @@ func (s *Service) supervisor() error {
 			s.OnlineCallback(resumed)
 		}
 
+		// TODO: Do not resubscribe subscriptions made in the OnlineCallback.
+
+		// resubscribe
+		if s.ResubscribeAllSubscriptions {
+			if !s.resubscribe(client) {
+				continue
+			}
+		}
+
 		// run dispatcher on client
 		dying := s.dispatcher(client, fail)
 
@@ -414,15 +423,14 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 		return nil, false
 	}
 
-	// return client if resubscription is not enabled
-	if !s.ResubscribeAllSubscriptions {
-		return client, connectFuture.SessionPresent()
-	}
+	return client, connectFuture.SessionPresent()
+}
 
+func (s *Service) resubscribe(client *Client) bool {
 	// get all subscriptions and return if empty
 	items := s.subscriptions.All()
 	if len(items) == 0 {
-		return client, connectFuture.SessionPresent()
+		return true
 	}
 
 	// prepare subscriptions
@@ -434,8 +442,8 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 	// resubscribe all subscriptions
 	subscribeFuture, err := client.SubscribeMultiple(subs)
 	if err != nil {
-		s.err("Subscribe", err)
-		return nil, false
+		s.err("Resubscribe", err)
+		return false
 	}
 
 	// wait for suback.
@@ -443,19 +451,19 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 	// check if future has been canceled
 	if err == future.ErrCanceled {
-		s.err("Subscribe", err)
-		return nil, false
+		s.err("Resubscribe", err)
+		return false
 	}
 
 	// check if future has timed out
 	if err == future.ErrTimeout {
 		client.Close()
 
-		s.err("Subscribe", err)
-		return nil, false
+		s.err("Resubscribe", err)
+		return false
 	}
 
-	return client, connectFuture.SessionPresent()
+	return true
 }
 
 // reads from the queues and calls the current client
