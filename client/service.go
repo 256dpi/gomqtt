@@ -137,8 +137,8 @@ func NewService(queueSize ...int) *Service {
 	return &Service{
 		state:                       serviceStopped,
 		Session:                     session.NewMemorySession(),
-		MinReconnectDelay:           1 * time.Second,
-		MaxReconnectDelay:           32 * time.Second,
+		MinReconnectDelay:           50 * time.Millisecond,
+		MaxReconnectDelay:           10 * time.Second,
 		ConnectTimeout:              5 * time.Second,
 		DisconnectTimeout:           10 * time.Second,
 		ResubscribeTimeout:          5 * time.Second,

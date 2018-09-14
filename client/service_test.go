@@ -235,7 +235,6 @@ func TestServiceReconnect(t *testing.T) {
 	offline := make(chan struct{})
 
 	s := NewService()
-	s.MinReconnectDelay = 50 * time.Millisecond
 	s.ConnectTimeout = 50 * time.Millisecond
 
 	i := 0
@@ -364,7 +363,6 @@ func TestServiceResubscribe(t *testing.T) {
 	offline := make(chan struct{})
 
 	s := NewService()
-	s.MinReconnectDelay = 50 * time.Millisecond
 
 	i := 0
 
@@ -448,7 +446,6 @@ func TestServiceResubscribeTimeout(t *testing.T) {
 	offline := make(chan struct{})
 
 	s := NewService()
-	s.MinReconnectDelay = 50 * time.Millisecond
 	s.ResubscribeTimeout = 50 * time.Millisecond
 
 	i := 0
