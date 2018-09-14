@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -346,18 +347,16 @@ func (s *Service) supervisor() error {
 			continue
 		}
 
-		// run callback
-		if s.OnlineCallback != nil {
-			s.OnlineCallback(resumed)
-		}
-
-		// TODO: Do not resubscribe subscriptions made in the OnlineCallback.
-
 		// resubscribe
 		if s.ResubscribeAllSubscriptions {
 			if !s.resubscribe(client) {
 				continue
 			}
+		}
+
+		// run callback
+		if s.OnlineCallback != nil {
+			s.OnlineCallback(resumed)
 		}
 
 		// run dispatcher on client
@@ -438,6 +437,11 @@ func (s *Service) resubscribe(client *Client) bool {
 	for _, v := range items {
 		subs = append(subs, v.(packet.Subscription))
 	}
+
+	// sort subscriptions
+	sort.Slice(subs, func(i, j int) bool {
+		return subs[i].Topic < subs[j].Topic
+	})
 
 	// resubscribe all subscriptions
 	subscribeFuture, err := client.SubscribeMultiple(subs)

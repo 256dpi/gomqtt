@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -44,6 +45,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
+
 		close(online)
 	}
 
@@ -104,7 +106,6 @@ func TestServiceCommandsInCallback(t *testing.T) {
 	offline := make(chan struct{})
 
 	s := NewService()
-	s.ResubscribeAllSubscriptions = false // TODO: Breaks test.
 
 	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
@@ -153,6 +154,7 @@ func TestStartStopVariations(t *testing.T) {
 
 	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
+
 		close(online)
 	}
 
@@ -197,6 +199,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 
 	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
+
 		close(online)
 	}
 
@@ -246,6 +249,7 @@ func TestServiceReconnect(t *testing.T) {
 
 	s.OnlineCallback = func(resumed bool) {
 		assert.False(t, resumed)
+
 		close(online)
 	}
 
@@ -265,9 +269,7 @@ func TestServiceReconnect(t *testing.T) {
 	assert.Equal(t, 4, i)
 }
 
-func TestServiceReconnectResubscribe(t *testing.T) {
-	t.Skip("Test contains race condition") // TODO: Fix it.
-
+func TestServiceResubscribe(t *testing.T) {
 	subscribe1 := packet.NewSubscribe()
 	subscribe1.Subscriptions = []packet.Subscription{{Topic: "overlap/#", QOS: 0}}
 	subscribe1.ID = 1
@@ -317,9 +319,9 @@ func TestServiceReconnectResubscribe(t *testing.T) {
 
 	subscribe6 := packet.NewSubscribe()
 	subscribe6.Subscriptions = []packet.Subscription{
+		{Topic: "identical/a", QOS: 0},
 		{Topic: "overlap/#", QOS: 0},
 		{Topic: "overlap/a", QOS: 1},
-		{Topic: "identical/a", QOS: 0},
 	}
 	subscribe6.ID = 1
 
@@ -365,18 +367,18 @@ func TestServiceReconnectResubscribe(t *testing.T) {
 
 	s := NewService()
 	s.MinReconnectDelay = 50 * time.Millisecond
-	s.ConnectTimeout = 50 * time.Millisecond
 
 	i := uint32(0)
 
 	s.OnlineCallback = func(_ bool) {
-		if atomic.AddUint32(&i, 1) == 1 {
+		i++
+		if i == 1 {
 			close(online1)
 		}
 	}
 
 	s.OfflineCallback = func() {
-		if atomic.LoadUint32(&i) == 2 {
+		if i == 2 {
 			close(offline)
 		}
 	}
@@ -451,6 +453,9 @@ func TestServiceReconnectResubscribeTimeout(t *testing.T) {
 	s.MinReconnectDelay = 50 * time.Millisecond
 	s.ConnectTimeout = 50 * time.Millisecond
 	s.ResubscribeTimeout = 55 * time.Millisecond
+	s.Logger = func(msg string) {
+		fmt.Println(msg)
+	}
 
 	i := uint32(0)
 
