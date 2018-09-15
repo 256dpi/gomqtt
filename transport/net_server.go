@@ -10,28 +10,31 @@ type NetServer struct {
 	listener net.Listener
 }
 
-// NewNetServer creates a new TCP server that listens on the provided address.
-func NewNetServer(address string) (*NetServer, error) {
+// NewNetServer wraps the provided listener.
+func NewNetServer(listener net.Listener) *NetServer {
+	return &NetServer{
+		listener: listener,
+	}
+}
+
+// CreateNetServer creates a new TCP server that listens on the provided address.
+func CreateNetServer(address string) (*NetServer, error) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 
-	return &NetServer{
-		listener: listener,
-	}, nil
+	return NewNetServer(listener), nil
 }
 
-// NewSecureNetServer creates a new TLS server that listens on the provided address.
-func NewSecureNetServer(address string, config *tls.Config) (*NetServer, error) {
+// CreateSecureNetServer creates a new TLS server that listens on the provided address.
+func CreateSecureNetServer(address string, config *tls.Config) (*NetServer, error) {
 	listener, err := tls.Listen("tcp", address, config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &NetServer{
-		listener: listener,
-	}, nil
+	return NewNetServer(listener), nil
 }
 
 // Accept will return the next available connection or block until a

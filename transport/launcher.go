@@ -35,13 +35,13 @@ func (l *Launcher) Launch(urlString string) (Server, error) {
 
 	switch urlParts.Scheme {
 	case "tcp", "mqtt":
-		return NewNetServer(urlParts.Host)
+		return CreateNetServer(urlParts.Host)
 	case "tls", "mqtts":
-		return NewSecureNetServer(urlParts.Host, l.TLSConfig)
+		return CreateSecureNetServer(urlParts.Host, l.TLSConfig)
 	case "ws":
-		return NewWebSocketServer(urlParts.Host)
+		return CreateWebSocketServer(urlParts.Host)
 	case "wss":
-		return NewSecureWebSocketServer(urlParts.Host, l.TLSConfig)
+		return CreateSecureWebSocketServer(urlParts.Host, l.TLSConfig)
 	}
 
 	return nil, ErrUnsupportedProtocol

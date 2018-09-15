@@ -25,7 +25,9 @@ type WebSocketServer struct {
 	tomb tomb.Tomb
 }
 
-func newWebSocketServer(listener net.Listener) *WebSocketServer {
+// NewWebSocketServer wraps the provided listener.
+func NewWebSocketServer(listener net.Listener) *WebSocketServer {
+	// create server
 	ws := &WebSocketServer{
 		listener: listener,
 		upgrader: &websocket.Upgrader{
@@ -44,50 +46,38 @@ func newWebSocketServer(listener net.Listener) *WebSocketServer {
 		return true
 	}
 
+	// create http server
+	h := &http.Server{
+		Handler: http.HandlerFunc(ws.requestHandler),
+	}
+
+	// serve http traffic in background
+	ws.tomb.Go(func() error {
+		return h.Serve(ws.listener)
+	})
+
 	return ws
 }
 
-// NewWebSocketServer creates a new WS server that listens on the provided address.
-func NewWebSocketServer(address string) (*WebSocketServer, error) {
+// CreateWebSocketServer creates a new WS server that listens on the provided address.
+func CreateWebSocketServer(address string) (*WebSocketServer, error) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 
-	s := newWebSocketServer(listener)
-	s.serveHTTP()
-
-	return s, nil
+	return NewWebSocketServer(listener), nil
 }
 
-// NewSecureWebSocketServer creates a new WSS server that listens on the
+// CreateSecureWebSocketServer creates a new WSS server that listens on the
 // provided address.
-func NewSecureWebSocketServer(address string, config *tls.Config) (*WebSocketServer, error) {
+func CreateSecureWebSocketServer(address string, config *tls.Config) (*WebSocketServer, error) {
 	listener, err := tls.Listen("tcp", address, config)
 	if err != nil {
 		return nil, err
 	}
 
-	s := newWebSocketServer(listener)
-	s.serveHTTP()
-
-	return s, nil
-}
-
-func (s *WebSocketServer) serveHTTP() {
-	s.mux = http.NewServeMux()
-	s.mux.HandleFunc("/", s.requestHandler)
-
-	h := &http.Server{
-		Handler: s.mux,
-	}
-
-	s.tomb.Go(func() error {
-		err := h.Serve(s.listener)
-
-		// Server will always return an error
-		return err
-	})
+	return NewWebSocketServer(listener), nil
 }
 
 // SetFallback will register a http.Handler that gets called if a request is not
