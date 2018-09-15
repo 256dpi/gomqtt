@@ -13,7 +13,7 @@ import (
 
 // The Engine handles incoming connections and connects them to the backend.
 type Engine struct {
-	// The Backend that will passed to accepted clients.
+	// The Backend that will be passed to accepted clients.
 	Backend Backend
 
 	// ConnectTimeout defines the timeout to receive the first packet.

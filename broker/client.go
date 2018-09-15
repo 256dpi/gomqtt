@@ -198,6 +198,8 @@ type outgoing struct {
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
+	state uint32
+
 	// PacketPrefetch may be set during Setup to control the number of packets
 	// that are read by Client and made available for processing. Will default
 	// to 10 if not set.
@@ -216,14 +218,9 @@ type Client struct {
 	// parallel calls to Dequeue a client can perform. Will default to 10.
 	ParallelDequeues int
 
-	// read-only
 	backend Backend
 	conn    transport.Conn
 
-	// atomically written and read
-	state uint32
-
-	// set during connect
 	id      string
 	will    *packet.Message
 	session Session
