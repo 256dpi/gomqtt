@@ -218,6 +218,10 @@ type Client struct {
 	// parallel calls to Dequeue a client can perform. Will default to 10.
 	ParallelDequeues int
 
+	// PacketCallback can be set to inspect packets before processing and
+	// apply rate limits. Connect packets will not be provided to the callback.
+	PacketCallback func(packet.Generic) error
+
 	backend Backend
 	conn    transport.Conn
 
@@ -337,6 +341,14 @@ func (c *Client) processor() error {
 		}
 
 		c.backend.Log(PacketReceived, c, pkt, nil, nil)
+
+		// call callback
+		if c.PacketCallback != nil {
+			err = c.PacketCallback(pkt)
+			if err != nil {
+				return c.die(ClientError, err)
+			}
+		}
 
 		// process packet
 		err = c.processPacket(pkt)
