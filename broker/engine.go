@@ -19,10 +19,8 @@ type Engine struct {
 	// ConnectTimeout defines the timeout to receive the first packet.
 	ConnectTimeout time.Duration
 
-	// The Default* properties will be set on newly accepted connections.
-	DefaultReadLimit   int64
-	DefaultReadBuffer  int
-	DefaultWriteBuffer int
+	// The DefaultReadLimit defines the initial read limit.
+	DefaultReadLimit int64
 
 	// OnError can be used to receive errors from engine. If an error is received
 	// the server should be restarted.
@@ -88,12 +86,6 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 
 	// set default read limit
 	conn.SetReadLimit(e.DefaultReadLimit)
-
-	// TODO: Buffers should be configured before the socket is opened.
-	// go1.11 should provide a custom dialer facility that might allow this
-
-	// set default buffer sizes
-	conn.SetBuffers(e.DefaultReadBuffer, e.DefaultWriteBuffer)
 
 	// set initial read timeout
 	conn.SetReadTimeout(e.ConnectTimeout)

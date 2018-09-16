@@ -74,10 +74,6 @@ func TestWebSocketConnBigAsyncSendAfterClose(t *testing.T) {
 	abstractConnBigAsyncSendAfterCloseTest(t, "ws")
 }
 
-func TestWebSocketConnSetBuffers(t *testing.T) {
-	abstractConnSetBuffersTest(t, "ws")
-}
-
 func TestWebSocketBadFrameError(t *testing.T) {
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // < bad frame

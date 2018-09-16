@@ -277,7 +277,7 @@ func (c *Client) ID() string {
 }
 
 // Conn returns the client's underlying connection. Calls to SetReadLimit,
-// SetBuffers, LocalAddr and RemoteAddr are safe.
+// LocalAddr and RemoteAddr are safe.
 func (c *Client) Conn() transport.Conn {
 	return c.conn
 }

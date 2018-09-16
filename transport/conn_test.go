@@ -348,21 +348,3 @@ func abstractConnBigAsyncSendAfterCloseTest(t *testing.T, protocol string) {
 
 	safeReceive(done)
 }
-
-func abstractConnSetBuffersTest(t *testing.T, protocol string) {
-	// TODO: Do some real testing.
-
-	conn2, done := connectionPair(protocol, func(conn1 Conn) {
-		conn1.SetBuffers(128, 128)
-
-		err := conn1.Close()
-		assert.NoError(t, err)
-	})
-
-	conn2.SetBuffers(128, 128)
-
-	err := conn2.Close()
-	assert.NoError(t, err)
-
-	safeReceive(done)
-}
