@@ -5,14 +5,32 @@ import (
 	"github.com/256dpi/gomqtt/transport"
 )
 
+// Dialer defines the dialer used by a client.
+type Dialer interface {
+	Dial(urlString string) (transport.Conn, error)
+}
+
 // A Config holds information about establishing a connection to a broker.
 type Config struct {
-	Dialer       *transport.Dialer
-	BrokerURL    string
-	ClientID     string
+	// Dialer can be set to use a custom dialer.
+	Dialer Dialer
+
+	// BrokerURL is the url that is used to infer options to open the connection.
+	BrokerURL string
+
+	// ClientID can be set to the clients id.
+	ClientID string
+
+	// CleanSession can be set to request a clean session.
 	CleanSession bool
-	KeepAlive    string
-	WillMessage  *packet.Message
+
+	// KeepAlive should be time duration string e.g. "30s".
+	KeepAlive string
+
+	// Will message is registered on the broker upon connect if set.
+	WillMessage *packet.Message
+
+	// ValidateSubs will cause the client to fail if subscriptions failed.
 	ValidateSubs bool
 }
 
