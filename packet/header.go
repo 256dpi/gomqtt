@@ -28,18 +28,18 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 
 	// check buffer length
 	if len(dst) < tl {
-		return total, makeError("[%s] insufficient buffer size, expected %d, got %d", t, tl, len(dst))
+		return total, makeError("insufficient buffer size, expected %d, got %d", t, tl, len(dst))
 	}
 
 	// check remaining length
 	if rl > maxRemainingLength || rl < 0 {
-		return total, makeError("[%s] remaining length (%d) out of bound (max %d, min 0)", t, rl, maxRemainingLength)
+		return total, makeError("remaining length (%d) out of bound (max %d, min 0)", t, rl, maxRemainingLength)
 	}
 
 	// check header length
 	hl := headerLen(rl)
 	if len(dst) < hl {
-		return total, makeError("[%s] insufficient buffer size, expected %d, got %d", t, hl, len(dst))
+		return total, makeError("insufficient buffer size, expected %d, got %d", t, hl, len(dst))
 	}
 
 	// write type and flags
@@ -60,7 +60,7 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 
 	// check buffer size
 	if len(src) < 2 {
-		return total, 0, 0, makeError("[%s] insufficient buffer size, expected %d, got %d", t, 2, len(src))
+		return total, 0, 0, makeError("insufficient buffer size, expected %d, got %d", t, 2, len(src))
 	}
 
 	// read type and flags
@@ -71,12 +71,12 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 
 	// check against static type
 	if decodedType != t {
-		return total, 0, 0, makeError("[%s] invalid type %d", t, decodedType)
+		return total, 0, 0, makeError("invalid type %d", t, decodedType)
 	}
 
 	// check flags except for publish packets
 	if t != PUBLISH && flags != t.defaultFlags() {
-		return total, 0, 0, makeError("[%s] invalid flags, expected %d, got %d", t, t.defaultFlags(), flags)
+		return total, 0, 0, makeError("invalid flags, expected %d, got %d", t, t.defaultFlags(), flags)
 	}
 
 	// read remaining length
@@ -86,12 +86,12 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 
 	// check resulting remaining length
 	if m <= 0 {
-		return total, 0, 0, makeError("[%s] error reading remaining length", t)
+		return total, 0, 0, makeError("error reading remaining length", t)
 	}
 
 	// check remaining buffer
 	if rl > len(src[total:]) {
-		return total, 0, 0, makeError("[%s] remaining length (%d) is greater than remaining buffer (%d)", t, rl, len(src[total:]))
+		return total, 0, 0, makeError("remaining length (%d) is greater than remaining buffer (%d)", t, rl, len(src[total:]))
 	}
 
 	return total, flags, rl, nil

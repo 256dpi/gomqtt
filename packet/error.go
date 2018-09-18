@@ -4,12 +4,14 @@ import "fmt"
 
 // Error represents decoding and encoding errors.
 type Error struct {
+	Type Type
+
 	format    string
 	arguments []interface{}
 }
 
-func makeError(format string, arguments ...interface{}) *Error {
-	return &Error{format, arguments}
+func makeError(format string, typ Type, arguments ...interface{}) *Error {
+	return &Error{Type: typ, format: format, arguments: arguments}
 }
 
 // Error implements the error interface.

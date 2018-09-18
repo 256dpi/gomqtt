@@ -89,7 +89,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, makeError("[%s] expected remaining length to be 2", cp.Type())
+		return total, makeError("expected remaining length to be 2", cp.Type())
 	}
 
 	// read connack flags
@@ -99,7 +99,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 
 	// check flags
 	if connackFlags&254 != 0 {
-		return 0, makeError("[%s] bits 7-1 in acknowledge flags are not 0", cp.Type())
+		return 0, makeError("bits 7-1 in acknowledge flags are not 0", cp.Type())
 	}
 
 	// read return code
@@ -108,7 +108,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 
 	// check return code
 	if !cp.ReturnCode.Valid() {
-		return 0, makeError("[%s] invalid return code (%d)", cp.Type(), cp.ReturnCode)
+		return 0, makeError("invalid return code (%d)", cp.Type(), cp.ReturnCode)
 	}
 
 	return total, nil
@@ -137,7 +137,7 @@ func (cp *Connack) Encode(dst []byte) (int, error) {
 
 	// check return code
 	if !cp.ReturnCode.Valid() {
-		return total, makeError("[%s] invalid return code (%d)", cp.Type(), cp.ReturnCode)
+		return total, makeError("invalid return code (%d)", cp.Type(), cp.ReturnCode)
 	}
 
 	// set return code
