@@ -1,5 +1,10 @@
 package packet
 
+import "errors"
+
+// ErrInvalidPacketType is returned by New if the packet type is invalid.
+var ErrInvalidPacketType = errors.New("invalid packet type")
+
 // Type represents the MQTT packet types.
 type Type byte
 
@@ -127,7 +132,7 @@ func (t Type) New() (Generic, error) {
 		return NewDisconnect(), nil
 	}
 
-	return nil, makeError("[Unknown] invalid packet type %d", t)
+	return nil, ErrInvalidPacketType
 }
 
 // Valid returns a boolean indicating whether the type is valid or not.
