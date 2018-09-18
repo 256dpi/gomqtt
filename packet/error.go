@@ -10,7 +10,7 @@ type Error struct {
 	arguments []interface{}
 }
 
-func makeError(format string, typ Type, arguments ...interface{}) *Error {
+func makeError(typ Type, format string, arguments ...interface{}) *Error {
 	return &Error{Type: typ, format: format, arguments: arguments}
 }
 

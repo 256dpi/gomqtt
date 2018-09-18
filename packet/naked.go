@@ -12,7 +12,7 @@ func nakedDecode(src []byte, t Type) (int, error) {
 
 	// check remaining length
 	if rl != 0 {
-		return hl, makeError("expected zero remaining length", t)
+		return hl, makeError(t, "expected zero remaining length")
 	}
 
 	return hl, err

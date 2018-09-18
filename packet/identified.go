@@ -23,7 +23,7 @@ func identifiedDecode(src []byte, t Type) (int, ID, error) {
 
 	// check remaining length
 	if rl != 2 {
-		return total, 0, makeError("expected remaining length to be 2", t)
+		return total, 0, makeError(t, "expected remaining length to be 2")
 	}
 
 	// read packet id
@@ -32,7 +32,7 @@ func identifiedDecode(src []byte, t Type) (int, ID, error) {
 
 	// check packet id
 	if packetID == 0 {
-		return total, 0, makeError("packet id must be grater than zero", t)
+		return total, 0, makeError(t, "packet id must be grater than zero")
 	}
 
 	return total, ID(packetID), nil
@@ -44,7 +44,7 @@ func identifiedEncode(dst []byte, id ID, t Type) (int, error) {
 
 	// check packet id
 	if id == 0 {
-		return total, makeError("packet id must be grater than zero", t)
+		return total, makeError(t, "packet id must be grater than zero")
 	}
 
 	// encode header

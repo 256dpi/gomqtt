@@ -100,7 +100,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, makeError("insufficient buffer size, expected %d, got %d", cp.Type(), total+1, len(src))
+		return total, makeError(cp.Type(), "insufficient buffer size, expected %d, got %d", total+1, len(src))
 	}
 
 	// read version
@@ -109,7 +109,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// check protocol string and version
 	if versionByte != Version311 && versionByte != Version31 {
-		return total, makeError("invalid protocol version (%d)", cp.Type(), versionByte)
+		return total, makeError(cp.Type(), "invalid protocol version (%d)", versionByte)
 	}
 
 	// set version
@@ -117,12 +117,12 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// check protocol version string
 	if !bytes.Equal(protoName, version311Name) && !bytes.Equal(protoName, version31Name) {
-		return total, makeError("invalid protocol version description (%s)", cp.Type(), protoName)
+		return total, makeError(cp.Type(), "invalid protocol version description (%s)", protoName)
 	}
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, makeError("insufficient buffer size, expected %d, got %d", cp.Type(), total+1, len(src))
+		return total, makeError(cp.Type(), "insufficient buffer size, expected %d, got %d", total+1, len(src))
 	}
 
 	// read connect flags
@@ -139,17 +139,17 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
-		return total, makeError("reserved bit 0 is not 0", cp.Type())
+		return total, makeError(cp.Type(), "reserved bit 0 is not 0")
 	}
 
 	// check will qos
 	if !validQOS(willQOS) {
-		return total, makeError("invalid QOS level (%d) for will message", cp.Type(), willQOS)
+		return total, makeError(cp.Type(), "invalid QOS level (%d) for will message", willQOS)
 	}
 
 	// check will flags
 	if !willFlag && (willRetain || willQOS != 0) {
-		return total, makeError("if the will flag (%t) is set to 0 the will qos (%d) and will retain (%t) fields must be set to zero", cp.Type(), willFlag, willQOS, willRetain)
+		return total, makeError(cp.Type(), "if the will flag (%t) is set to 0 the will qos (%d) and will retain (%t) fields must be set to zero", willFlag, willQOS, willRetain)
 	}
 
 	// create will if present
@@ -159,12 +159,12 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// check auth flags
 	if !usernameFlag && passwordFlag {
-		return total, makeError("password flag is set but username flag is not set", cp.Type())
+		return total, makeError(cp.Type(), "password flag is set but username flag is not set")
 	}
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, makeError("insufficient buffer size, expected %d, got %d", cp.Type(), total+2, len(src))
+		return total, makeError(cp.Type(), "insufficient buffer size, expected %d, got %d", total+2, len(src))
 	}
 
 	// read keep alive
@@ -180,7 +180,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// if the client supplies a zero-byte clientID, the client must also set CleanSession to 1
 	if len(cp.ClientID) == 0 && !cp.CleanSession {
-		return total, makeError("clean session must be 1 if client id is zero length", cp.Type())
+		return total, makeError(cp.Type(), "clean session must be 1 if client id is zero length")
 	}
 
 	// read will topic and payload
@@ -239,7 +239,7 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 
 	// check version byte
 	if cp.Version != Version311 && cp.Version != Version31 {
-		return total, makeError("unsupported protocol version %d", cp.Type(), cp.Version)
+		return total, makeError(cp.Type(), "unsupported protocol version %d", cp.Version)
 	}
 
 	// write version string, length has been checked beforehand
@@ -277,12 +277,12 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 
 		// check will topic length
 		if len(cp.Will.Topic) == 0 {
-			return total, makeError("will topic is empty", cp.Type())
+			return total, makeError(cp.Type(), "will topic is empty")
 		}
 
 		// check will qos
 		if !validQOS(cp.Will.QOS) {
-			return total, makeError("invalid will qos level %d", cp.Type(), cp.Will.QOS)
+			return total, makeError(cp.Type(), "invalid will qos level %d", cp.Will.QOS)
 		}
 
 		// set will qos flag
@@ -301,7 +301,7 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 
 	// check client id and clean session
 	if len(cp.ClientID) == 0 && !cp.CleanSession {
-		return total, makeError("clean session must be 1 if client id is zero length", cp.Type())
+		return total, makeError(cp.Type(), "clean session must be 1 if client id is zero length")
 	}
 
 	// set clean session flag
@@ -342,7 +342,7 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 	}
 
 	if len(cp.Username) == 0 && len(cp.Password) > 0 {
-		return total, makeError("password set without username", cp.Type())
+		return total, makeError(cp.Type(), "password set without username")
 	}
 
 	// write username

@@ -57,7 +57,7 @@ func (up *Unsubscribe) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, makeError("insufficient buffer size, expected %d, got %d", up.Type(), total+2, len(src))
+		return total, makeError(up.Type(), "insufficient buffer size, expected %d, got %d", total+2, len(src))
 	}
 
 	// read packet id
@@ -66,7 +66,7 @@ func (up *Unsubscribe) Decode(src []byte) (int, error) {
 
 	// check packet id
 	if up.ID == 0 {
-		return total, makeError("packet id must be grater than zero", up.Type())
+		return total, makeError(up.Type(), "packet id must be grater than zero")
 	}
 
 	// prepare counter
@@ -92,7 +92,7 @@ func (up *Unsubscribe) Decode(src []byte) (int, error) {
 
 	// check for empty list
 	if len(up.Topics) == 0 {
-		return total, makeError("empty topic list", up.Type())
+		return total, makeError(up.Type(), "empty topic list")
 	}
 
 	return total, nil
@@ -106,7 +106,7 @@ func (up *Unsubscribe) Encode(dst []byte) (int, error) {
 
 	// check packet id
 	if up.ID == 0 {
-		return total, makeError("packet id must be grater than zero", up.Type())
+		return total, makeError(up.Type(), "packet id must be grater than zero")
 	}
 
 	// encode header
