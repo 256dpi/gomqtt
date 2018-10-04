@@ -26,6 +26,7 @@ var duration = flag.Int("duration", 0, "duration in seconds")
 var sendRate = flag.Int("send-rate", 0, "messages per second")
 var receiveRate = flag.Int("receive-rate", 0, "messages per second")
 var payloadSize = flag.Int("payload", 1, "payload size in bytes")
+var retained = flag.Bool("retained", false, "retain flag")
 
 var sent int32
 var received int32
@@ -166,6 +167,7 @@ func publisher(id string) {
 	publish := packet.NewPublish()
 	publish.Message.Topic = id
 	publish.Message.Payload = payload
+	publish.Message.Retain = *retained
 
 	var bucket *ratelimit.Bucket
 	if *sendRate > 0 {
