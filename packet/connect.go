@@ -149,7 +149,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// check will flags
 	if !willFlag && (willRetain || willQOS != 0) {
-		return total, makeError(cp.Type(), "if the will flag (%t) is set to 0 the will qos (%d) and will retain (%t) fields must be set to zero", willFlag, willQOS, willRetain)
+		return total, makeError(cp.Type(), "if the will flag is set to 0 the will qos and will retain fields must be set to zero")
 	}
 
 	// create will if present
