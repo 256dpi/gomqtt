@@ -19,6 +19,21 @@ func NewPacketStore() *PacketStore {
 	}
 }
 
+// NewPacketStoreWithPackets returns a new PacketStore with the provided packets.
+func NewPacketStoreWithPackets(packets []packet.Generic) *PacketStore {
+	// prepare store
+	store := &PacketStore{
+		packets: make(map[packet.ID]packet.Generic),
+	}
+
+	// add packets
+	for _, pkt := range packets {
+		store.Save(pkt)
+	}
+
+	return store
+}
+
 // Save will store a packet in the store. An eventual existing packet with the
 // same id gets quietly overwritten.
 func (s *PacketStore) Save(pkt packet.Generic) {

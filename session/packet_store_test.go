@@ -32,4 +32,7 @@ func TestPacketStore(t *testing.T) {
 
 	pkts = store.All()
 	assert.Equal(t, 0, len(pkts))
+
+	store = NewPacketStoreWithPackets([]packet.Generic{&packet.Subscribe{ID: 7}})
+	assert.Equal(t, []packet.Generic{&packet.Subscribe{ID: 7}}, store.All())
 }
