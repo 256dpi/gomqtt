@@ -81,7 +81,7 @@ func TestReceiveMessage(t *testing.T) {
 
 	suback := packet.NewSuback()
 	suback.ID = 1
-	suback.ReturnCodes = []uint8{0}
+	suback.ReturnCodes = []packet.QOS{0}
 
 	publish := packet.NewPublish()
 	publish.Message = packet.Message{

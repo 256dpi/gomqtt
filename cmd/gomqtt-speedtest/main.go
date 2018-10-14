@@ -42,7 +42,7 @@ func main() {
 		panic(err)
 	}
 
-	sf, err := cl.Subscribe(*topic, uint8(*qos))
+	sf, err := cl.Subscribe(*topic, packet.QOS(*qos))
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +61,7 @@ func main() {
 	for {
 		t1 := time.Now()
 
-		pf, err := cl.Publish(*topic, []byte(*topic), uint8(*qos), false)
+		pf, err := cl.Publish(*topic, []byte(*topic), packet.QOS(*qos), false)
 		if err != nil {
 			panic(err)
 		}

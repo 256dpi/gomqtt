@@ -613,7 +613,7 @@ func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
 
 	// prepare suback packet
 	suback := packet.NewSuback()
-	suback.ReturnCodes = make([]byte, len(pkt.Subscriptions))
+	suback.ReturnCodes = make([]packet.QOS, len(pkt.Subscriptions))
 	suback.ID = pkt.ID
 
 	// set granted qos

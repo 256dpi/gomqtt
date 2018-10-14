@@ -87,7 +87,7 @@ func ClearRetainedMessage(config *Config, topic string, timeout time.Duration) e
 
 // ReceiveMessage will connect to the specified broker and issue a subscription
 // for the specified topic and return the first message received.
-func ReceiveMessage(config *Config, topic string, qos byte, timeout time.Duration) (*packet.Message, error) {
+func ReceiveMessage(config *Config, topic string, qos packet.QOS, timeout time.Duration) (*packet.Message, error) {
 	// create client
 	client := New()
 

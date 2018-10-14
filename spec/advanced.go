@@ -120,7 +120,7 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -136,12 +136,12 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := c.Subscribe("/"+topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	subscribeFuture, err = c.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)

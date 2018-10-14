@@ -245,7 +245,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 // Publish will send a Publish packet containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
-func (c *Client) Publish(topic string, payload []byte, qos uint8, retain bool) (GenericFuture, error) {
+func (c *Client) Publish(topic string, payload []byte, qos packet.QOS, retain bool) (GenericFuture, error) {
 	msg := &packet.Message{
 		Topic:   topic,
 		Payload: payload,
@@ -309,7 +309,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 // Subscribe will send a Subscribe packet containing one topic to subscribe. It
 // will return a SubscribeFuture that gets completed once a Suback packet has
 // been received.
-func (c *Client) Subscribe(topic string, qos uint8) (SubscribeFuture, error) {
+func (c *Client) Subscribe(topic string, qos packet.QOS) (SubscribeFuture, error) {
 	return c.SubscribeMultiple([]packet.Subscription{
 		{Topic: topic, QOS: qos},
 	})

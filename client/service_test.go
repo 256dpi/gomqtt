@@ -16,7 +16,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 	subscribe.ID = 1
 
 	suback := packet.NewSuback()
-	suback.ReturnCodes = []uint8{0}
+	suback.ReturnCodes = []packet.QOS{0}
 	suback.ID = 1
 
 	publish := packet.NewPublish()
@@ -54,7 +54,7 @@ func TestServicePublishSubscribe(t *testing.T) {
 	s.MessageCallback = func(msg *packet.Message) error {
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(message)
 		return nil
@@ -81,7 +81,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 	subscribe.ID = 1
 
 	suback := packet.NewSuback()
-	suback.ReturnCodes = []uint8{0}
+	suback.ReturnCodes = []packet.QOS{0}
 	suback.ID = 1
 
 	publish := packet.NewPublish()
@@ -119,7 +119,7 @@ func TestServiceCommandsInCallback(t *testing.T) {
 	s.MessageCallback = func(msg *packet.Message) error {
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(message)
@@ -292,23 +292,23 @@ func TestServiceResubscribe(t *testing.T) {
 	unsubscribe.ID = 6
 
 	suback1 := packet.NewSuback()
-	suback1.ReturnCodes = []uint8{0}
+	suback1.ReturnCodes = []packet.QOS{0}
 	suback1.ID = 1
 
 	suback2 := packet.NewSuback()
-	suback2.ReturnCodes = []uint8{1}
+	suback2.ReturnCodes = []packet.QOS{1}
 	suback2.ID = 2
 
 	suback3 := packet.NewSuback()
-	suback3.ReturnCodes = []uint8{1}
+	suback3.ReturnCodes = []packet.QOS{1}
 	suback3.ID = 3
 
 	suback4 := packet.NewSuback()
-	suback4.ReturnCodes = []uint8{0}
+	suback4.ReturnCodes = []packet.QOS{0}
 	suback4.ID = 4
 
 	suback5 := packet.NewSuback()
-	suback5.ReturnCodes = []uint8{0}
+	suback5.ReturnCodes = []packet.QOS{0}
 	suback5.ID = 5
 
 	unsuback := packet.NewUnsuback()
@@ -323,7 +323,7 @@ func TestServiceResubscribe(t *testing.T) {
 	subscribe6.ID = 1
 
 	suback6 := packet.NewSuback()
-	suback6.ReturnCodes = []uint8{0, 1, 0}
+	suback6.ReturnCodes = []packet.QOS{0, 1, 0}
 	suback6.ID = 1
 
 	publish := packet.NewPublish()
@@ -382,7 +382,7 @@ func TestServiceResubscribe(t *testing.T) {
 	s.MessageCallback = func(m *packet.Message) error {
 		assert.Equal(t, "test", m.Topic)
 		assert.Equal(t, []byte("test"), m.Payload)
-		assert.Equal(t, uint8(0), m.QOS)
+		assert.Equal(t, packet.QOS(0), m.QOS)
 		assert.False(t, m.Retain)
 		close(message)
 		return nil
@@ -415,7 +415,7 @@ func TestServiceResubscribeTimeout(t *testing.T) {
 	subscribe1.ID = 1
 
 	suback1 := packet.NewSuback()
-	suback1.ReturnCodes = []uint8{0}
+	suback1.ReturnCodes = []packet.QOS{0}
 	suback1.ID = 1
 
 	broker1 := flow.New().

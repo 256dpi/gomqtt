@@ -11,7 +11,7 @@ import (
 )
 
 // RetainedMessageTest tests the broker for properly handling retained messages.
-func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub uint8) {
+func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub packet.QOS) {
 	assert.NoError(t, client.ClearRetainedMessage(client.NewConfig(config.URL), out, 10*time.Second))
 
 	time.Sleep(config.MessageRetainWait)
@@ -41,7 +41,7 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 		assert.NoError(t, err)
 		assert.Equal(t, out, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(sub), msg.QOS)
+		assert.Equal(t, packet.QOS(sub), msg.QOS)
 		assert.True(t, msg.Retain)
 
 		close(wait)
@@ -57,7 +57,7 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 	subscribeFuture, err := receiver.Subscribe(in, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{sub}, subscribeFuture.ReturnCodes())
 
 	safeReceive(wait)
 
@@ -105,7 +105,7 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload2, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.True(t, msg.Retain)
 
 		close(wait)
@@ -121,7 +121,7 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	safeReceive(wait)
 
@@ -167,7 +167,7 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.True(t, msg.Retain)
 
 		close(wait)
@@ -183,7 +183,7 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := receiverAndClearer.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	safeReceive(wait)
 
@@ -213,7 +213,7 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err = nonReceiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	time.Sleep(config.NoMessageWait)
 
@@ -235,7 +235,7 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -251,7 +251,7 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := c.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(topic, testPayload, 0, true)
 	assert.NoError(t, err)
@@ -279,7 +279,7 @@ func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) 
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Nil(t, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -295,7 +295,7 @@ func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) 
 	subscribeFuture, err := c.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(topic, nil, 0, true)
 	assert.NoError(t, err)
@@ -343,7 +343,7 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.True(t, msg.Retain)
 
 		close(wait)
@@ -359,7 +359,7 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	safeReceive(wait)
 
@@ -400,7 +400,7 @@ func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic strin
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.True(t, msg.Retain)
 
 		wait <- struct{}{}
@@ -416,14 +416,14 @@ func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic strin
 	subscribeFuture, err := receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	safeReceive(wait)
 
 	subscribeFuture, err = receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	safeReceive(wait)
 

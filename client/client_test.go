@@ -348,7 +348,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	subscribe.ID = 1
 
 	suback := packet.NewSuback()
-	suback.ReturnCodes = []uint8{0}
+	suback.ReturnCodes = []packet.QOS{0}
 	suback.ID = 1
 
 	publish := packet.NewPublish()
@@ -374,7 +374,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
 		return nil
@@ -389,7 +389,7 @@ func TestClientPublishSubscribeQOS0(t *testing.T) {
 	subscribeFuture, err := c.Subscribe("test", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish("test", []byte("test"), 0, false)
 	assert.NoError(t, err)
@@ -417,7 +417,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	subscribe.ID = 1
 
 	suback := packet.NewSuback()
-	suback.ReturnCodes = []uint8{1}
+	suback.ReturnCodes = []packet.QOS{1}
 	suback.ID = 1
 
 	publish := packet.NewPublish()
@@ -450,7 +450,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(1), msg.QOS)
+		assert.Equal(t, packet.QOS(1), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
 		return nil
@@ -465,7 +465,7 @@ func TestClientPublishSubscribeQOS1(t *testing.T) {
 	subscribeFuture, err := c.Subscribe("test", 1)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
-	assert.Equal(t, []uint8{1}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{1}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish("test", []byte("test"), 1, false)
 	assert.NoError(t, err)
@@ -493,7 +493,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	subscribe.ID = 1
 
 	suback := packet.NewSuback()
-	suback.ReturnCodes = []uint8{2}
+	suback.ReturnCodes = []packet.QOS{2}
 	suback.ID = 1
 
 	publish := packet.NewPublish()
@@ -536,7 +536,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "test", msg.Topic)
 		assert.Equal(t, []byte("test"), msg.Payload)
-		assert.Equal(t, uint8(2), msg.QOS)
+		assert.Equal(t, packet.QOS(2), msg.QOS)
 		assert.False(t, msg.Retain)
 		close(wait)
 		return nil
@@ -551,7 +551,7 @@ func TestClientPublishSubscribeQOS2(t *testing.T) {
 	subscribeFuture, err := c.Subscribe("test", 2)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
-	assert.Equal(t, []uint8{2}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{2}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish("test", []byte("test"), 2, false)
 	assert.NoError(t, err)
@@ -934,7 +934,7 @@ func TestClientLogger(t *testing.T) {
 	subscribe.ID = 1
 
 	suback := packet.NewSuback()
-	suback.ReturnCodes = []uint8{0}
+	suback.ReturnCodes = []packet.QOS{0}
 	suback.ID = 1
 
 	publish := packet.NewPublish()

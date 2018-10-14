@@ -123,7 +123,7 @@ func consumer(id string) {
 		return nil
 	}
 
-	sf, err := cl.Subscribe(id, byte(*qos))
+	sf, err := cl.Subscribe(id, packet.QOS(*qos))
 	if err != nil {
 		panic(err)
 	}
@@ -151,7 +151,7 @@ func publisher(id string) {
 				bucket.Wait(1)
 			}
 
-			pf, err := cl.Publish(id, payload, byte(*qos), *retained)
+			pf, err := cl.Publish(id, payload, packet.QOS(*qos), *retained)
 			if err != nil {
 				panic(err)
 			}

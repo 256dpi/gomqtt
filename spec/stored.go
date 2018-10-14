@@ -247,7 +247,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 // StoredSubscriptionsTest tests the broker for properly handling stored
 // subscriptions.
-func StoredSubscriptionsTest(t *testing.T, config *Config, topic string, qos uint8) {
+func StoredSubscriptionsTest(t *testing.T, config *Config, topic string, qos packet.QOS) {
 	id := config.clientID()
 
 	options := client.NewConfigWithClientID(config.URL, id)
@@ -266,7 +266,7 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, topic string, qos uin
 	subscribeFuture, err := subscriber.Subscribe(topic, qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{qos}, subscribeFuture.ReturnCodes())
 
 	err = subscriber.Disconnect()
 	assert.NoError(t, err)
@@ -279,7 +279,7 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, topic string, qos uin
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(qos), msg.QOS)
+		assert.Equal(t, packet.QOS(qos), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -325,7 +325,7 @@ func CleanStoredSubscriptionsTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := subscriber.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	err = subscriber.Disconnect()
 	assert.NoError(t, err)
@@ -375,7 +375,7 @@ func RemoveStoredSubscriptionTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := subscriberAndUnsubscriber.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	unsubscribeFuture, err := subscriberAndUnsubscriber.Unsubscribe(topic)
 	assert.NoError(t, err)

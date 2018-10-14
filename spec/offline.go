@@ -12,7 +12,7 @@ import (
 
 // OfflineSubscriptionTest tests the broker for properly handling offline
 // subscriptions.
-func OfflineSubscriptionTest(t *testing.T, config *Config, topic string, sub, pub uint8, await bool) {
+func OfflineSubscriptionTest(t *testing.T, config *Config, topic string, sub, pub packet.QOS, await bool) {
 	id := config.clientID()
 
 	options := client.NewConfigWithClientID(config.URL, id)
@@ -31,7 +31,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, topic string, sub, pu
 	subscribeFuture, err := offlineSubscriber.Subscribe(topic, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{sub}, subscribeFuture.ReturnCodes())
 
 	err = offlineSubscriber.Disconnect()
 	assert.NoError(t, err)
@@ -58,7 +58,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, topic string, sub, pu
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(sub), msg.QOS)
+		assert.Equal(t, packet.QOS(sub), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -83,7 +83,7 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, topic string, sub, pu
 
 // OfflineSubscriptionRetainedTest tests the broker for properly handling
 // retained messages and offline subscriptions.
-func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string, sub, pub uint8, await bool) {
+func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string, sub, pub packet.QOS, await bool) {
 	id := config.clientID()
 
 	options := client.NewConfigWithClientID(config.URL, id)
@@ -105,7 +105,7 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string,
 	subscribeFuture, err := offlineSubscriber.Subscribe(topic, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{sub}, subscribeFuture.ReturnCodes())
 
 	err = offlineSubscriber.Disconnect()
 	assert.NoError(t, err)
@@ -132,7 +132,7 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string,
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(sub), msg.QOS)
+		assert.Equal(t, packet.QOS(sub), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)

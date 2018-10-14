@@ -33,7 +33,7 @@ type SubscribeFuture interface {
 	GenericFuture
 
 	// ReturnCodes will return the suback codes returned by the broker.
-	ReturnCodes() []uint8
+	ReturnCodes() []packet.QOS
 }
 
 type futureKey int
@@ -70,11 +70,11 @@ type subscribeFuture struct {
 	*future.Future
 }
 
-func (f *subscribeFuture) ReturnCodes() []uint8 {
+func (f *subscribeFuture) ReturnCodes() []packet.QOS {
 	v, ok := f.Data.Load(returnCodesKey)
 	if !ok {
 		return nil
 	}
 
-	return v.([]uint8)
+	return v.([]packet.QOS)
 }

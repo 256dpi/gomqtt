@@ -15,7 +15,7 @@ import (
 )
 
 // PublishSubscribeTest tests the broker for basic pub sub support.
-func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS, pubQOS uint8) {
+func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS, pubQOS packet.QOS) {
 	c := client.New()
 	wait := make(chan struct{})
 
@@ -23,7 +23,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 		assert.NoError(t, err)
 		assert.Equal(t, pub, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(subQOS), msg.QOS)
+		assert.Equal(t, packet.QOS(subQOS), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -39,7 +39,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 	subscribeFuture, err := c.Subscribe(sub, subQOS)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{subQOS}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{subQOS}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(pub, testPayload, pubQOS, false)
 	assert.NoError(t, err)
@@ -54,7 +54,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 }
 
 // UnsubscribeTest tests the broker for unsubscribe support.
-func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
+func UnsubscribeTest(t *testing.T, config *Config, topic string, qos packet.QOS) {
 	c := client.New()
 	wait := make(chan struct{})
 
@@ -78,12 +78,12 @@ func UnsubscribeTest(t *testing.T, config *Config, topic string, qos uint8) {
 	subscribeFuture, err := c.Subscribe(topic+"/1", qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{qos}, subscribeFuture.ReturnCodes())
 
 	subscribeFuture, err = c.Subscribe(topic+"/2", qos)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{qos}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{qos}, subscribeFuture.ReturnCodes())
 
 	unsubscribeFuture, err := c.Unsubscribe(topic + "/1")
 	assert.NoError(t, err)
@@ -141,7 +141,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 		assert.NoError(t, err)
 		assert.Equal(t, topic+"/foo", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -157,12 +157,12 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 	subscribeFuture, err := c.Subscribe(topic+"/#", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	subscribeFuture, err = c.Subscribe(topic+"/+", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	unsubscribeFuture, err := c.Unsubscribe(topic + "/#")
 	assert.NoError(t, err)
@@ -181,7 +181,7 @@ func UnsubscribeOverlappingSubscriptions(t *testing.T, config *Config, topic str
 }
 
 // SubscriptionUpgradeTest tests the broker for properly upgrading subscriptions,
-func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, to uint8) {
+func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, to packet.QOS) {
 	c := client.New()
 	wait := make(chan struct{})
 
@@ -189,7 +189,7 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(to), msg.QOS)
+		assert.Equal(t, packet.QOS(to), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -205,12 +205,12 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 	subscribeFuture, err := c.Subscribe(topic, from)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{from}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{from}, subscribeFuture.ReturnCodes())
 
 	subscribeFuture, err = c.Subscribe(topic, to)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{to}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{to}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(topic, testPayload, to, false)
 	assert.NoError(t, err)
@@ -232,7 +232,7 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 		assert.NoError(t, err)
 		assert.Equal(t, pub, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, byte(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -248,12 +248,12 @@ func OverlappingSubscriptionsTest(t *testing.T, config *Config, pub, sub string)
 	subscribeFuture, err := c.Subscribe(sub, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	subscribeFuture, err = c.Subscribe(pub, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(pub, testPayload, 0, false)
 	assert.NoError(t, err)
@@ -277,7 +277,7 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic+"/3", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(2), msg.QOS)
+		assert.Equal(t, packet.QOS(2), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -299,7 +299,7 @@ func MultipleSubscriptionTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := c.SubscribeMultiple(subs)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0, 1, 2}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0, 1, 2}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(topic+"/3", testPayload, 2, false)
 	assert.NoError(t, err)
@@ -323,7 +323,7 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(1), msg.QOS)
+		assert.Equal(t, packet.QOS(1), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -344,7 +344,7 @@ func DuplicateSubscriptionTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := c.SubscribeMultiple(subs)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0, 1}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0, 1}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(topic, testPayload, 1, false)
 	assert.NoError(t, err)
@@ -367,7 +367,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic+"/foo", msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(0), msg.QOS)
+		assert.Equal(t, packet.QOS(0), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -383,7 +383,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := c.Subscribe(topic+"/foo", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	publishFuture, err := c.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
@@ -410,7 +410,7 @@ func IsolatedSubscriptionTest(t *testing.T, config *Config, topic string) {
 }
 
 // WillTest tests the broker for supporting will messages.
-func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
+func WillTest(t *testing.T, config *Config, topic string, sub, pub packet.QOS) {
 	clientWithWill := client.New()
 
 	opts := client.NewConfig(config.URL)
@@ -433,7 +433,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, uint8(sub), msg.QOS)
+		assert.Equal(t, packet.QOS(sub), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -449,7 +449,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub uint8) {
 	subscribeFuture, err := clientReceivingWill.Subscribe(topic, sub)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{sub}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{sub}, subscribeFuture.ReturnCodes())
 
 	err = clientWithWill.Close()
 	assert.NoError(t, err)
@@ -496,7 +496,7 @@ func CleanWillTest(t *testing.T, config *Config, topic string) {
 	subscribeFuture, err := nonReceiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
 	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []uint8{0}, subscribeFuture.ReturnCodes())
+	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
 
 	err = clientWithWill.Disconnect()
 	assert.NoError(t, err)

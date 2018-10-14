@@ -190,7 +190,7 @@ func (s *Service) Start(config *Config) {
 // Publish will send a Publish packet containing the passed parameters. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
-func (s *Service) Publish(topic string, payload []byte, qos uint8, retain bool) GenericFuture {
+func (s *Service) Publish(topic string, payload []byte, qos packet.QOS, retain bool) GenericFuture {
 	msg := &packet.Message{
 		Topic:   topic,
 		Payload: payload,
@@ -224,7 +224,7 @@ func (s *Service) PublishMessage(msg *packet.Message) GenericFuture {
 // Subscribe will send a Subscribe packet containing one topic to subscribe. It
 // will return a SubscribeFuture that gets completed once the acknowledgements
 // have been received.
-func (s *Service) Subscribe(topic string, qos uint8) SubscribeFuture {
+func (s *Service) Subscribe(topic string, qos packet.QOS) SubscribeFuture {
 	return s.SubscribeMultiple([]packet.Subscription{
 		{Topic: topic, QOS: qos},
 	})
