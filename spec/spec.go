@@ -289,8 +289,16 @@ func Run(t *testing.T, config *Config) {
 			OfflineSubscriptionTest(t, config, "offsub/4", 1, 1, true)
 		})
 
+		t.Run("OfflineSubscriptionQOS12", func(t *testing.T) {
+			OfflineSubscriptionTest(t, config, "offsub/5", 1, 2, true)
+		})
+
+		t.Run("OfflineSubscriptionQOS21", func(t *testing.T) {
+			OfflineSubscriptionTest(t, config, "offsub/6", 2, 1, true)
+		})
+
 		t.Run("OfflineSubscriptionQOS22", func(t *testing.T) {
-			OfflineSubscriptionTest(t, config, "offsub/5", 2, 2, true)
+			OfflineSubscriptionTest(t, config, "offsub/7", 2, 2, true)
 		})
 	}
 
