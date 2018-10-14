@@ -19,23 +19,23 @@ const (
 
 // A MemorySession stores packets in memory.
 type MemorySession struct {
-	counter  *IDCounter
-	incStore *PacketStore
-	outStore *PacketStore
+	Counter  *IDCounter
+	Incoming *PacketStore
+	Outgoing *PacketStore
 }
 
 // NewMemorySession returns a new MemorySession.
 func NewMemorySession() *MemorySession {
 	return &MemorySession{
-		counter:  NewIDCounter(),
-		incStore: NewPacketStore(),
-		outStore: NewPacketStore(),
+		Counter:  NewIDCounter(),
+		Incoming: NewPacketStore(),
+		Outgoing: NewPacketStore(),
 	}
 }
 
 // NextID will return the next id for outgoing packets.
 func (s *MemorySession) NextID() packet.ID {
-	return s.counter.NextID()
+	return s.Counter.NextID()
 }
 
 // SavePacket will store a packet in the session. An eventual existing
@@ -64,18 +64,19 @@ func (s *MemorySession) AllPackets(dir Direction) ([]packet.Generic, error) {
 
 // Reset will completely reset the session.
 func (s *MemorySession) Reset() error {
-	s.counter.Reset()
-	s.incStore.Reset()
-	s.outStore.Reset()
+	// reset counter and stores
+	s.Counter.Reset()
+	s.Incoming.Reset()
+	s.Outgoing.Reset()
 
 	return nil
 }
 
 func (s *MemorySession) storeForDirection(dir Direction) *PacketStore {
 	if dir == Incoming {
-		return s.incStore
+		return s.Incoming
 	} else if dir == Outgoing {
-		return s.outStore
+		return s.Outgoing
 	}
 
 	panic("unknown direction")
