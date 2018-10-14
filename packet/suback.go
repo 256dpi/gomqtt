@@ -11,7 +11,7 @@ import (
 // codes, that specify the maximum QOS levels that have been granted.
 type Suback struct {
 	// The granted QOS levels for the requested subscriptions.
-	ReturnCodes []uint8
+	ReturnCodes []QOS
 
 	// The packet identifier.
 	ID ID
@@ -80,13 +80,15 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 	rcl := int(rl) - 2
 
 	// read return codes
-	sp.ReturnCodes = make([]uint8, rcl)
-	copy(sp.ReturnCodes, src[total:total+rcl])
+	sp.ReturnCodes = make([]QOS, rcl)
+	for i, rc := range src[total : total+rcl] {
+		sp.ReturnCodes[i] = QOS(rc)
+	}
 	total += len(sp.ReturnCodes)
 
 	// validate return codes
 	for i, code := range sp.ReturnCodes {
-		if !validQOS(code) && code != QOSFailure {
+		if !code.Successful() && code != QOSFailure {
 			return total, makeError(sp.Type(), "invalid return code %d for topic %d", code, i)
 		}
 	}
@@ -102,7 +104,7 @@ func (sp *Suback) Encode(dst []byte) (int, error) {
 
 	// check return codes
 	for i, code := range sp.ReturnCodes {
-		if !validQOS(code) && code != QOSFailure {
+		if !code.Successful() && code != QOSFailure {
 			return total, makeError(sp.Type(), "invalid return code %d for topic %d", code, i)
 		}
 	}
@@ -124,7 +126,9 @@ func (sp *Suback) Encode(dst []byte) (int, error) {
 	total += 2
 
 	// write return codes
-	copy(dst[total:], sp.ReturnCodes)
+	for i, rc := range sp.ReturnCodes {
+		dst[total+i] = byte(rc)
+	}
 	total += len(sp.ReturnCodes)
 
 	return total, nil

@@ -7,9 +7,9 @@ import (
 )
 
 func TestQOSCodes(t *testing.T) {
-	assert.Equal(t, byte(0), QOSAtMostOnce)
-	assert.Equal(t, byte(1), QOSAtLeastOnce)
-	assert.Equal(t, byte(2), QOSExactlyOnce)
+	assert.Equal(t, QOS(0), QOSAtMostOnce)
+	assert.Equal(t, QOS(1), QOSAtLeastOnce)
+	assert.Equal(t, QOS(2), QOSExactlyOnce)
 }
 
 func TestFixedHeaderFlags(t *testing.T) {

@@ -11,7 +11,7 @@ type Message struct {
 	Payload []byte
 
 	// The QOS indicates the level of assurance for delivery.
-	QOS byte
+	QOS QOS
 
 	// If the Retain flag is set to true, the server must store the message,
 	// so that it can be delivered to future subscribers whose subscriptions

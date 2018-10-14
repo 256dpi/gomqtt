@@ -33,7 +33,7 @@ func TestPublishDecode1(t *testing.T) {
 	assert.Equal(t, ID(7), pkt.ID)
 	assert.Equal(t, "gomqtt", pkt.Message.Topic)
 	assert.Equal(t, []byte("send me home"), pkt.Message.Payload)
-	assert.Equal(t, uint8(1), pkt.Message.QOS)
+	assert.Equal(t, QOS(1), pkt.Message.QOS)
 	assert.Equal(t, true, pkt.Message.Retain)
 	assert.Equal(t, true, pkt.Dup)
 }
@@ -56,7 +56,7 @@ func TestPublishDecode2(t *testing.T) {
 	assert.Equal(t, ID(0), pkt.ID)
 	assert.Equal(t, "gomqtt", pkt.Message.Topic)
 	assert.Equal(t, []byte("send me home"), pkt.Message.Payload)
-	assert.Equal(t, uint8(0), pkt.Message.QOS)
+	assert.Equal(t, QOS(0), pkt.Message.QOS)
 	assert.Equal(t, false, pkt.Message.Retain)
 	assert.Equal(t, false, pkt.Dup)
 }

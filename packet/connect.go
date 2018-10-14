@@ -134,7 +134,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 	passwordFlag := ((connectFlags >> 6) & 0x1) == 1
 	willFlag := ((connectFlags >> 2) & 0x1) == 1
 	willRetain := ((connectFlags >> 5) & 0x1) == 1
-	willQOS := (connectFlags >> 3) & 0x3
+	willQOS := QOS((connectFlags >> 3) & 0x3)
 	cp.CleanSession = ((connectFlags >> 1) & 0x1) == 1
 
 	// check reserved bit
@@ -143,7 +143,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 	}
 
 	// check will qos
-	if !validQOS(willQOS) {
+	if !willQOS.Successful() {
 		return total, makeError(cp.Type(), "invalid QOS level (%d) for will message", willQOS)
 	}
 
@@ -281,12 +281,12 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 		}
 
 		// check will qos
-		if !validQOS(cp.Will.QOS) {
+		if !cp.Will.QOS.Successful() {
 			return total, makeError(cp.Type(), "invalid will qos level %d", cp.Will.QOS)
 		}
 
 		// set will qos flag
-		connectFlags = (connectFlags & 231) | (cp.Will.QOS << 3) // 231 = 11100111
+		connectFlags = (connectFlags & 231) | (byte(cp.Will.QOS) << 3) // 231 = 11100111
 
 		// set will retain flag
 		if cp.Will.Retain {

@@ -44,11 +44,11 @@ func TestSubscribeDecode(t *testing.T) {
 	assert.Equal(t, len(pktBytes), n)
 	assert.Equal(t, 3, len(pkt.Subscriptions))
 	assert.Equal(t, "gomqtt", pkt.Subscriptions[0].Topic)
-	assert.Equal(t, uint8(0), pkt.Subscriptions[0].QOS)
+	assert.Equal(t, QOS(0), pkt.Subscriptions[0].QOS)
 	assert.Equal(t, "/a/b/#/c", pkt.Subscriptions[1].Topic)
-	assert.Equal(t, uint8(1), pkt.Subscriptions[1].QOS)
+	assert.Equal(t, QOS(1), pkt.Subscriptions[1].QOS)
 	assert.Equal(t, "/a/b/#/cdd", pkt.Subscriptions[2].Topic)
-	assert.Equal(t, uint8(2), pkt.Subscriptions[2].QOS)
+	assert.Equal(t, QOS(2), pkt.Subscriptions[2].QOS)
 }
 
 func TestSubscribeDecodeError1(t *testing.T) {
@@ -144,6 +144,24 @@ func TestSubscribeDecodeError6(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestSubscribeDecodeError7(t *testing.T) {
+	pktBytes := []byte{
+		byte(SUBSCRIBE<<4) | 2,
+		5,
+		0, // packet ID MSB
+		7, // packet ID LSB
+		0, // topic name MSB
+		1, // topic name LSB
+		's',
+		0x81, // < invalid qos
+	}
+
+	pkt := NewSubscribe()
+	_, err := pkt.Decode(pktBytes)
+
+	assert.Error(t, err)
+}
+
 func TestSubscribeEncode(t *testing.T) {
 	pktBytes := []byte{
 		byte(SUBSCRIBE<<4) | 2,
@@ -206,6 +224,19 @@ func TestSubscribeEncodeError2(t *testing.T) {
 func TestSubscribeEncodeError3(t *testing.T) {
 	pkt := NewSubscribe()
 	pkt.ID = 0 // < zero packet id
+
+	dst := make([]byte, pkt.Len())
+	_, err := pkt.Encode(dst)
+
+	assert.Error(t, err)
+}
+
+func TestSubscribeEncodeError4(t *testing.T) {
+	pkt := NewSubscribe()
+	pkt.ID = 7
+	pkt.Subscriptions = []Subscription{
+		{string(make([]byte, 10)), 0x81}, // invalid qos
+	}
 
 	dst := make([]byte, pkt.Len())
 	_, err := pkt.Encode(dst)

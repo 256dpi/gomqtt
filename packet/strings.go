@@ -76,8 +76,3 @@ func writeLPBytes(buf []byte, b []byte, t Type) (int, error) {
 func writeLPString(buf []byte, str string, t Type) (int, error) {
 	return writeLPBytes(buf, []byte(str), t)
 }
-
-// checks the QOS value to see if it's valid
-func validQOS(qos byte) bool {
-	return qos == QOSAtMostOnce || qos == QOSAtLeastOnce || qos == QOSExactlyOnce
-}

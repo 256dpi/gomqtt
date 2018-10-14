@@ -58,10 +58,10 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 	// read flags
 	pp.Dup = ((flags >> 3) & 0x1) == 1
 	pp.Message.Retain = (flags & 0x1) == 1
-	pp.Message.QOS = (flags >> 1) & 0x3
+	pp.Message.QOS = QOS((flags >> 1) & 0x3)
 
 	// check qos
-	if !validQOS(pp.Message.QOS) {
+	if !pp.Message.QOS.Successful() {
 		return total, makeError(pp.Type(), "invalid QOS level (%d)", pp.Message.QOS)
 	}
 
@@ -136,7 +136,7 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 	}
 
 	// check qos
-	if !validQOS(pp.Message.QOS) {
+	if !pp.Message.QOS.Successful() {
 		return 0, makeError(pp.Type(), "invalid QOS level %d", pp.Message.QOS)
 	}
 
@@ -146,7 +146,7 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 	}
 
 	// set qos
-	flags = (flags & 249) | (pp.Message.QOS << 1) // 249 = 11111001
+	flags = (flags & 249) | (byte(pp.Message.QOS) << 1) // 249 = 11111001
 
 	// encode header
 	n, err := headerEncode(dst[total:], flags, pp.len(), pp.Len(), PUBLISH)

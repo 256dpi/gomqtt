@@ -12,7 +12,7 @@ type Subscription struct {
 	Topic string
 
 	// The requested maximum QOS level.
-	QOS uint8
+	QOS QOS
 }
 
 func (s *Subscription) String() string {
@@ -103,8 +103,14 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 			return total, makeError(sp.Type(), "insufficient buffer size, expected %d, got %d", total+1, len(src))
 		}
 
+		// read qos
+		qos := QOS(src[total])
+		if !qos.Successful() {
+			return total, makeError(sp.Type(), "invalid QOS level (%d)", qos)
+		}
+
 		// read qos and add subscription
-		sp.Subscriptions = append(sp.Subscriptions, Subscription{t, src[total]})
+		sp.Subscriptions = append(sp.Subscriptions, Subscription{t, qos})
 		total++
 
 		// decrement counter
@@ -149,8 +155,13 @@ func (sp *Subscribe) Encode(dst []byte) (int, error) {
 			return total, err
 		}
 
+		// check qos
+		if !t.QOS.Successful() {
+			return total, makeError(sp.Type(), "invalid QOS level (%d)", t.QOS)
+		}
+
 		// write qos
-		dst[total] = t.QOS
+		dst[total] = byte(t.QOS)
 
 		total++
 	}

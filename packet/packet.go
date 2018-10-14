@@ -3,21 +3,30 @@ package packet
 
 import "encoding/binary"
 
+// QOS is the type used to store quality of service levels.
+type QOS byte
+
 const (
 	// QOSAtMostOnce defines that the message is delivered at most once, or it
 	// may not be delivered at all.
-	QOSAtMostOnce byte = iota
+	QOSAtMostOnce QOS = iota
 
 	// QOSAtLeastOnce defines that the message is always delivered at least once.
-	QOSAtLeastOnce
+	QOSAtLeastOnce QOS = iota
 
 	// QOSExactlyOnce defines that the message is always delivered exactly once.
-	QOSExactlyOnce
+	QOSExactlyOnce QOS = iota
 
 	// QOSFailure indicates that there has been an error while subscribing
 	// to a specific topic.
-	QOSFailure = 0x80
+	QOSFailure QOS = 0x80
 )
+
+// Successful returns if the provided quality of service level represents a
+// successful value.
+func (qos QOS) Successful() bool {
+	return qos == QOSAtMostOnce || qos == QOSAtLeastOnce || qos == QOSExactlyOnce
+}
 
 // ID is the type used to store packet ids.
 type ID uint16
