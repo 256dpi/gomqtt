@@ -24,16 +24,16 @@ func (c *IDCounter) NextID() packet.ID {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
+	// ignore zeroes
+	if c.current == 0 {
+		c.current++
+	}
+
 	// cache current id
 	id := c.current
 
 	// increment id
 	c.current++
-
-	// increment again if current id is zero
-	if c.current == 0 {
-		c.current++
-	}
 
 	return id
 }
