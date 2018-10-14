@@ -25,4 +25,8 @@ func TestIDCounter(t *testing.T) {
 	counter.Reset()
 
 	assert.Equal(t, packet.ID(1), counter.NextID())
+
+	counter = NewIDCounterWithNext(10)
+
+	assert.Equal(t, packet.ID(10), counter.NextID())
 }

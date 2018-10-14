@@ -8,14 +8,20 @@ import (
 
 // An IDCounter continuously counts packet ids.
 type IDCounter struct {
-	current packet.ID
-	mutex   sync.Mutex
+	next  packet.ID
+	mutex sync.Mutex
 }
 
 // NewIDCounter returns a new counter.
 func NewIDCounter() *IDCounter {
+	return NewIDCounterWithNext(1)
+}
+
+// NewIDCounterWithNext returns a new counter that will emit the specified if
+// id as the next id.
+func NewIDCounterWithNext(next packet.ID) *IDCounter {
 	return &IDCounter{
-		current: 1,
+		next: next,
 	}
 }
 
@@ -25,15 +31,15 @@ func (c *IDCounter) NextID() packet.ID {
 	defer c.mutex.Unlock()
 
 	// ignore zeroes
-	if c.current == 0 {
-		c.current++
+	if c.next == 0 {
+		c.next++
 	}
 
-	// cache current id
-	id := c.current
+	// cache next id
+	id := c.next
 
 	// increment id
-	c.current++
+	c.next++
 
 	return id
 }
@@ -43,5 +49,5 @@ func (c *IDCounter) Reset() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	c.current = 1
+	c.next = 1
 }
