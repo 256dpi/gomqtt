@@ -390,11 +390,46 @@ func (c *Client) dequeuer() error {
 
 		c.backend.Log(MessageDequeued, c, nil, msg, nil)
 
-		// send message
-		err = c.sendMessage(msg, ack)
-		if err != nil {
-			return err // error has already been handled
+		// prepare publish packet
+		publish := packet.NewPublish()
+		publish.Message = *msg
+
+		// set packet id
+		if publish.Message.QOS > 0 {
+			publish.ID = c.session.NextID()
 		}
+
+		// store packet if at least qos 1
+		if publish.Message.QOS > 0 {
+			err := c.session.SavePacket(session.Outgoing, publish)
+			if err != nil {
+				return c.die(SessionError, err)
+			}
+		}
+
+		// acknowledge message
+		if ack != nil {
+			ack()
+
+			c.backend.Log(MessageAcknowledged, c, nil, msg, nil)
+		}
+
+		// send packet
+		err = c.send(publish, true)
+		if err != nil {
+			return c.die(TransportError, err)
+		}
+
+		// immediately put back dequeue token for qos 0 messages
+		if publish.Message.QOS == 0 {
+			select {
+			case c.dequeueTokens <- struct{}{}:
+			default:
+				// continue if full for some reason
+			}
+		}
+
+		c.backend.Log(MessageForwarded, c, nil, msg, nil)
 	}
 }
 
@@ -849,53 +884,6 @@ func (c *Client) processDisconnect() error {
 }
 
 /* helpers */
-
-// send messages
-func (c *Client) sendMessage(msg *packet.Message, ack Ack) error {
-	// prepare publish packet
-	publish := packet.NewPublish()
-	publish.Message = *msg
-
-	// set packet id
-	if publish.Message.QOS > 0 {
-		publish.ID = c.session.NextID()
-	}
-
-	// store packet if at least qos 1
-	if publish.Message.QOS > 0 {
-		err := c.session.SavePacket(session.Outgoing, publish)
-		if err != nil {
-			return c.die(SessionError, err)
-		}
-	}
-
-	// acknowledge message since it has been stored in the session if a quality
-	// of service > 0 is requested
-	if ack != nil {
-		ack()
-
-		c.backend.Log(MessageAcknowledged, c, nil, msg, nil)
-	}
-
-	// send packet
-	err := c.send(publish, true)
-	if err != nil {
-		return c.die(TransportError, err)
-	}
-
-	// immediately put back dequeue token for qos 0 messages
-	if publish.Message.QOS == 0 {
-		select {
-		case c.dequeueTokens <- struct{}{}:
-		default:
-			// continue if full for some reason
-		}
-	}
-
-	c.backend.Log(MessageForwarded, c, nil, msg, nil)
-
-	return nil
-}
 
 // send an acknowledgment
 func (c *Client) sendAck(pkt packet.Generic) error {
