@@ -201,8 +201,6 @@ type outgoing struct {
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
-	state uint32
-
 	// ParallelPublishes may be set during Setup to control the number of
 	// parallel calls to Publish a client can perform. This setting also has an
 	// effect on how many incoming packets are stored in the clients session.
@@ -235,6 +233,7 @@ type Client struct {
 	// Disconnect packets are not provided to the callback.
 	PacketCallback func(packet.Generic) error
 
+	state   uint32
 	backend Backend
 	conn    transport.Conn
 
