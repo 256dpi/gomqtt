@@ -564,3 +564,36 @@ func KeepAliveTimeoutTest(t *testing.T, config *Config) {
 	err = c.Test(conn)
 	assert.NoError(t, err)
 }
+
+// UnexpectedPubrelTest tests the broker for proper handling of unexpected pubrel
+// packets.
+func UnexpectedPubrelTest(t *testing.T, config *Config) {
+	username, password := config.usernamePassword()
+
+	connect := packet.NewConnect()
+	connect.Username = username
+	connect.Password = password
+
+	connack := packet.NewConnack()
+
+	pubrel := packet.NewPubrel()
+	pubrel.ID = 42
+
+	pubcomp := packet.NewPubcomp()
+	pubcomp.ID = 42
+
+	c := flow.New().
+		Send(connect).
+		Receive(connack).
+		Send(pubrel).
+		Receive(pubcomp).
+		Send(&packet.Disconnect{}).
+		End()
+
+	conn, err := transport.Dial(config.URL)
+	assert.NoError(t, err)
+	assert.NotNil(t, conn)
+
+	err = c.Test(conn)
+	assert.NoError(t, err)
+}

@@ -186,6 +186,10 @@ func Run(t *testing.T, config *Config) {
 		KeepAliveTimeoutTest(t, config)
 	})
 
+	t.Run("UnexpectedPubrel", func(t *testing.T) {
+		UnexpectedPubrelTest(t, config)
+	})
+
 	if config.RetainedMessages {
 		t.Run("RetainedMessageQOS0", func(t *testing.T) {
 			RetainedMessageTest(t, config, "retained/1", "retained/1", 0, 0)

@@ -794,15 +794,21 @@ func (c *Client) processPubrel(id packet.ID) error {
 		return c.die(SessionError, err)
 	}
 
+	// prepare pubcomp packet
+	pubcomp := packet.NewPubcomp()
+	pubcomp.ID = id
+
 	// get packet from store
 	publish, ok := pkt.(*packet.Publish)
 	if !ok {
-		return nil // ignore a wrongly sent Pubrel packet
-	}
+		// immediately send pubcomp for missing packets
+		err = c.send(pubcomp, true)
+		if err != nil {
+			return c.die(TransportError, err)
+		}
 
-	// prepare pubcomp packet
-	pubcomp := packet.NewPubcomp()
-	pubcomp.ID = publish.ID
+		return nil
+	}
 
 	// the pubrec packet will be cleared from the session once the pubcomp
 	// has been sent

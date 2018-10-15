@@ -123,7 +123,7 @@ func TestClientTokenTimeoutDequeue(t *testing.T) {
 		Receive(packet.NewConnack()).
 		Send(&packet.Subscribe{Subscriptions: []packet.Subscription{{Topic: "ttd", QOS: 2}}, ID: 1}).
 		Receive(&packet.Suback{ID: 1, ReturnCodes: []packet.QOS{2}}).
-		Run(func(){
+		Run(func() {
 			pf, err := client1.Publish("ttd", nil, 2, false)
 			assert.NoError(t, err)
 			assert.NoError(t, pf.Wait(10*time.Second))
