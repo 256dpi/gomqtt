@@ -15,7 +15,7 @@ import (
 )
 
 // PublishSubscribeTest tests the broker for basic pub sub support.
-func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS, pubQOS packet.QOS) {
+func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS, pubQOS, recQOS packet.QOS) {
 	c := client.New()
 	wait := make(chan struct{})
 
@@ -23,7 +23,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 		assert.NoError(t, err)
 		assert.Equal(t, pub, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, packet.QOS(subQOS), msg.QOS)
+		assert.Equal(t, packet.QOS(recQOS), msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
