@@ -662,7 +662,7 @@ func (c *Client) processPingreq() error {
 	return nil
 }
 
-// handle an incoming Subscribe packet
+// handle an incoming subscribe packet
 func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
 	// acquire subscribe token
 	select {
@@ -698,7 +698,7 @@ func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
 	return nil
 }
 
-// handle an incoming Unsubscribe packet
+// handle an incoming unsubscribe packet
 func (c *Client) processUnsubscribe(pkt *packet.Unsubscribe) error {
 	// acquire subscribe token
 	select {
@@ -728,11 +728,11 @@ func (c *Client) processUnsubscribe(pkt *packet.Unsubscribe) error {
 	return nil
 }
 
-// handle an incoming Publish packet
+// handle an incoming publish packet
 func (c *Client) processPublish(publish *packet.Publish) error {
 	// handle qos 0 flow
 	if publish.Message.QOS == 0 {
-		// publish message to others
+		// publish message
 		err := c.backend.Publish(c, &publish.Message, nil)
 		if err != nil {
 			return c.die(BackendError, err)
@@ -759,7 +759,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		puback := packet.NewPuback()
 		puback.ID = publish.ID
 
-		// publish message to others and queue puback if ack is called
+		// publish message and queue puback if ack is called
 		err := c.backend.Publish(c, &publish.Message, func() {
 			c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
@@ -797,7 +797,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 	return nil
 }
 
-// handle an incoming Puback or Pubcomp packet
+// handle an incoming p or pubcomp packet
 func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	// remove packet from store
 	err := c.session.DeletePacket(session.Outgoing, id)
@@ -815,13 +815,13 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	return nil
 }
 
-// handle an incoming Pubrec packet
+// handle an incoming pubrec packet
 func (c *Client) processPubrec(id packet.ID) error {
 	// allocate packet
 	pubrel := packet.NewPubrel()
 	pubrel.ID = id
 
-	// overwrite stored Publish with the Pubrel packet
+	// overwrite stored publish with the pubrel packet
 	err := c.session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
 		return c.die(SessionError, err)
@@ -836,7 +836,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 	return nil
 }
 
-// handle an incoming Pubrel packet
+// handle an incoming pubrel packet
 func (c *Client) processPubrel(id packet.ID) error {
 	// get stored publish packet from session
 	pkt, err := c.session.LookupPacket(session.Incoming, id)
@@ -860,10 +860,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 		return nil
 	}
 
-	// the pubrec packet will be cleared from the session once the pubcomp
-	// has been sent
-
-	// publish message to others and queue pubcomp if ack is called
+	// publish message and queue pubcomp if ack is called
 	err = c.backend.Publish(c, &publish.Message, func() {
 		c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
@@ -881,7 +878,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	return nil
 }
 
-// handle an incoming Disconnect packet
+// handle an incoming disconnect packet
 func (c *Client) processDisconnect() error {
 	// clear will
 	c.will = nil
@@ -929,7 +926,7 @@ func (c *Client) die(event LogEvent, err error) error {
 func (c *Client) cleanup() {
 	// check if not cleanly connected and will is present
 	if atomic.LoadUint32(&c.state) == clientConnected && c.will != nil {
-		// publish message to others
+		// publish message
 		err := c.backend.Publish(c, c.will, nil)
 		if err != nil {
 			c.backend.Log(BackendError, c, nil, nil, err)
