@@ -727,7 +727,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 
 	// handle qos 2 flow
 	if publish.Message.QOS == 2 {
-		// store packet
+		// store received publish packet in session
 		err := c.session.SavePacket(session.Incoming, publish)
 		if err != nil {
 			return c.die(SessionError, err)
@@ -788,7 +788,7 @@ func (c *Client) processPubrec(id packet.ID) error {
 
 // handle an incoming Pubrel packet
 func (c *Client) processPubrel(id packet.ID) error {
-	// get publish packet from store
+	// get stored publish packet from session
 	pkt, err := c.session.LookupPacket(session.Incoming, id)
 	if err != nil {
 		return c.die(SessionError, err)
@@ -908,7 +908,7 @@ func (c *Client) sendAck(pkt packet.Generic) error {
 		return err // error already handled
 	}
 
-	// remove pubrec from session
+	// remove publish from session
 	if pubcomp, ok := pkt.(*packet.Pubcomp); ok {
 		err = c.session.DeletePacket(session.Incoming, pubcomp.ID)
 		if err != nil {
