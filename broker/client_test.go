@@ -96,3 +96,59 @@ func TestClientTokenTimeoutPublish(t *testing.T) {
 
 	safeReceive(done)
 }
+
+func TestClientTokenTimeoutDequeue(t *testing.T) {
+	backend := &testMemoryBackend{
+		MemoryBackend: *NewMemoryBackend(),
+	}
+
+	backend.MemoryBackend.ClientParallelDequeues = 1
+	backend.MemoryBackend.ClientTokenTimeout = 10 * time.Millisecond
+
+	port, quit, done := Run(NewEngine(backend), "tcp")
+
+	options := client.NewConfig("tcp://localhost:" + port)
+
+	client1 := client.New()
+
+	cf, err := client1.Connect(options)
+	assert.NoError(t, err)
+	assert.NoError(t, cf.Wait(10*time.Second))
+
+	pf, err := client1.Publish("cool", nil, 0, false)
+	assert.NoError(t, err)
+	assert.NoError(t, pf.Wait(10*time.Second))
+
+	conn, err := transport.Dial("tcp://localhost:" + port)
+	assert.NoError(t, err)
+
+	f := flow.New().Debug().
+		Send(packet.NewConnect()).
+		Receive(packet.NewConnack()).
+		Send(&packet.Subscribe{Subscriptions: []packet.Subscription{{Topic: "cool", QOS: 2}}, ID: 1}).
+		Receive(&packet.Suback{ID: 1, ReturnCodes: []packet.QOS{2}}).
+		Run(func(){
+			pf, err := client1.Publish("cool", nil, 2, false)
+			assert.NoError(t, err)
+			assert.NoError(t, pf.Wait(10*time.Second))
+
+			pf, err = client1.Publish("cool", nil, 2, false)
+			assert.NoError(t, err)
+			assert.NoError(t, pf.Wait(10*time.Second))
+		}).
+		Receive(&packet.Publish{Message: packet.Message{Topic: "cool", QOS: 2}, ID: 1}).
+		End()
+
+	err = f.Test(conn)
+	assert.NoError(t, err)
+
+	err = client1.Disconnect()
+	assert.NoError(t, err)
+
+	ret := backend.Close(5 * time.Second)
+	assert.True(t, ret)
+
+	close(quit)
+
+	safeReceive(done)
+}
