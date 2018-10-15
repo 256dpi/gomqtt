@@ -192,11 +192,6 @@ const (
 	clientDisconnected
 )
 
-type outgoing struct {
-	pkt packet.Generic
-	ack Ack
-}
-
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
 	// ParallelPublishes may be set during Setup to control the number of
@@ -239,7 +234,7 @@ type Client struct {
 	will    *packet.Message
 	session Session
 
-	outgoing chan outgoing
+	ackQueue chan packet.Generic
 
 	publishTokens   chan struct{}
 	subscribeTokens chan struct{}
@@ -333,9 +328,9 @@ func (c *Client) processor() error {
 		return err // error has already been handled
 	}
 
-	// start dequeuer and sender
+	// start dequeuer and acker
 	c.tomb.Go(c.dequeuer)
-	c.tomb.Go(c.sender)
+	c.tomb.Go(c.acker)
 
 	for {
 		// check if still alive
@@ -433,40 +428,38 @@ func (c *Client) dequeuer() error {
 	}
 }
 
-// message and packet sender
-func (c *Client) sender() error {
+// packet acker
+func (c *Client) acker() error {
 	for {
 		select {
-		case e := <-c.outgoing:
-			if e.pkt != nil {
-				// send packet
-				err := c.send(e.pkt, true)
+		case pkt := <-c.ackQueue:
+			// send packet
+			err := c.send(pkt, true)
+			if err != nil {
+				return err // error already handled
+			}
+
+			// remove publish from session if pubcomp
+			if pubcomp, ok := pkt.(*packet.Pubcomp); ok {
+				err = c.session.DeletePacket(session.Incoming, pubcomp.ID)
 				if err != nil {
-					return err // error already handled
+					return c.die(SessionError, err)
 				}
+			}
 
-				// remove publish from session if pubcomp
-				if pubcomp, ok := e.pkt.(*packet.Pubcomp); ok {
-					err = c.session.DeletePacket(session.Incoming, pubcomp.ID)
-					if err != nil {
-						return c.die(SessionError, err)
-					}
+			// put back tokens based on type
+			switch pkt.(type) {
+			case *packet.Suback, *packet.Unsuback:
+				select {
+				case c.subscribeTokens <- struct{}{}:
+				default:
+					// continue if full for some reason
 				}
-
-				// put back tokens based on type
-				switch e.pkt.(type) {
-				case *packet.Suback, *packet.Unsuback:
-					select {
-					case c.subscribeTokens <- struct{}{}:
-					default:
-						// continue if full for some reason
-					}
-				case *packet.Puback, *packet.Pubcomp:
-					select {
-					case c.publishTokens <- struct{}{}:
-					default:
-						// continue if full for some reason
-					}
+			case *packet.Puback, *packet.Pubcomp:
+				select {
+				case c.publishTokens <- struct{}{}:
+				default:
+					// continue if full for some reason
 				}
 			}
 		case <-c.tomb.Dying():
@@ -570,8 +563,8 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 		c.dequeueTokens <- struct{}{}
 	}
 
-	// create outgoing queue
-	c.outgoing = make(chan outgoing, c.ParallelPublishes+c.InflightMessages+c.ParallelSubscribes)
+	// create ack queue
+	c.ackQueue = make(chan packet.Generic, c.ParallelPublishes+c.InflightMessages+c.ParallelSubscribes)
 
 	// save will if present
 	if pkt.Will != nil {
@@ -687,7 +680,7 @@ func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
 	// subscribe client to queue
 	err := c.backend.Subscribe(c, pkt.Subscriptions, func() {
 		select {
-		case c.outgoing <- outgoing{pkt: suback}:
+		case c.ackQueue <- suback:
 		case <-c.tomb.Dying():
 		}
 	})
@@ -717,7 +710,7 @@ func (c *Client) processUnsubscribe(pkt *packet.Unsubscribe) error {
 	// unsubscribe topics
 	err := c.backend.Unsubscribe(c, pkt.Topics, func() {
 		select {
-		case c.outgoing <- outgoing{pkt: unsuback}:
+		case c.ackQueue <- unsuback:
 		case <-c.tomb.Dying():
 		}
 	})
@@ -764,7 +757,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 			c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
 			select {
-			case c.outgoing <- outgoing{pkt: puback}:
+			case c.ackQueue <- puback:
 			case <-c.tomb.Dying():
 			}
 		})
@@ -878,7 +871,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 		c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
 		select {
-		case c.outgoing <- outgoing{pkt: pubcomp}:
+		case c.ackQueue <- pubcomp:
 		case <-c.tomb.Dying():
 		}
 	})
