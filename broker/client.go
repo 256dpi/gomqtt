@@ -439,10 +439,34 @@ func (c *Client) sender() error {
 		select {
 		case e := <-c.outgoing:
 			if e.pkt != nil {
-				// send acknowledgment
-				err := c.sendAck(e.pkt)
+				// send packet
+				err := c.send(e.pkt, true)
 				if err != nil {
-					return err // error has already been handled
+					return err // error already handled
+				}
+
+				// remove publish from session if pubcomp
+				if pubcomp, ok := e.pkt.(*packet.Pubcomp); ok {
+					err = c.session.DeletePacket(session.Incoming, pubcomp.ID)
+					if err != nil {
+						return c.die(SessionError, err)
+					}
+				}
+
+				// put back tokens based on type
+				switch e.pkt.(type) {
+				case *packet.Suback, *packet.Unsuback:
+					select {
+					case c.subscribeTokens <- struct{}{}:
+					default:
+						// continue if full for some reason
+					}
+				case *packet.Puback, *packet.Pubcomp:
+					select {
+					case c.publishTokens <- struct{}{}:
+					default:
+						// continue if full for some reason
+					}
 				}
 			}
 		case <-c.tomb.Dying():
@@ -884,43 +908,6 @@ func (c *Client) processDisconnect() error {
 }
 
 /* helpers */
-
-// send an acknowledgment
-func (c *Client) sendAck(pkt packet.Generic) error {
-	// send packet
-	err := c.send(pkt, true)
-	if err != nil {
-		return err // error already handled
-	}
-
-	// remove publish from session
-	if pubcomp, ok := pkt.(*packet.Pubcomp); ok {
-		err = c.session.DeletePacket(session.Incoming, pubcomp.ID)
-		if err != nil {
-			return c.die(SessionError, err)
-		}
-	}
-
-	// check ack type
-	switch pkt.(type) {
-	case *packet.Suback, *packet.Unsuback:
-		// put back subscribe token
-		select {
-		case c.subscribeTokens <- struct{}{}:
-		default:
-			// continue if full for some reason
-		}
-	case *packet.Puback, *packet.Pubcomp:
-		// put back publish token
-		select {
-		case c.publishTokens <- struct{}{}:
-		default:
-			// continue if full for some reason
-		}
-	}
-
-	return nil
-}
 
 // send a packet
 func (c *Client) send(pkt packet.Generic, async bool) error {
