@@ -71,11 +71,15 @@ var ErrKillTimeout = errors.New("kill timeout")
 
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
-	// The maximal size of the session queue. Will default to 100 if not set.
+	// The maximal size of the session queue.
+	//
+	// Will default to 100.
 	SessionQueueSize int
 
 	// The time after an error is returned while waiting on an killed existing
-	// client to exit. Will default to 5 seconds if not set.
+	// client to exit.
+	//
+	// Will default to 5 seconds.
 	KillTimeout time.Duration
 
 	// A map of username and passwords that grant read and write access.
@@ -312,8 +316,8 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, ac
 // Unsubscribe is not needed at the moment.
 func (m *MemoryBackend) Unsubscribe(client *Client, topics []string, ack Ack) error {
 	// delete subscriptions
-	for _, topic := range topics {
-		client.Session().(*memorySession).subscriptions.Empty(topic)
+	for _, t := range topics {
+		client.Session().(*memorySession).subscriptions.Empty(t)
 	}
 
 	// call ack if provided
