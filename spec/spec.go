@@ -74,36 +74,36 @@ func (c *Config) clientID() string {
 
 // Run will fully test a to support all specified features in the matrix.
 func Run(t *testing.T, config *Config) {
-	t.Run("PublishSubscribeQOS00", func(t *testing.T) {
+	t.Run("PublishSubscribeQOS0", func(t *testing.T) {
 		PublishSubscribeTest(t, config, "pubsub/1", "pubsub/1", 0, 0, 0)
 	})
 
-	t.Run("PublishSubscribeQOS11", func(t *testing.T) {
+	t.Run("PublishSubscribeQOS1", func(t *testing.T) {
 		PublishSubscribeTest(t, config, "pubsub/2", "pubsub/2", 1, 1, 1)
 	})
 
-	t.Run("PublishSubscribeQOS22", func(t *testing.T) {
+	t.Run("PublishSubscribeQOS2", func(t *testing.T) {
 		PublishSubscribeTest(t, config, "pubsub/3", "pubsub/3", 2, 2, 2)
 	})
 
 	t.Run("PublishSubscribeWildcardOne", func(t *testing.T) {
-		PublishSubscribeTest(t, config, "pubsub/4/foo", "pubsub/4/+", 0, 0, 0)
+		PublishSubscribeTest(t, config, "wildcard/1/foo", "wildcard/1/+", 0, 0, 0)
 	})
 
 	t.Run("PublishSubscribeWildcardSome", func(t *testing.T) {
-		PublishSubscribeTest(t, config, "pubsub/5/foo", "pubsub/5/#", 0, 0, 0)
+		PublishSubscribeTest(t, config, "wildcard/2/foo", "wildcard/2/#", 0, 0, 0)
 	})
 
 	t.Run("PublishSubscribeQOSDowngrade1To0", func(t *testing.T) {
-		PublishSubscribeTest(t, config, "pubsub/6", "pubsub/6", 0, 1, 0)
+		PublishSubscribeTest(t, config, "downgrade/1", "downgrade/1", 0, 1, 0)
 	})
 
 	t.Run("PublishSubscribeQOSDowngrade2To0", func(t *testing.T) {
-		PublishSubscribeTest(t, config, "pubsub/7", "pubsub/7", 0, 2, 0)
+		PublishSubscribeTest(t, config, "downgrade/2", "downgrade/2", 0, 2, 0)
 	})
 
 	t.Run("PublishSubscribeQOSDowngrade2To1", func(t *testing.T) {
-		PublishSubscribeTest(t, config, "pubsub/8", "pubsub/8", 1, 2, 1)
+		PublishSubscribeTest(t, config, "downgrade/3", "downgrade/3", 1, 2, 1)
 	})
 
 	t.Run("UnsubscribeQOS0", func(t *testing.T) {
