@@ -564,7 +564,7 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	}
 
 	// create ack queue
-	c.ackQueue = make(chan packet.Generic, c.ParallelPublishes+c.InflightMessages+c.ParallelSubscribes)
+	c.ackQueue = make(chan packet.Generic, c.ParallelPublishes+c.ParallelSubscribes)
 
 	// save will if present
 	if pkt.Will != nil {
