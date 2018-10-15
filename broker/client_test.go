@@ -6,6 +6,8 @@ import (
 
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/transport"
+	"github.com/256dpi/gomqtt/transport/flow"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -61,4 +63,36 @@ func TestClientPacketCallback(t *testing.T) {
 	assert.Len(t, backend.packets, 2)
 	assert.Equal(t, packet.SUBSCRIBE, backend.packets[0].Type())
 	assert.Equal(t, packet.PUBLISH, backend.packets[1].Type())
+}
+
+func TestClientTokenTimeoutPublish(t *testing.T) {
+	backend := &testMemoryBackend{
+		MemoryBackend: *NewMemoryBackend(),
+	}
+
+	backend.MemoryBackend.ClientParallelPublishes = 1
+	backend.MemoryBackend.ClientTokenTimeout = 10 * time.Millisecond
+
+	port, quit, done := Run(NewEngine(backend), "tcp")
+
+	conn, err := transport.Dial("tcp://localhost:" + port)
+	assert.NoError(t, err)
+
+	f := flow.New().
+		Send(packet.NewConnect()).
+		Receive(packet.NewConnack()).
+		Send(&packet.Publish{Message: packet.Message{Topic: "cool", QOS: 2}, ID: 1}).
+		Receive(&packet.Pubrec{ID: 1}).
+		Send(&packet.Publish{Message: packet.Message{Topic: "cool", QOS: 2}, ID: 2}).
+		End()
+
+	err = f.Test(conn)
+	assert.NoError(t, err)
+
+	ret := backend.Close(5 * time.Second)
+	assert.True(t, ret)
+
+	close(quit)
+
+	safeReceive(done)
 }

@@ -691,21 +691,21 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		c.backend.Log(MessagePublished, c, nil, &publish.Message, nil)
 	}
 
+	// acquire publish token
+	select {
+	case <-c.publishTokens:
+		// continue
+	case <-time.After(c.TokenTimeout):
+		return c.die(ClientError, ErrTokenTimeout)
+	case <-c.tomb.Dying():
+		return tomb.ErrDying
+	}
+
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		// prepare puback
 		puback := packet.NewPuback()
 		puback.ID = publish.ID
-
-		// acquire publish token
-		select {
-		case <-c.publishTokens:
-			// continue
-		case <-time.After(c.TokenTimeout):
-			return c.die(ClientError, ErrTokenTimeout)
-		case <-c.tomb.Dying():
-			return tomb.ErrDying
-		}
 
 		// publish message to others and queue puback if ack is called
 		err := c.backend.Publish(c, &publish.Message, func() {
