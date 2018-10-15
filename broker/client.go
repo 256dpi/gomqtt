@@ -213,12 +213,12 @@ type Client struct {
 	// Will default to 10.
 	ParallelSubscribes int
 
-	// ParallelDequeues may be set during Setup to control the number of
-	// parallel calls to Dequeue a client can perform. This setting also has an
-	// effect on how many outgoing packets are stored in the clients session.
+	// InflightMessages may be set during Setup to control the number of
+	// inflight messages from the broker to the client. This also defines how
+	// many outgoing packets are stored in the clients session.
 	//
 	// Will default to 10.
-	ParallelDequeues int
+	InflightMessages int
 
 	// TokenTimeout sets the timeout after which the client should fail when
 	// obtaining publish, subscribe and dequeue tokens in order to prevent
@@ -493,8 +493,8 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	}
 
 	// set default parallel dequeues
-	if c.ParallelDequeues <= 0 {
-		c.ParallelDequeues = 10
+	if c.InflightMessages <= 0 {
+		c.InflightMessages = 10
 	}
 
 	// set default token timeout
@@ -515,13 +515,13 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	}
 
 	// prepare dequeue tokens
-	c.dequeueTokens = make(chan struct{}, c.ParallelDequeues)
-	for i := 0; i < c.ParallelDequeues; i++ {
+	c.dequeueTokens = make(chan struct{}, c.InflightMessages)
+	for i := 0; i < c.InflightMessages; i++ {
 		c.dequeueTokens <- struct{}{}
 	}
 
 	// create outgoing queue
-	c.outgoing = make(chan outgoing, c.ParallelPublishes+c.ParallelDequeues+c.ParallelSubscribes)
+	c.outgoing = make(chan outgoing, c.ParallelPublishes+c.InflightMessages+c.ParallelSubscribes)
 
 	// save will if present
 	if pkt.Will != nil {

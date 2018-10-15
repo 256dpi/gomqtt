@@ -85,7 +85,7 @@ type MemoryBackend struct {
 	// Client configuration options. See broker.Client for details.
 	ClientParallelPublishes  int
 	ClientParallelSubscribes int
-	ClientParallelDequeues   int
+	ClientInflightMessages   int
 	ClientTokenTimeout       time.Duration
 
 	// A map of username and passwords that grant read and write access.
@@ -158,7 +158,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	// apply client settings
 	client.ParallelPublishes = m.ClientParallelPublishes
 	client.ParallelSubscribes = m.ClientParallelSubscribes
-	client.ParallelDequeues = m.ClientParallelDequeues
+	client.InflightMessages = m.ClientInflightMessages
 	client.TokenTimeout = m.ClientTokenTimeout
 
 	// return a new temporary session if id is zero

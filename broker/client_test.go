@@ -102,7 +102,7 @@ func TestClientTokenTimeoutDequeue(t *testing.T) {
 		MemoryBackend: *NewMemoryBackend(),
 	}
 
-	backend.MemoryBackend.ClientParallelDequeues = 1
+	backend.MemoryBackend.ClientInflightMessages = 1
 	backend.MemoryBackend.ClientTokenTimeout = 10 * time.Millisecond
 
 	port, quit, done := Run(NewEngine(backend), "tcp")
