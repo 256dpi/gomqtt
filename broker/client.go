@@ -201,16 +201,23 @@ type Client struct {
 	state uint32
 
 	// ParallelPublishes may be set during Setup to control the number of
-	// parallel calls to Publish a client can perform. Will default to 10.
+	// parallel calls to Publish a client can perform. This setting also has an
+	// effect on how many incoming packets are stored in the clients session.
+	//
+	// Will default to 10.
 	ParallelPublishes int
 
 	// ParallelSubscribes may be set during Setup to control the number of
 	// parallel calls to Subscribe and Unsubscribe a client can perform.
+	//
 	// Will default to 10.
 	ParallelSubscribes int
 
 	// ParallelDequeues may be set during Setup to control the number of
-	// parallel calls to Dequeue a client can perform. Will default to 10.
+	// parallel calls to Dequeue a client can perform. This setting also has an
+	// effect on how many outgoing packets are stored in the clients session.
+	//
+	// Will default to 10.
 	ParallelDequeues int
 
 	// PacketCallback can be set to inspect packets before processing and
