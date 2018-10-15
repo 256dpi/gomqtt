@@ -221,7 +221,8 @@ type Client struct {
 	ParallelDequeues int
 
 	// PacketCallback can be set to inspect packets before processing and
-	// apply rate limits. Connect packets will not be provided to the callback.
+	// apply rate limits. To guarantee the connection lifecycle, Connect and
+	// Disconnect packets are not provided to the callback.
 	PacketCallback func(packet.Generic) error
 
 	backend Backend
@@ -344,7 +345,7 @@ func (c *Client) processor() error {
 		c.backend.Log(PacketReceived, c, pkt, nil, nil)
 
 		// call callback
-		if c.PacketCallback != nil {
+		if c.PacketCallback != nil && pkt.Type() != packet.DISCONNECT {
 			err = c.PacketCallback(pkt)
 			if err != nil {
 				return c.die(ClientError, err)
