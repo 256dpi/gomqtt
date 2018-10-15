@@ -42,11 +42,11 @@ func TestClientPacketCallback(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, cf.Wait(10*time.Second))
 
-	sf, err := client1.Subscribe("cool", 0)
+	sf, err := client1.Subscribe("pc", 0)
 	assert.NoError(t, err)
 	assert.NoError(t, sf.Wait(10*time.Second))
 
-	pf, err := client1.Publish("cool", nil, 0, false)
+	pf, err := client1.Publish("pc", nil, 0, false)
 	assert.NoError(t, err)
 	assert.NoError(t, pf.Wait(10*time.Second))
 
@@ -81,9 +81,9 @@ func TestClientTokenTimeoutPublish(t *testing.T) {
 	f := flow.New().
 		Send(packet.NewConnect()).
 		Receive(packet.NewConnack()).
-		Send(&packet.Publish{Message: packet.Message{Topic: "cool", QOS: 2}, ID: 1}).
+		Send(&packet.Publish{Message: packet.Message{Topic: "ttp", QOS: 2}, ID: 1}).
 		Receive(&packet.Pubrec{ID: 1}).
-		Send(&packet.Publish{Message: packet.Message{Topic: "cool", QOS: 2}, ID: 2}).
+		Send(&packet.Publish{Message: packet.Message{Topic: "ttp", QOS: 2}, ID: 2}).
 		End()
 
 	err = f.Test(conn)
@@ -115,28 +115,24 @@ func TestClientTokenTimeoutDequeue(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, cf.Wait(10*time.Second))
 
-	pf, err := client1.Publish("cool", nil, 0, false)
-	assert.NoError(t, err)
-	assert.NoError(t, pf.Wait(10*time.Second))
-
 	conn, err := transport.Dial("tcp://localhost:" + port)
 	assert.NoError(t, err)
 
 	f := flow.New().
 		Send(packet.NewConnect()).
 		Receive(packet.NewConnack()).
-		Send(&packet.Subscribe{Subscriptions: []packet.Subscription{{Topic: "cool", QOS: 2}}, ID: 1}).
+		Send(&packet.Subscribe{Subscriptions: []packet.Subscription{{Topic: "ttd", QOS: 2}}, ID: 1}).
 		Receive(&packet.Suback{ID: 1, ReturnCodes: []packet.QOS{2}}).
 		Run(func(){
-			pf, err := client1.Publish("cool", nil, 2, false)
+			pf, err := client1.Publish("ttd", nil, 2, false)
 			assert.NoError(t, err)
 			assert.NoError(t, pf.Wait(10*time.Second))
 
-			pf, err = client1.Publish("cool", nil, 2, false)
+			pf, err = client1.Publish("ttd", nil, 2, false)
 			assert.NoError(t, err)
 			assert.NoError(t, pf.Wait(10*time.Second))
 		}).
-		Receive(&packet.Publish{Message: packet.Message{Topic: "cool", QOS: 2}, ID: 1}).
+		Receive(&packet.Publish{Message: packet.Message{Topic: "ttd", QOS: 2}, ID: 1}).
 		End()
 
 	err = f.Test(conn)
