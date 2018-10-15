@@ -40,7 +40,7 @@ func (s *memorySession) lookupSubscription(topic string) *packet.Subscription {
 	return nil
 }
 
-func (s *memorySession) applyQoS(msg *packet.Message) *packet.Message {
+func (s *memorySession) applyQOS(msg *packet.Message) *packet.Message {
 	// get subscription
 	sub := s.lookupSubscription(msg.Topic)
 	if sub != nil {
@@ -429,9 +429,9 @@ func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 	// get next message from queue
 	select {
 	case msg := <-sess.temporary:
-		return sess.applyQoS(msg), nil, nil
+		return sess.applyQOS(msg), nil, nil
 	case msg := <-sess.stored:
-		return sess.applyQoS(msg), nil, nil
+		return sess.applyQOS(msg), nil, nil
 	case <-client.Closing():
 		return nil, nil, nil
 	}

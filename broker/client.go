@@ -131,7 +131,7 @@ type Backend interface {
 	// Publish should forward the passed message to all other clients that hold
 	// a subscription that matches the messages topic. It should also add the
 	// message to all sessions that have a matching offline subscription. The
-	// later may only apply to messages with a QoS greater than 0. If an Ack is
+	// later may only apply to messages with a QOS greater than 0. If an Ack is
 	// provided, the message will be acknowledged when called during or after
 	// the call to Publish.
 	//
@@ -150,7 +150,7 @@ type Backend interface {
 	// from the queue. The Client might dequeue other messages before acknowledging
 	// a message.
 	//
-	// The returned message must have a QoS set that respects the QoS set by
+	// The returned message must have a QOS set that respects the QOS set by
 	// the matching subscription.
 	Dequeue(client *Client) (*packet.Message, Ack, error)
 
