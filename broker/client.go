@@ -168,24 +168,23 @@ type Backend interface {
 	Log(event LogEvent, client *Client, pkt packet.Generic, msg *packet.Message, err error)
 }
 
-// ErrExpectedConnect is returned when the first received packet is not a
-// Connect.
-var ErrExpectedConnect = errors.New("expected a Connect as the first packet")
+// ErrUnexpectedPacket is returned when an unexpected packet is received.
+var ErrUnexpectedPacket = errors.New("unexpected packet")
 
 // ErrNotAuthorized is returned when a client is not authorized.
-var ErrNotAuthorized = errors.New("client is not authorized")
+var ErrNotAuthorized = errors.New("not authorized")
 
 // ErrMissingSession is returned if the backend does not return a session.
-var ErrMissingSession = errors.New("no session returned from Backend")
+var ErrMissingSession = errors.New("missing session")
 
 // ErrTokenTimeout is returned if the client reaches the token timeout.
 var ErrTokenTimeout = errors.New("token timeout")
 
 // ErrClientDisconnected is returned if a client disconnects cleanly.
-var ErrClientDisconnected = errors.New("client has disconnected")
+var ErrClientDisconnected = errors.New("client disconnected")
 
 // ErrClientClosed is returned if a client is being closed by the broker.
-var ErrClientClosed = errors.New("client has been closed")
+var ErrClientClosed = errors.New("client closed")
 
 const (
 	clientConnecting uint32 = iota
@@ -326,13 +325,13 @@ func (c *Client) processor() error {
 	// get connect
 	connect, ok := pkt.(*packet.Connect)
 	if !ok {
-		return c.die(ClientError, ErrExpectedConnect)
+		return c.die(ClientError, ErrUnexpectedPacket)
 	}
 
 	// process connect
 	err = c.processConnect(connect)
 	if err != nil {
-		return err // error has already been cleaned
+		return err // error has already been handled
 	}
 
 	// start dequeuer and sender
@@ -364,7 +363,7 @@ func (c *Client) processor() error {
 		// process packet
 		err = c.processPacket(pkt)
 		if err != nil {
-			return err // error has already been cleaned
+			return err // error has already been handled
 		}
 	}
 }
@@ -411,13 +410,13 @@ func (c *Client) sender() error {
 				// send acknowledgment
 				err := c.sendAck(e.pkt)
 				if err != nil {
-					return err // error has already been cleaned
+					return err // error has already been handled
 				}
 			} else if e.msg != nil {
 				// send message
 				err := c.sendMessage(e.msg, e.ack)
 				if err != nil {
-					return err // error has already been cleaned
+					return err // error has already been handled
 				}
 			}
 		case <-c.tomb.Dying():
@@ -590,11 +589,13 @@ func (c *Client) processPacket(pkt packet.Generic) error {
 		err = c.processPingreq()
 	case *packet.Disconnect:
 		err = c.processDisconnect()
+	default:
+		err = c.die(ClientError, ErrUnexpectedPacket)
 	}
 
 	// return eventual error
 	if err != nil {
-		return err // error has already been cleaned
+		return err // error has already been handled
 	}
 
 	return nil
