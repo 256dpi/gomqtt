@@ -194,7 +194,6 @@ const (
 
 type outgoing struct {
 	pkt packet.Generic
-	msg *packet.Message
 	ack Ack
 }
 
@@ -391,12 +390,10 @@ func (c *Client) dequeuer() error {
 
 		c.backend.Log(MessageDequeued, c, nil, msg, nil)
 
-		// queue message
-		select {
-		case c.outgoing <- outgoing{msg: msg, ack: ack}:
-			// continue
-		case <-c.tomb.Dying():
-			return tomb.ErrDying
+		// send message
+		err = c.sendMessage(msg, ack)
+		if err != nil {
+			return err // error has already been handled
 		}
 	}
 }
@@ -409,12 +406,6 @@ func (c *Client) sender() error {
 			if e.pkt != nil {
 				// send acknowledgment
 				err := c.sendAck(e.pkt)
-				if err != nil {
-					return err // error has already been handled
-				}
-			} else if e.msg != nil {
-				// send message
-				err := c.sendMessage(e.msg, e.ack)
 				if err != nil {
 					return err // error has already been handled
 				}
