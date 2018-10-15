@@ -756,7 +756,11 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	}
 
 	// put back dequeue token
-	c.dequeueTokens <- struct{}{}
+	select {
+	case c.dequeueTokens <- struct{}{}:
+	default:
+		// continue if full for some reason
+	}
 
 	return nil
 }
@@ -884,7 +888,11 @@ func (c *Client) sendMessage(msg *packet.Message, ack Ack) error {
 
 	// immediately put back dequeue token for qos 0 messages
 	if publish.Message.QOS == 0 {
-		c.dequeueTokens <- struct{}{}
+		select {
+		case c.dequeueTokens <- struct{}{}:
+		default:
+			// continue if full for some reason
+		}
 	}
 
 	c.backend.Log(MessageForwarded, c, nil, msg, nil)
@@ -912,10 +920,18 @@ func (c *Client) sendAck(pkt packet.Generic) error {
 	switch pkt.(type) {
 	case *packet.Suback, *packet.Unsuback:
 		// put back subscribe token
-		c.subscribeTokens <- struct{}{}
+		select {
+		case c.subscribeTokens <- struct{}{}:
+		default:
+			// continue if full for some reason
+		}
 	case *packet.Puback, *packet.Pubcomp:
 		// put back publish token
-		c.publishTokens <- struct{}{}
+		select {
+		case c.publishTokens <- struct{}{}:
+		default:
+			// continue if full for some reason
+		}
 	}
 
 	return nil
