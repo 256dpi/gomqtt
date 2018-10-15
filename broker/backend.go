@@ -440,7 +440,7 @@ func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 	sess := client.Session().(*memorySession)
 
 	// this implementation is very basic and will dequeue messages immediately
-	// and not return no ack. messages are lost if clients fail to handle them
+	// and not return no ack. messages are lost if the client fails to handle them
 
 	// get next message from queue
 	select {
