@@ -82,6 +82,12 @@ type MemoryBackend struct {
 	// Will default to 5 seconds.
 	KillTimeout time.Duration
 
+	// Client configuration options. See broker.Client for details.
+	ClientParallelPublishes  int
+	ClientParallelSubscribes int
+	ClientParallelDequeues   int
+	ClientTokenTimeout       time.Duration
+
 	// A map of username and passwords that grant read and write access.
 	Credentials map[string]string
 
@@ -148,6 +154,12 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	if m.closing {
 		return nil, false, ErrClosing
 	}
+
+	// apply client settings
+	client.ParallelPublishes = m.ClientParallelPublishes
+	client.ParallelSubscribes = m.ClientParallelSubscribes
+	client.ParallelDequeues = m.ClientParallelDequeues
+	client.TokenTimeout = m.ClientTokenTimeout
 
 	// return a new temporary session if id is zero
 	if len(id) == 0 {
