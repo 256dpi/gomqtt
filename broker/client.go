@@ -178,6 +178,9 @@ var ErrNotAuthorized = errors.New("client is not authorized")
 // ErrMissingSession is returned if the backend does not return a session.
 var ErrMissingSession = errors.New("no session returned from Backend")
 
+// ErrTokenTimeout is returned if the client reaches the token timeout.
+var ErrTokenTimeout = errors.New("token timeout")
+
 // ErrClientDisconnected is returned if a client disconnects cleanly.
 var ErrClientDisconnected = errors.New("client has disconnected")
 
@@ -219,6 +222,13 @@ type Client struct {
 	//
 	// Will default to 10.
 	ParallelDequeues int
+
+	// TokenTimeout sets the timeout after which the client should fail when
+	// obtaining publish, subscribe and dequeue tokens in order to prevent
+	// potential deadlocks.
+	//
+	// Will default to 30 seconds.
+	TokenTimeout time.Duration
 
 	// PacketCallback can be set to inspect packets before processing and
 	// apply rate limits. To guarantee the connection lifecycle, Connect and
@@ -367,6 +377,8 @@ func (c *Client) dequeuer() error {
 		select {
 		case <-c.dequeueTokens:
 			// continue
+		case <-time.After(c.TokenTimeout):
+			return c.die(ClientError, ErrTokenTimeout)
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
 		}
@@ -487,6 +499,11 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 		c.ParallelDequeues = 10
 	}
 
+	// set default token timeout
+	if c.TokenTimeout == 0 {
+		c.TokenTimeout = 30 * time.Second
+	}
+
 	// prepare publish tokens
 	c.publishTokens = make(chan struct{}, c.ParallelPublishes)
 	for i := 0; i < c.ParallelPublishes; i++ {
@@ -601,6 +618,8 @@ func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
 	select {
 	case <-c.subscribeTokens:
 		// continue
+	case <-time.After(c.TokenTimeout):
+		return c.die(ClientError, ErrTokenTimeout)
 	case <-c.tomb.Dying():
 		return tomb.ErrDying
 	}
@@ -635,6 +654,8 @@ func (c *Client) processUnsubscribe(pkt *packet.Unsubscribe) error {
 	select {
 	case <-c.subscribeTokens:
 		// continue
+	case <-time.After(c.TokenTimeout):
+		return c.die(ClientError, ErrTokenTimeout)
 	case <-c.tomb.Dying():
 		return tomb.ErrDying
 	}
@@ -680,6 +701,8 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		select {
 		case <-c.publishTokens:
 			// continue
+		case <-time.After(c.TokenTimeout):
+			return c.die(ClientError, ErrTokenTimeout)
 		case <-c.tomb.Dying():
 			return tomb.ErrDying
 		}
@@ -782,6 +805,8 @@ func (c *Client) processPubrel(id packet.ID) error {
 	select {
 	case <-c.publishTokens:
 		// continue
+	case <-time.After(c.TokenTimeout):
+		return c.die(ClientError, ErrTokenTimeout)
 	case <-c.tomb.Dying():
 		return tomb.ErrDying
 	}
