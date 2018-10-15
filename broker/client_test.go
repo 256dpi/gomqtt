@@ -122,7 +122,7 @@ func TestClientTokenTimeoutDequeue(t *testing.T) {
 	conn, err := transport.Dial("tcp://localhost:" + port)
 	assert.NoError(t, err)
 
-	f := flow.New().Debug().
+	f := flow.New().
 		Send(packet.NewConnect()).
 		Receive(packet.NewConnack()).
 		Send(&packet.Subscribe{Subscriptions: []packet.Subscription{{Topic: "cool", QOS: 2}}, ID: 1}).
