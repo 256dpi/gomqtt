@@ -585,6 +585,13 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 
 	// resend stored packets
 	for _, pkt := range packets {
+		// consume a dequeue token (will be replaced once the flow is complete)
+		select {
+		case <-c.dequeueTokens:
+		default:
+			// continue if depleted
+		}
+
 		// set the dup flag on a publish packet
 		publish, ok := pkt.(*packet.Publish)
 		if ok {
