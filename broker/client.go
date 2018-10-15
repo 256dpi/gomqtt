@@ -689,6 +689,8 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		}
 
 		c.backend.Log(MessagePublished, c, nil, &publish.Message, nil)
+
+		return nil
 	}
 
 	// acquire publish token
