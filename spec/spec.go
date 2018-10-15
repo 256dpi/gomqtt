@@ -86,6 +86,14 @@ func Run(t *testing.T, config *Config) {
 		PublishSubscribeTest(t, config, "pubsub/3", "pubsub/3", 2, 2, 2)
 	})
 
+	t.Run("PublishSubscribeQOSKeep0", func(t *testing.T) {
+		PublishSubscribeTest(t, config, "keep/1", "keep/1", 1, 0, 0)
+	})
+
+	t.Run("PublishSubscribeQOSKeep1", func(t *testing.T) {
+		PublishSubscribeTest(t, config, "keep/2", "keep/2", 2, 1, 1)
+	})
+
 	t.Run("PublishSubscribeWildcardOne", func(t *testing.T) {
 		PublishSubscribeTest(t, config, "wildcard/1/foo", "wildcard/1/+", 0, 0, 0)
 	})
