@@ -200,11 +200,6 @@ type outgoing struct {
 type Client struct {
 	state uint32
 
-	// PacketPrefetch may be set during Setup to control the number of packets
-	// that are read by Client and made available for processing. Will default
-	// to 10 if not set.
-	PacketPrefetch int
-
 	// ParallelPublishes may be set during Setup to control the number of
 	// parallel calls to Publish a client can perform. Will default to 10.
 	ParallelPublishes int
@@ -229,7 +224,6 @@ type Client struct {
 	will    *packet.Message
 	session Session
 
-	incoming chan packet.Generic
 	outgoing chan outgoing
 
 	publishTokens   chan struct{}
@@ -470,11 +464,6 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	// assign session
 	c.session = s
 
-	// set default packet prefetch
-	if c.PacketPrefetch <= 0 {
-		c.PacketPrefetch = 10
-	}
-
 	// set default parallel publishes
 	if c.ParallelPublishes <= 0 {
 		c.ParallelPublishes = 10
@@ -507,9 +496,6 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	for i := 0; i < c.ParallelDequeues; i++ {
 		c.dequeueTokens <- struct{}{}
 	}
-
-	// crate incoming queue
-	c.incoming = make(chan packet.Generic, c.PacketPrefetch)
 
 	// create outgoing queue
 	c.outgoing = make(chan outgoing, c.ParallelPublishes+c.ParallelDequeues+c.ParallelSubscribes)
