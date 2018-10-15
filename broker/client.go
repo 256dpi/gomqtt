@@ -863,16 +863,6 @@ func (c *Client) processPubrel(id packet.ID) error {
 	// the pubrec packet will be cleared from the session once the pubcomp
 	// has been sent
 
-	// acquire publish token
-	select {
-	case <-c.publishTokens:
-		// continue
-	case <-time.After(c.TokenTimeout):
-		return c.die(ClientError, ErrTokenTimeout)
-	case <-c.tomb.Dying():
-		return tomb.ErrDying
-	}
-
 	// publish message to others and queue pubcomp if ack is called
 	err = c.backend.Publish(c, &publish.Message, func() {
 		c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
