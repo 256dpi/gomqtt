@@ -90,7 +90,7 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 		total += 2
 
 		// check packet id
-		if pp.ID == 0 {
+		if !pp.ID.Valid() {
 			return total, makeError(pp.Type(), "packet id must be grater than zero")
 		}
 	}
@@ -141,7 +141,7 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 	}
 
 	// check packet id
-	if pp.Message.QOS > 0 && pp.ID == 0 {
+	if pp.Message.QOS > 0 && !pp.ID.Valid() {
 		return total, makeError(pp.Type(), "packet id must be grater than zero")
 	}
 

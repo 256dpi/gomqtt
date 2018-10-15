@@ -80,7 +80,7 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 	total += 2
 
 	// check packet id
-	if sp.ID == 0 {
+	if !sp.ID.Valid() {
 		return total, makeError(sp.Type(), "packet id must be grater than zero")
 	}
 
@@ -132,7 +132,7 @@ func (sp *Subscribe) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check packet id
-	if sp.ID == 0 {
+	if !sp.ID.Valid() {
 		return total, makeError(sp.Type(), "packet id must be grater than zero")
 	}
 

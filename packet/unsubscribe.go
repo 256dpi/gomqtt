@@ -65,7 +65,7 @@ func (up *Unsubscribe) Decode(src []byte) (int, error) {
 	total += 2
 
 	// check packet id
-	if up.ID == 0 {
+	if !up.ID.Valid() {
 		return total, makeError(up.Type(), "packet id must be grater than zero")
 	}
 
@@ -105,7 +105,7 @@ func (up *Unsubscribe) Encode(dst []byte) (int, error) {
 	total := 0
 
 	// check packet id
-	if up.ID == 0 {
+	if !up.ID.Valid() {
 		return total, makeError(up.Type(), "packet id must be grater than zero")
 	}
 

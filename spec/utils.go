@@ -17,7 +17,7 @@ func safeReceive(ch chan struct{}) {
 func lower(a, b packet.QOS) packet.QOS {
 	if a < b {
 		return a
-	} else {
-		return b
 	}
+
+	return b
 }

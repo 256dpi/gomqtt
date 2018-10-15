@@ -27,15 +27,15 @@ func identifiedDecode(src []byte, t Type) (int, ID, error) {
 	}
 
 	// read packet id
-	packetID := binary.BigEndian.Uint16(src[total:])
+	packetID := ID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 
 	// check packet id
-	if packetID == 0 {
+	if !packetID.Valid() {
 		return total, 0, makeError(t, "packet id must be grater than zero")
 	}
 
-	return total, ID(packetID), nil
+	return total, packetID, nil
 }
 
 // encodes an identified packet
@@ -43,7 +43,7 @@ func identifiedEncode(dst []byte, id ID, t Type) (int, error) {
 	total := 0
 
 	// check packet id
-	if id == 0 {
+	if !id.Valid() {
 		return total, makeError(t, "packet id must be grater than zero")
 	}
 

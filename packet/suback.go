@@ -72,7 +72,7 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 	total += 2
 
 	// check packet id
-	if sp.ID == 0 {
+	if !sp.ID.Valid() {
 		return total, makeError(sp.Type(), "packet id must be grater than zero")
 	}
 
@@ -110,7 +110,7 @@ func (sp *Suback) Encode(dst []byte) (int, error) {
 	}
 
 	// check packet id
-	if sp.ID == 0 {
+	if !sp.ID.Valid() {
 		return total, makeError(sp.Type(), "packet id must be grater than zero")
 	}
 

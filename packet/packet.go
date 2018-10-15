@@ -31,6 +31,11 @@ func (qos QOS) Successful() bool {
 // ID is the type used to store packet ids.
 type ID uint16
 
+// Valid returns whether this packet id is valid.
+func (id ID) Valid() bool {
+	return id != 0
+}
+
 //Generic is an MQTT control packet that can be encoded to a buffer or decoded
 // from a buffer.
 type Generic interface {
