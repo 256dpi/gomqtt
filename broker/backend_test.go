@@ -51,11 +51,11 @@ func TestMemoryBackendClose(t *testing.T) {
 		return nil
 	}
 
-	connectFuture, err := client1.Connect(options)
+	cf, err := client1.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
 	options.ClientID = "close2"
 	options.CleanSession = true
@@ -70,11 +70,11 @@ func TestMemoryBackendClose(t *testing.T) {
 		return nil
 	}
 
-	connectFuture, err = client2.Connect(options)
+	cf, err = client2.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
 	ret := backend.Close(5 * time.Second)
 	assert.True(t, ret)

@@ -18,15 +18,15 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 
 	retainer := client.New()
 
-	connectFuture, err := retainer.Connect(client.NewConfig(config.URL))
+	cf, err := retainer.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	publishFuture, err := retainer.Publish(out, testPayload, pub, true)
+	pf, err := retainer.Publish(out, testPayload, pub, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	time.Sleep(config.MessageRetainWait)
 
@@ -48,16 +48,16 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 		return nil
 	}
 
-	connectFuture, err = receiver.Connect(client.NewConfig(config.URL))
+	cf, err = receiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := receiver.Subscribe(in, sub)
+	sf, err := receiver.Subscribe(in, sub)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{sub}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{sub}, sf.ReturnCodes())
 
 	safeReceive(wait)
 
@@ -76,21 +76,21 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 
 	retainer := client.New()
 
-	connectFuture, err := retainer.Connect(client.NewConfig(config.URL))
+	cf, err := retainer.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	publishFuture, err := retainer.Publish(topic, testPayload, 0, true)
+	pf, err := retainer.Publish(topic, testPayload, 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	time.Sleep(config.MessageRetainWait)
 
-	publishFuture, err = retainer.Publish(topic, testPayload2, 0, true)
+	pf, err = retainer.Publish(topic, testPayload2, 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	time.Sleep(config.MessageRetainWait)
 
@@ -112,16 +112,16 @@ func RetainedMessageReplaceTest(t *testing.T, config *Config, topic string) {
 		return nil
 	}
 
-	connectFuture, err = receiver.Connect(client.NewConfig(config.URL))
+	cf, err = receiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := receiver.Subscribe(topic, 0)
+	sf, err := receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
 	safeReceive(wait)
 
@@ -139,15 +139,15 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 
 	retainer := client.New()
 
-	connectFuture, err := retainer.Connect(client.NewConfig(config.URL))
+	cf, err := retainer.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	publishFuture, err := retainer.Publish(topic, testPayload, 0, true)
+	pf, err := retainer.Publish(topic, testPayload, 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	time.Sleep(config.MessageRetainWait)
 
@@ -174,24 +174,24 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 		return nil
 	}
 
-	connectFuture, err = receiverAndClearer.Connect(client.NewConfig(config.URL))
+	cf, err = receiverAndClearer.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := receiverAndClearer.Subscribe(topic, 0)
+	sf, err := receiverAndClearer.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
 	safeReceive(wait)
 
 	time.Sleep(config.NoMessageWait)
 
-	publishFuture, err = receiverAndClearer.Publish(topic, nil, 0, true)
+	pf, err = receiverAndClearer.Publish(topic, nil, 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	time.Sleep(config.MessageRetainWait)
 
@@ -204,16 +204,16 @@ func ClearRetainedMessageTest(t *testing.T, config *Config, topic string) {
 		return nil
 	}
 
-	connectFuture, err = nonReceiver.Connect(client.NewConfig(config.URL))
+	cf, err = nonReceiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err = nonReceiver.Subscribe(topic, 0)
+	sf, err = nonReceiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
 	time.Sleep(config.NoMessageWait)
 
@@ -242,20 +242,20 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 		return nil
 	}
 
-	connectFuture, err := c.Connect(client.NewConfig(config.URL))
+	cf, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := c.Subscribe(topic, 0)
+	sf, err := c.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
-	publishFuture, err := c.Publish(topic, testPayload, 0, true)
+	pf, err := c.Publish(topic, testPayload, 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	safeReceive(wait)
 
@@ -286,20 +286,20 @@ func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) 
 		return nil
 	}
 
-	connectFuture, err := c.Connect(client.NewConfig(config.URL))
+	cf, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := c.Subscribe(topic, 0)
+	sf, err := c.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
-	publishFuture, err := c.Publish(topic, nil, 0, true)
+	pf, err := c.Publish(topic, nil, 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	safeReceive(wait)
 
@@ -325,11 +325,11 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 		Retain:  true,
 	}
 
-	connectFuture, err := clientWithRetainedWill.Connect(opts)
+	cf, err := clientWithRetainedWill.Connect(opts)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
 	err = clientWithRetainedWill.Close()
 	assert.NoError(t, err)
@@ -350,16 +350,16 @@ func RetainedWillTest(t *testing.T, config *Config, topic string) {
 		return nil
 	}
 
-	connectFuture, err = receiver.Connect(client.NewConfig(config.URL))
+	cf, err = receiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := receiver.Subscribe(topic, 0)
+	sf, err := receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
 	safeReceive(wait)
 
@@ -378,15 +378,15 @@ func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic strin
 
 	retainer := client.New()
 
-	connectFuture, err := retainer.Connect(client.NewConfig(config.URL))
+	cf, err := retainer.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	publishFuture, err := retainer.Publish(topic, testPayload, 0, true)
+	pf, err := retainer.Publish(topic, testPayload, 0, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	time.Sleep(config.MessageRetainWait)
 
@@ -407,23 +407,23 @@ func RetainedMessageResubscriptionTest(t *testing.T, config *Config, topic strin
 		return nil
 	}
 
-	connectFuture, err = receiver.Connect(client.NewConfig(config.URL))
+	cf, err = receiver.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := receiver.Subscribe(topic, 0)
+	sf, err := receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
 	safeReceive(wait)
 
-	subscribeFuture, err = receiver.Subscribe(topic, 0)
+	sf, err = receiver.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
 	safeReceive(wait)
 

@@ -22,31 +22,31 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, topic string, sub, pu
 
 	offlineSubscriber := client.New()
 
-	connectFuture, err := offlineSubscriber.Connect(options)
+	cf, err := offlineSubscriber.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := offlineSubscriber.Subscribe(topic, sub)
+	sf, err := offlineSubscriber.Subscribe(topic, sub)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{sub}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{sub}, sf.ReturnCodes())
 
 	err = offlineSubscriber.Disconnect()
 	assert.NoError(t, err)
 
 	publisher := client.New()
 
-	connectFuture, err = publisher.Connect(client.NewConfig(config.URL))
+	cf, err = publisher.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	publishFuture, err := publisher.Publish(topic, testPayload, pub, false)
+	pf, err := publisher.Publish(topic, testPayload, pub, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	err = publisher.Disconnect()
 	assert.NoError(t, err)
@@ -65,11 +65,11 @@ func OfflineSubscriptionTest(t *testing.T, config *Config, topic string, sub, pu
 		return nil
 	}
 
-	connectFuture, err = offlineReceiver.Connect(options)
+	cf, err = offlineReceiver.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.True(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.True(t, cf.SessionPresent())
 
 	if await {
 		safeReceive(wait)
@@ -96,31 +96,31 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string,
 
 	offlineSubscriber := client.New()
 
-	connectFuture, err := offlineSubscriber.Connect(options)
+	cf, err := offlineSubscriber.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := offlineSubscriber.Subscribe(topic, sub)
+	sf, err := offlineSubscriber.Subscribe(topic, sub)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{sub}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{sub}, sf.ReturnCodes())
 
 	err = offlineSubscriber.Disconnect()
 	assert.NoError(t, err)
 
 	publisher := client.New()
 
-	connectFuture, err = publisher.Connect(client.NewConfig(config.URL))
+	cf, err = publisher.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	publishFuture, err := publisher.Publish(topic, testPayload, pub, true)
+	pf, err := publisher.Publish(topic, testPayload, pub, true)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	err = publisher.Disconnect()
 	assert.NoError(t, err)
@@ -140,11 +140,11 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string,
 		return nil
 	}
 
-	connectFuture, err = offlineReceiver.Connect(options)
+	cf, err = offlineReceiver.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.True(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.True(t, cf.SessionPresent())
 
 	if await {
 		safeReceive(wait)

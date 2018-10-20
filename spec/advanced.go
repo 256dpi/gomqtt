@@ -18,19 +18,19 @@ func AuthenticationTest(t *testing.T, config *Config) {
 		return nil
 	}
 
-	connectFuture, err := deniedClient.Connect(client.NewConfig(config.DenyURL))
+	cf, err := deniedClient.Connect(client.NewConfig(config.DenyURL))
 	assert.NoError(t, err)
-	assert.Error(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.NotAuthorized, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.Error(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.NotAuthorized, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
 	allowedClient := client.New()
 
-	connectFuture, err = allowedClient.Connect(client.NewConfig(config.URL))
+	cf, err = allowedClient.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
 	err = allowedClient.Disconnect()
 	assert.NoError(t, err)
@@ -53,19 +53,19 @@ func UniqueClientIDUncleanTest(t *testing.T, config *Config) {
 		return nil
 	}
 
-	connectFuture, err := firstClient.Connect(options)
+	cf, err := firstClient.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
 	secondClient := client.New()
 
-	connectFuture, err = secondClient.Connect(options)
+	cf, err = secondClient.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.True(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.True(t, cf.SessionPresent())
 
 	safeReceive(wait)
 
@@ -88,19 +88,19 @@ func UniqueClientIDCleanTest(t *testing.T, config *Config) {
 		return nil
 	}
 
-	connectFuture, err := firstClient.Connect(options)
+	cf, err := firstClient.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
 	secondClient := client.New()
 
-	connectFuture, err = secondClient.Connect(options)
+	cf, err = secondClient.Connect(options)
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
 	safeReceive(wait)
 
@@ -125,25 +125,25 @@ func RootSlashDistinctionTest(t *testing.T, config *Config, topic string) {
 		return nil
 	}
 
-	connectFuture, err := c.Connect(client.NewConfig(config.URL))
+	cf, err := c.Connect(client.NewConfig(config.URL))
 	assert.NoError(t, err)
-	assert.NoError(t, connectFuture.Wait(10*time.Second))
-	assert.Equal(t, packet.ConnectionAccepted, connectFuture.ReturnCode())
-	assert.False(t, connectFuture.SessionPresent())
+	assert.NoError(t, cf.Wait(10*time.Second))
+	assert.Equal(t, packet.ConnectionAccepted, cf.ReturnCode())
+	assert.False(t, cf.SessionPresent())
 
-	subscribeFuture, err := c.Subscribe("/"+topic, 0)
+	sf, err := c.Subscribe("/"+topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
-	subscribeFuture, err = c.Subscribe(topic, 0)
+	sf, err = c.Subscribe(topic, 0)
 	assert.NoError(t, err)
-	assert.NoError(t, subscribeFuture.Wait(10*time.Second))
-	assert.Equal(t, []packet.QOS{0}, subscribeFuture.ReturnCodes())
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
-	publishFuture, err := c.Publish(topic, testPayload, 0, false)
+	pf, err := c.Publish(topic, testPayload, 0, false)
 	assert.NoError(t, err)
-	assert.NoError(t, publishFuture.Wait(10*time.Second))
+	assert.NoError(t, pf.Wait(10*time.Second))
 
 	safeReceive(wait)
 
