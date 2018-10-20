@@ -51,12 +51,10 @@ func (s *Store) All() []*Future {
 	s.RLock()
 	defer s.RUnlock()
 
-	all := make([]*Future, len(s.store))
+	all := make([]*Future, 0, len(s.store))
 
-	i := 0
 	for _, savedFuture := range s.store {
-		all[i] = savedFuture
-		i++
+		all = append(all, savedFuture)
 	}
 
 	return all
