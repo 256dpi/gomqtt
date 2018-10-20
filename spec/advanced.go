@@ -80,8 +80,6 @@ func UniqueClientIDCleanTest(t *testing.T, config *Config) {
 	options := client.NewConfigWithClientID(config.URL, id)
 	options.CleanSession = true
 
-	assert.NoError(t, client.ClearSession(options, 10*time.Second))
-
 	wait := make(chan struct{})
 
 	firstClient := client.New()
