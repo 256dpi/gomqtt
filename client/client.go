@@ -51,8 +51,9 @@ var ErrFailedSubscription = errors.New("failed subscription")
 // called with an error to instantly close the client and prevent it from
 // sending any acknowledgments for the specified message.
 //
-// Note: Execution of the client is resumed after the callback returns. This
-// means that waiting on a future inside the callback will deadlock the client.
+// Note: Execution of the client is before the callback is called and resumed
+// after the callback returns. This means that waiting on a future inside the
+// callback will deadlock the client.
 type Callback func(msg *packet.Message, err error) error
 
 // A Logger is a function called by the client to log activity.
@@ -150,13 +151,13 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	// save config
-	c.config = config
-
 	// check if already connecting
 	if atomic.LoadUint32(&c.state) >= clientConnecting {
 		return nil, ErrClientAlreadyConnecting
 	}
+
+	// save config
+	c.config = config
 
 	// parse url
 	urlParts, err := url.ParseRequestURI(config.BrokerURL)
