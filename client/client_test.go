@@ -768,6 +768,7 @@ func TestClientSessionResumption(t *testing.T) {
 	publish1.Message.Payload = []byte("test")
 	publish1.Message.QOS = 1
 	publish1.ID = 1
+	publish1.Dup = true
 
 	puback1 := packet.NewPuback()
 	puback1.ID = 1
