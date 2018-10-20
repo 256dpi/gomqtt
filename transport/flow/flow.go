@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 	"time"
 
@@ -72,7 +71,7 @@ const (
 // An Action is a step in a flow.
 type action struct {
 	kind     byte
-	packet   packet.Generic
+	packets  []packet.Generic
 	fn       func()
 	ch       chan struct{}
 	duration time.Duration
@@ -97,31 +96,31 @@ func (f *Flow) Debug() *Flow {
 	return f
 }
 
-// Send will send and one packet.
-func (f *Flow) Send(pkt packet.Generic) *Flow {
+// Send will send the specified packets.
+func (f *Flow) Send(pkts ...packet.Generic) *Flow {
 	f.add(action{
-		kind:   actionSend,
-		packet: pkt,
+		kind:    actionSend,
+		packets: pkts,
 	})
 
 	return f
 }
 
-// Receive will receive and match one packet.
-func (f *Flow) Receive(pkt packet.Generic) *Flow {
+// Receive will receive and match the specified packets out of order.
+func (f *Flow) Receive(pkts ...packet.Generic) *Flow {
 	f.add(action{
-		kind:   actionReceive,
-		packet: pkt,
+		kind:    actionReceive,
+		packets: pkts,
 	})
 
 	return f
 }
 
-// Skip will receive one packet without matching it.
-func (f *Flow) Skip(pkt packet.Generic) *Flow {
+// Skip will receive the specified packets without matching out of order.
+func (f *Flow) Skip(pkts ...packet.Generic) *Flow {
 	f.add(action{
-		kind:   actionSkip,
-		packet: pkt,
+		kind:    actionSkip,
+		packets: pkts,
 	})
 
 	return f
@@ -157,22 +156,47 @@ func (f *Flow) End() *Flow {
 
 // Test starts the flow on the given Conn and reports to the specified test.
 func (f *Flow) Test(conn Conn) error {
+	// handle all actions
 	for _, action := range f.actions {
-		switch action.kind {
-		case actionSend:
+		err := f.test(conn, action)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (f *Flow) test(conn Conn, action action) error {
+	switch action.kind {
+	case actionSend:
+		// send all saved packets
+		for _, pkt := range action.packets {
 			if f.debug {
-				fmt.Printf("sending packet: %s...\n", action.packet.String())
+				fmt.Printf("sending packet: %s...\n", pkt.String())
 			}
 
-			err := conn.Send(action.packet, false)
+			// send a single packet
+			err := conn.Send(pkt, false)
 			if err != nil {
 				return fmt.Errorf("error sending packet: %v", err)
 			}
-		case actionReceive:
+		}
+	case actionReceive:
+		// initialize store
+		store := make(map[int]string)
+		for i, pkt := range action.packets {
+			store[i] = pkt.String()
+		}
+
+	receive:
+		// keep going until we have all packets
+		for len(store) > 0 {
 			if f.debug {
 				fmt.Printf("receiving packet...\n")
 			}
 
+			// wait for next packet
 			pkt, err := conn.Receive()
 			if err != nil {
 				return fmt.Errorf("expected to receive a packet but got error: %v", err)
@@ -182,51 +206,79 @@ func (f *Flow) Test(conn Conn) error {
 				fmt.Println("received packet:", pkt)
 			}
 
-			if want, got := action.packet.String(), pkt.String(); want != got {
-				return fmt.Errorf("expected packet of %q but got %q", want, got)
+			// check packet
+			for i, p := range store {
+				if p == pkt.String() {
+					delete(store, i)
+					continue receive
+				}
 			}
-		case actionSkip:
+
+			return fmt.Errorf("unexpected packet %q", pkt)
+		}
+	case actionSkip:
+		// initialize store
+		store := make(map[int]packet.Type)
+		for i, pkt := range action.packets {
+			store[i] = pkt.Type()
+		}
+
+	skip:
+		// keep going until we have all packets
+		for len(store) > 0 {
 			if f.debug {
 				fmt.Printf("skiping packet...\n")
 			}
 
+			// wait for next packet
 			pkt, err := conn.Receive()
 			if err != nil {
 				return fmt.Errorf("expected to skip over a received packet but got error: %v", err)
 			}
 
-			t1 := reflect.TypeOf(pkt)
-			t2 := reflect.TypeOf(action.packet)
-			if t1 != t2 {
-				return fmt.Errorf("expected to receive a packet of type %v instead of %v", t2, t1)
-			}
-		case actionRun:
 			if f.debug {
-				fmt.Printf("running...\n")
+				fmt.Println("received packet:", pkt.Type().String())
 			}
 
-			action.fn()
-		case actionClose:
-			if f.debug {
-				fmt.Printf("closing...\n")
+			// check packet
+			for i, p := range store {
+				if p == pkt.Type() {
+					delete(store, i)
+					continue skip
+				}
 			}
 
-			err := conn.Close()
-			if err != nil {
-				return fmt.Errorf("expected connection to close successfully but got error: %v", err)
-			}
-		case actionEnd:
-			if f.debug {
-				fmt.Printf("ending...\n")
-			}
+			return fmt.Errorf("unexpected to receive a packet of type %v", pkt.Type())
+		}
+	case actionRun:
+		if f.debug {
+			fmt.Printf("running...\n")
+		}
 
-			pkt, err := conn.Receive()
-			if err != nil && !strings.Contains(err.Error(), "EOF") {
-				return fmt.Errorf("expected EOF but got %v", err)
-			}
-			if pkt != nil {
-				return fmt.Errorf("expected no packet but got %v", pkt)
-			}
+		// run function
+		action.fn()
+	case actionClose:
+		if f.debug {
+			fmt.Printf("closing...\n")
+		}
+
+		// close connection
+		err := conn.Close()
+		if err != nil {
+			return fmt.Errorf("expected connection to close successfully but got error: %v", err)
+		}
+	case actionEnd:
+		if f.debug {
+			fmt.Printf("ending...\n")
+		}
+
+		// wait for end of file
+		pkt, err := conn.Receive()
+		if err != nil && !strings.Contains(err.Error(), "EOF") {
+			return fmt.Errorf("expected EOF but got %v", err)
+		}
+		if pkt != nil {
+			return fmt.Errorf("expected no packet but got %v", pkt)
 		}
 	}
 

@@ -19,8 +19,15 @@ func TestFlow(t *testing.T) {
 	}
 	subscribe.ID = 1
 
-	publish := packet.NewPublish()
-	publish.Message.Topic = "test"
+	publish1 := packet.NewPublish()
+	publish1.ID = 2
+	publish1.Message.Topic = "test"
+	publish1.Message.QOS = 1
+
+	publish2 := packet.NewPublish()
+	publish2.ID = 3
+	publish2.Message.Topic = "test"
+	publish2.Message.QOS = 1
 
 	wait := make(chan struct{})
 
@@ -31,7 +38,7 @@ func TestFlow(t *testing.T) {
 			close(wait)
 		}).
 		Skip(&packet.Subscribe{}).
-		Receive(publish).
+		Receive(publish1, publish2).
 		Close()
 
 	client := New().
@@ -41,7 +48,7 @@ func TestFlow(t *testing.T) {
 			<-wait
 		}).
 		Send(subscribe).
-		Send(publish).
+		Send(publish2, publish1).
 		End()
 
 	pipe := NewPipe()
