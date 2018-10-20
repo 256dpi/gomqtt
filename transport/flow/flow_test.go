@@ -23,14 +23,13 @@ func TestFlow(t *testing.T) {
 	publish.Message.Topic = "test"
 
 	wait := make(chan struct{})
-	cb := func() {
-		close(wait)
-	}
 
 	server := New().
 		Receive(connect).
 		Send(connack).
-		Run(cb).
+		Run(func() {
+			close(wait)
+		}).
 		Skip(&packet.Subscribe{}).
 		Receive(publish).
 		Close()
@@ -38,10 +37,11 @@ func TestFlow(t *testing.T) {
 	client := New().
 		Send(connect).
 		Receive(connack).
-		Wait(wait).
+		Run(func() {
+			<-wait
+		}).
 		Send(subscribe).
 		Send(publish).
-		Delay(5 * time.Millisecond).
 		End()
 
 	pipe := NewPipe()

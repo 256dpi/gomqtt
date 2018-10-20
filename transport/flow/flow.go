@@ -64,9 +64,7 @@ const (
 	actionSend byte = iota
 	actionReceive
 	actionSkip
-	actionWait
 	actionRun
-	actionDelay
 	actionClose
 	actionEnd
 )
@@ -129,31 +127,11 @@ func (f *Flow) Skip(pkt packet.Generic) *Flow {
 	return f
 }
 
-// Wait will wait until the specified channel is closed.
-func (f *Flow) Wait(ch chan struct{}) *Flow {
-	f.add(action{
-		kind: actionWait,
-		ch:   ch,
-	})
-
-	return f
-}
-
 // Run will call the supplied function and wait until it returns.
 func (f *Flow) Run(fn func()) *Flow {
 	f.add(action{
 		kind: actionRun,
 		fn:   fn,
-	})
-
-	return f
-}
-
-// Delay will suspend the flow using the specified duration.
-func (f *Flow) Delay(d time.Duration) *Flow {
-	f.add(action{
-		kind:     actionDelay,
-		duration: d,
 	})
 
 	return f
@@ -222,24 +200,12 @@ func (f *Flow) Test(conn Conn) error {
 			if t1 != t2 {
 				return fmt.Errorf("expected to receive a packet of type %v instead of %v", t2, t1)
 			}
-		case actionWait:
-			if f.debug {
-				fmt.Printf("waiting...\n")
-			}
-
-			<-action.ch
 		case actionRun:
 			if f.debug {
 				fmt.Printf("running...\n")
 			}
 
 			action.fn()
-		case actionDelay:
-			if f.debug {
-				fmt.Printf("sleeping: %s\n", action.duration.String())
-			}
-
-			time.Sleep(action.duration)
 		case actionClose:
 			if f.debug {
 				fmt.Printf("closing...\n")
