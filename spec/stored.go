@@ -38,6 +38,9 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 	publishOut.Message.Topic = topic
 	publishOut.Message.QOS = 1
 
+	pubackOut := packet.NewPuback()
+	pubackOut.ID = 2
+
 	publishIn := packet.NewPublish()
 	publishIn.ID = 1
 	publishIn.Message.Topic = topic
@@ -58,8 +61,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 		Send(subscribe).
 		Skip(&packet.Suback{}).
 		Send(publishOut).
-		Skip(&packet.Puback{}).
-		Receive(publishIn).
+		Receive(pubackOut, publishIn).
 		Close().
 		Test(conn1)
 	assert.NoError(t, err)
@@ -110,6 +112,9 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 	pubrelOut := packet.NewPubrel()
 	pubrelOut.ID = 2
 
+	pubcompOut := packet.NewPubcomp()
+	pubcompOut.ID = 2
+
 	publishIn := packet.NewPublish()
 	publishIn.ID = 1
 	publishIn.Message.Topic = topic
@@ -135,8 +140,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 		Send(publishOut).
 		Skip(&packet.Pubrec{}).
 		Send(pubrelOut).
-		Skip(&packet.Pubcomp{}).
-		Receive(publishIn).
+		Receive(pubcompOut, publishIn).
 		Close().
 		Test(conn1)
 	assert.NoError(t, err)
@@ -191,6 +195,9 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 	pubrelOut := packet.NewPubrel()
 	pubrelOut.ID = 2
 
+	pubcompOut := packet.NewPubcomp()
+	pubcompOut.ID = 2
+
 	publishIn := packet.NewPublish()
 	publishIn.ID = 1
 	publishIn.Message.Topic = topic
@@ -219,8 +226,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 		Send(publishOut).
 		Skip(&packet.Pubrec{}).
 		Send(pubrelOut).
-		Skip(&packet.Pubcomp{}).
-		Receive(publishIn).
+		Receive(pubcompOut, publishIn).
 		Send(pubrecIn).
 		Close().
 		Test(conn1)
