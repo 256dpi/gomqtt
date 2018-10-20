@@ -46,7 +46,7 @@ func TestClientPacketCallback(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, sf.Wait(10*time.Second))
 
-	pf, err := client1.Publish("pc", nil, 0, false)
+	pf, err := client1.Publish("pc", nil, 1, false)
 	assert.NoError(t, err)
 	assert.NoError(t, pf.Wait(10*time.Second))
 

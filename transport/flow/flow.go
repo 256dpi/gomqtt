@@ -39,7 +39,7 @@ func (conn *Pipe) Send(pkt packet.Generic, _ bool) error {
 	case conn.pipe <- pkt:
 		return nil
 	case <-conn.close:
-		return errors.New("already closed")
+		return errors.New("closed")
 	}
 }
 
@@ -83,13 +83,13 @@ type action struct {
 // A Flow is a sequence of actions that can be tested against a connection.
 type Flow struct {
 	debug   bool
-	actions []*action
+	actions []action
 }
 
 // New returns a new flow.
 func New() *Flow {
 	return &Flow{
-		actions: make([]*action, 0),
+		actions: make([]action, 0),
 	}
 }
 
@@ -101,7 +101,7 @@ func (f *Flow) Debug() *Flow {
 
 // Send will send and one packet.
 func (f *Flow) Send(pkt packet.Generic) *Flow {
-	f.add(&action{
+	f.add(action{
 		kind:   actionSend,
 		packet: pkt,
 	})
@@ -111,7 +111,7 @@ func (f *Flow) Send(pkt packet.Generic) *Flow {
 
 // Receive will receive and match one packet.
 func (f *Flow) Receive(pkt packet.Generic) *Flow {
-	f.add(&action{
+	f.add(action{
 		kind:   actionReceive,
 		packet: pkt,
 	})
@@ -121,7 +121,7 @@ func (f *Flow) Receive(pkt packet.Generic) *Flow {
 
 // Skip will receive one packet without matching it.
 func (f *Flow) Skip(pkt packet.Generic) *Flow {
-	f.add(&action{
+	f.add(action{
 		kind:   actionSkip,
 		packet: pkt,
 	})
@@ -131,7 +131,7 @@ func (f *Flow) Skip(pkt packet.Generic) *Flow {
 
 // Wait will wait until the specified channel is closed.
 func (f *Flow) Wait(ch chan struct{}) *Flow {
-	f.add(&action{
+	f.add(action{
 		kind: actionWait,
 		ch:   ch,
 	})
@@ -141,7 +141,7 @@ func (f *Flow) Wait(ch chan struct{}) *Flow {
 
 // Run will call the supplied function and wait until it returns.
 func (f *Flow) Run(fn func()) *Flow {
-	f.add(&action{
+	f.add(action{
 		kind: actionRun,
 		fn:   fn,
 	})
@@ -151,7 +151,7 @@ func (f *Flow) Run(fn func()) *Flow {
 
 // Delay will suspend the flow using the specified duration.
 func (f *Flow) Delay(d time.Duration) *Flow {
-	f.add(&action{
+	f.add(action{
 		kind:     actionDelay,
 		duration: d,
 	})
@@ -161,7 +161,7 @@ func (f *Flow) Delay(d time.Duration) *Flow {
 
 // Close will immediately close the connection.
 func (f *Flow) Close() *Flow {
-	f.add(&action{
+	f.add(action{
 		kind: actionClose,
 	})
 
@@ -170,7 +170,7 @@ func (f *Flow) Close() *Flow {
 
 // End will match proper connection close.
 func (f *Flow) End() *Flow {
-	f.add(&action{
+	f.add(action{
 		kind: actionEnd,
 	})
 
@@ -283,6 +283,6 @@ func (f *Flow) TestAsync(conn Conn, timeout time.Duration) <-chan error {
 }
 
 // add will add the specified action.
-func (f *Flow) add(action *action) {
+func (f *Flow) add(action action) {
 	f.actions = append(f.actions, action)
 }
