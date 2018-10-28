@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"strconv"
 	"time"
 
@@ -9,9 +10,14 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+var broker = flag.String("broker", "tcp://0.0.0.0:1883", "broker url")
+
 const timeout = 5 * time.Second
 
 func main() {
+	// parse flags
+	flag.Parse()
+
 	// create new shell.
 	shell := ishell.New()
 
@@ -42,8 +48,9 @@ func main() {
 	// add connect command
 	shell.AddCmd(&ishell.Cmd{
 		Name:     "connect",
+		Aliases:  []string{"c"},
 		Help:     "connect to broker",
-		LongHelp: `connect URL:string CLIENT_ID:string CLEAN:bool`,
+		LongHelp: `connect CLIENT_ID CLEAN`,
 		Func: func(ctx *ishell.Context) {
 			// check state
 			if c != nil {
@@ -51,29 +58,20 @@ func main() {
 				return
 			}
 
-			// check args
-			if len(ctx.Args) == 0 {
-				shell.Println("Failed: missing arguments")
-				return
-			}
-
-			// get url
-			url := ctx.Args[0]
-
 			// get client id
 			clientID := ""
-			if len(ctx.Args) >= 2 {
-				clientID = ctx.Args[1]
+			if len(ctx.Args) >= 1 {
+				clientID = ctx.Args[0]
 			}
 
 			// get clean flag
 			clean := true
-			if len(ctx.Args) >= 3 {
-				clean = ctx.Args[2] == "true"
+			if len(ctx.Args) >= 2 {
+				clean = ctx.Args[1] == "true"
 			}
 
 			// prepare config
-			cfg := client.NewConfigWithClientID(url, clientID)
+			cfg := client.NewConfigWithClientID(*broker, clientID)
 			cfg.CleanSession = clean
 
 			// print config
@@ -109,6 +107,7 @@ func main() {
 	// add subscribe command
 	shell.AddCmd(&ishell.Cmd{
 		Name:     "subscribe",
+		Aliases:  []string{"s"},
 		Help:     "subscribe a topic",
 		LongHelp: `subscribe TOPIC QOS`,
 		Func: func(ctx *ishell.Context) {
@@ -155,6 +154,7 @@ func main() {
 	// add publish command
 	shell.AddCmd(&ishell.Cmd{
 		Name:     "publish",
+		Aliases:  []string{"p"},
 		Help:     "publish a message",
 		LongHelp: `publish TOPIC PAYLOAD QOS RETAIN`,
 		Func: func(ctx *ishell.Context) {
@@ -212,6 +212,7 @@ func main() {
 	// add unsubscribe command
 	shell.AddCmd(&ishell.Cmd{
 		Name:     "unsubscribe",
+		Aliases:  []string{"u"},
 		Help:     "unsubscribe a topic",
 		LongHelp: `unsubscribe TOPIC`,
 		Func: func(ctx *ishell.Context) {
@@ -251,6 +252,7 @@ func main() {
 	// add disconnect command
 	shell.AddCmd(&ishell.Cmd{
 		Name:     "disconnect",
+		Aliases:  []string{"d"},
 		Help:     "disconnect from broker",
 		LongHelp: `disconnect`,
 		Func: func(ctx *ishell.Context) {
