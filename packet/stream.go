@@ -5,6 +5,9 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"time"
+
+	"github.com/256dpi/mercury"
 )
 
 // ErrDetectionOverflow is returned by the Decoder if the next packet couldn't
@@ -17,19 +20,19 @@ var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
 // An Encoder wraps a Writer and continuously encodes packets.
 type Encoder struct {
-	writer *bufio.Writer
+	writer *mercury.Writer
 	buffer bytes.Buffer
 }
 
 // NewEncoder creates a new Encoder.
 func NewEncoder(writer io.Writer) *Encoder {
 	return &Encoder{
-		writer: bufio.NewWriter(writer),
+		writer: mercury.NewWriter(writer, time.Millisecond),
 	}
 }
 
 // Write encodes and writes the passed packet to the write buffer.
-func (e *Encoder) Write(pkt Generic) error {
+func (e *Encoder) Write(pkt Generic, async bool) error {
 	// reset and eventually grow buffer
 	packetLength := pkt.Len()
 	e.buffer.Reset()
@@ -43,7 +46,11 @@ func (e *Encoder) Write(pkt Generic) error {
 	}
 
 	// write buffer
-	_, err = e.writer.Write(buf)
+	if async {
+		_, err = e.writer.Write(buf)
+	} else {
+		_, err = e.writer.WriteAndFlush(buf)
+	}
 	if err != nil {
 		return err
 	}
@@ -135,18 +142,14 @@ func (d *Decoder) Read() (Generic, error) {
 
 // A Stream combines an Encoder and Decoder
 type Stream struct {
-	Decoder
-	Encoder
+	*Decoder
+	*Encoder
 }
 
 // NewStream creates a new Stream.
 func NewStream(reader io.Reader, writer io.Writer) *Stream {
 	return &Stream{
-		Decoder: Decoder{
-			reader: bufio.NewReader(reader),
-		},
-		Encoder: Encoder{
-			writer: bufio.NewWriter(writer),
-		},
+		Decoder: NewDecoder(reader),
+		Encoder: NewEncoder(writer),
 	}
 }

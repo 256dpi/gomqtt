@@ -13,7 +13,7 @@ func TestEncoder(t *testing.T) {
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
 
-	err := enc.Write(NewConnect())
+	err := enc.Write(NewConnect(), false)
 	assert.NoError(t, err)
 
 	err = enc.Flush()
@@ -29,7 +29,7 @@ func TestEncoderEncodeError(t *testing.T) {
 	pkt := NewConnack()
 	pkt.ReturnCode = 11 // < invalid return code
 
-	err := enc.Write(pkt)
+	err := enc.Write(pkt, false)
 	assert.Error(t, err)
 }
 
@@ -42,7 +42,7 @@ func TestEncoderWriterError(t *testing.T) {
 	pkt.Message.Topic = "foo"
 	pkt.Message.Payload = make([]byte, 4096)
 
-	err := enc.Write(pkt)
+	err := enc.Write(pkt, false)
 	assert.Error(t, err)
 }
 
@@ -144,7 +144,7 @@ func TestStream(t *testing.T) {
 
 	s := NewStream(in, out)
 
-	err := s.Write(NewConnect())
+	err := s.Write(NewConnect(), false)
 	assert.NoError(t, err)
 
 	err = s.Flush()

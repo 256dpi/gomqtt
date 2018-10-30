@@ -25,9 +25,6 @@ type BaseConn struct {
 
 	stream *packet.Stream
 
-	flushTimer *time.Timer
-	flushError error
-
 	sMutex sync.Mutex
 	rMutex sync.Mutex
 
@@ -52,68 +49,16 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
 
-	// clear and return any error from asyncFlush
-	if c.flushError != nil {
-		err := c.flushError
-		c.flushError = nil
-		return err
-	}
-
 	// write packet
-	err := c.stream.Write(pkt)
+	err := c.stream.Write(pkt, async)
 	if err != nil {
 		// ensure connection gets closed
 		c.carrier.Close()
 
 		return err
-	}
-
-	// flush immediately if not async
-	if !async {
-		// stop the timer if existing
-		if c.flushTimer != nil {
-			c.flushTimer.Stop()
-			c.flushTimer = nil
-		}
-
-		// perform flush
-		err = c.stream.Flush()
-		if err != nil {
-			// ensure connection gets closed
-			c.carrier.Close()
-
-			return err
-		}
-
-		return nil
-	}
-
-	// setup the timer if missing
-	if c.flushTimer == nil {
-		c.flushTimer = time.AfterFunc(FlushTimeout, c.asyncFlush)
 	}
 
 	return nil
-}
-
-func (c *BaseConn) asyncFlush() {
-	c.sMutex.Lock()
-	defer c.sMutex.Unlock()
-
-	// clear timer
-	c.flushTimer = nil
-
-	// flush buffer
-	err := c.stream.Flush()
-	if err != nil {
-		// ensure connection gets closed
-		c.carrier.Close()
-
-		// save error if not yet existing
-		if c.flushError != nil {
-			c.flushError = err
-		}
-	}
 }
 
 // Receive will read from the underlying connection and return a fully read
