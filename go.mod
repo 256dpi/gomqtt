@@ -1,7 +1,7 @@
 module github.com/256dpi/gomqtt
 
 require (
-	github.com/256dpi/mercury v0.0.0-20181030065423-5844fe65b403
+	github.com/256dpi/mercury v0.1.0
 	github.com/abiosoft/ishell v2.0.0+incompatible
 	github.com/abiosoft/readline v0.0.0-20180607040430-155bce2042db // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973

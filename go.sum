@@ -1,5 +1,5 @@
-github.com/256dpi/mercury v0.0.0-20181030065423-5844fe65b403 h1:m4ACQJBk6/BxdJgcS7mayw6JLZaFDvD9KFM6xlQmz5c=
-github.com/256dpi/mercury v0.0.0-20181030065423-5844fe65b403/go.mod h1:W2/eVt6tqfSn5J8en63oGNmnZSb66PUo0e5YBzSHkkU=
+github.com/256dpi/mercury v0.1.0 h1:4SqjOOOJUhi/TWGH277qi6TPJOPxp5NXm+NO0Rfvii8=
+github.com/256dpi/mercury v0.1.0/go.mod h1:W2/eVt6tqfSn5J8en63oGNmnZSb66PUo0e5YBzSHkkU=
 github.com/abiosoft/ishell v2.0.0+incompatible h1:zpwIuEHc37EzrsIYah3cpevrIc8Oma7oZPxr03tlmmw=
 github.com/abiosoft/ishell v2.0.0+incompatible/go.mod h1:HQR9AqF2R3P4XXpMpI0NAzgHf/aS6+zVXRj14cVk9qg=
 github.com/abiosoft/readline v0.0.0-20180607040430-155bce2042db h1:CjPUSXOiYptLbTdr1RceuZgSFDQ7U15ITERUGrUORx8=
