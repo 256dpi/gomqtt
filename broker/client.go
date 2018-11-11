@@ -147,8 +147,7 @@ type Backend interface {
 	//
 	// The Backend may return an Ack to receive a signal that the message is being
 	// delivered under the selected qos level and is therefore safe to be deleted
-	// from the queue. The Client might dequeue other messages before acknowledging
-	// a message.
+	// from the queue. The Client will call the Ack before calling Dequeue again.
 	//
 	// The returned message must have a QOS set that respects the QOS set by
 	// the matching subscription.
