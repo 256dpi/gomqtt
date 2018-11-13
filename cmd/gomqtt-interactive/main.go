@@ -31,16 +31,16 @@ func main() {
 	cb := func(msg *packet.Message, err error) error {
 		// check error
 		if err != nil {
-			shell.Printf("Error: %s\n", err.Error())
+			shell.Printf("< Error: %s\n", err.Error())
 			c = nil
 			return nil
 		}
 
 		// print message
-		shell.Printf("Message: %s\n", string(msg.Payload))
-		shell.Printf("Topic: %s\n", msg.Topic)
-		shell.Printf("QOS: %d\n", msg.QOS)
-		shell.Printf("Retain: %t\n", msg.Retain)
+		shell.Printf("< Message: %s\n", string(msg.Payload))
+		shell.Printf("< Topic: %s\n", msg.Topic)
+		shell.Printf("< QOS: %d\n", msg.QOS)
+		shell.Printf("< Retain: %t\n", msg.Retain)
 
 		return nil
 	}
