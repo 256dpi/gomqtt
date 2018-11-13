@@ -220,7 +220,7 @@ func TestServiceUnsubscribe(t *testing.T) {
 func TestServiceReconnect(t *testing.T) {
 	delay := flow.New().
 		Receive(connectPacket()).
-		Run(func(){
+		Run(func() {
 			time.Sleep(55 * time.Millisecond)
 		}).
 		End()

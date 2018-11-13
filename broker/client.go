@@ -92,8 +92,8 @@ type Backend interface {
 	// authenticated. Setup should return the already stored session for the
 	// supplied id or create and return a new one if it is missing or a clean
 	// session is requested. If the supplied id has a zero length, a new
-	// temporary session should returned that is not stored further. The backend
-	// should also close any existing clients that use the same client id.
+	// temporary session should be returned that is not stored further. The
+	// backend should also close any existing clients that use the same id.
 	//
 	// Note: In this call the Backend may also allocate other resources and
 	// setup the client for further usage as the broker will acknowledge the
@@ -103,9 +103,10 @@ type Backend interface {
 
 	// Restore is called after the client has restored packets from the session.
 	//
-	// The Backend should resubscribe stored subscriptions. Retained messages
-	// that are delivered as a result of resubscribing a stored subscription
-	// must be queued with the retain flag set to false.
+	// The Backend should resubscribe stored subscriptions and begin with queueing
+	// missed offline messages. When all offline messages have been queued the
+	// client may receive online messages. Depending on the implementation, this
+	// may not be required as Dequeue will already pick up offline messages.
 	Restore(client *Client) error
 
 	// Subscribe should subscribe the passed client to the specified topics and
@@ -117,9 +118,8 @@ type Backend interface {
 	// a temporary or persistent queue that is drained when Dequeue is called.
 	//
 	// Retained messages that match the supplied subscription should be added to
-	// a temporary queue that is also drained when Dequeue is called. Retained
-	// messages are not part of the stored session state as they are anyway
-	// redelivered using the stored subscription mechanism.
+	// a temporary queue that is also drained when Dequeue is called. The messages
+	// must be delivered with the retained flag set to true.
 	Subscribe(client *Client, subs []packet.Subscription, ack Ack) error
 
 	// Unsubscribe should unsubscribe the passed client from the specified topics
@@ -138,7 +138,7 @@ type Backend interface {
 	// If the retained flag is set, messages with a payload should replace the
 	// currently retained message. Otherwise, the currently retained message
 	// should be removed. The flag should be cleared before publishing the
-	// message to subscribed clients.
+	// message to other subscribed clients.
 	Publish(client *Client, msg *packet.Message, ack Ack) error
 
 	// Dequeue is called by the Client to obtain the next message from the queue
@@ -147,7 +147,7 @@ type Backend interface {
 	//
 	// The Backend may return an Ack to receive a signal that the message is being
 	// delivered under the selected qos level and is therefore safe to be deleted
-	// from the queue. The Client will call the Ack before calling Dequeue again.
+	// from the queue. The Ack will be called before Dequeue is called again.
 	//
 	// The returned message must have a QOS set that respects the QOS set by
 	// the matching subscription.

@@ -257,37 +257,10 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 
 // Restore is not needed at the moment.
 func (m *MemoryBackend) Restore(client *Client) error {
-	// acquire global mutex
-	m.globalMutex.Lock()
-	defer m.globalMutex.Unlock()
-
-	// get session
-	sess := client.Session().(*memorySession)
-
-	// restore stored subscriptions
-	for _, sub := range sess.subscriptions.All() {
-		// get retained messages
-		values := m.retainedMessages.Search(sub.(packet.Subscription).Topic)
-
-		// publish messages
-		for _, value := range values {
-			// copy message
-			msg := value.(*packet.Message).Copy()
-			msg.Retain = false
-
-			// add to temporary queue or return error if queue is full
-			select {
-			case sess.temporary <- msg:
-			default:
-				return ErrQueueFull
-			}
-		}
-	}
-
 	return nil
 }
 
-// Subscribe will queue retained messages for the passed subscription.
+// Subscribe will store the subscription and queue retained messages.
 func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, ack Ack) error {
 	// acquire global mutex
 	m.globalMutex.Lock()
@@ -325,7 +298,7 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, ac
 	return nil
 }
 
-// Unsubscribe is not needed at the moment.
+// Unsubscribe will delete the subscription.
 func (m *MemoryBackend) Unsubscribe(client *Client, topics []string, ack Ack) error {
 	// delete subscriptions
 	for _, t := range topics {
@@ -366,8 +339,8 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 		return s.temporary
 	}
 
-	// use stored queue if qos > 0 and not retained
-	if msg.QOS > 0 && !msg.Retain {
+	// use stored queue if qos > 0
+	if msg.QOS > 0 {
 		queue = func(s *memorySession) chan *packet.Message {
 			return s.stored
 		}
@@ -432,7 +405,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 	return nil
 }
 
-// Dequeue will get the next message from the queues.
+// Dequeue will get the next message from the temporary or stored queue.
 func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 	// mutex locking not needed
 
