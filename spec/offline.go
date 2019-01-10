@@ -122,6 +122,8 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string,
 	assert.NoError(t, err)
 	assert.NoError(t, pf.Wait(10*time.Second))
 
+	time.Sleep(config.MessageRetainWait)
+
 	err = publisher.Disconnect()
 	assert.NoError(t, err)
 
