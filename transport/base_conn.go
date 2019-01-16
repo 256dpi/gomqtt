@@ -29,10 +29,10 @@ type BaseConn struct {
 }
 
 // NewBaseConn creates a new BaseConn using the specified Carrier.
-func NewBaseConn(c Carrier) *BaseConn {
+func NewBaseConn(c Carrier, maxWriteDelay time.Duration) *BaseConn {
 	return &BaseConn{
 		carrier: c,
-		stream:  packet.NewStream(c, c),
+		stream:  packet.NewStream(c, c, maxWriteDelay),
 	}
 }
 

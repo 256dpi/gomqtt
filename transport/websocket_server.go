@@ -15,6 +15,8 @@ var errManualClose = errors.New("internal: manual close")
 
 // The WebSocketServer accepts websocket.Conn based connections.
 type WebSocketServer struct {
+	MaxWriteDelay time.Duration
+
 	listener      net.Listener
 	mux           *http.ServeMux
 	fallback      http.Handler
@@ -93,6 +95,11 @@ func (s *WebSocketServer) SetOriginChecker(fn func(r *http.Request) bool) {
 }
 
 func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request) {
+	// ensure write delay default
+	if s.MaxWriteDelay == 0 {
+		s.MaxWriteDelay = 10 * time.Millisecond
+	}
+
 	// run fallback if request is not an upgrade
 	if r.Header.Get("Upgrade") != "websocket" && s.fallback != nil {
 		s.fallback.ServeHTTP(w, r)
@@ -107,7 +114,7 @@ func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	// create connection
-	webSocketConn := NewWebSocketConn(conn)
+	webSocketConn := NewWebSocketConn(conn, s.MaxWriteDelay)
 
 	select {
 	case s.incoming <- webSocketConn:

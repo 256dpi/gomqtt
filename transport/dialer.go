@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -14,6 +15,7 @@ import (
 type Dialer struct {
 	TLSConfig     *tls.Config
 	RequestHeader http.Header
+	MaxWriteDelay time.Duration
 
 	DefaultTCPPort string
 	DefaultTLSPort string
@@ -50,6 +52,11 @@ func Dial(urlString string) (Conn, error) {
 
 // Dial initiates a connection based in information extracted from an URL.
 func (d *Dialer) Dial(urlString string) (Conn, error) {
+	// ensure write delay default
+	if d.MaxWriteDelay == 0 {
+		d.MaxWriteDelay = 10 * time.Millisecond
+	}
+
 	urlParts, err := url.ParseRequestURI(urlString)
 	if err != nil {
 		return nil, err
@@ -72,7 +79,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 			return nil, err
 		}
 
-		return NewNetConn(conn), nil
+		return NewNetConn(conn, d.MaxWriteDelay), nil
 	case "tls", "mqtts":
 		if port == "" {
 			port = d.DefaultTLSPort
@@ -83,7 +90,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 			return nil, err
 		}
 
-		return NewNetConn(conn), nil
+		return NewNetConn(conn, d.MaxWriteDelay), nil
 	case "ws":
 		if port == "" {
 			port = d.DefaultWSPort
@@ -96,7 +103,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 			return nil, err
 		}
 
-		return NewWebSocketConn(conn), nil
+		return NewWebSocketConn(conn, d.MaxWriteDelay), nil
 	case "wss":
 		if port == "" {
 			port = d.DefaultWSSPort
@@ -110,7 +117,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 			return nil, err
 		}
 
-		return NewWebSocketConn(conn), nil
+		return NewWebSocketConn(conn, d.MaxWriteDelay), nil
 	}
 
 	return nil, ErrUnsupportedProtocol

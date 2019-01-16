@@ -25,9 +25,9 @@ type Encoder struct {
 }
 
 // NewEncoder creates a new Encoder.
-func NewEncoder(writer io.Writer) *Encoder {
+func NewEncoder(writer io.Writer, maxWriteDelay time.Duration) *Encoder {
 	return &Encoder{
-		writer: mercury.NewWriter(writer, time.Millisecond),
+		writer: mercury.NewWriter(writer, maxWriteDelay),
 	}
 }
 
@@ -147,9 +147,9 @@ type Stream struct {
 }
 
 // NewStream creates a new Stream.
-func NewStream(reader io.Reader, writer io.Writer) *Stream {
+func NewStream(reader io.Reader, writer io.Writer, maxWriteDelay time.Duration) *Stream {
 	return &Stream{
 		Decoder: NewDecoder(reader),
-		Encoder: NewEncoder(writer),
+		Encoder: NewEncoder(writer, maxWriteDelay),
 	}
 }

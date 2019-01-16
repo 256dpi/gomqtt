@@ -5,13 +5,14 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEncoder(t *testing.T) {
 	buf := new(bytes.Buffer)
-	enc := NewEncoder(buf)
+	enc := NewEncoder(buf, time.Millisecond)
 
 	err := enc.Write(NewConnect(), false)
 	assert.NoError(t, err)
@@ -24,7 +25,7 @@ func TestEncoder(t *testing.T) {
 
 func TestEncoderEncodeError(t *testing.T) {
 	buf := new(bytes.Buffer)
-	enc := NewEncoder(buf)
+	enc := NewEncoder(buf, time.Millisecond)
 
 	pkt := NewConnack()
 	pkt.ReturnCode = 11 // < invalid return code
@@ -36,7 +37,7 @@ func TestEncoderEncodeError(t *testing.T) {
 func TestEncoderWriterError(t *testing.T) {
 	enc := NewEncoder(&errorWriter{
 		err: errors.New("foo"),
-	})
+	}, time.Millisecond)
 
 	pkt := NewPublish()
 	pkt.Message.Topic = "foo"
@@ -142,7 +143,7 @@ func TestStream(t *testing.T) {
 	in := new(bytes.Buffer)
 	out := new(bytes.Buffer)
 
-	s := NewStream(in, out)
+	s := NewStream(in, out, time.Millisecond)
 
 	err := s.Write(NewConnect(), false)
 	assert.NoError(t, err)

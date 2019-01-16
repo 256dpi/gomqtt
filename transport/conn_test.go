@@ -301,7 +301,7 @@ func abstractConnAsyncSendAfterCloseTest(t *testing.T, protocol string) {
 	err = conn2.Send(packet.NewConnect(), true)
 	assert.NoError(t, err)
 
-	<-time.After(2 * time.Millisecond)
+	<-time.After(20 * time.Millisecond)
 
 	err = conn2.Send(packet.NewConnect(), true)
 	assert.Error(t, err)

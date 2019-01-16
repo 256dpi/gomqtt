@@ -103,9 +103,9 @@ type WebSocketConn struct {
 }
 
 // NewWebSocketConn returns a new WebSocketConn.
-func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
+func NewWebSocketConn(conn *websocket.Conn, maxWriteDelay time.Duration) *WebSocketConn {
 	return &WebSocketConn{
-		BaseConn: NewBaseConn(&wsStream{conn: conn}),
+		BaseConn: NewBaseConn(&wsStream{conn: conn}, maxWriteDelay),
 		conn:     conn,
 	}
 }

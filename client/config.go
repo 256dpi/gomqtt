@@ -1,6 +1,8 @@
 package client
 
 import (
+	"time"
+
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
 )
@@ -32,6 +34,10 @@ type Config struct {
 
 	// ValidateSubs will cause the client to fail if subscriptions failed.
 	ValidateSubs bool
+
+	// MaxWriteDelay defines the maximum allowed delay when flushing the
+	// underlying buffered writer.
+	MaxWriteDelay time.Duration
 }
 
 // NewConfig creates a new Config using the specified URL.
