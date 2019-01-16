@@ -16,7 +16,7 @@ var ErrCanceled = errors.New("future canceled")
 // A Future is a low-level future type that can be extended to transport
 // custom information.
 type Future struct {
-	Data sync.Map
+	Data *sync.Map
 
 	completeChannel chan struct{}
 	cancelChannel   chan struct{}
@@ -25,6 +25,7 @@ type Future struct {
 // New will return a new Future.
 func New() *Future {
 	return &Future{
+		Data:            new(sync.Map),
 		completeChannel: make(chan struct{}),
 		cancelChannel:   make(chan struct{}),
 	}
