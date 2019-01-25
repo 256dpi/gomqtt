@@ -91,7 +91,6 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 	}()
 
 	dialer := NewDialer()
-	dialer.TLSConfig = clientTLSConfig
 	dialer.DefaultTCPPort = getPort(server)
 	dialer.DefaultTLSPort = getPort(server)
 	dialer.DefaultWSPort = getPort(server)
