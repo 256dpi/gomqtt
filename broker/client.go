@@ -225,6 +225,9 @@ type Client struct {
 	// Disconnect packets are not provided to the callback.
 	PacketCallback func(packet.Generic) error
 
+	// Ref can be used by the backend to attach a custom object to the client.
+	Ref interface{}
+
 	state   uint32
 	backend Backend
 	conn    transport.Conn
