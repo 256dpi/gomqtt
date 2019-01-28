@@ -290,8 +290,8 @@ func (c *Client) Conn() transport.Conn {
 
 // Close will immediately close the client.
 func (c *Client) Close() {
-	c.tomb.Kill(ErrClientClosed)
 	_ = c.conn.Close()
+	c.tomb.Kill(ErrClientClosed)
 }
 
 // Closing returns a channel that is closed when the client is closing.
