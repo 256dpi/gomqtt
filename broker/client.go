@@ -262,7 +262,7 @@ func NewClient(backend Backend, conn transport.Conn) *Client {
 	// run cleanup goroutine
 	go func() {
 		// wait for death and cleanup
-		c.tomb.Wait()
+		_ = c.tomb.Wait()
 		c.cleanup()
 
 		// close channel
@@ -291,7 +291,7 @@ func (c *Client) Conn() transport.Conn {
 // Close will immediately close the client.
 func (c *Client) Close() {
 	c.tomb.Kill(ErrClientClosed)
-	c.conn.Close()
+	_ = c.conn.Close()
 }
 
 // Closing returns a channel that is closed when the client is closing.
@@ -889,7 +889,7 @@ func (c *Client) processDisconnect() error {
 	atomic.StoreUint32(&c.state, clientDisconnected)
 
 	// close underlying connection (triggers cleanup)
-	c.conn.Close()
+	_ = c.conn.Close()
 
 	c.backend.Log(ClientDisconnected, c, nil, nil, nil)
 
@@ -919,7 +919,7 @@ func (c *Client) die(event LogEvent, err error) error {
 	c.backend.Log(event, c, nil, nil, err)
 
 	// close connection if requested
-	c.conn.Close()
+	_ = c.conn.Close()
 
 	return err
 }
