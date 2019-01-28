@@ -438,7 +438,7 @@ func (c *Client) acker() error {
 			// send packet
 			err := c.send(pkt, true)
 			if err != nil {
-				return err // error already handled
+				return c.die(TransportError, err)
 			}
 
 			// remove publish from session if pubcomp
