@@ -921,6 +921,9 @@ func (c *Client) die(event LogEvent, err error) error {
 	// close connection if requested
 	_ = c.conn.Close()
 
+	// ensure tomb is killed
+	c.tomb.Kill(err)
+
 	return err
 }
 
