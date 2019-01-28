@@ -891,6 +891,9 @@ func (c *Client) processDisconnect() error {
 	// close underlying connection (triggers cleanup)
 	_ = c.conn.Close()
 
+	// ensure tomb is killed
+	c.tomb.Kill(ErrClientDisconnected)
+
 	c.backend.Log(ClientDisconnected, c, nil, nil, nil)
 
 	return ErrClientDisconnected
@@ -918,7 +921,7 @@ func (c *Client) die(event LogEvent, err error) error {
 	// log error
 	c.backend.Log(event, c, nil, nil, err)
 
-	// close connection if requested
+	// close connection
 	_ = c.conn.Close()
 
 	// ensure tomb is killed
