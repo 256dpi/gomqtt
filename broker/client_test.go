@@ -27,6 +27,34 @@ func (b *testMemoryBackend) Setup(client *Client, id string, clean bool) (Sessio
 	return b.MemoryBackend.Setup(client, id, clean)
 }
 
+func TestClientMaximumKeepAlive(t *testing.T) {
+	backend := &testMemoryBackend{
+		MemoryBackend: *NewMemoryBackend(),
+	}
+
+	backend.MemoryBackend.ClientMaximumKeepAlive = 10 * time.Millisecond
+
+	port, quit, done := Run(NewEngine(backend), "tcp")
+
+	conn, err := transport.Dial("tcp://localhost:" + port)
+	assert.NoError(t, err)
+
+	f := flow.New().
+		Send(packet.NewConnect()).
+		Receive(packet.NewConnack()).
+		End()
+
+	err = f.Test(conn)
+	assert.NoError(t, err)
+
+	ret := backend.Close(5 * time.Second)
+	assert.True(t, ret)
+
+	close(quit)
+
+	safeReceive(done)
+}
+
 func TestClientPacketCallback(t *testing.T) {
 	backend := &testMemoryBackend{
 		MemoryBackend: *NewMemoryBackend(),

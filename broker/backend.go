@@ -83,6 +83,7 @@ type MemoryBackend struct {
 	KillTimeout time.Duration
 
 	// Client configuration options. See broker.Client for details.
+	ClientMaximumKeepAlive   time.Duration
 	ClientParallelPublishes  int
 	ClientParallelSubscribes int
 	ClientInflightMessages   int
@@ -156,6 +157,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	}
 
 	// apply client settings
+	client.MaximumKeepAlive = m.ClientMaximumKeepAlive
 	client.ParallelPublishes = m.ClientParallelPublishes
 	client.ParallelSubscribes = m.ClientParallelSubscribes
 	client.InflightMessages = m.ClientInflightMessages

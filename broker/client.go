@@ -193,6 +193,13 @@ const (
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
+	// MaximumKeepAlive may be set during Setup to enforce a maximum keep alive
+	// for this client. Missing or higher intervals will be set to the specified
+	// value.
+	//
+	// Will default to 5 minutes.
+	MaximumKeepAlive time.Duration
+
 	// ParallelPublishes may be set during Setup to control the number of
 	// parallel calls to Publish a client can perform. This setting also has an
 	// effect on how many incoming packets are stored in the clients session.
@@ -514,12 +521,21 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 		return c.die(BackendError, ErrMissingSession)
 	}
 
-	// set keep alive
-	if pkt.KeepAlive > 0 {
-		c.conn.SetReadTimeout(time.Duration(pkt.KeepAlive) * 1500 * time.Millisecond)
-	} else {
-		c.conn.SetReadTimeout(0)
+	// set default maximum keep alive
+	if c.MaximumKeepAlive <= 0 {
+		c.MaximumKeepAlive = 5 * time.Minute
 	}
+
+	// get requested keep alive
+	requestedKeepAlive := time.Duration(pkt.KeepAlive) * time.Second
+
+	// enforce maximum keep alive
+	if requestedKeepAlive == 0 || requestedKeepAlive > c.MaximumKeepAlive {
+		requestedKeepAlive = c.MaximumKeepAlive
+	}
+
+	// set read timeout based on keep alive and grant 50% grace period
+	c.conn.SetReadTimeout(requestedKeepAlive + time.Duration(float64(requestedKeepAlive)*0.5))
 
 	// set session present
 	connack.SessionPresent = !pkt.CleanSession && resumed
