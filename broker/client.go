@@ -506,19 +506,19 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	// set state
 	atomic.StoreUint32(&c.state, clientConnected)
 
-	// set keep alive
-	if pkt.KeepAlive > 0 {
-		c.conn.SetReadTimeout(time.Duration(pkt.KeepAlive) * 1500 * time.Millisecond)
-	} else {
-		c.conn.SetReadTimeout(0)
-	}
-
 	// retrieve session
 	s, resumed, err := c.backend.Setup(c, pkt.ClientID, pkt.CleanSession)
 	if err != nil {
 		return c.die(BackendError, err)
 	} else if s == nil {
 		return c.die(BackendError, ErrMissingSession)
+	}
+
+	// set keep alive
+	if pkt.KeepAlive > 0 {
+		c.conn.SetReadTimeout(time.Duration(pkt.KeepAlive) * 1500 * time.Millisecond)
+	} else {
+		c.conn.SetReadTimeout(0)
 	}
 
 	// set session present
