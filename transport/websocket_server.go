@@ -119,7 +119,7 @@ func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request)
 	select {
 	case s.incoming <- webSocketConn:
 	case <-s.tomb.Dying():
-		webSocketConn.Close()
+		_ = webSocketConn.Close()
 	}
 }
 
@@ -146,7 +146,7 @@ func (s *WebSocketServer) Close() error {
 	s.tomb.Kill(errManualClose)
 
 	err := s.listener.Close()
-	s.tomb.Wait()
+	_ = s.tomb.Wait()
 
 	if err != nil {
 		return err

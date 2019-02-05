@@ -50,7 +50,7 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 	err := c.stream.Write(pkt, async)
 	if err != nil {
 		// ensure connection gets closed
-		c.carrier.Close()
+		_ = c.carrier.Close()
 
 		return err
 	}
@@ -71,13 +71,16 @@ func (c *BaseConn) Receive() (packet.Generic, error) {
 	pkt, err := c.stream.Read()
 	if err != nil {
 		// ensure connection gets closed
-		c.carrier.Close()
+		_ = c.carrier.Close()
 
 		return nil, err
 	}
 
 	// reset timeout
-	c.resetTimeout()
+	err = c.resetTimeout()
+	if err != nil {
+		return nil, err
+	}
 
 	return pkt, nil
 }
@@ -117,13 +120,15 @@ func (c *BaseConn) SetReadLimit(limit int64) {
 // and Read returns an error.
 func (c *BaseConn) SetReadTimeout(timeout time.Duration) {
 	c.readTimeout = timeout
-	c.resetTimeout()
+
+	// apply new timeout immediately
+	_ = c.resetTimeout()
 }
 
-func (c *BaseConn) resetTimeout() {
+func (c *BaseConn) resetTimeout() error {
 	if c.readTimeout > 0 {
-		c.carrier.SetReadDeadline(time.Now().Add(c.readTimeout))
+		return c.carrier.SetReadDeadline(time.Now().Add(c.readTimeout))
 	} else {
-		c.carrier.SetReadDeadline(time.Time{})
+		return c.carrier.SetReadDeadline(time.Time{})
 	}
 }

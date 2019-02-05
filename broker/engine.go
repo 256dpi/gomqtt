@@ -80,7 +80,7 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 
 	// close conn immediately when dying
 	if !e.tomb.Alive() {
-		conn.Close()
+		_ = conn.Close()
 		return false
 	}
 
@@ -107,7 +107,7 @@ func (e *Engine) Close() {
 
 	// stop acceptors
 	e.tomb.Kill(nil)
-	e.tomb.Wait()
+	_ = e.tomb.Wait()
 }
 
 // Run runs the passed engine on a random available port and returns a channel
@@ -133,7 +133,7 @@ func Run(engine *Engine, protocol string) (string, chan struct{}, chan struct{})
 		<-quit
 
 		// errors from close are ignored
-		server.Close()
+		_ = server.Close()
 
 		// close broker
 		engine.Close()
