@@ -253,6 +253,8 @@ func DirectRetainedMessageTest(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, sf.Wait(10*time.Second))
 	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
 
+	time.Sleep(config.MessageRetainWait)
+
 	pf, err := c.Publish(topic, testPayload, 0, true)
 	assert.NoError(t, err)
 	assert.NoError(t, pf.Wait(10*time.Second))
@@ -296,6 +298,8 @@ func DirectClearRetainedMessageTest(t *testing.T, config *Config, topic string) 
 	assert.NoError(t, err)
 	assert.NoError(t, sf.Wait(10*time.Second))
 	assert.Equal(t, []packet.QOS{0}, sf.ReturnCodes())
+
+	time.Sleep(config.MessageRetainWait)
 
 	pf, err := c.Publish(topic, nil, 0, true)
 	assert.NoError(t, err)
