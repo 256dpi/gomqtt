@@ -128,7 +128,7 @@ func (c *BaseConn) SetReadTimeout(timeout time.Duration) {
 func (c *BaseConn) resetTimeout() error {
 	if c.readTimeout > 0 {
 		return c.carrier.SetReadDeadline(time.Now().Add(c.readTimeout))
-	} else {
-		return c.carrier.SetReadDeadline(time.Time{})
 	}
+
+	return c.carrier.SetReadDeadline(time.Time{})
 }

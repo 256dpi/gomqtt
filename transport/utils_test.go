@@ -27,7 +27,7 @@ func init() {
 
 	serverTLSConfig = &tls.Config{
 		Certificates: []tls.Certificate{crt},
-		NextProtos: []string{"h2", "http/1.1"},
+		NextProtos:   []string{"h2", "http/1.1"},
 	}
 
 	testDialer = NewDialer()
