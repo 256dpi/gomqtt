@@ -16,16 +16,13 @@ import (
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
-
-	"github.com/juju/ratelimit"
 )
 
 var broker = flag.String("broker", "tcp://0.0.0.0:1883", "broker url")
 var pairs = flag.Int("pairs", 1, "number of pairs")
+var inflight = flag.Int("inflight", 0, "available tokens")
 var duration = flag.Int("duration", 0, "duration in seconds")
-var sendRate = flag.Int("send-rate", 0, "messages per second")
-var receiveRate = flag.Int("receive-rate", 0, "messages per second")
-var payloadSize = flag.Int("payload", 1, "payload size in bytes")
+var length = flag.Int("length", 1, "payload length")
 var retained = flag.Bool("retained", false, "retain flag")
 
 var sent int32
@@ -44,7 +41,7 @@ func main() {
 		panic(http.ListenAndServe("localhost:6061", nil))
 	}()
 
-	payload = make([]byte, *payloadSize)
+	payload = make([]byte, *length)
 
 	fmt.Printf("Start benchmark of %s using %d pairs for %d seconds...\n", *broker, *pairs, *duration)
 
@@ -69,8 +66,16 @@ func main() {
 	for i := 0; i < *pairs; i++ {
 		id := strconv.Itoa(i)
 
-		go consumer(id)
-		go publisher(id)
+		var tokens chan struct{}
+		if *inflight > 0 {
+			tokens = make(chan struct{}, *inflight)
+			for i := 0; i < *inflight; i++ {
+				tokens <- struct{}{}
+			}
+		}
+
+		go consumer(id, tokens)
+		go publisher(id, tokens)
 	}
 
 	go reporter()
@@ -119,7 +124,7 @@ func connection(id string) transport.Conn {
 	panic("connection failed")
 }
 
-func consumer(id string) {
+func consumer(id string, tokens chan<- struct{}) {
 	name := "consumer/" + id
 	conn := connection(name)
 
@@ -139,19 +144,17 @@ func consumer(id string) {
 		panic(err)
 	}
 
-	var bucket *ratelimit.Bucket
-	if *receiveRate > 0 {
-		bucket = ratelimit.NewBucketWithRate(float64(*receiveRate), int64(*receiveRate))
-	}
-
 	for {
-		if bucket != nil {
-			bucket.Wait(1)
-		}
-
 		_, err := conn.Receive()
 		if err != nil {
 			panic(err)
+		}
+
+		if tokens != nil {
+			select {
+			case tokens <- struct{}{}:
+			default:
+			}
 		}
 
 		atomic.AddInt32(&received, 1)
@@ -160,7 +163,7 @@ func consumer(id string) {
 	}
 }
 
-func publisher(id string) {
+func publisher(id string, tokens <-chan struct{}) {
 	name := "publisher/" + id
 	conn := connection(name)
 
@@ -169,14 +172,9 @@ func publisher(id string) {
 	publish.Message.Payload = payload
 	publish.Message.Retain = *retained
 
-	var bucket *ratelimit.Bucket
-	if *sendRate > 0 {
-		bucket = ratelimit.NewBucketWithRate(float64(*sendRate), int64(*sendRate))
-	}
-
 	for {
-		if bucket != nil {
-			bucket.Wait(1)
+		if tokens != nil {
+			<-tokens
 		}
 
 		err := conn.Send(publish, true)

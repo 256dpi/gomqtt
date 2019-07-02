@@ -15,19 +15,16 @@ import (
 
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
-
-	"github.com/juju/ratelimit"
 )
 
 var broker = flag.String("broker", "tcp://0.0.0.0:1883", "broker url")
 var pairs = flag.Int("pairs", 1, "number of pairs")
+var inflight = flag.Int("inflight", 0, "number of inflight messages")
+var futures = flag.Int("futures", 100, "number of active futures")
 var duration = flag.Int("duration", 0, "duration in seconds")
-var publishRate = flag.Int("publish-rate", 0, "messages per second")
-var processRate = flag.Int("process-rate", 0, "messages per second")
-var payloadSize = flag.Int("payload", 1, "message payload size")
-var qos = flag.Int("qos", 0, "message qos")
+var length = flag.Int("length", 1, "message payload length")
 var retained = flag.Bool("retained", false, "message retain flag")
-var inflight = flag.Int("inflight", 10, "number of inflight messages")
+var qos = flag.Int("qos", 0, "message qos")
 
 var sent int32
 var received int32
@@ -45,7 +42,7 @@ func main() {
 		panic(http.ListenAndServe("localhost:6061", nil))
 	}()
 
-	payload = make([]byte, *payloadSize)
+	payload = make([]byte, *length)
 
 	fmt.Printf("Start benchmark of %s using %d pairs for %d seconds...\n", *broker, *pairs, *duration)
 
@@ -70,8 +67,16 @@ func main() {
 	for i := 0; i < *pairs; i++ {
 		id := strconv.Itoa(i)
 
-		go consumer(id)
-		go publisher(id)
+		var tokens chan struct{}
+		if *inflight > 0 {
+			tokens = make(chan struct{}, *inflight)
+			for i := 0; i < *inflight; i++ {
+				tokens <- struct{}{}
+			}
+		}
+
+		go consumer(id, tokens)
+		go publisher(id, tokens)
 	}
 
 	go reporter()
@@ -98,22 +103,20 @@ func connect(id string) *client.Client {
 	return cl
 }
 
-func consumer(id string) {
+func consumer(id string, tokens chan<- struct{}) {
 	name := "consumer/" + id
 	cl := connect(name)
-
-	var bucket *ratelimit.Bucket
-	if *processRate > 0 {
-		bucket = ratelimit.NewBucketWithRate(float64(*processRate), int64(*processRate))
-	}
 
 	cl.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
 			panic(err)
 		}
 
-		if bucket != nil {
-			bucket.Wait(1)
+		if tokens != nil {
+			select {
+			case tokens <- struct{}{}:
+			default:
+			}
 		}
 
 		atomic.AddInt32(&received, 1)
@@ -134,21 +137,16 @@ func consumer(id string) {
 	}
 }
 
-func publisher(id string) {
+func publisher(id string, tokens <-chan struct{}) {
 	name := "publisher/" + id
 	cl := connect(name)
 
-	var bucket *ratelimit.Bucket
-	if *publishRate > 0 {
-		bucket = ratelimit.NewBucketWithRate(float64(*publishRate), int64(*publishRate))
-	}
-
-	futures := make(chan client.GenericFuture, *inflight)
+	list := make(chan client.GenericFuture, *futures)
 
 	go func() {
 		for {
-			if bucket != nil {
-				bucket.Wait(1)
+			if tokens != nil {
+				<-tokens
 			}
 
 			pf, err := cl.Publish(id, payload, packet.QOS(*qos), *retained)
@@ -156,11 +154,11 @@ func publisher(id string) {
 				panic(err)
 			}
 
-			futures <- pf
+			list <- pf
 		}
 	}()
 
-	for pf := range futures {
+	for pf := range list {
 		err := pf.Wait(5 * time.Second)
 		if err != nil {
 			panic(err)
