@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/release/256dpi/gomqtt.svg)](https://github.com/256dpi/gomqtt/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/256dpi/gomqtt)](https://goreportcard.com/report/github.com/256dpi/gomqtt)
 
-**The gomqtt project provides various go packages that deal with the [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) protocol.**
+**Go Packages for working with the [MQTT 3.1.1](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/) protocol.**
 
 ## Installation
 
