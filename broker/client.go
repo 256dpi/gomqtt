@@ -687,14 +687,19 @@ func (c *Client) processPingreq() error {
 
 // handle an incoming subscribe packet
 func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
-	// acquire subscribe token
+	// acquire subscribe token, try fast path first
 	select {
 	case <-c.subscribeTokens:
 		// continue
-	case <-time.After(c.TokenTimeout):
-		return c.die(ClientError, ErrTokenTimeout)
-	case <-c.tomb.Dying():
-		return tomb.ErrDying
+	default:
+		select {
+		case <-c.subscribeTokens:
+			// continue
+		case <-time.After(c.TokenTimeout):
+			return c.die(ClientError, ErrTokenTimeout)
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
+		}
 	}
 
 	// prepare suback packet
@@ -723,14 +728,19 @@ func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
 
 // handle an incoming unsubscribe packet
 func (c *Client) processUnsubscribe(pkt *packet.Unsubscribe) error {
-	// acquire subscribe token
+	// acquire subscribe token, try fast path first
 	select {
 	case <-c.subscribeTokens:
 		// continue
-	case <-time.After(c.TokenTimeout):
-		return c.die(ClientError, ErrTokenTimeout)
-	case <-c.tomb.Dying():
-		return tomb.ErrDying
+	default:
+		select {
+		case <-c.subscribeTokens:
+			// continue
+		case <-time.After(c.TokenTimeout):
+			return c.die(ClientError, ErrTokenTimeout)
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
+		}
 	}
 
 	// prepare unsuback packet
@@ -766,14 +776,19 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		return nil
 	}
 
-	// acquire publish token
+	// acquire publish token, try fast path first
 	select {
 	case <-c.publishTokens:
 		// continue
-	case <-time.After(c.TokenTimeout):
-		return c.die(ClientError, ErrTokenTimeout)
-	case <-c.tomb.Dying():
-		return tomb.ErrDying
+	default:
+		select {
+		case <-c.publishTokens:
+			// continue
+		case <-time.After(c.TokenTimeout):
+			return c.die(ClientError, ErrTokenTimeout)
+		case <-c.tomb.Dying():
+			return tomb.ErrDying
+		}
 	}
 
 	// handle qos 1 flow
