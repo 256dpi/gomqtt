@@ -30,11 +30,9 @@ func newMemorySession(backlog int) *memorySession {
 }
 
 func (s *memorySession) lookupSubscription(topic string) *packet.Subscription {
-	values := s.subscriptions.Match(topic)
-
-	if len(values) > 0 {
-		sub := values[0].(packet.Subscription)
-		return &sub
+	value := s.subscriptions.MatchFirst(topic)
+	if value != nil {
+		return value.(*packet.Subscription)
 	}
 
 	return nil
@@ -270,7 +268,7 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, ac
 
 	// save subscription
 	for _, sub := range subs {
-		client.Session().(*memorySession).subscriptions.Set(sub.Topic, sub)
+		client.Session().(*memorySession).subscriptions.Set(sub.Topic, &sub)
 	}
 
 	// call ack if provided
