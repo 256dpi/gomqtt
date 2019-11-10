@@ -374,14 +374,19 @@ func (c *Client) processor() error {
 // message dequeuer
 func (c *Client) dequeuer() error {
 	for {
-		// acquire dequeue token
+		// acquire dequeue token, try fast path first
 		select {
 		case <-c.dequeueTokens:
 			// continue
-		case <-time.After(c.TokenTimeout):
-			return c.die(ClientError, ErrTokenTimeout)
-		case <-c.tomb.Dying():
-			return tomb.ErrDying
+		default:
+			select {
+			case <-c.dequeueTokens:
+				// continue
+			case <-time.After(c.TokenTimeout):
+				return c.die(ClientError, ErrTokenTimeout)
+			case <-c.tomb.Dying():
+				return tomb.ErrDying
+			}
 		}
 
 		// request next message
