@@ -34,25 +34,30 @@ func Parse(topic string, allowWildcards bool) (string, error) {
 		return "", ErrZeroLength
 	}
 
-	// split to segments
-	segments := strings.Split(topic, "/")
+	// get first segment
+	remainder := topic
+	segment := topicSegment(topic, "/")
 
 	// check all segments
-	for i, s := range segments {
+	for segment != topicEnd {
 		// check use of wildcards
-		if (strings.Contains(s, "+") || strings.Contains(s, "#")) && len(s) > 1 {
+		if (strings.Contains(segment, "+") || strings.Contains(segment, "#")) && len(segment) > 1 {
 			return "", ErrWildcards
 		}
 
 		// check if wildcards are allowed
-		if !allowWildcards && (s == "#" || s == "+") {
+		if !allowWildcards && (segment == "#" || segment == "+") {
 			return "", ErrWildcards
 		}
 
 		// check if hash is the last character
-		if s == "#" && i != len(segments)-1 {
+		if segment == "#" && topicShorten(remainder, "/") != topicEnd {
 			return "", ErrWildcards
 		}
+
+		// get next segment
+		remainder = topicShorten(remainder, "/")
+		segment = topicSegment(remainder, "/")
 	}
 
 	return topic, nil
