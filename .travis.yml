@@ -16,6 +16,7 @@ script:
   - go test -coverprofile=broker.coverprofile ./broker
   - go test -coverprofile=client.coverprofile ./client
   - go test -coverprofile=packet.coverprofile ./packet
+  - go test -coverprofile=session.coverprofile ./session
   - go test -coverprofile=spec.coverprofile ./spec
   - go test -coverprofile=topic.coverprofile ./topic
   - go test -coverprofile=transport.coverprofile ./transport
