@@ -20,7 +20,7 @@ func init() {
 		panic(err)
 	}
 
-	crt, err := tls.LoadX509KeyPair(filepath.Join(wd, "../example.com+2.pem"), filepath.Join(wd, "../example.com+2-key.pem"))
+	crt, err := tls.LoadX509KeyPair(filepath.Join(wd, "../example.crt"), filepath.Join(wd, "../example.key"))
 	if err != nil {
 		panic(err)
 	}

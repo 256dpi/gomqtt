@@ -11,8 +11,7 @@ before_install:
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
   - go get github.com/FiloSottile/mkcert
-  - mkcert -install
-  - mkcert example.com localhost 127.0.0.1
+  - make cert
 script:
   - go test -coverprofile=broker.coverprofile ./broker
   - go test -coverprofile=client.coverprofile ./client
