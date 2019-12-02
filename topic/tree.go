@@ -48,20 +48,20 @@ func (n *node) string(i int) string {
 
 // A Tree implements a thread-safe topic tree.
 type Tree struct {
-	// The separator character. Default: "/"
+	// The separator character.
 	Separator string
 
-	// The single level wildcard character. Default: "+"
+	// The single level wildcard character.
 	WildcardOne string
 
-	// The multi level wildcard character. Default "#"
+	// The multi level wildcard character.
 	WildcardSome string
 
 	root  *node
 	mutex sync.RWMutex
 }
 
-// NewTree returns a new Tree.
+// NewTree returns a new Tree using the standard MQTT separator and wildcards.
 func NewTree() *Tree {
 	return &Tree{
 		Separator:    "/",
