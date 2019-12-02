@@ -41,7 +41,7 @@ func CreateSecureNetServer(address string, config *tls.Config) (*NetServer, erro
 }
 
 // Accept will return the next available connection or block until a
-// connection becomes available, otherwise returns an Error.
+// connection becomes available, otherwise returns an error.
 func (s *NetServer) Accept() (Conn, error) {
 	// ensure write delay default
 	if s.MaxWriteDelay == 0 {
@@ -57,7 +57,7 @@ func (s *NetServer) Accept() (Conn, error) {
 }
 
 // Close will close the underlying listener and cleanup resources. It will
-// return an Error if the underlying listener didn't close cleanly.
+// return an error if the underlying listener didn't close cleanly.
 func (s *NetServer) Close() error {
 	err := s.listener.Close()
 	if err != nil {

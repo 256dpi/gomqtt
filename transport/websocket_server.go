@@ -124,7 +124,7 @@ func (s *WebSocketServer) requestHandler(w http.ResponseWriter, r *http.Request)
 }
 
 // Accept will return the next available connection or block until a
-// connection becomes available, otherwise returns an Error.
+// connection becomes available, otherwise returns an error.
 func (s *WebSocketServer) Accept() (Conn, error) {
 	select {
 	case <-s.tomb.Dying():
@@ -141,7 +141,7 @@ func (s *WebSocketServer) Accept() (Conn, error) {
 }
 
 // Close will close the underlying listener and cleanup resources. It will
-// return an Error if the underlying listener didn't close cleanly.
+// return an error if the underlying listener didn't close cleanly.
 func (s *WebSocketServer) Close() error {
 	s.tomb.Kill(errManualClose)
 

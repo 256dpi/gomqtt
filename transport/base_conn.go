@@ -59,8 +59,8 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 }
 
 // Receive will read from the underlying connection and return a fully read
-// packet. It will return an Error if there was an error while decoding or
-// reading from the underlying connection.
+// packet. It will return any error encountered while decoding or reading from
+// the underlying connection.
 //
 // Note: Only one goroutine can Receive at the same time.
 func (c *BaseConn) Receive() (packet.Generic, error) {
@@ -86,8 +86,7 @@ func (c *BaseConn) Receive() (packet.Generic, error) {
 }
 
 // Close will close the underlying connection and cleanup resources. It will
-// return an Error if there was an error while closing the underlying
-// connection.
+// return any error encountered while closing the underlying connection.
 func (c *BaseConn) Close() error {
 	c.sMutex.Lock()
 	defer c.sMutex.Unlock()
@@ -110,7 +109,7 @@ func (c *BaseConn) Close() error {
 
 // SetReadLimit sets the maximum size of a packet that can be received.
 // If the limit is greater than zero, Receive will close the connection and
-// return an Error if receiving the next packet will exceed the limit.
+// return an error if receiving the next packet will exceed the limit.
 func (c *BaseConn) SetReadLimit(limit int64) {
 	c.stream.Decoder.Limit = limit
 }
