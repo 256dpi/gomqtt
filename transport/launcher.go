@@ -15,35 +15,31 @@ func NewLauncher() *Launcher {
 	return &Launcher{}
 }
 
-var sharedLauncher *Launcher
-
-func init() {
-	sharedLauncher = NewLauncher()
-}
+var sharedLauncher = NewLauncher()
 
 // Launch is a shorthand function.
-func Launch(urlString string) (Server, error) {
-	return sharedLauncher.Launch(urlString)
+func Launch(address string) (Server, error) {
+	return sharedLauncher.Launch(address)
 }
 
-// Launch will launch a server based on information extracted from an URL.
-func (l *Launcher) Launch(urlString string) (Server, error) {
-	// parse url
-	urlParts, err := url.ParseRequestURI(urlString)
+// Launch will launch a server based on information extracted from the address.
+func (l *Launcher) Launch(address string) (Server, error) {
+	// parse address
+	addr, err := url.ParseRequestURI(address)
 	if err != nil {
 		return nil, err
 	}
 
 	// check scheme
-	switch urlParts.Scheme {
+	switch addr.Scheme {
 	case "tcp", "mqtt":
-		return CreateNetServer(urlParts.Host)
+		return CreateNetServer(addr.Host)
 	case "tls", "ssl", "mqtts":
-		return CreateSecureNetServer(urlParts.Host, l.TLSConfig)
+		return CreateSecureNetServer(addr.Host, l.TLSConfig)
 	case "ws":
-		return CreateWebSocketServer(urlParts.Host)
+		return CreateWebSocketServer(addr.Host)
 	case "wss":
-		return CreateSecureWebSocketServer(urlParts.Host, l.TLSConfig)
+		return CreateSecureWebSocketServer(addr.Host, l.TLSConfig)
 	}
 
 	return nil, ErrUnsupportedProtocol

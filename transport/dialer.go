@@ -39,39 +39,35 @@ func NewDialer() *Dialer {
 	}
 }
 
-var sharedDialer *Dialer
-
-func init() {
-	sharedDialer = NewDialer()
-}
+var sharedDialer = NewDialer()
 
 // Dial is a shorthand function.
-func Dial(urlString string) (Conn, error) {
-	return sharedDialer.Dial(urlString)
+func Dial(address string) (Conn, error) {
+	return sharedDialer.Dial(address)
 }
 
 // Dial initiates a connection based in information extracted from an URL.
-func (d *Dialer) Dial(urlString string) (Conn, error) {
+func (d *Dialer) Dial(address string) (Conn, error) {
 	// ensure write delay default
 	if d.MaxWriteDelay == 0 {
 		d.MaxWriteDelay = 10 * time.Millisecond
 	}
 
-	// parse url
-	urlParts, err := url.ParseRequestURI(urlString)
+	// parse address
+	addr, err := url.ParseRequestURI(address)
 	if err != nil {
 		return nil, err
 	}
 
 	// get host and port
-	host, port, err := net.SplitHostPort(urlParts.Host)
+	host, port, err := net.SplitHostPort(addr.Host)
 	if err != nil {
-		host = urlParts.Host
+		host = addr.Host
 		port = ""
 	}
 
 	// check scheme
-	switch urlParts.Scheme {
+	switch addr.Scheme {
 	case "tcp", "mqtt":
 		// set default port
 		if port == "" {
@@ -105,7 +101,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 		}
 
 		// format url
-		wsURL := fmt.Sprintf("ws://%s:%s%s", host, port, urlParts.Path)
+		wsURL := fmt.Sprintf("ws://%s:%s%s", host, port, addr.Path)
 
 		// make connection
 		conn, _, err := d.webSocketDialer.Dial(wsURL, d.RequestHeader)
@@ -121,7 +117,7 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 		}
 
 		// format url
-		wsURL := fmt.Sprintf("wss://%s:%s%s", host, port, urlParts.Path)
+		wsURL := fmt.Sprintf("wss://%s:%s%s", host, port, addr.Path)
 
 		// make connection
 		d.webSocketDialer.TLSClientConfig = d.TLSConfig
