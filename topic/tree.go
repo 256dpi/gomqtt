@@ -48,28 +48,27 @@ func (n *node) string(i int) string {
 
 // A Tree implements a thread-safe topic tree.
 type Tree struct {
-	// The separator character.
-	Separator string
-
-	// The single level wildcard character.
-	WildcardOne string
-
-	// The multi level wildcard character.
-	WildcardSome string
-
-	root  *node
-	mutex sync.RWMutex
+	separator    string
+	wildcardOne  string
+	wildcardSome string
+	root         *node
+	mutex        sync.RWMutex
 }
 
-// NewTree returns a new Tree using the standard MQTT separator and wildcards.
-func NewTree() *Tree {
+// NewTree returns a new Tree using the specified separator and wildcards.
+func NewTree(separator, wildcardOne, wildcardSome string) *Tree {
 	return &Tree{
-		Separator:    "/",
-		WildcardOne:  "+",
-		WildcardSome: "#",
-
-		root: newNode(),
+		separator:    separator,
+		wildcardOne:  wildcardOne,
+		wildcardSome: wildcardSome,
+		root:         newNode(),
 	}
+}
+
+// NewStandardTree returns a new Tree using the standard MQTT separator and
+// wildcards.
+func NewStandardTree() *Tree {
+	return NewTree("/", "+", "#")
 }
 
 // Add registers the value for the supplied topic. This function will
@@ -100,7 +99,7 @@ func (t *Tree) add(value interface{}, topic string, node *node) {
 	}
 
 	// get segment
-	segment := topicSegment(topic, t.Separator)
+	segment := topicSegment(topic, t.separator)
 
 	// get child
 	child, ok := node.children[segment]
@@ -110,7 +109,7 @@ func (t *Tree) add(value interface{}, topic string, node *node) {
 	}
 
 	// descend
-	t.add(value, topicShorten(topic, t.Separator), child)
+	t.add(value, topicShorten(topic, t.separator), child)
 }
 
 // Set sets the supplied value as the only value for the supplied topic. This
@@ -131,7 +130,7 @@ func (t *Tree) set(value interface{}, topic string, node *node) {
 	}
 
 	// get segment
-	segment := topicSegment(topic, t.Separator)
+	segment := topicSegment(topic, t.separator)
 
 	// get child
 	child, ok := node.children[segment]
@@ -141,7 +140,7 @@ func (t *Tree) set(value interface{}, topic string, node *node) {
 	}
 
 	// descend
-	t.set(value, topicShorten(topic, t.Separator), child)
+	t.set(value, topicShorten(topic, t.separator), child)
 }
 
 // Get gets the values from the topic that exactly matches the supplied topics.
@@ -160,7 +159,7 @@ func (t *Tree) get(topic string, node *node) []interface{} {
 	}
 
 	// get segment
-	segment := topicSegment(topic, t.Separator)
+	segment := topicSegment(topic, t.separator)
 
 	// get child
 	child, ok := node.children[segment]
@@ -169,7 +168,7 @@ func (t *Tree) get(topic string, node *node) []interface{} {
 	}
 
 	// descend
-	return t.get(topicShorten(topic, t.Separator), child)
+	return t.get(topicShorten(topic, t.separator), child)
 }
 
 // Remove un-registers the value from the supplied topic. This function will
@@ -205,7 +204,7 @@ func (t *Tree) remove(value interface{}, topic string, node *node) bool {
 	}
 
 	// get segment
-	segment := topicSegment(topic, t.Separator)
+	segment := topicSegment(topic, t.separator)
 
 	// get child
 	child, ok := node.children[segment]
@@ -214,7 +213,7 @@ func (t *Tree) remove(value interface{}, topic string, node *node) bool {
 	}
 
 	// descend and remove node if empty
-	if t.remove(value, topicShorten(topic, t.Separator), child) {
+	if t.remove(value, topicShorten(topic, t.separator), child) {
 		delete(node.children, segment)
 	}
 
@@ -281,7 +280,7 @@ func (t *Tree) MatchFirst(topic string) interface{} {
 
 func (t *Tree) match(topic string, node *node, fn func([]interface{}) bool) {
 	// add all values to the result set that match multiple levels
-	if child, ok := node.children[t.WildcardSome]; ok && len(child.values) > 0 {
+	if child, ok := node.children[t.wildcardSome]; ok && len(child.values) > 0 {
 		if !fn(child.values) {
 			return
 		}
@@ -297,17 +296,17 @@ func (t *Tree) match(topic string, node *node, fn func([]interface{}) bool) {
 	}
 
 	// advance children that match a single level
-	if child, ok := node.children[t.WildcardOne]; ok {
-		t.match(topicShorten(topic, t.Separator), child, fn)
+	if child, ok := node.children[t.wildcardOne]; ok {
+		t.match(topicShorten(topic, t.separator), child, fn)
 	}
 
 	// get segment
-	segment := topicSegment(topic, t.Separator)
+	segment := topicSegment(topic, t.separator)
 
 	// match segments and get children
-	if segment != t.WildcardOne && segment != t.WildcardSome {
+	if segment != t.wildcardOne && segment != t.wildcardSome {
 		if child, ok := node.children[segment]; ok {
-			t.match(topicShorten(topic, t.Separator), child, fn)
+			t.match(topicShorten(topic, t.separator), child, fn)
 		}
 	}
 }
@@ -357,10 +356,10 @@ func (t *Tree) search(topic string, node *node, fn func([]interface{}) bool) {
 	}
 
 	// get segment
-	segment := topicSegment(topic, t.Separator)
+	segment := topicSegment(topic, t.separator)
 
 	// add all current and further values
-	if segment == t.WildcardSome {
+	if segment == t.wildcardSome {
 		if len(node.values) > 0 {
 			if !fn(node.values) {
 				return
@@ -373,7 +372,7 @@ func (t *Tree) search(topic string, node *node, fn func([]interface{}) bool) {
 	}
 
 	// add all current values and continue
-	if segment == t.WildcardOne {
+	if segment == t.wildcardOne {
 		if len(node.values) > 0 {
 			if !fn(node.values) {
 				return
@@ -381,14 +380,14 @@ func (t *Tree) search(topic string, node *node, fn func([]interface{}) bool) {
 		}
 
 		for _, child := range node.children {
-			t.search(topicShorten(topic, t.Separator), child, fn)
+			t.search(topicShorten(topic, t.separator), child, fn)
 		}
 	}
 
 	// match segments and get children
-	if segment != t.WildcardOne && segment != t.WildcardSome {
+	if segment != t.wildcardOne && segment != t.wildcardSome {
 		if child, ok := node.children[segment]; ok {
-			t.search(topicShorten(topic, t.Separator), child, fn)
+			t.search(topicShorten(topic, t.separator), child, fn)
 		}
 	}
 }

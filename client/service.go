@@ -143,7 +143,7 @@ func NewService(queueSize ...int) *Service {
 		DisconnectTimeout:           10 * time.Second,
 		ResubscribeTimeout:          5 * time.Second,
 		ResubscribeAllSubscriptions: true,
-		subscriptions:               topic.NewTree(),
+		subscriptions:               topic.NewStandardTree(),
 		commandQueue:                make(chan *command, qs),
 		futureStore:                 future.NewStore(),
 	}

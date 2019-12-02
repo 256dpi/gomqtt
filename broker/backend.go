@@ -23,7 +23,7 @@ type memorySession struct {
 func newMemorySession(backlog int) *memorySession {
 	return &memorySession{
 		MemorySession: session.NewMemorySession(),
-		subscriptions: topic.NewTree(),
+		subscriptions: topic.NewStandardTree(),
 		stored:        make(chan *packet.Message, backlog),
 		temporary:     make(chan *packet.Message, backlog),
 	}
@@ -111,7 +111,7 @@ func NewMemoryBackend() *MemoryBackend {
 		activeClients:     make(map[string]*Client),
 		storedSessions:    make(map[string]*memorySession),
 		temporarySessions: make(map[*Client]*memorySession),
-		retainedMessages:  topic.NewTree(),
+		retainedMessages:  topic.NewStandardTree(),
 	}
 }
 
