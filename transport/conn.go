@@ -15,14 +15,14 @@ type Conn interface {
 	// stale. Encoding errors are directly returned, but any network errors caught
 	// while flushing the buffer asynchronously will be returned on the next call.
 	//
-	// Note: Only one goroutine can Send at the same time.
+	// Note: Only one goroutine can send at the same time.
 	Send(pkt packet.Generic, async bool) error
 
 	// Receive will read from the underlying connection and return a fully read
 	// packet. It will return any error encountered while decoding or reading
 	// from the underlying connection.
 	//
-	// Note: Only one goroutine can Receive at the same time.
+	// Note: Only one goroutine can receive at the same time.
 	Receive() (packet.Generic, error)
 
 	// Close will close the underlying connection and cleanup resources. It will

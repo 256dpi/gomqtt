@@ -57,34 +57,41 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 		d.MaxWriteDelay = 10 * time.Millisecond
 	}
 
+	// parse url
 	urlParts, err := url.ParseRequestURI(urlString)
 	if err != nil {
 		return nil, err
 	}
 
+	// get host and port
 	host, port, err := net.SplitHostPort(urlParts.Host)
 	if err != nil {
 		host = urlParts.Host
 		port = ""
 	}
 
+	// check scheme
 	switch urlParts.Scheme {
 	case "tcp", "mqtt":
+		// set default port
 		if port == "" {
 			port = d.DefaultTCPPort
 		}
 
+		// make connection
 		conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
 		if err != nil {
 			return nil, err
 		}
 
 		return NewNetConn(conn, d.MaxWriteDelay), nil
-	case "tls", "mqtts":
+	case "tls", "ssl", "mqtts":
+		// set default port
 		if port == "" {
 			port = d.DefaultTLSPort
 		}
 
+		// make connection
 		conn, err := tls.Dial("tcp", net.JoinHostPort(host, port), d.TLSConfig)
 		if err != nil {
 			return nil, err
@@ -92,12 +99,15 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 
 		return NewNetConn(conn, d.MaxWriteDelay), nil
 	case "ws":
+		// set default port
 		if port == "" {
 			port = d.DefaultWSPort
 		}
 
+		// format url
 		wsURL := fmt.Sprintf("ws://%s:%s%s", host, port, urlParts.Path)
 
+		// make connection
 		conn, _, err := d.webSocketDialer.Dial(wsURL, d.RequestHeader)
 		if err != nil {
 			return nil, err
@@ -105,12 +115,15 @@ func (d *Dialer) Dial(urlString string) (Conn, error) {
 
 		return NewWebSocketConn(conn, d.MaxWriteDelay), nil
 	case "wss":
+		// set default port
 		if port == "" {
 			port = d.DefaultWSSPort
 		}
 
+		// format url
 		wsURL := fmt.Sprintf("wss://%s:%s%s", host, port, urlParts.Path)
 
+		// make connection
 		d.webSocketDialer.TLSClientConfig = d.TLSConfig
 		conn, _, err := d.webSocketDialer.Dial(wsURL, d.RequestHeader)
 		if err != nil {

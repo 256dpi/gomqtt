@@ -18,14 +18,11 @@ type Carrier interface {
 // A BaseConn manages the low-level plumbing between the Carrier and the packet
 // Stream.
 type BaseConn struct {
-	carrier Carrier
-
-	stream *packet.Stream
-
-	sMutex sync.Mutex
-	rMutex sync.Mutex
-
-	readTimeout time.Duration
+	carrier      Carrier
+	stream       *packet.Stream
+	sendMutex    sync.Mutex
+	receiveMutex sync.Mutex
+	readTimeout  time.Duration
 }
 
 // NewBaseConn creates a new BaseConn using the specified Carrier.
@@ -41,10 +38,11 @@ func NewBaseConn(c Carrier, maxWriteDelay time.Duration) *BaseConn {
 // stale. Encoding errors are directly returned, but any network errors caught
 // while flushing the buffer asynchronously will be returned on the next call.
 //
-// Note: Only one goroutine can Send at the same time.
+// Note: Only one goroutine can send at the same time.
 func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
-	c.sMutex.Lock()
-	defer c.sMutex.Unlock()
+	// acquire mutex
+	c.sendMutex.Lock()
+	defer c.sendMutex.Unlock()
 
 	// write packet
 	err := c.stream.Write(pkt, async)
@@ -62,10 +60,11 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 // packet. It will return any error encountered while decoding or reading from
 // the underlying connection.
 //
-// Note: Only one goroutine can Receive at the same time.
+// Note: Only one goroutine can receive at the same time.
 func (c *BaseConn) Receive() (packet.Generic, error) {
-	c.rMutex.Lock()
-	defer c.rMutex.Unlock()
+	// acquire mutex
+	c.receiveMutex.Lock()
+	defer c.receiveMutex.Unlock()
 
 	// read next packet
 	pkt, err := c.stream.Read()
@@ -88,8 +87,9 @@ func (c *BaseConn) Receive() (packet.Generic, error) {
 // Close will close the underlying connection and cleanup resources. It will
 // return any error encountered while closing the underlying connection.
 func (c *BaseConn) Close() error {
-	c.sMutex.Lock()
-	defer c.sMutex.Unlock()
+	// acquire mutex
+	c.sendMutex.Lock()
+	defer c.sendMutex.Unlock()
 
 	// flush buffer
 	err1 := c.stream.Flush()

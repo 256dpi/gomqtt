@@ -28,11 +28,13 @@ func Launch(urlString string) (Server, error) {
 
 // Launch will launch a server based on information extracted from an URL.
 func (l *Launcher) Launch(urlString string) (Server, error) {
+	// parse url
 	urlParts, err := url.ParseRequestURI(urlString)
 	if err != nil {
 		return nil, err
 	}
 
+	// check scheme
 	switch urlParts.Scheme {
 	case "tcp", "mqtt":
 		return CreateNetServer(urlParts.Host)
