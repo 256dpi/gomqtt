@@ -16,17 +16,23 @@ type Engine struct {
 	// The Backend that will be passed to accepted clients.
 	Backend Backend
 
+	// ReadLimit defines the initial read limit.
+	//
+	// Default: No limit.
+	ReadLimit int64
+
+	// MaxWriteDelay defines the initial max write delay.
+	//
+	// Default: No delay.
+	MaxWriteDelay time.Duration
+
 	// ConnectTimeout defines the timeout to receive the first packet.
+	//
+	// Default: No timeout
 	ConnectTimeout time.Duration
 
-	// The DefaultReadLimit defines the initial read limit.
-	DefaultReadLimit int64
-
-	// The DefaultMaxWriteDelay defines the initial default max write delay.
-	DefaultMaxWriteDelay time.Duration
-
-	// OnError can be used to receive errors from engine. If an error is received
-	// the server should be restarted.
+	// OnError can be used to receive errors from the engine. If an error is
+	// received the server should be restarted.
 	OnError func(error)
 
 	mutex sync.Mutex
@@ -38,6 +44,8 @@ func NewEngine(backend Backend) *Engine {
 	return &Engine{
 		Backend:        backend,
 		ConnectTimeout: 10 * time.Second,
+		ReadLimit:      8 * 1024 * 1024, // 8MB
+		MaxWriteDelay:  time.Millisecond,
 	}
 }
 
@@ -88,10 +96,10 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 	}
 
 	// set default read limit
-	conn.SetReadLimit(e.DefaultReadLimit)
+	conn.SetReadLimit(e.ReadLimit)
 
 	// set initial max write delay
-	conn.SetMaxWriteDelay(e.DefaultMaxWriteDelay)
+	conn.SetMaxWriteDelay(e.MaxWriteDelay)
 
 	// set initial read timeout
 	conn.SetReadTimeout(e.ConnectTimeout)

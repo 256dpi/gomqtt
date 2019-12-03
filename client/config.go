@@ -50,7 +50,8 @@ func NewConfig(url string) *Config {
 		CleanSession:  true,
 		KeepAlive:     "30s",
 		ValidateSubs:  true,
-		MaxWriteDelay: 10 * time.Millisecond,
+		ReadLimit:     8 * 1024 * 1024, // 8MB
+		MaxWriteDelay: time.Millisecond,
 	}
 }
 

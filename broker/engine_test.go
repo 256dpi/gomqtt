@@ -30,7 +30,7 @@ func TestConnectTimeout(t *testing.T) {
 
 func TestDefaultReadLimit(t *testing.T) {
 	engine := NewEngine(NewMemoryBackend())
-	engine.DefaultReadLimit = 1
+	engine.ReadLimit = 1
 
 	port, quit, done := Run(engine, "tcp")
 
