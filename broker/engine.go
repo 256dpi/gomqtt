@@ -22,6 +22,9 @@ type Engine struct {
 	// The DefaultReadLimit defines the initial read limit.
 	DefaultReadLimit int64
 
+	// The DefaultMaxWriteDelay defines the initial default max write delay.
+	DefaultMaxWriteDelay time.Duration
+
 	// OnError can be used to receive errors from engine. If an error is received
 	// the server should be restarted.
 	OnError func(error)
@@ -86,6 +89,9 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 
 	// set default read limit
 	conn.SetReadLimit(e.DefaultReadLimit)
+
+	// set initial max write delay
+	conn.SetMaxWriteDelay(e.DefaultMaxWriteDelay)
 
 	// set initial read timeout
 	conn.SetReadTimeout(e.ConnectTimeout)

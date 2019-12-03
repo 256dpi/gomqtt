@@ -26,10 +26,10 @@ type BaseConn struct {
 }
 
 // NewBaseConn creates a new BaseConn using the specified Carrier.
-func NewBaseConn(c Carrier, maxWriteDelay time.Duration) *BaseConn {
+func NewBaseConn(c Carrier) *BaseConn {
 	return &BaseConn{
 		carrier: c,
-		stream:  packet.NewStream(c, c, maxWriteDelay),
+		stream:  packet.NewStream(c, c),
 	}
 }
 
@@ -111,7 +111,7 @@ func (c *BaseConn) Close() error {
 // If the limit is greater than zero, Receive will close the connection and
 // return an error if receiving the next packet will exceed the limit.
 func (c *BaseConn) SetReadLimit(limit int64) {
-	c.stream.Decoder.Limit = limit
+	c.stream.SetReadLimit(limit)
 }
 
 // SetReadTimeout sets the maximum time that can pass between reads.
@@ -122,6 +122,12 @@ func (c *BaseConn) SetReadTimeout(timeout time.Duration) {
 
 	// apply new timeout immediately
 	_ = c.resetTimeout()
+}
+
+// SetMaxWriteDelay will set the maximum amount of time allowed to pass until
+// an asynchronous write is flushed.
+func (c *BaseConn) SetMaxWriteDelay(delay time.Duration) {
+	c.stream.SetMaxWriteDelay(delay)
 }
 
 func (c *BaseConn) resetTimeout() error {

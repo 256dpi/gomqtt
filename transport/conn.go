@@ -39,6 +39,10 @@ type Conn interface {
 	// and Read returns an error.
 	SetReadTimeout(timeout time.Duration)
 
+	// SetMaxWriteDelay will set the maximum amount of time allowed to pass until
+	// an asynchronous write is flushed.
+	SetMaxWriteDelay(delay time.Duration)
+
 	// LocalAddr will return the underlying connection's local net address.
 	LocalAddr() net.Addr
 

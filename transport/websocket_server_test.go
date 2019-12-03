@@ -41,9 +41,9 @@ func TestWebSocketServerInvalidUpgrade(t *testing.T) {
 	server, err := testLauncher.Launch("ws://localhost:0")
 	require.NoError(t, err)
 
-	resp, err := http.Get(getURL(server, "http"))
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	res, err := http.Get(getURL(server, "http"))
 	assert.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 
 	err = server.Close()
 	assert.NoError(t, err)
@@ -79,17 +79,13 @@ func TestWebSocketServerConnectionCancelOnClose(t *testing.T) {
 }
 
 func TestWebSocketFallback(t *testing.T) {
-	server, err := testLauncher.Launch("ws://localhost:0")
-	require.NoError(t, err)
-
-	ws := server.(*WebSocketServer)
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("Hello world: " + r.Proto))
 	})
 
-	ws.SetFallback(mux)
+	server, err := CreateWebSocketServer("localhost:0", mux)
+	require.NoError(t, err)
 
 	resp, err := http.Get(getURL(server, "http") + "/test")
 	assert.NoError(t, err)
@@ -103,17 +99,13 @@ func TestWebSocketFallback(t *testing.T) {
 }
 
 func TestWebSocketFallbackHTTP2(t *testing.T) {
-	server, err := testLauncher.Launch("wss://localhost:0")
-	require.NoError(t, err)
-
-	ws := server.(*WebSocketServer)
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("Hello world: " + r.Proto))
 	})
 
-	ws.SetFallback(mux)
+	server, err := CreateSecureWebSocketServer("localhost:0", testTLSConfig, mux)
+	require.NoError(t, err)
 
 	resp, err := http.Get(getURL(server, "https") + "/test")
 	assert.NoError(t, err)
@@ -124,18 +116,4 @@ func TestWebSocketFallbackHTTP2(t *testing.T) {
 
 	err = server.Close()
 	assert.NoError(t, err)
-}
-
-func TestWebSocketOriginChecker(t *testing.T) {
-	server, err := testLauncher.Launch("ws://localhost:0")
-	require.NoError(t, err)
-
-	ws := server.(*WebSocketServer)
-	ws.SetOriginChecker(func(r *http.Request) bool {
-		return false
-	})
-
-	conn, err := testDialer.Dial(getURL(server, "ws"))
-	require.Error(t, err)
-	require.Nil(t, conn)
 }

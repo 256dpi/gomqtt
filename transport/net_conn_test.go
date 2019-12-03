@@ -78,10 +78,11 @@ func TestNetConnCloseWhileReadError(t *testing.T) {
 		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
-		pkt.Encode(buf)
+		_, err := pkt.Encode(buf)
+		assert.NoError(t, err)
 
 		netConn := conn1.(*NetConn)
-		_, err := netConn.UnderlyingConn().Write(buf[0:7]) // < incomplete packet
+		_, err = netConn.UnderlyingConn().Write(buf[0:7]) // < incomplete packet
 		assert.NoError(t, err)
 
 		err = netConn.UnderlyingConn().Close()
@@ -100,10 +101,11 @@ func TestNetConnCloseWhileDetectError(t *testing.T) {
 		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
-		pkt.Encode(buf)
+		_, err := pkt.Encode(buf)
+		assert.NoError(t, err)
 
 		netConn := conn1.(*NetConn)
-		_, err := netConn.UnderlyingConn().Write(buf[0:1]) // < too less for a detection
+		_, err = netConn.UnderlyingConn().Write(buf[0:1]) // < too less for a detection
 		assert.NoError(t, err)
 
 		err = netConn.UnderlyingConn().Close()
@@ -122,10 +124,11 @@ func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
 		buf := make([]byte, pkt.Len())
-		pkt.Encode(buf)
+		_, err := pkt.Encode(buf)
+		assert.NoError(t, err)
 
 		netConn := conn1.(*NetConn)
-		_, err := netConn.UnderlyingConn().Write(buf[0 : len(buf)-1]) // < not all of the bytes
+		_, err = netConn.UnderlyingConn().Write(buf[0 : len(buf)-1]) // < not all of the bytes
 		assert.NoError(t, err)
 	})
 

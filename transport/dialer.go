@@ -11,35 +11,71 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// The Dialer handles connecting to a server and creating a connection.
-type Dialer struct {
-	TLSConfig     *tls.Config
-	RequestHeader http.Header
-	MaxWriteDelay time.Duration
+// DialConfig is used to configure a dialer.
+type DialConfig struct {
+	// The TLS config to be used with secure connections.
+	TLSConfig *tls.Config
 
+	// The additional request headers for web socket connections.
+	RequestHeader http.Header
+
+	// The time after which a dial attempt is cancelled.
+	//
+	// Default: No timeout.
+	Timeout time.Duration
+
+	// The default ports to be uses if no port has been specified.
+	//
+	// Defaults: 1883, 8883, 80, 443.
 	DefaultTCPPort string
 	DefaultTLSPort string
 	DefaultWSPort  string
 	DefaultWSSPort string
+}
 
-	webSocketDialer *websocket.Dialer
+func (c *DialConfig) ensureDefaults() {
+	// set default ports
+	if c.DefaultTCPPort == "" {
+		c.DefaultTCPPort = "1883"
+	}
+	if c.DefaultTLSPort == "" {
+		c.DefaultTLSPort = "8883"
+	}
+	if c.DefaultWSPort == "" {
+		c.DefaultWSPort = "80"
+	}
+	if c.DefaultWSPort == "" {
+		c.DefaultWSPort = "443"
+	}
+}
+
+// The Dialer handles connecting to a server and creating a connection.
+type Dialer struct {
+	config    DialConfig
+	netDialer net.Dialer
+	wsDialer  websocket.Dialer
 }
 
 // NewDialer returns a new Dialer.
-func NewDialer() *Dialer {
+func NewDialer(config DialConfig) *Dialer {
+	// ensure defaults
+	config.ensureDefaults()
+
 	return &Dialer{
-		DefaultTCPPort: "1883",
-		DefaultTLSPort: "8883",
-		DefaultWSPort:  "80",
-		DefaultWSSPort: "443",
-		webSocketDialer: &websocket.Dialer{
-			Proxy:        http.ProxyFromEnvironment,
-			Subprotocols: []string{"mqtt"},
+		config: config,
+		netDialer: net.Dialer{
+			Timeout: config.Timeout,
+		},
+		wsDialer: websocket.Dialer{
+			Proxy:            http.ProxyFromEnvironment,
+			TLSClientConfig:  config.TLSConfig,
+			HandshakeTimeout: config.Timeout,
+			Subprotocols:     []string{"mqtt"},
 		},
 	}
 }
 
-var sharedDialer = NewDialer()
+var sharedDialer = NewDialer(DialConfig{})
 
 // Dial is a shorthand function.
 func Dial(address string) (Conn, error) {
@@ -48,11 +84,6 @@ func Dial(address string) (Conn, error) {
 
 // Dial initiates a connection based in information extracted from an URL.
 func (d *Dialer) Dial(address string) (Conn, error) {
-	// ensure write delay default
-	if d.MaxWriteDelay == 0 {
-		d.MaxWriteDelay = 10 * time.Millisecond
-	}
-
 	// parse address
 	addr, err := url.ParseRequestURI(address)
 	if err != nil {
@@ -71,63 +102,62 @@ func (d *Dialer) Dial(address string) (Conn, error) {
 	case "tcp", "mqtt":
 		// set default port
 		if port == "" {
-			port = d.DefaultTCPPort
+			port = d.config.DefaultTCPPort
 		}
 
 		// make connection
-		conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
+		conn, err := d.netDialer.Dial("tcp", net.JoinHostPort(host, port))
 		if err != nil {
 			return nil, err
 		}
 
-		return NewNetConn(conn, d.MaxWriteDelay), nil
+		return NewNetConn(conn), nil
 	case "tls", "ssl", "mqtts":
 		// set default port
 		if port == "" {
-			port = d.DefaultTLSPort
+			port = d.config.DefaultTLSPort
 		}
 
 		// make connection
-		conn, err := tls.Dial("tcp", net.JoinHostPort(host, port), d.TLSConfig)
+		conn, err := tls.DialWithDialer(&d.netDialer, "tcp", net.JoinHostPort(host, port), d.config.TLSConfig)
 		if err != nil {
 			return nil, err
 		}
 
-		return NewNetConn(conn, d.MaxWriteDelay), nil
+		return NewNetConn(conn), nil
 	case "ws":
 		// set default port
 		if port == "" {
-			port = d.DefaultWSPort
+			port = d.config.DefaultWSPort
 		}
 
 		// format url
 		wsURL := fmt.Sprintf("ws://%s:%s%s", host, port, addr.Path)
 
 		// make connection
-		conn, _, err := d.webSocketDialer.Dial(wsURL, d.RequestHeader)
+		conn, _, err := d.wsDialer.Dial(wsURL, d.config.RequestHeader)
 		if err != nil {
 			return nil, err
 		}
 
-		return NewWebSocketConn(conn, d.MaxWriteDelay), nil
+		return NewWebSocketConn(conn), nil
 	case "wss":
 		// set default port
 		if port == "" {
-			port = d.DefaultWSSPort
+			port = d.config.DefaultWSSPort
 		}
 
 		// format url
 		wsURL := fmt.Sprintf("wss://%s:%s%s", host, port, addr.Path)
 
 		// make connection
-		d.webSocketDialer.TLSClientConfig = d.TLSConfig
-		conn, _, err := d.webSocketDialer.Dial(wsURL, d.RequestHeader)
+		conn, _, err := d.wsDialer.Dial(wsURL, d.config.RequestHeader)
 		if err != nil {
 			return nil, err
 		}
 
-		return NewWebSocketConn(conn, d.MaxWriteDelay), nil
+		return NewWebSocketConn(conn), nil
+	default:
+		return nil, ErrUnsupportedProtocol
 	}
-
-	return nil, ErrUnsupportedProtocol
 }

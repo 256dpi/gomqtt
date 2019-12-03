@@ -12,7 +12,8 @@ import (
 
 func TestEncoder(t *testing.T) {
 	buf := new(bytes.Buffer)
-	enc := NewEncoder(buf, time.Millisecond)
+	enc := NewEncoder(buf)
+	enc.SetMaxWriteDelay(time.Millisecond)
 
 	err := enc.Write(NewConnect(), false)
 	assert.NoError(t, err)
@@ -25,7 +26,8 @@ func TestEncoder(t *testing.T) {
 
 func TestEncoderEncodeError(t *testing.T) {
 	buf := new(bytes.Buffer)
-	enc := NewEncoder(buf, time.Millisecond)
+	enc := NewEncoder(buf)
+	enc.SetMaxWriteDelay(time.Millisecond)
 
 	pkt := NewConnack()
 	pkt.ReturnCode = 11 // < invalid return code
@@ -37,7 +39,8 @@ func TestEncoderEncodeError(t *testing.T) {
 func TestEncoderWriterError(t *testing.T) {
 	enc := NewEncoder(&errorWriter{
 		err: errors.New("foo"),
-	}, time.Millisecond)
+	})
+	enc.SetMaxWriteDelay(time.Millisecond)
 
 	pkt := NewPublish()
 	pkt.Message.Topic = "foo"
@@ -107,7 +110,7 @@ func TestDecoderInvalidTypeError(t *testing.T) {
 func TestDecoderReadLimitError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
-	dec.Limit = 1
+	dec.limit = 1
 
 	buf.Write([]byte{0x00, 0x00})
 
@@ -143,7 +146,8 @@ func TestStream(t *testing.T) {
 	in := new(bytes.Buffer)
 	out := new(bytes.Buffer)
 
-	s := NewStream(in, out, time.Millisecond)
+	s := NewStream(in, out)
+	s.SetMaxWriteDelay(time.Millisecond)
 
 	err := s.Write(NewConnect(), false)
 	assert.NoError(t, err)

@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-var serverTLSConfig *tls.Config
-
+var testTLSConfig *tls.Config
 var testDialer *Dialer
 var testLauncher *Launcher
 
@@ -25,15 +24,16 @@ func init() {
 		panic(err)
 	}
 
-	serverTLSConfig = &tls.Config{
+	testTLSConfig = &tls.Config{
 		Certificates: []tls.Certificate{crt},
 		NextProtos:   []string{"h2", "http/1.1"},
 	}
 
-	testDialer = NewDialer()
+	testDialer = NewDialer(DialConfig{})
 
-	testLauncher = NewLauncher()
-	testLauncher.TLSConfig = serverTLSConfig
+	testLauncher = NewLauncher(LaunchConfig{
+		TLSConfig: testTLSConfig,
+	})
 }
 
 // returns a client-ish and server-ish pair of connections
@@ -51,6 +51,8 @@ func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 			panic(err)
 		}
 
+		conn.SetMaxWriteDelay(10 * time.Millisecond)
+
 		handler(conn)
 
 		server.Close()
@@ -61,6 +63,8 @@ func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 	if err != nil {
 		panic(err)
 	}
+
+	conn.SetMaxWriteDelay(10 * time.Millisecond)
 
 	return conn, done
 }

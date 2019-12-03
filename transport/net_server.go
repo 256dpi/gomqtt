@@ -3,13 +3,10 @@ package transport
 import (
 	"crypto/tls"
 	"net"
-	"time"
 )
 
 // A NetServer accepts net.Conn based connections.
 type NetServer struct {
-	MaxWriteDelay time.Duration
-
 	listener net.Listener
 }
 
@@ -43,28 +40,18 @@ func CreateSecureNetServer(address string, config *tls.Config) (*NetServer, erro
 // Accept will return the next available connection or block until a
 // connection becomes available, otherwise returns an error.
 func (s *NetServer) Accept() (Conn, error) {
-	// ensure write delay default
-	if s.MaxWriteDelay == 0 {
-		s.MaxWriteDelay = 10 * time.Millisecond
-	}
-
 	conn, err := s.listener.Accept()
 	if err != nil {
 		return nil, err
 	}
 
-	return NewNetConn(conn, s.MaxWriteDelay), nil
+	return NewNetConn(conn), nil
 }
 
 // Close will close the underlying listener and cleanup resources. It will
 // return an error if the underlying listener didn't close cleanly.
 func (s *NetServer) Close() error {
-	err := s.listener.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.listener.Close()
 }
 
 // Addr returns the server's network address.

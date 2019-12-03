@@ -102,7 +102,7 @@ func TestClientConnectCustomDialer(t *testing.T) {
 	c.Callback = errorCallback(t)
 
 	config := NewConfig("tcp://localhost:" + port)
-	config.Dialer = transport.NewDialer()
+	config.Dialer = transport.NewDialer(transport.DialConfig{})
 
 	connectFuture, err := c.Connect(config)
 	assert.NoError(t, err)

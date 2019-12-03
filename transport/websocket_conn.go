@@ -18,9 +18,9 @@ type wsStream struct {
 	reader io.Reader
 }
 
-func (s *wsStream) Read(p []byte) (int, error) {
+func (s *wsStream) Read(buf []byte) (int, error) {
+	// prepare total
 	total := 0
-	buf := p
 
 	for {
 		// get next reader
@@ -103,9 +103,9 @@ type WebSocketConn struct {
 }
 
 // NewWebSocketConn returns a new WebSocketConn.
-func NewWebSocketConn(conn *websocket.Conn, maxWriteDelay time.Duration) *WebSocketConn {
+func NewWebSocketConn(conn *websocket.Conn) *WebSocketConn {
 	return &WebSocketConn{
-		BaseConn: NewBaseConn(&wsStream{conn: conn}, maxWriteDelay),
+		BaseConn: NewBaseConn(&wsStream{conn: conn}),
 		conn:     conn,
 	}
 }

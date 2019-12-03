@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"sync/atomic"
 	"time"
 
 	"github.com/256dpi/mercury"
@@ -18,22 +19,22 @@ var ErrDetectionOverflow = errors.New("detection overflow")
 // exceeded its read limit.
 var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
-// An Encoder wraps a Writer and continuously encodes packets.
+// An Encoder wraps a writer and continuously encodes packets.
 type Encoder struct {
 	writer *mercury.Writer
 	buffer bytes.Buffer
 }
 
 // NewEncoder creates a new Encoder.
-func NewEncoder(writer io.Writer, maxWriteDelay time.Duration) *Encoder {
+func NewEncoder(writer io.Writer) *Encoder {
 	return &Encoder{
-		writer: mercury.NewWriter(writer, maxWriteDelay),
+		writer: mercury.NewWriter(writer, 0),
 	}
 }
 
 // Write encodes and writes the passed packet to the write buffer.
 func (e *Encoder) Write(pkt Generic, async bool) error {
-	// reset and eventually grow buffer
+	// reset and potentially grow buffer
 	packetLength := pkt.Len()
 	e.buffer.Reset()
 	e.buffer.Grow(packetLength)
@@ -63,10 +64,15 @@ func (e *Encoder) Flush() error {
 	return e.writer.Flush()
 }
 
+// SetMaxWriteDelay will set the maximum amount of time allowed to pass until
+// an asynchronous write is flushed.
+func (e *Encoder) SetMaxWriteDelay(delay time.Duration) {
+	e.writer.SetMaxDelay(delay)
+}
+
 // A Decoder wraps a Reader and continuously decodes packets.
 type Decoder struct {
-	Limit int64
-
+	limit  int64
 	reader *bufio.Reader
 	buffer bytes.Buffer
 }
@@ -109,7 +115,8 @@ func (d *Decoder) Read() (Generic, error) {
 		}
 
 		// check read limit
-		if d.Limit > 0 && int64(packetLength) > d.Limit {
+		limit := atomic.LoadInt64(&d.limit)
+		if limit > 0 && int64(packetLength) > limit {
 			return nil, ErrReadLimitExceeded
 		}
 
@@ -140,6 +147,12 @@ func (d *Decoder) Read() (Generic, error) {
 	}
 }
 
+// SetReadLimit will set the read limit. Packets with a length above that limit
+// will cause the ErrReadLimitExceeded error.
+func (d *Decoder) SetReadLimit(limit int64) {
+	atomic.StoreInt64(&d.limit, limit)
+}
+
 // A Stream combines an Encoder and Decoder
 type Stream struct {
 	*Decoder
@@ -147,9 +160,9 @@ type Stream struct {
 }
 
 // NewStream creates a new Stream.
-func NewStream(reader io.Reader, writer io.Writer, maxWriteDelay time.Duration) *Stream {
+func NewStream(reader io.Reader, writer io.Writer) *Stream {
 	return &Stream{
 		Decoder: NewDecoder(reader),
-		Encoder: NewEncoder(writer, maxWriteDelay),
+		Encoder: NewEncoder(writer),
 	}
 }

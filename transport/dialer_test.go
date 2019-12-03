@@ -90,11 +90,12 @@ func abstractDefaultPortTest(t *testing.T, protocol string) {
 		close(wait)
 	}()
 
-	dialer := NewDialer()
-	dialer.DefaultTCPPort = getPort(server)
-	dialer.DefaultTLSPort = getPort(server)
-	dialer.DefaultWSPort = getPort(server)
-	dialer.DefaultWSSPort = getPort(server)
+	dialer := NewDialer(DialConfig{
+		DefaultTCPPort: getPort(server),
+		DefaultTLSPort: getPort(server),
+		DefaultWSPort:  getPort(server),
+		DefaultWSSPort: getPort(server),
+	})
 
 	conn, err := dialer.Dial(protocol + "://localhost")
 	require.NoError(t, err)

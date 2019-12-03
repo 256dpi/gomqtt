@@ -35,6 +35,9 @@ type Config struct {
 	// ValidateSubs will cause the client to fail if subscriptions failed.
 	ValidateSubs bool
 
+	// ReadLimit defines the maximum size of a packet that can be received.
+	ReadLimit int64
+
 	// MaxWriteDelay defines the maximum allowed delay when flushing the
 	// underlying buffered writer.
 	MaxWriteDelay time.Duration
@@ -43,10 +46,11 @@ type Config struct {
 // NewConfig creates a new Config using the specified URL.
 func NewConfig(url string) *Config {
 	return &Config{
-		BrokerURL:    url,
-		CleanSession: true,
-		KeepAlive:    "30s",
-		ValidateSubs: true,
+		BrokerURL:     url,
+		CleanSession:  true,
+		KeepAlive:     "30s",
+		ValidateSubs:  true,
+		MaxWriteDelay: 10 * time.Millisecond,
 	}
 }
 

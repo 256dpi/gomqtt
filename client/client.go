@@ -193,6 +193,12 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 		}
 	}
 
+	// set read limit
+	c.conn.SetReadLimit(c.config.ReadLimit)
+
+	// set max write delay
+	c.conn.SetMaxWriteDelay(c.config.MaxWriteDelay)
+
 	// set to connecting as from this point the client cannot be reused
 	atomic.StoreUint32(&c.state, clientConnecting)
 

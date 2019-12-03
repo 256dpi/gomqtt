@@ -2,7 +2,6 @@ package transport
 
 import (
 	"net"
-	"time"
 )
 
 // A NetConn is a wrapper around a basic TCP connection.
@@ -13,9 +12,9 @@ type NetConn struct {
 }
 
 // NewNetConn returns a new NetConn.
-func NewNetConn(conn net.Conn, maxWriteDelay time.Duration) *NetConn {
+func NewNetConn(conn net.Conn) *NetConn {
 	return &NetConn{
-		BaseConn: NewBaseConn(conn, maxWriteDelay),
+		BaseConn: NewBaseConn(conn),
 		conn:     conn,
 	}
 }

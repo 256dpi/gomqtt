@@ -78,7 +78,8 @@ func TestWebSocketBadFrameError(t *testing.T) {
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		buf := []byte{0x07, 0x00, 0x00, 0x00, 0x00} // < bad frame
 
-		conn1.(*WebSocketConn).UnderlyingConn().UnderlyingConn().Write(buf)
+		_, err := conn1.(*WebSocketConn).UnderlyingConn().UnderlyingConn().Write(buf)
+		assert.NoError(t, err)
 
 		pkt, err := conn1.Receive()
 		assert.Nil(t, pkt)
@@ -99,9 +100,10 @@ func TestWebSocketChunkedMessage(t *testing.T) {
 
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		buf := make([]byte, pkt.Len())
-		pkt.Encode(buf)
+		_, err := pkt.Encode(buf)
+		assert.NoError(t, err)
 
-		err := conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.BinaryMessage, buf[:7])
+		err = conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.BinaryMessage, buf[:7])
 		assert.NoError(t, err)
 
 		err = conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.BinaryMessage, buf[7:])
@@ -129,10 +131,14 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		buf := make([]byte, pkt.Len()*2)
-		pkt.Encode(buf)
-		pkt.Encode(buf[pkt.Len():])
 
-		err := conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.BinaryMessage, buf)
+		_, err := pkt.Encode(buf)
+		assert.NoError(t, err)
+
+		_, err = pkt.Encode(buf[pkt.Len():])
+		assert.NoError(t, err)
+
+		err = conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.BinaryMessage, buf)
 		assert.NoError(t, err)
 
 		in, err := conn1.Receive()
