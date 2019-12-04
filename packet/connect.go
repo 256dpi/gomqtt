@@ -82,11 +82,8 @@ func (cp *Connect) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (cp *Connect) Decode(src []byte) (int, error) {
-	total := 0
-
 	// decode header
-	hl, _, _, err := headerDecode(src[total:], CONNECT)
-	total += hl
+	total, _, _, err := headerDecode(src, CONNECT)
 	if err != nil {
 		return total, err
 	}
@@ -183,14 +180,16 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 		return total, makeError(cp.Type(), "clean session must be 1 if client id is zero length")
 	}
 
-	// read will topic and payload
+	// check will
 	if cp.Will != nil {
+		// read will topic
 		cp.Will.Topic, n, err = readLPString(src[total:], cp.Type())
 		total += n
 		if err != nil {
 			return total, err
 		}
 
+		// read will payload
 		cp.Will.Payload, n, err = readLPBytes(src[total:], true, cp.Type())
 		total += n
 		if err != nil {
@@ -223,11 +222,8 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (cp *Connect) Encode(dst []byte) (int, error) {
-	total := 0
-
 	// encode header
-	n, err := headerEncode(dst[total:], 0, cp.len(), cp.Len(), CONNECT)
-	total += n
+	total, err := headerEncode(dst, 0, cp.len(), cp.Len(), CONNECT)
 	if err != nil {
 		return total, err
 	}
@@ -244,10 +240,16 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 
 	// write version string, length has been checked beforehand
 	if cp.Version == Version311 {
-		n, _ = writeLPBytes(dst[total:], version311Name, cp.Type())
+		n, err := writeLPBytes(dst[total:], version311Name, cp.Type())
+		if err != nil {
+			return total, err
+		}
 		total += n
 	} else if cp.Version == Version31 {
-		n, _ = writeLPBytes(dst[total:], version31Name, cp.Type())
+		n, err := writeLPBytes(dst[total:], version31Name, cp.Type())
+		if err != nil {
+			return total, err
+		}
 		total += n
 	}
 
@@ -255,24 +257,22 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 	dst[total] = cp.Version
 	total++
 
+	// prepare connect flags
 	var connectFlags byte
 
 	// set username flag
 	if len(cp.Username) > 0 {
 		connectFlags |= 128 // 10000000
-	} else {
-		connectFlags &= 127 // 01111111
 	}
 
 	// set password flag
 	if len(cp.Password) > 0 {
 		connectFlags |= 64 // 01000000
-	} else {
-		connectFlags &= 191 // 10111111
 	}
 
-	// set will flag
+	// check will
 	if cp.Will != nil {
+		// set will flag
 		connectFlags |= 0x4 // 00000100
 
 		// check will topic length
@@ -291,12 +291,7 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 		// set will retain flag
 		if cp.Will.Retain {
 			connectFlags |= 32 // 00100000
-		} else {
-			connectFlags &= 223 // 11011111
 		}
-
-	} else {
-		connectFlags &= 251 // 11111011
 	}
 
 	// check client id and clean session
@@ -307,8 +302,6 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 	// set clean session flag
 	if cp.CleanSession {
 		connectFlags |= 0x2 // 00000010
-	} else {
-		connectFlags &= 253 // 11111101
 	}
 
 	// write connect flags
@@ -320,20 +313,22 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 	total += 2
 
 	// write client id
-	n, err = writeLPString(dst[total:], cp.ClientID, cp.Type())
+	n, err := writeLPString(dst[total:], cp.ClientID, cp.Type())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
-	// write will topic and payload
+	// check will
 	if cp.Will != nil {
+		// write will topic
 		n, err = writeLPString(dst[total:], cp.Will.Topic, cp.Type())
 		total += n
 		if err != nil {
 			return total, err
 		}
 
+		// write will payload
 		n, err = writeLPBytes(dst[total:], cp.Will.Payload, cp.Type())
 		total += n
 		if err != nil {
@@ -341,6 +336,7 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 		}
 	}
 
+	// check username and password
 	if len(cp.Username) == 0 && len(cp.Password) > 0 {
 		return total, makeError(cp.Type(), "password set without username")
 	}
@@ -368,8 +364,10 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 
 // Returns the payload length.
 func (cp *Connect) len() int {
+	// prepare total
 	total := 0
 
+	// check version
 	if cp.Version == Version31 {
 		// 2 bytes protocol name length
 		// 6 bytes protocol name

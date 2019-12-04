@@ -12,11 +12,8 @@ func identifiedLen() int {
 
 // decodes an identified packet
 func identifiedDecode(src []byte, t Type) (int, ID, error) {
-	total := 0
-
 	// decode header
-	hl, _, rl, err := headerDecode(src, t)
-	total += hl
+	total, _, rl, err := headerDecode(src, t)
 	if err != nil {
 		return total, 0, err
 	}
@@ -40,16 +37,13 @@ func identifiedDecode(src []byte, t Type) (int, ID, error) {
 
 // encodes an identified packet
 func identifiedEncode(dst []byte, id ID, t Type) (int, error) {
-	total := 0
-
 	// check packet id
 	if !id.Valid() {
-		return total, makeError(t, "packet id must be grater than zero")
+		return 0, makeError(t, "packet id must be grater than zero")
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, 2, identifiedLen(), t)
-	total += n
+	total, err := headerEncode(dst, 0, 2, identifiedLen(), t)
 	if err != nil {
 		return total, err
 	}

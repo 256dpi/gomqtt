@@ -46,11 +46,9 @@ func (pp *Publish) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (pp *Publish) Decode(src []byte) (int, error) {
-	total := 0
-
 	// decode header
-	hl, flags, rl, err := headerDecode(src[total:], PUBLISH)
-	total += hl
+	hl, flags, rl, err := headerDecode(src, PUBLISH)
+	total := hl
 	if err != nil {
 		return total, err
 	}
@@ -70,15 +68,15 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 		return total, makeError(pp.Type(), "insufficient buffer size, expected %d, got %d", total+2, len(src))
 	}
 
-	n := 0
-
 	// read topic
+	n := 0
 	pp.Message.Topic, n, err = readLPString(src[total:], pp.Type())
 	total += n
 	if err != nil {
 		return total, err
 	}
 
+	// check quality of service
 	if pp.Message.QOS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
@@ -112,27 +110,22 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (pp *Publish) Encode(dst []byte) (int, error) {
-	total := 0
-
 	// check topic length
 	if len(pp.Message.Topic) == 0 {
-		return total, makeError(pp.Type(), "topic name is empty")
+		return 0, makeError(pp.Type(), "topic name is empty")
 	}
 
-	flags := byte(0)
+	// prepare flags
+	var flags byte
 
 	// set dup flag
 	if pp.Dup {
 		flags |= 0x8 // 00001000
-	} else {
-		flags &= 247 // 11110111
 	}
 
 	// set retain flag
 	if pp.Message.Retain {
 		flags |= 0x1 // 00000001
-	} else {
-		flags &= 254 // 11111110
 	}
 
 	// check qos
@@ -142,21 +135,20 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 
 	// check packet id
 	if pp.Message.QOS > 0 && !pp.ID.Valid() {
-		return total, makeError(pp.Type(), "packet id must be grater than zero")
+		return 0, makeError(pp.Type(), "packet id must be grater than zero")
 	}
 
 	// set qos
 	flags = (flags & 249) | (byte(pp.Message.QOS) << 1) // 249 = 11111001
 
 	// encode header
-	n, err := headerEncode(dst[total:], flags, pp.len(), pp.Len(), PUBLISH)
-	total += n
+	total, err := headerEncode(dst, flags, pp.len(), pp.Len(), PUBLISH)
 	if err != nil {
 		return total, err
 	}
 
 	// write topic
-	n, err = writeLPString(dst[total:], pp.Message.Topic, pp.Type())
+	n, err := writeLPString(dst[total:], pp.Message.Topic, pp.Type())
 	total += n
 	if err != nil {
 		return total, err

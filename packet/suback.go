@@ -48,11 +48,8 @@ func (sp *Suback) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (sp *Suback) Decode(src []byte) (int, error) {
-	total := 0
-
 	// decode header
-	hl, _, rl, err := headerDecode(src[total:], SUBACK)
-	total += hl
+	total, _, rl, err := headerDecode(src, SUBACK)
 	if err != nil {
 		return total, err
 	}
@@ -100,23 +97,20 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (sp *Suback) Encode(dst []byte) (int, error) {
-	total := 0
-
 	// check return codes
 	for i, code := range sp.ReturnCodes {
 		if !code.Successful() && code != QOSFailure {
-			return total, makeError(sp.Type(), "invalid return code %d for topic %d", code, i)
+			return 0, makeError(sp.Type(), "invalid return code %d for topic %d", code, i)
 		}
 	}
 
 	// check packet id
 	if !sp.ID.Valid() {
-		return total, makeError(sp.Type(), "packet id must be grater than zero")
+		return 0, makeError(sp.Type(), "packet id must be grater than zero")
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, sp.len(), sp.Len(), SUBACK)
-	total += n
+	total, err := headerEncode(dst, 0, sp.len(), sp.Len(), SUBACK)
 	if err != nil {
 		return total, err
 	}
@@ -126,10 +120,10 @@ func (sp *Suback) Encode(dst []byte) (int, error) {
 	total += 2
 
 	// write return codes
-	for i, rc := range sp.ReturnCodes {
-		dst[total+i] = byte(rc)
+	for _, rc := range sp.ReturnCodes {
+		dst[total] = byte(rc)
+		total++
 	}
-	total += len(sp.ReturnCodes)
 
 	return total, nil
 }

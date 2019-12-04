@@ -7,67 +7,56 @@ import (
 const maxRemainingLength = 268435455 // 256 MB
 
 func headerLen(rl int) int {
-	// packet type and flag byte
-	total := 1
-
+	// packet type and flag byte + remaining length
 	if rl <= 127 {
-		total++
+		return 2
 	} else if rl <= 16383 {
-		total += 2
+		return 3
 	} else if rl <= 2097151 {
-		total += 3
-	} else {
-		total += 4
+		return 4
 	}
 
-	return total
+	return 5
 }
 
 func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
-	total := 0
-
 	// check buffer length
 	if len(dst) < tl {
-		return total, makeError(t, "insufficient buffer size, expected %d, got %d", tl, len(dst))
+		return 0, makeError(t, "insufficient buffer size, expected %d, got %d", tl, len(dst))
 	}
 
 	// check remaining length
 	if rl > maxRemainingLength || rl < 0 {
-		return total, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
+		return 0, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
 	}
 
 	// check header length
 	hl := headerLen(rl)
 	if len(dst) < hl {
-		return total, makeError(t, "insufficient buffer size, expected %d, got %d", hl, len(dst))
+		return 0, makeError(t, "insufficient buffer size, expected %d, got %d", hl, len(dst))
 	}
 
 	// write type and flags
 	typeAndFlags := byte(t)<<4 | (t.defaultFlags() & 0xf)
 	typeAndFlags |= flags
-	dst[total] = typeAndFlags
-	total++
+	dst[0] = typeAndFlags
 
 	// write remaining length
-	n := binary.PutUvarint(dst[total:], uint64(rl))
-	total += n
+	n := binary.PutUvarint(dst[1:], uint64(rl))
 
-	return total, nil
+	return 1 + n, nil
 }
 
 func headerDecode(src []byte, t Type) (int, byte, int, error) {
-	total := 0
-
 	// check buffer size
 	if len(src) < 2 {
-		return total, 0, 0, makeError(t, "insufficient buffer size, expected %d, got %d", 2, len(src))
+		return 0, 0, 0, makeError(t, "insufficient buffer size, expected %d, got %d", 2, len(src))
 	}
 
 	// read type and flags
-	typeAndFlags := src[total : total+1]
-	decodedType := Type(typeAndFlags[0] >> 4)
-	flags := typeAndFlags[0] & 0x0f
-	total++
+	decodedType := Type(src[0] >> 4)
+	flags := src[0] & 0x0f
+	total := 1
 
 	// check against static type
 	if decodedType != t {

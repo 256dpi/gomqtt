@@ -46,11 +46,8 @@ func (up *Unsubscribe) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (up *Unsubscribe) Decode(src []byte) (int, error) {
-	total := 0
-
 	// decode header
-	hl, _, rl, err := headerDecode(src[total:], UNSUBSCRIBE)
-	total += hl
+	total, _, rl, err := headerDecode(src, UNSUBSCRIBE)
 	if err != nil {
 		return total, err
 	}
@@ -70,11 +67,12 @@ func (up *Unsubscribe) Decode(src []byte) (int, error) {
 	}
 
 	// prepare counter
-	tl := int(rl) - 2
+	tl := rl - 2
 
 	// reset topics
 	up.Topics = up.Topics[:0]
 
+	// read topics
 	for tl > 0 {
 		// read topic
 		t, n, err := readLPString(src[total:], up.Type())
@@ -102,16 +100,13 @@ func (up *Unsubscribe) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (up *Unsubscribe) Encode(dst []byte) (int, error) {
-	total := 0
-
 	// check packet id
 	if !up.ID.Valid() {
-		return total, makeError(up.Type(), "packet id must be grater than zero")
+		return 0, makeError(up.Type(), "packet id must be grater than zero")
 	}
 
 	// encode header
-	n, err := headerEncode(dst[total:], 0, up.len(), up.Len(), UNSUBSCRIBE)
-	total += n
+	total, err := headerEncode(dst, 0, up.len(), up.Len(), UNSUBSCRIBE)
 	if err != nil {
 		return total, err
 	}
@@ -120,6 +115,7 @@ func (up *Unsubscribe) Encode(dst []byte) (int, error) {
 	binary.BigEndian.PutUint16(dst[total:], uint16(up.ID))
 	total += 2
 
+	// write topics
 	for _, t := range up.Topics {
 		// write topic
 		n, err := writeLPString(dst[total:], t, up.Type())
@@ -137,6 +133,7 @@ func (up *Unsubscribe) len() int {
 	// packet ID
 	total := 2
 
+	// add topics
 	for _, t := range up.Topics {
 		total += 2 + len(t)
 	}

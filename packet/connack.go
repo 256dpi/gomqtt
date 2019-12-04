@@ -78,11 +78,8 @@ func (cp *Connack) Len() int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (cp *Connack) Decode(src []byte) (int, error) {
-	total := 0
-
 	// decode header
-	hl, _, rl, err := headerDecode(src, CONNACK)
-	total += hl
+	total, _, rl, err := headerDecode(src, CONNACK)
 	if err != nil {
 		return total, err
 	}
@@ -99,7 +96,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 
 	// check flags
 	if connackFlags&254 != 0 {
-		return 0, makeError(cp.Type(), "bits 7-1 in acknowledge flags are not 0")
+		return total, makeError(cp.Type(), "bits 7-1 in acknowledge flags are not 0")
 	}
 
 	// read return code
@@ -108,7 +105,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 
 	// check return code
 	if !cp.ReturnCode.Valid() {
-		return 0, makeError(cp.Type(), "invalid return code (%d)", cp.ReturnCode)
+		return total, makeError(cp.Type(), "invalid return code (%d)", cp.ReturnCode)
 	}
 
 	return total, nil
@@ -118,11 +115,8 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (cp *Connack) Encode(dst []byte) (int, error) {
-	total := 0
-
 	// encode header
-	n, err := headerEncode(dst[total:], 0, 2, cp.Len(), CONNACK)
-	total += n
+	total, err := headerEncode(dst, 0, 2, cp.Len(), CONNACK)
 	if err != nil {
 		return total, err
 	}
