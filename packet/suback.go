@@ -80,8 +80,8 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 	sp.ReturnCodes = make([]QOS, rcl)
 	for i, rc := range src[total : total+rcl] {
 		sp.ReturnCodes[i] = QOS(rc)
+		total++
 	}
-	total += len(sp.ReturnCodes)
 
 	// validate return codes
 	for i, code := range sp.ReturnCodes {

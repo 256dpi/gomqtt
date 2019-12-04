@@ -27,8 +27,8 @@ func (up *Unsubscribe) Type() Type {
 
 // String returns a string representation of the packet.
 func (up *Unsubscribe) String() string {
+	// collect topics
 	var topics []string
-
 	for _, t := range up.Topics {
 		topics = append(topics, fmt.Sprintf("%q", t))
 	}

@@ -63,11 +63,6 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 		return total, makeError(pp.Type(), "invalid QOS level (%d)", pp.Message.QOS)
 	}
 
-	// check buffer length
-	if len(src) < total+2 {
-		return total, makeError(pp.Type(), "insufficient buffer size, expected %d, got %d", total+2, len(src))
-	}
-
 	// read topic
 	n := 0
 	pp.Message.Topic, n, err = readLPString(src[total:], pp.Type())

@@ -42,8 +42,8 @@ func (sp *Subscribe) Type() Type {
 
 // String returns a string representation of the packet.
 func (sp *Subscribe) String() string {
+	// collect subscriptions
 	var subscriptions []string
-
 	for _, t := range sp.Subscriptions {
 		subscriptions = append(subscriptions, t.String())
 	}

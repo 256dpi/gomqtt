@@ -367,7 +367,7 @@ func (cp *Connect) len() int {
 	// prepare total
 	total := 0
 
-	// check version
+	// add version
 	if cp.Version == Version31 {
 		// 2 bytes protocol name length
 		// 6 bytes protocol name
@@ -380,8 +380,8 @@ func (cp *Connect) len() int {
 		total += 2 + 4 + 1
 	}
 
-	// 1 byte connect flags
-	// 2 bytes keep alive timer
+	// add 1 byte connect flags
+	// add 2 bytes keep alive timer
 	total += 1 + 2
 
 	// add the clientID length

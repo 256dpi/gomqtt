@@ -7,7 +7,7 @@ import (
 const maxRemainingLength = 268435455 // 256 MB
 
 func headerLen(rl int) int {
-	// packet type and flag byte + remaining length
+	// add packet type and flag byte + remaining length
 	if rl <= 127 {
 		return 2
 	} else if rl <= 16383 {
