@@ -88,7 +88,7 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 	sp.Subscriptions = sp.Subscriptions[:0]
 
 	// calculate number of subscriptions
-	sl := int(rl) - 2
+	sl := rl - 2
 
 	for sl > 0 {
 		// read topic

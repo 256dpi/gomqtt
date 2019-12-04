@@ -77,7 +77,7 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 	}
 
 	// calculate number of return codes
-	rcl := int(rl) - 2
+	rcl := rl - 2
 
 	// read return codes
 	sp.ReturnCodes = make([]QOS, rcl)

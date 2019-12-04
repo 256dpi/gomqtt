@@ -96,7 +96,7 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 	}
 
 	// calculate payload length
-	l := int(rl) - (total - hl)
+	l := rl - (total - hl)
 
 	// read payload
 	if l > 0 {
