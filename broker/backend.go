@@ -69,15 +69,11 @@ var ErrKillTimeout = errors.New("kill timeout")
 
 // A MemoryBackend stores everything in memory.
 type MemoryBackend struct {
-	// The maximal size of the session queue.
-	//
-	// Will default to 100.
+	// The size of the session queue.
 	SessionQueueSize int
 
 	// The time after an error is returned while waiting on an killed existing
 	// client to exit.
-	//
-	// Will default to 5 seconds.
 	KillTimeout time.Duration
 
 	// Client configuration options. See broker.Client for details.
@@ -116,7 +112,7 @@ func NewMemoryBackend() *MemoryBackend {
 }
 
 // Authenticate will authenticates a clients credentials.
-func (m *MemoryBackend) Authenticate(client *Client, user, password string) (bool, error) {
+func (m *MemoryBackend) Authenticate(_ *Client, user, password string) (bool, error) {
 	// acquire global mutex
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
@@ -256,7 +252,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 }
 
 // Restore is not needed at the moment.
-func (m *MemoryBackend) Restore(client *Client) error {
+func (m *MemoryBackend) Restore(*Client) error {
 	return nil
 }
 

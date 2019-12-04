@@ -54,7 +54,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	if int(*duration) > 0 {
+	if *duration > 0 {
 		time.AfterFunc(time.Duration(*duration)*time.Second, func() {
 			fmt.Println("Finishing...")
 			os.Exit(0)

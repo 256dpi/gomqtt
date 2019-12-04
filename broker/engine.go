@@ -17,18 +17,12 @@ type Engine struct {
 	Backend Backend
 
 	// ReadLimit defines the initial read limit.
-	//
-	// Default: No limit.
 	ReadLimit int64
 
 	// MaxWriteDelay defines the initial max write delay.
-	//
-	// Default: No delay.
 	MaxWriteDelay time.Duration
 
 	// ConnectTimeout defines the timeout to receive the first packet.
-	//
-	// Default: No timeout
 	ConnectTimeout time.Duration
 
 	// OnError can be used to receive errors from the engine. If an error is
