@@ -49,5 +49,6 @@ func (c *IDCounter) Reset() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
+	// reset counter
 	c.next = 1
 }

@@ -73,6 +73,7 @@ func (s *MemorySession) Reset() error {
 }
 
 func (s *MemorySession) storeForDirection(dir Direction) *PacketStore {
+	// check direction
 	if dir == Incoming {
 		return s.Incoming
 	} else if dir == Outgoing {

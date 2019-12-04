@@ -51,6 +51,7 @@ func (s *PacketStore) Lookup(id packet.ID) packet.Generic {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
+	// get packet
 	return s.packets[id]
 }
 
@@ -59,6 +60,7 @@ func (s *PacketStore) Delete(id packet.ID) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	// delete packet
 	delete(s.packets, id)
 }
 
@@ -67,8 +69,8 @@ func (s *PacketStore) All() []packet.Generic {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
+	// collect packets
 	var all []packet.Generic
-
 	for _, pkt := range s.packets {
 		all = append(all, pkt)
 	}
@@ -81,5 +83,6 @@ func (s *PacketStore) Reset() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	// reset packets
 	s.packets = make(map[packet.ID]packet.Generic)
 }
