@@ -89,6 +89,8 @@ func connection(id string) transport.Conn {
 		panic(err)
 	}
 
+	conn.SetMaxWriteDelay(10 * time.Millisecond)
+
 	mqttURL, err := url.Parse(*broker)
 	if err != nil {
 		panic(err)

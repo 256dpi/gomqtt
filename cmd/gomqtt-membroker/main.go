@@ -17,7 +17,6 @@ import (
 )
 
 var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
-var sqz = flag.Int("sqz", 100, "session queue size")
 
 func main() {
 	flag.Parse()
@@ -36,7 +35,9 @@ func main() {
 	fmt.Println("Done!")
 
 	backend := broker.NewMemoryBackend()
-	backend.SessionQueueSize = *sqz
+	backend.SessionQueueSize = 100
+	backend.ClientParallelPublishes = 100
+	backend.ClientInflightMessages = 100
 
 	var published int32
 	var forwarded int32

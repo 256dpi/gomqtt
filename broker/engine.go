@@ -39,7 +39,7 @@ func NewEngine(backend Backend) *Engine {
 		Backend:        backend,
 		ConnectTimeout: 10 * time.Second,
 		ReadLimit:      8 * 1024 * 1024, // 8MB
-		MaxWriteDelay:  time.Millisecond,
+		MaxWriteDelay:  10 * time.Millisecond,
 	}
 }
 
