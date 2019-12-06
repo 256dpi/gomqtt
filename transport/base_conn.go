@@ -118,6 +118,11 @@ func (c *BaseConn) SetReadLimit(limit int64) {
 // If no data is received in the set duration the connection will be closed
 // and Read returns an error.
 func (c *BaseConn) SetReadTimeout(timeout time.Duration) {
+	// acquire mutex
+	c.receiveMutex.Lock()
+	defer c.receiveMutex.Unlock()
+
+	// set new timeout
 	c.readTimeout = timeout
 
 	// apply new timeout immediately
