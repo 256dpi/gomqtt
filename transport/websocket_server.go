@@ -36,6 +36,7 @@ func NewWebSocketServer(listener net.Listener, fallback http.Handler) *WebSocket
 
 // CreateWebSocketServer creates a new WS server that listens on the provided address.
 func CreateWebSocketServer(address string, fallback http.Handler) (*WebSocketServer, error) {
+	// create listener
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, err
@@ -47,6 +48,7 @@ func CreateWebSocketServer(address string, fallback http.Handler) (*WebSocketSer
 // CreateSecureWebSocketServer creates a new WSS server that listens on the
 // provided address.
 func CreateSecureWebSocketServer(address string, config *tls.Config, fallback http.Handler) (*WebSocketServer, error) {
+	// create listener
 	listener, err := tls.Listen("tcp", address, config)
 	if err != nil {
 		return nil, err

@@ -19,6 +19,7 @@ func NewNetServer(listener net.Listener) *NetServer {
 
 // CreateNetServer creates a new TCP server that listens on the provided address.
 func CreateNetServer(address string) (*NetServer, error) {
+	// create listener
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, err
@@ -29,6 +30,7 @@ func CreateNetServer(address string) (*NetServer, error) {
 
 // CreateSecureNetServer creates a new TLS server that listens on the provided address.
 func CreateSecureNetServer(address string, config *tls.Config) (*NetServer, error) {
+	// create listener
 	listener, err := tls.Listen("tcp", address, config)
 	if err != nil {
 		return nil, err
@@ -40,6 +42,7 @@ func CreateSecureNetServer(address string, config *tls.Config) (*NetServer, erro
 // Accept will return the next available connection or block until a
 // connection becomes available, otherwise returns an error.
 func (s *NetServer) Accept() (Conn, error) {
+	// wait next connection
 	conn, err := s.listener.Accept()
 	if err != nil {
 		return nil, err

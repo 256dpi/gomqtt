@@ -11,7 +11,6 @@ import (
 // A Carrier is a generalized stream that can be used with BaseConn.
 type Carrier interface {
 	io.ReadWriteCloser
-
 	SetReadDeadline(time.Time) error
 }
 
@@ -136,6 +135,7 @@ func (c *BaseConn) SetMaxWriteDelay(delay time.Duration) {
 }
 
 func (c *BaseConn) resetTimeout() error {
+	// check timeout
 	if c.readTimeout > 0 {
 		return c.carrier.SetReadDeadline(time.Now().Add(c.readTimeout))
 	}
