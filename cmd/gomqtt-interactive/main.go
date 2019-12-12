@@ -39,6 +39,7 @@ func main() {
 
 		// print message
 		shell.Printf("< Message: %s\n", string(msg.Payload))
+		shell.Printf("< Length: %d\n", len(msg.Payload))
 		shell.Printf("< Topic: %s\n", msg.Topic)
 		shell.Printf("< QOS: %d\n", msg.QOS)
 		shell.Printf("< Retain: %t\n", msg.Retain)

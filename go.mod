@@ -13,9 +13,9 @@ require (
 	github.com/jpillora/backoff v0.0.0-20170918002102-8eab2debe79d
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
-	github.com/stretchr/testify v1.2.2
-	golang.org/x/net v0.0.0-20181029044818-c44066c5c816 // indirect
-	golang.org/x/sys v0.0.0-20181029174526-d69651ed3497 // indirect
+	github.com/stretchr/testify v1.3.0
+	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3 // indirect
+	golang.org/x/sys v0.0.0-20190412213103-97732733099d // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 )
 
