@@ -16,20 +16,18 @@ var ErrCanceled = errors.New("future canceled")
 // A Future is a low-level future type that can be extended to transport
 // custom information.
 type Future struct {
-	Data *sync.Map
-
-	completeChannel chan struct{}
-	cancelChannel   chan struct{}
-	completeOnce    sync.Once
-	cancelOnce      sync.Once
+	result    interface{}
+	completed chan struct{}
+	cancelled chan struct{}
+	complete  sync.Once
+	cancel    sync.Once
 }
 
 // New will return a new Future.
 func New() *Future {
 	return &Future{
-		Data:            new(sync.Map),
-		completeChannel: make(chan struct{}),
-		cancelChannel:   make(chan struct{}),
+		completed: make(chan struct{}),
+		cancelled: make(chan struct{}),
 	}
 }
 
@@ -37,14 +35,12 @@ func New() *Future {
 // future is completed or canceled the current will as well. Data saved in the
 // bound future is copied to the current on complete and cancel.
 func (f *Future) Bind(f2 *Future) {
-	go func(){
+	go func() {
 		select {
-		case <-f2.completeChannel:
-			f.Data = f2.Data
-			f.Complete()
-		case <-f2.cancelChannel:
-			f.Data = f2.Data
-			f.Cancel()
+		case <-f2.completed:
+			f.Complete(f2.Result())
+		case <-f2.cancelled:
+			f.Cancel(f2.Result())
 		}
 	}()
 }
@@ -53,9 +49,9 @@ func (f *Future) Bind(f2 *Future) {
 // completed, canceled or the request timed out.
 func (f *Future) Wait(timeout time.Duration) error {
 	select {
-	case <-f.completeChannel:
+	case <-f.completed:
 		return nil
-	case <-f.cancelChannel:
+	case <-f.cancelled:
 		return ErrCanceled
 	case <-time.After(timeout):
 		return ErrTimeout
@@ -63,15 +59,23 @@ func (f *Future) Wait(timeout time.Duration) error {
 }
 
 // Complete will complete the future.
-func (f *Future) Complete() {
-	f.completeOnce.Do(func() {
-		close(f.completeChannel)
+func (f *Future) Complete(result interface{}) {
+	f.complete.Do(func() {
+		f.result = result
+		close(f.completed)
 	})
 }
 
 // Cancel will cancel the future.
-func (f *Future) Cancel() {
-	f.cancelOnce.Do(func() {
-		close(f.cancelChannel)
+func (f *Future) Cancel(result interface{}) {
+	f.cancel.Do(func() {
+		f.result = result
+		close(f.cancelled)
 	})
+}
+
+// Result will return the value provided when the future has been completed or
+// cancelled.
+func (f *Future) Result() interface{} {
+	return f.result
 }

@@ -489,7 +489,7 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 					s.err("Subscribe", err)
 
 					// cancel future
-					cmd.future.Cancel()
+					cmd.future.Cancel(nil)
 
 					return false
 				}
@@ -506,7 +506,7 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 					s.err("Unsubscribe", err)
 
 					// cancel future
-					cmd.future.Cancel()
+					cmd.future.Cancel(nil)
 
 					return false
 				}
@@ -523,7 +523,7 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 					s.err("Publish", err)
 
 					// cancel future
-					cmd.future.Cancel()
+					cmd.future.Cancel(nil)
 
 					return false
 				}

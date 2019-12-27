@@ -36,34 +36,28 @@ type SubscribeFuture interface {
 	ReturnCodes() []packet.QOS
 }
 
-type futureKey int
-
-const (
-	sessionPresentKey futureKey = iota
-	returnCodeKey
-	returnCodesKey
-)
-
 type connectFuture struct {
 	*future.Future
 }
 
 func (f *connectFuture) SessionPresent() bool {
-	v, ok := f.Data.Load(sessionPresentKey)
+	// get result
+	v, ok := f.Result().(*packet.Connack)
 	if !ok {
 		return false
 	}
 
-	return v.(bool)
+	return v.SessionPresent
 }
 
 func (f *connectFuture) ReturnCode() packet.ConnackCode {
-	v, ok := f.Data.Load(returnCodeKey)
+	// get result
+	v, ok := f.Result().(*packet.Connack)
 	if !ok {
 		return 0
 	}
 
-	return v.(packet.ConnackCode)
+	return v.ReturnCode
 }
 
 type subscribeFuture struct {
@@ -71,10 +65,11 @@ type subscribeFuture struct {
 }
 
 func (f *subscribeFuture) ReturnCodes() []packet.QOS {
-	v, ok := f.Data.Load(returnCodesKey)
+	// get result
+	v, ok := f.Result().(*packet.Suback)
 	if !ok {
 		return nil
 	}
 
-	return v.([]packet.QOS)
+	return v.ReturnCodes
 }

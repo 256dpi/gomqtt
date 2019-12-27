@@ -89,7 +89,7 @@ func (s *Store) Clear() {
 
 	// cancel all futures
 	for _, savedFuture := range s.store {
-		savedFuture.Cancel()
+		savedFuture.Cancel(nil)
 	}
 
 	// reset store

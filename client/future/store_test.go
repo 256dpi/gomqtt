@@ -34,7 +34,7 @@ func TestStoreAwait(t *testing.T) {
 
 	go func() {
 		time.Sleep(1 * time.Millisecond)
-		f.Complete()
+		f.Complete(nil)
 		store.Delete(1)
 	}()
 

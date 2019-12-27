@@ -306,7 +306,7 @@ func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
 
 	// complete and remove qos 0 future
 	if msg.QOS == 0 {
-		publishFuture.Complete()
+		publishFuture.Complete(nil)
 		c.futureStore.Delete(publish.ID)
 	}
 
@@ -519,14 +519,10 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 	// set state
 	atomic.StoreUint32(&c.state, clientConnacked)
 
-	// fill future
-	c.connectFuture.Data.Store(sessionPresentKey, connack.SessionPresent)
-	c.connectFuture.Data.Store(returnCodeKey, connack.ReturnCode)
-
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
 		err := c.die(ErrClientConnectionDenied, true, false)
-		c.connectFuture.Cancel()
+		c.connectFuture.Cancel(connack)
 		return err
 	}
 
@@ -534,7 +530,7 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 	atomic.StoreUint32(&c.state, clientConnected)
 
 	// complete future
-	c.connectFuture.Complete()
+	c.connectFuture.Complete(connack)
 
 	// retrieve stored packets
 	packets, err := c.Session.AllPackets(session.Outgoing)
@@ -582,15 +578,14 @@ func (c *Client) processSuback(suback *packet.Suback) error {
 	if c.config.ValidateSubs {
 		for _, code := range suback.ReturnCodes {
 			if code == packet.QOSFailure {
-				subscribeFuture.Cancel()
+				subscribeFuture.Cancel(nil)
 				return ErrFailedSubscription
 			}
 		}
 	}
 
 	// complete future
-	subscribeFuture.Data.Store(returnCodesKey, suback.ReturnCodes)
-	subscribeFuture.Complete()
+	subscribeFuture.Complete(suback)
 
 	return nil
 }
@@ -610,7 +605,7 @@ func (c *Client) processUnsuback(unsuback *packet.Unsuback) error {
 	}
 
 	// complete future
-	unsubscribeFuture.Complete()
+	unsubscribeFuture.Complete(nil)
 
 	// remove future from store
 	c.futureStore.Delete(unsuback.ID)
@@ -680,7 +675,7 @@ func (c *Client) processPubackAndPubcomp(id packet.ID) error {
 	}
 
 	// complete future
-	publishFuture.Complete()
+	publishFuture.Complete(nil)
 
 	// remove future from store
 	c.futureStore.Delete(id)
@@ -814,7 +809,7 @@ func (c *Client) send(pkt packet.Generic, async bool) error {
 func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	// cancel connect future if appropriate
 	if atomic.LoadUint32(&c.state) < clientConnacked && c.connectFuture != nil {
-		c.connectFuture.Cancel()
+		c.connectFuture.Cancel(nil)
 	}
 
 	// set state
