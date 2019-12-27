@@ -19,8 +19,8 @@ type Future struct {
 	result    interface{}
 	completed chan struct{}
 	cancelled chan struct{}
-	complete  sync.Once
-	cancel    sync.Once
+	done      bool
+	mutex     sync.Mutex
 }
 
 // New will return a new Future.
@@ -32,50 +32,92 @@ func New() *Future {
 }
 
 // Bind will tie the current future to the specified future. If the bound to
-// future is completed or canceled the current will as well. Data saved in the
+// future is completed or canceled the current will as well. The result from the
 // bound future is copied to the current on complete and cancel.
 func (f *Future) Bind(f2 *Future) {
 	go func() {
-		select {
-		case <-f2.completed:
-			f.Complete(f2.Result())
-		case <-f2.cancelled:
+		err := f2.Wait(0)
+		if err == ErrCanceled {
 			f.Cancel(f2.Result())
+		} else {
+			f.Complete(f2.Result())
 		}
 	}()
 }
 
 // Wait will wait the given amount of time and return whether the future has been
-// completed, canceled or the request timed out.
+// completed, canceled or the request timed out. If no time has been provided
+// the wait will never timeout.
 func (f *Future) Wait(timeout time.Duration) error {
+	// prepare deadline
+	var deadline <-chan time.Time
+	if timeout > 0 {
+		deadline = time.After(timeout)
+	}
+
+	// wait completion, cancellation or timeout
 	select {
 	case <-f.completed:
 		return nil
 	case <-f.cancelled:
 		return ErrCanceled
-	case <-time.After(timeout):
+	case <-deadline:
 		return ErrTimeout
 	}
 }
 
 // Complete will complete the future.
-func (f *Future) Complete(result interface{}) {
-	f.complete.Do(func() {
-		f.result = result
-		close(f.completed)
-	})
+func (f *Future) Complete(result interface{}) bool {
+	// acquire mutex
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	// check flag
+	if f.done {
+		return false
+	}
+
+	// set result
+	f.result = result
+
+	// signal completion
+	close(f.completed)
+
+	// set flag
+	f.done = true
+
+	return true
 }
 
 // Cancel will cancel the future.
-func (f *Future) Cancel(result interface{}) {
-	f.cancel.Do(func() {
-		f.result = result
-		close(f.cancelled)
-	})
+func (f *Future) Cancel(result interface{}) bool {
+	// acquire mutex
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	// check flag
+	if f.done {
+		return false
+	}
+
+	// set result
+	f.result = result
+
+	// signal cancellation
+	close(f.cancelled)
+
+	// set flag
+	f.done = true
+
+	return true
 }
 
 // Result will return the value provided when the future has been completed or
 // cancelled.
 func (f *Future) Result() interface{} {
+	// acquire mutex
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
 	return f.result
 }

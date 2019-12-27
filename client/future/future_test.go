@@ -15,19 +15,14 @@ func TestFutureCompleteBefore(t *testing.T) {
 }
 
 func TestFutureCompleteAfter(t *testing.T) {
-	done := make(chan struct{})
-
 	f := New()
 
-	go func() {
-		assert.NoError(t, f.Wait(10*time.Millisecond))
-		assert.Equal(t, 1, f.Result())
-		close(done)
-	}()
+	time.AfterFunc(time.Millisecond, func() {
+		f.Complete(1)
+	})
 
-	f.Complete(1)
-
-	<-done
+	assert.NoError(t, f.Wait(10*time.Millisecond))
+	assert.Equal(t, 1, f.Result())
 }
 
 func TestFutureCancelBefore(t *testing.T) {
@@ -38,19 +33,14 @@ func TestFutureCancelBefore(t *testing.T) {
 }
 
 func TestFutureCancelAfter(t *testing.T) {
-	done := make(chan struct{})
-
 	f := New()
 
-	go func() {
-		assert.Equal(t, ErrCanceled, f.Wait(10*time.Millisecond))
-		assert.Equal(t, 1, f.Result())
-		close(done)
-	}()
+	time.AfterFunc(time.Millisecond, func() {
+		f.Cancel(1)
+	})
 
-	f.Cancel(1)
-
-	<-done
+	assert.Equal(t, ErrCanceled, f.Wait(10*time.Millisecond))
+	assert.Equal(t, 1, f.Result())
 }
 
 func TestFutureTimeout(t *testing.T) {
@@ -59,40 +49,28 @@ func TestFutureTimeout(t *testing.T) {
 }
 
 func TestFutureBindBefore(t *testing.T) {
-	done := make(chan struct{})
-
 	f := New()
 	f.Cancel(1)
 
 	ff := New()
 	ff.Bind(f)
 
-	go func() {
-		err := ff.Wait(10 * time.Millisecond)
-		assert.Equal(t, ErrCanceled, err)
-		assert.Equal(t, 1, ff.Result())
-		close(done)
-	}()
-
-	<-done
+	err := ff.Wait(10 * time.Millisecond)
+	assert.Equal(t, ErrCanceled, err)
+	assert.Equal(t, 1, ff.Result())
 }
 
 func TestFutureBindAfter(t *testing.T) {
-	done := make(chan struct{})
-
 	f := New()
-	f.Cancel(1)
+
+	time.AfterFunc(time.Millisecond, func() {
+		f.Cancel(1)
+	})
 
 	ff := New()
-
-	go func() {
-		err := ff.Wait(10 * time.Millisecond)
-		assert.Equal(t, ErrCanceled, err)
-		assert.Equal(t, 1, ff.Result())
-		close(done)
-	}()
-
 	ff.Bind(f)
 
-	<-done
+	err := ff.Wait(10 * time.Millisecond)
+	assert.Equal(t, ErrCanceled, err)
+	assert.Equal(t, 1, ff.Result())
 }
