@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/256dpi/gomqtt/client/future"
@@ -68,8 +67,6 @@ const (
 // Note: If clean session is false and there are packets in the store, messages
 // might get completed after starting without triggering any futures to complete.
 type Service struct {
-	state uint32
-
 	config *Config
 
 	// The session used by the client to store unacknowledged packets.
@@ -117,6 +114,7 @@ type Service struct {
 	// configured to request one.
 	ResubscribeAllSubscriptions bool
 
+	started       bool
 	backoff       *backoff.Backoff
 	subscriptions *topic.Tree
 	commandQueue  chan *command
@@ -136,7 +134,6 @@ func NewService(queueSize ...int) *Service {
 	}
 
 	return &Service{
-		state:                       serviceStopped,
 		Session:                     session.NewMemorySession(),
 		MinReconnectDelay:           50 * time.Millisecond,
 		MaxReconnectDelay:           10 * time.Second,
@@ -153,20 +150,22 @@ func NewService(queueSize ...int) *Service {
 // Start will start the service with the specified configuration. From now on
 // the service will automatically reconnect on any error until Stop is called.
 func (s *Service) Start(config *Config) {
+	// check config
 	if config == nil {
-		panic("no config specified")
+		panic("missing config")
 	}
 
+	// acquire mutex
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	// return if already started
-	if atomic.LoadUint32(&s.state) == serviceStarted {
+	if s.started {
 		return
 	}
 
 	// set state
-	atomic.StoreUint32(&s.state, serviceStarted)
+	s.started = true
 
 	// save config
 	s.config = config
@@ -192,20 +191,19 @@ func (s *Service) Start(config *Config) {
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (s *Service) Publish(topic string, payload []byte, qos packet.QOS, retain bool) GenericFuture {
-	msg := &packet.Message{
+	return s.PublishMessage(&packet.Message{
 		Topic:   topic,
 		Payload: payload,
 		QOS:     qos,
 		Retain:  retain,
-	}
-
-	return s.PublishMessage(msg)
+	})
 }
 
 // PublishMessage will send a Publish packet containing the passed message. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (s *Service) PublishMessage(msg *packet.Message) GenericFuture {
+	// acquire mutex
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -235,6 +233,7 @@ func (s *Service) Subscribe(topic string, qos packet.QOS) SubscribeFuture {
 // subscribe. It will return a SubscribeFuture that gets completed once the
 // acknowledgements have been received.
 func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) SubscribeFuture {
+	// acquire mutex
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -267,6 +266,7 @@ func (s *Service) Unsubscribe(topic string) GenericFuture {
 // topics to unsubscribe. It will return a SubscribeFuture that gets completed
 // once the acknowledgements have been received.
 func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
+	// acquire mutex
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -294,13 +294,17 @@ func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 // Note: You should clear the futures on the last stop before exiting to ensure
 // that all goroutines return that wait on futures.
 func (s *Service) Stop(clearFutures bool) {
+	// acquire mutex
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	// return if service not started
-	if atomic.LoadUint32(&s.state) != serviceStarted {
+	if !s.started{
 		return
 	}
+
+	// set state
+	s.started = false
 
 	// kill and wait
 	s.tomb.Kill(nil)
@@ -311,20 +315,16 @@ func (s *Service) Stop(clearFutures bool) {
 		s.futureStore.Protect(false)
 		s.futureStore.Clear()
 	}
-
-	// set state
-	atomic.StoreUint32(&s.state, serviceStopped)
 }
 
 // the supervised reconnect loop
 func (s *Service) supervisor() error {
+	// prepare flag
 	first := true
 
 	for {
-		if first {
-			// no delay on first attempt
-			first = false
-		} else {
+		// delay if not first
+		if !first {
 			// get backoff duration
 			d := s.backoff.Duration()
 			s.log(fmt.Sprintf("Delay Reconnect: %v", d))
@@ -338,6 +338,9 @@ func (s *Service) supervisor() error {
 		}
 
 		s.log("Next Reconnect")
+
+		// clear flag
+		first = false
 
 		// prepare the kill channel
 		kill := make(chan struct{})
@@ -407,14 +410,13 @@ func (s *Service) connect(kill chan struct{}) (*Client, bool) {
 	// attempt to connect
 	connectFuture, err := client.Connect(s.config)
 	if err != nil {
+		_ = client.Close()
 		s.err("Connect", err)
 		return nil, false
 	}
 
-	// wait for connack
+	// await future
 	err = connectFuture.Wait(s.ConnectTimeout)
-
-	// check if future has been cancelled or timed out
 	if err != nil {
 		_ = client.Close()
 		s.err("Connect", err)
@@ -445,14 +447,13 @@ func (s *Service) resubscribe(client *Client) bool {
 	// resubscribe all subscriptions
 	subscribeFuture, err := client.SubscribeMultiple(subs)
 	if err != nil {
+		_ = client.Close()
 		s.err("Resubscribe", err)
 		return false
 	}
 
-	// wait for suback.
+	// await future
 	err = subscribeFuture.Wait(s.ResubscribeTimeout)
-
-	// check if future has been cancelled or timed out
 	if err != nil {
 		_ = client.Close()
 		s.err("Resubscribe", err)
