@@ -339,11 +339,11 @@ func (s *Service) supervisor() error {
 
 		s.log("Next Reconnect")
 
-		// prepare the stop channel
-		fail := make(chan struct{})
+		// prepare the kill channel
+		kill := make(chan struct{})
 
 		// try once to get a client
-		client, resumed := s.connect(fail)
+		client, resumed := s.connect(kill)
 		if client == nil {
 			continue
 		}
@@ -361,7 +361,7 @@ func (s *Service) supervisor() error {
 		}
 
 		// run dispatcher on client
-		dying := s.dispatcher(client, fail)
+		dying := s.dispatcher(client, kill)
 
 		// run callback
 		if s.OfflineCallback != nil {
@@ -376,7 +376,7 @@ func (s *Service) supervisor() error {
 }
 
 // will try to connect one client to the broker
-func (s *Service) connect(fail chan struct{}) (*Client, bool) {
+func (s *Service) connect(kill chan struct{}) (*Client, bool) {
 	// prepare new client
 	client := New()
 	client.Session = s.Session
@@ -387,7 +387,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 	client.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
 			s.err("Client", err)
-			close(fail)
+			close(kill)
 			return nil
 		}
 
@@ -396,7 +396,7 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 			err = s.MessageCallback(msg)
 			if err != nil {
 				s.err("Callback", err)
-				close(fail)
+				close(kill)
 				return err
 			}
 		}
@@ -477,7 +477,7 @@ func (s *Service) resubscribe(client *Client) bool {
 }
 
 // reads from the queues and calls the current client
-func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
+func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 	for {
 		select {
 		case cmd := <-s.commandQueue:
@@ -540,7 +540,7 @@ func (s *Service) dispatcher(client *Client, fail chan struct{}) bool {
 			}
 
 			return true
-		case <-fail:
+		case <-kill:
 			return false
 		}
 	}
