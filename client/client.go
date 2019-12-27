@@ -46,20 +46,6 @@ var ErrClientExpectedConnack = errors.New("client expected connack")
 // Config.ValidateSubs has been set to true.
 var ErrFailedSubscription = errors.New("failed subscription")
 
-// A Callback is a function called by the client upon received messages or
-// internal errors. An error can be returned if the callback is not already
-// called with an error to instantly close the client and prevent it from
-// sending any acknowledgments for the specified message. In this case the
-// callback is called again with the error.
-//
-// Note: Execution of the client is stopped before the callback is called and
-// resumed after the callback returns. This means that waiting on a future
-// inside the callback will deadlock the client.
-type Callback func(msg *packet.Message, err error) error
-
-// A Logger is a function called by the client to log activity.
-type Logger func(msg string)
-
 const (
 	clientInitialized uint32 = iota
 	clientConnecting
@@ -108,14 +94,21 @@ type Client struct {
 	// The session used by the client to store unacknowledged packets.
 	Session Session
 
-	// The callback to be called by the client upon receiving a message or
-	// encountering an error while processing incoming packets.
-	Callback Callback
+	// The Callback is called by the client upon received messages or internal
+	// errors. An error can be returned if the callback is not already called
+	// with an error to instantly close the client and prevent it from sending
+	// any acknowledgments for the specified message. In this case the callback
+	// is called again with the error.
+	//
+	// Note: Execution of the client is stopped before the callback is called and
+	// resumed after the callback returns. This means that waiting on a future
+	// inside the callback will deadlock the client.
+	Callback func(msg *packet.Message, err error) error
 
 	// The logger that is used to log low level information about packets
 	// that have been successfully sent and received and details about the
 	// automatic keep alive handler.
-	Logger Logger
+	Logger func(msg string)
 
 	config        *Config
 	conn          transport.Conn

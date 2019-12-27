@@ -25,33 +25,6 @@ type command struct {
 	topics        []string
 }
 
-// An OnlineCallback is a function that is called when the service is connected.
-//
-// Note: Execution of the service is resumed after the callback returns. This
-// means that waiting on a future inside the callback will deadlock the service.
-type OnlineCallback func(resumed bool)
-
-// A MessageCallback is a function that is called when a message is received.
-// If an error is returned the underlying client will be prevented from
-// acknowledging the specified message and closed immediately. The errors is
-// logged and a reconnect attempt initiated.
-//
-// Note: Execution of the service is resumed after the callback returns. This
-// means that waiting on a future inside the callback will deadlock the service.
-type MessageCallback func(*packet.Message) error
-
-// An ErrorCallback is a function that is called when an error occurred.
-//
-// Note: Execution of the service is resumed after the callback returns. This
-// means that waiting on a future inside the callback will deadlock the service.
-type ErrorCallback func(error)
-
-// An OfflineCallback is a function that is called when the service is disconnected.
-//
-// Note: Execution of the service is resumed after the callback returns. This
-// means that waiting on a future inside the callback will deadlock the service.
-type OfflineCallback func()
-
 // Service is an abstraction for Client that provides a stable interface to the
 // application, while it automatically connects and reconnects clients in the
 // background. Errors are not returned but emitted using the ErrorCallback.
@@ -64,22 +37,41 @@ type Service struct {
 	// The session used by the client to store unacknowledged packets.
 	Session Session
 
-	// The callback that is used to notify that the service is online.
-	OnlineCallback OnlineCallback
+	// The OnlineCallback is called when the service is connected.
+	//
+	// Note: Execution of the service is resumed after the callback returns.
+	// This means that waiting on a future inside the callback will deadlock the
+	// service.
+	OnlineCallback func(resumed bool)
 
-	// The callback to be called by the service upon receiving a message.
-	MessageCallback MessageCallback
+	// The MessageCallback is called when a message is received. If an error is
+	// returned the underlying client will be prevented from acknowledging the
+	// specified message and closed immediately. The errors is logged and a
+	// reconnect attempt initiated.
+	//
+	// Note: Execution of the service is resumed after the callback returns.
+	// This means that waiting on a future inside the callback will deadlock the
+	// service.
+	MessageCallback func(*packet.Message) error
 
-	// The callback to be called by the service upon encountering an error.
-	ErrorCallback ErrorCallback
+	// The ErrorCallback is called when an error occurred.
+	//
+	// Note: Execution of the service is resumed after the callback returns.
+	// This means that waiting on a future inside the callback will deadlock the
+	// service.
+	ErrorCallback func(error)
 
-	// The callback that is used to notify that the service is offline.
-	OfflineCallback OfflineCallback
+	// The OfflineCallback is called when the service is disconnected.
+	//
+	// Note: Execution of the service is resumed after the callback returns.
+	// This means that waiting on a future inside the callback will deadlock the
+	// service.
+	OfflineCallback func()
 
 	// The logger that is used to log write low level information like packets
-	// that have ben successfully sent and received, details about the
-	// automatic keep alive handler, reconnection and occurring errors.
-	Logger Logger
+	// that have ben successfully sent and received, details about the automatic
+	// keep alive handler, reconnection and occurring errors.
+	Logger func(msg string)
 
 	// The minimum delay between reconnects.
 	//
