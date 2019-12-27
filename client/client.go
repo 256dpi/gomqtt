@@ -412,7 +412,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 
 	// finish current packets
 	if len(timeout) > 0 {
-		c.futureStore.Await(timeout[0])
+		_  = c.futureStore.Await(timeout[0])
 	}
 
 	// set state
@@ -856,14 +856,14 @@ func (c *Client) die(err error, close bool, fromCallback bool) error {
 // called by Disconnect and Close
 func (c *Client) end(err error, possiblyClosed bool) error {
 	// close connection
-	err = c.cleanup(err, true, true)
+	err = c.cleanup(err, true, possiblyClosed)
 
 	// shutdown goroutines
 	c.tomb.Kill(nil)
 
 	// wait for all goroutines to exit
 	// goroutines will send eventual errors through the callback
-	c.tomb.Wait()
+	_ = c.tomb.Wait()
 
 	// do cleanup
 	return err
