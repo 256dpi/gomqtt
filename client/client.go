@@ -412,7 +412,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 
 	// finish current packets
 	if len(timeout) > 0 {
-		_  = c.futureStore.Await(timeout[0])
+		_ = c.futureStore.Await(timeout[0])
 	}
 
 	// set state

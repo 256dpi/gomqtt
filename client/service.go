@@ -304,7 +304,7 @@ func (s *Service) Stop(clearFutures bool) {
 
 	// kill and wait
 	s.tomb.Kill(nil)
-	s.tomb.Wait()
+	_ = s.tomb.Wait()
 
 	// clear futures if requested
 	if clearFutures {
@@ -414,16 +414,9 @@ func (s *Service) connect(kill chan struct{}) (*Client, bool) {
 	// wait for connack
 	err = connectFuture.Wait(s.ConnectTimeout)
 
-	// check if future has been canceled
-	if err == future.ErrCanceled {
-		s.err("Connect", err)
-		return nil, false
-	}
-
-	// check if future has timed out
-	if err == future.ErrTimeout {
-		client.Close()
-
+	// check if future has been cancelled or timed out
+	if err != nil {
+		_ = client.Close()
 		s.err("Connect", err)
 		return nil, false
 	}
@@ -459,16 +452,9 @@ func (s *Service) resubscribe(client *Client) bool {
 	// wait for suback.
 	err = subscribeFuture.Wait(s.ResubscribeTimeout)
 
-	// check if future has been canceled
-	if err == future.ErrCanceled {
-		s.err("Resubscribe", err)
-		return false
-	}
-
-	// check if future has timed out
-	if err == future.ErrTimeout {
-		client.Close()
-
+	// check if future has been cancelled or timed out
+	if err != nil {
+		_ = client.Close()
 		s.err("Resubscribe", err)
 		return false
 	}
