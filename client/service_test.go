@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -266,6 +267,48 @@ func TestServiceReconnect(t *testing.T) {
 	safeReceive(done)
 
 	assert.Equal(t, 4, i)
+}
+
+func TestServiceReconnectCallbackError(t *testing.T) {
+	publish := packet.NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+
+	first := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Send(publish).
+		End()
+
+	second := flow.New().
+		Receive(connectPacket()).
+		Send(connackPacket()).
+		Send(publish).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, first, second)
+
+	s := NewService()
+
+	i := 0
+	message := make(chan struct{})
+	s.MessageCallback = func(msg *packet.Message) error {
+		if i == 0 {
+			i++
+			return fmt.Errorf("error")
+		}
+
+		close(message)
+		return nil
+	}
+
+	s.Start(NewConfig("tcp://localhost:" + port))
+
+	safeReceive(message)
+	s.Stop(true)
+
+	safeReceive(done)
 }
 
 func TestServiceResubscribe(t *testing.T) {

@@ -35,7 +35,8 @@ type OnlineCallback func(resumed bool)
 
 // A MessageCallback is a function that is called when a message is received.
 // If an error is returned the underlying client will be prevented from
-// acknowledging the specified message and closes immediately.
+// acknowledging the specified message and closed immediately. The errors is
+// logged and a reconnect attempt initiated.
 //
 // Note: Execution of the service is resumed after the callback returns. This
 // means that waiting on a future inside the callback will deadlock the service.
@@ -392,7 +393,12 @@ func (s *Service) connect(fail chan struct{}) (*Client, bool) {
 
 		// call the handler
 		if s.MessageCallback != nil {
-			return s.MessageCallback(msg)
+			err = s.MessageCallback(msg)
+			if err != nil {
+				s.err("Callback", err)
+				close(fail)
+				return err
+			}
 		}
 
 		return nil
