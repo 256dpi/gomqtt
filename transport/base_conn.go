@@ -46,7 +46,7 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 	// write packet
 	err := c.stream.Write(pkt, async)
 	if err != nil {
-		// ensure connection gets closed
+		// ensure carrier gets closed
 		_ = c.carrier.Close()
 
 		return err
@@ -68,7 +68,7 @@ func (c *BaseConn) Receive() (packet.Generic, error) {
 	// read next packet
 	pkt, err := c.stream.Read()
 	if err != nil {
-		// ensure connection gets closed
+		// ensure carrier gets closed
 		_ = c.carrier.Close()
 
 		return nil, err
@@ -77,6 +77,9 @@ func (c *BaseConn) Receive() (packet.Generic, error) {
 	// reset timeout
 	err = c.resetTimeout()
 	if err != nil {
+		// ensure carrier is closed
+		_ = c.carrier.Close()
+
 		return nil, err
 	}
 
