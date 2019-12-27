@@ -42,22 +42,22 @@ type connectFuture struct {
 
 func (f *connectFuture) SessionPresent() bool {
 	// get result
-	v, ok := f.Result().(*packet.Connack)
-	if !ok {
+	connack := f.Result().(*packet.Connack)
+	if connack == nil {
 		return false
 	}
 
-	return v.SessionPresent
+	return connack.SessionPresent
 }
 
 func (f *connectFuture) ReturnCode() packet.ConnackCode {
 	// get result
-	v, ok := f.Result().(*packet.Connack)
-	if !ok {
+	connack := f.Result().(*packet.Connack)
+	if connack == nil {
 		return 0
 	}
 
-	return v.ReturnCode
+	return connack.ReturnCode
 }
 
 type subscribeFuture struct {
@@ -66,10 +66,10 @@ type subscribeFuture struct {
 
 func (f *subscribeFuture) ReturnCodes() []packet.QOS {
 	// get result
-	v, ok := f.Result().(*packet.Suback)
-	if !ok {
+	suback := f.Result().(*packet.Suback)
+	if suback == nil {
 		return nil
 	}
 
-	return v.ReturnCodes
+	return suback.ReturnCodes
 }
