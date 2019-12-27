@@ -914,9 +914,18 @@ func TestClientErrorCallback(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	c := New()
+
+	i := 0
 	c.Callback = func(msg *packet.Message, err error) error {
-		assert.NotNil(t, msg)
-		assert.NoError(t, err)
+		if i == 0 {
+			i++
+			assert.NotNil(t, msg)
+			assert.NoError(t, err)
+			return errors.New("some error")
+		}
+
+		assert.Nil(t, msg)
+		assert.Error(t, err)
 		return errors.New("some error")
 	}
 

@@ -16,10 +16,9 @@ import (
 )
 
 type command struct {
-	publish     bool
-	subscribe   bool
-	unsubscribe bool
-
+	publish       bool
+	subscribe     bool
+	unsubscribe   bool
 	future        *future.Future
 	message       *packet.Message
 	subscriptions []packet.Subscription
@@ -53,11 +52,6 @@ type ErrorCallback func(error)
 // means that waiting on a future inside the callback will deadlock the service.
 type OfflineCallback func()
 
-const (
-	serviceStarted uint32 = iota
-	serviceStopped
-)
-
 // Service is an abstraction for Client that provides a stable interface to the
 // application, while it automatically connects and reconnects clients in the
 // background. Errors are not returned but emitted using the ErrorCallback.
@@ -67,8 +61,6 @@ const (
 // Note: If clean session is false and there are packets in the store, messages
 // might get completed after starting without triggering any futures to complete.
 type Service struct {
-	config *Config
-
 	// The session used by the client to store unacknowledged packets.
 	Session Session
 
@@ -114,14 +106,14 @@ type Service struct {
 	// configured to request one.
 	ResubscribeAllSubscriptions bool
 
+	config        *Config
 	started       bool
 	backoff       *backoff.Backoff
 	subscriptions *topic.Tree
 	commandQueue  chan *command
 	futureStore   *future.Store
-
-	mutex sync.Mutex
-	tomb  *tomb.Tomb
+	mutex         sync.Mutex
+	tomb          *tomb.Tomb
 }
 
 // NewService allocates and returns a new service. The optional parameter queueSize
@@ -149,7 +141,8 @@ func NewService(queueSize ...int) *Service {
 
 // Start will start the service with the specified configuration. From now on
 // the service will automatically reconnect on any error until Stop is called.
-func (s *Service) Start(config *Config) {
+// It returns false if the service was already started.
+func (s *Service) Start(config *Config) bool {
 	// check config
 	if config == nil {
 		panic("missing config")
@@ -161,7 +154,7 @@ func (s *Service) Start(config *Config) {
 
 	// return if already started
 	if s.started {
-		return
+		return false
 	}
 
 	// set state
@@ -185,6 +178,8 @@ func (s *Service) Start(config *Config) {
 
 	// start supervisor
 	s.tomb.Go(s.supervisor)
+
+	return true
 }
 
 // Publish will send a Publish packet containing the passed parameters. It will
@@ -289,18 +284,19 @@ func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 }
 
 // Stop will disconnect the client if online and cancel all futures if requested.
-// After the service is stopped in can be started again.
+// After the service is stopped in can be started again. It returns false if the
+// service was not running.
 //
 // Note: You should clear the futures on the last stop before exiting to ensure
 // that all goroutines return that wait on futures.
-func (s *Service) Stop(clearFutures bool) {
+func (s *Service) Stop(clearFutures bool) bool {
 	// acquire mutex
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	// return if service not started
-	if !s.started{
-		return
+	if !s.started {
+		return false
 	}
 
 	// set state
@@ -315,6 +311,8 @@ func (s *Service) Stop(clearFutures bool) {
 		s.futureStore.Protect(false)
 		s.futureStore.Clear()
 	}
+
+	return true
 }
 
 // the supervised reconnect loop
@@ -354,6 +352,7 @@ func (s *Service) supervisor() error {
 		// resubscribe
 		if s.ResubscribeAllSubscriptions {
 			if !s.resubscribe(client) {
+				_ = client.Close()
 				continue
 			}
 		}
@@ -365,6 +364,9 @@ func (s *Service) supervisor() error {
 
 		// run dispatcher on client
 		dying := s.dispatcher(client, kill)
+
+		// ensure client is closed
+		_ = client.Close()
 
 		// run callback
 		if s.OfflineCallback != nil {
@@ -396,12 +398,7 @@ func (s *Service) connect(kill chan struct{}) (*Client, bool) {
 
 		// call the handler
 		if s.MessageCallback != nil {
-			err = s.MessageCallback(msg)
-			if err != nil {
-				s.err("Callback", err)
-				close(kill)
-				return err
-			}
+			return s.MessageCallback(msg)
 		}
 
 		return nil
@@ -447,7 +444,6 @@ func (s *Service) resubscribe(client *Client) bool {
 	// resubscribe all subscriptions
 	subscribeFuture, err := client.SubscribeMultiple(subs)
 	if err != nil {
-		_ = client.Close()
 		s.err("Resubscribe", err)
 		return false
 	}
@@ -455,7 +451,6 @@ func (s *Service) resubscribe(client *Client) bool {
 	// await future
 	err = subscribeFuture.Wait(s.ResubscribeTimeout)
 	if err != nil {
-		_ = client.Close()
 		s.err("Resubscribe", err)
 		return false
 	}
@@ -468,55 +463,45 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 	for {
 		select {
 		case cmd := <-s.commandQueue:
-
 			// handle subscribe command
 			if cmd.subscribe {
+				// perform subscribe
 				f2, err := client.SubscribeMultiple(cmd.subscriptions)
 				if err != nil {
 					s.err("Subscribe", err)
-
-					// cancel future
 					cmd.future.Cancel(nil)
-
 					return false
 				}
 
-				// bind future in a own goroutine. the goroutine will be
-				// ultimately collected when the service is stopped
+				// bind future
 				cmd.future.Bind(f2.(*subscribeFuture).Future)
 			}
 
 			// handle unsubscribe command
 			if cmd.unsubscribe {
+				// perform unsubscribe
 				f2, err := client.UnsubscribeMultiple(cmd.topics)
 				if err != nil {
 					s.err("Unsubscribe", err)
-
-					// cancel future
 					cmd.future.Cancel(nil)
-
 					return false
 				}
 
-				// bind future in a own goroutine. the goroutine will be
-				// ultimately collected when the service is stopped
+				// bind future
 				cmd.future.Bind(f2.(*future.Future))
 			}
 
 			// handle publish command
 			if cmd.publish {
+				// perform publish
 				f2, err := client.PublishMessage(cmd.message)
 				if err != nil {
 					s.err("Publish", err)
-
-					// cancel future
 					cmd.future.Cancel(nil)
-
 					return false
 				}
 
-				// bind future in a own goroutine. the goroutine will be
-				// ultimately collected when the service is stopped
+				// bind future
 				cmd.future.Bind(f2.(*future.Future))
 			}
 		case <-s.tomb.Dying():

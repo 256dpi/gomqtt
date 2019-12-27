@@ -49,7 +49,8 @@ var ErrFailedSubscription = errors.New("failed subscription")
 // A Callback is a function called by the client upon received messages or
 // internal errors. An error can be returned if the callback is not already
 // called with an error to instantly close the client and prevent it from
-// sending any acknowledgments for the specified message.
+// sending any acknowledgments for the specified message. In this case the
+// callback is called again with the error.
 //
 // Note: Execution of the client is stopped before the callback is called and
 // resumed after the callback returns. This means that waiting on a future
@@ -104,9 +105,6 @@ type Session interface {
 type Client struct {
 	state uint32
 
-	config *Config
-	conn   transport.Conn
-
 	// The session used by the client to store unacknowledged packets.
 	Session Session
 
@@ -119,16 +117,16 @@ type Client struct {
 	// automatic keep alive handler.
 	Logger Logger
 
-	clean bool
-
+	config        *Config
+	conn          transport.Conn
+	clean         bool
 	keepAlive     time.Duration
 	tracker       *Tracker
 	futureStore   *future.Store
 	connectFuture *future.Future
-
-	tomb   tomb.Tomb
-	mutex  sync.Mutex
-	finish sync.Once
+	tomb          tomb.Tomb
+	mutex         sync.Mutex
+	finish        sync.Once
 }
 
 // New returns a new client that by default uses a fresh MemorySession.
@@ -144,10 +142,12 @@ func New() *Client {
 // return a ConnectFuture that gets completed once a Connack has been
 // received. If the Connect packet couldn't be transmitted it will return an error.
 func (c *Client) Connect(config *Config) (ConnectFuture, error) {
+	// check config
 	if config == nil {
-		panic("no config specified")
+		panic("missing config")
 	}
 
+	// acquire mutex
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -183,14 +183,11 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	// dial broker (with custom dialer if present)
 	if config.Dialer != nil {
 		c.conn, err = config.Dialer.Dial(config.BrokerURL)
-		if err != nil {
-			return nil, err
-		}
 	} else {
 		c.conn, err = transport.Dial(config.BrokerURL)
-		if err != nil {
-			return nil, err
-		}
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	// set read limit
@@ -253,20 +250,19 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (c *Client) Publish(topic string, payload []byte, qos packet.QOS, retain bool) (GenericFuture, error) {
-	msg := &packet.Message{
+	return c.PublishMessage(&packet.Message{
 		Topic:   topic,
 		Payload: payload,
 		QOS:     qos,
 		Retain:  retain,
-	}
-
-	return c.PublishMessage(msg)
+	})
 }
 
 // PublishMessage will send a Publish containing the passed message. It will
 // return a PublishFuture that gets completed once the quality of service flow
 // has been completed.
 func (c *Client) PublishMessage(msg *packet.Message) (GenericFuture, error) {
+	// acquire mutex
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -326,6 +322,7 @@ func (c *Client) Subscribe(topic string, qos packet.QOS) (SubscribeFuture, error
 // subscribe. It will return a SubscribeFuture that gets completed once a
 // Suback packet has been received.
 func (c *Client) SubscribeMultiple(subscriptions []packet.Subscription) (SubscribeFuture, error) {
+	// acquire mutex
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -368,6 +365,7 @@ func (c *Client) Unsubscribe(topic string) (GenericFuture, error) {
 // topics to unsubscribe. It will return a UnsubscribeFuture that gets completed
 // once an Unsuback packet has been received.
 func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
+	// acquire mutex
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -402,6 +400,7 @@ func (c *Client) UnsubscribeMultiple(topics []string) (GenericFuture, error) {
 // for all queued futures to complete or cancel. If no timeout is specified it
 // will not wait at all.
 func (c *Client) Disconnect(timeout ...time.Duration) error {
+	// acquire mutex
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -427,6 +426,7 @@ func (c *Client) Disconnect(timeout ...time.Duration) error {
 // Close closes the client immediately without sending a Disconnect packet and
 // waiting for outgoing transmissions to finish.
 func (c *Client) Close() error {
+	// acquire mutex
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -442,6 +442,7 @@ func (c *Client) Close() error {
 
 // processes incoming packets
 func (c *Client) processor() error {
+	// prepare flag
 	first := true
 
 	// start keep alive if greater than zero
@@ -459,7 +460,7 @@ func (c *Client) processor() error {
 			}
 
 			// die on any other error
-			return c.die(err, false, false)
+			return c.die(err, false)
 		}
 
 		// log received message
@@ -467,11 +468,12 @@ func (c *Client) processor() error {
 			c.Logger(fmt.Sprintf("Received: %s", pkt.String()))
 		}
 
+		// check if first
 		if first {
 			// get connack
 			connack, ok := pkt.(*packet.Connack)
 			if !ok {
-				return c.die(ErrClientExpectedConnack, true, false)
+				return c.die(ErrClientExpectedConnack, true)
 			}
 
 			// process connack
@@ -521,7 +523,7 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 
 	// return connection denied error and close connection if not accepted
 	if connack.ReturnCode != packet.ConnectionAccepted {
-		err := c.die(ErrClientConnectionDenied, true, false)
+		err := c.die(ErrClientConnectionDenied, true)
 		c.connectFuture.Cancel(connack)
 		return err
 	}
@@ -535,7 +537,7 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 	// retrieve stored packets
 	packets, err := c.Session.AllPackets(session.Outgoing)
 	if err != nil {
-		return c.die(err, true, false)
+		return c.die(err, true)
 	}
 
 	// resend stored packets
@@ -550,7 +552,7 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 		// resend packet
 		err = c.send(pkt, true)
 		if err != nil {
-			return c.die(err, false, false)
+			return c.die(err, false)
 		}
 	}
 
@@ -620,7 +622,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		if c.Callback != nil {
 			err := c.Callback(&publish.Message, nil)
 			if err != nil {
-				return c.die(err, true, true)
+				return c.die(err, true)
 			}
 		}
 	}
@@ -634,7 +636,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		// acknowledge qos 1 publish
 		err := c.send(puback, true)
 		if err != nil {
-			return c.die(err, false, false)
+			return c.die(err, false)
 		}
 	}
 
@@ -643,7 +645,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		// store packet
 		err := c.Session.SavePacket(session.Incoming, publish)
 		if err != nil {
-			return c.die(err, true, false)
+			return c.die(err, true)
 		}
 
 		// prepare pubrec packet
@@ -653,7 +655,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		// acknowledge qos 2 publish
 		err = c.send(pubrec, true)
 		if err != nil {
-			return c.die(err, false, false)
+			return c.die(err, false)
 		}
 	}
 
@@ -692,13 +694,13 @@ func (c *Client) processPubrec(id packet.ID) error {
 	// overwrite stored Publish with the Pubrel packet
 	err := c.Session.SavePacket(session.Outgoing, pubrel)
 	if err != nil {
-		return c.die(err, true, false)
+		return c.die(err, true)
 	}
 
 	// send packet
 	err = c.send(pubrel, true)
 	if err != nil {
-		return c.die(err, false, false)
+		return c.die(err, false)
 	}
 
 	return nil
@@ -709,7 +711,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	// get packet from store
 	pkt, err := c.Session.LookupPacket(session.Incoming, id)
 	if err != nil {
-		return c.die(err, true, false)
+		return c.die(err, true)
 	}
 
 	// get packet from store
@@ -722,7 +724,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	if c.Callback != nil {
 		err = c.Callback(&publish.Message, nil)
 		if err != nil {
-			return c.die(err, true, true)
+			return c.die(err, true)
 		}
 	}
 
@@ -733,13 +735,13 @@ func (c *Client) processPubrel(id packet.ID) error {
 	// acknowledge Publish packet
 	err = c.send(pubcomp, true)
 	if err != nil {
-		return c.die(err, false, false)
+		return c.die(err, false)
 	}
 
 	// remove packet from store
 	err = c.Session.DeletePacket(session.Incoming, id)
 	if err != nil {
-		return c.die(err, true, false)
+		return c.die(err, true)
 	}
 
 	return nil
@@ -757,13 +759,13 @@ func (c *Client) pinger() error {
 		if window < 0 {
 			// check if a pong has already been sent
 			if c.tracker.Pending() {
-				return c.die(ErrClientMissingPong, true, false)
+				return c.die(ErrClientMissingPong, true)
 			}
 
 			// send pingreq packet
 			err := c.send(packet.NewPingreq(), true)
 			if err != nil {
-				return c.die(err, false, false)
+				return c.die(err, false)
 			}
 
 			// save ping attempt
@@ -805,8 +807,35 @@ func (c *Client) send(pkt packet.Generic, async bool) error {
 	return nil
 }
 
+// called by Disconnect and Close
+func (c *Client) end(err error, possiblyClosed bool) error {
+	// close connection
+	err = c.cleanup(err, true, possiblyClosed)
+
+	// shutdown goroutines
+	c.tomb.Kill(nil)
+	_ = c.tomb.Wait()
+
+	return err
+}
+
+// used for closing and cleaning up from internal goroutines
+func (c *Client) die(err error, closeConn bool) error {
+	c.finish.Do(func() {
+		// cleanup error
+		err = c.cleanup(err, closeConn, false)
+
+		// call callback if available and ignore further errors
+		if c.Callback != nil {
+			_ = c.Callback(nil, err)
+		}
+	})
+
+	return err
+}
+
 // will try to cleanup as many resources as possible
-func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
+func (c *Client) cleanup(err error, closeConn bool, possiblyClosed bool) error {
 	// cancel connect future if appropriate
 	if atomic.LoadUint32(&c.state) < clientConnacked && c.connectFuture != nil {
 		c.connectFuture.Cancel(nil)
@@ -816,7 +845,7 @@ func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	atomic.StoreUint32(&c.state, clientDisconnected)
 
 	// ensure that the connection gets closed
-	if doClose {
+	if closeConn {
 		connErr := c.conn.Close()
 		if connErr != nil && err == nil && !possiblyClosed {
 			err = connErr
@@ -834,37 +863,5 @@ func (c *Client) cleanup(err error, doClose bool, possiblyClosed bool) error {
 	// cancel all futures
 	c.futureStore.Clear()
 
-	return err
-}
-
-// used for closing and cleaning up from internal goroutines
-func (c *Client) die(err error, close bool, fromCallback bool) error {
-	c.finish.Do(func() {
-		err = c.cleanup(err, close, false)
-
-		if c.Callback != nil && !fromCallback {
-			returnedErr := c.Callback(nil, err)
-			if returnedErr == nil {
-				err = nil
-			}
-		}
-	})
-
-	return err
-}
-
-// called by Disconnect and Close
-func (c *Client) end(err error, possiblyClosed bool) error {
-	// close connection
-	err = c.cleanup(err, true, possiblyClosed)
-
-	// shutdown goroutines
-	c.tomb.Kill(nil)
-
-	// wait for all goroutines to exit
-	// goroutines will send eventual errors through the callback
-	_ = c.tomb.Wait()
-
-	// do cleanup
 	return err
 }
