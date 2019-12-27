@@ -62,7 +62,7 @@ func TestFutureBindBefore(t *testing.T) {
 	f.Cancel()
 
 	ff := New()
-	go ff.Bind(f)
+	ff.Bind(f)
 
 	go func() {
 		err := ff.Wait(10 * time.Millisecond)
@@ -92,7 +92,7 @@ func TestFutureBindAfter(t *testing.T) {
 		close(done)
 	}()
 
-	go ff.Bind(f)
+	ff.Bind(f)
 
 	<-done
 }

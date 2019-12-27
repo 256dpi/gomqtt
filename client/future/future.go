@@ -20,6 +20,8 @@ type Future struct {
 
 	completeChannel chan struct{}
 	cancelChannel   chan struct{}
+	completeOnce    sync.Once
+	cancelOnce      sync.Once
 }
 
 // New will return a new Future.
@@ -35,14 +37,16 @@ func New() *Future {
 // future is completed or canceled the current will as well. Data saved in the
 // bound future is copied to the current on complete and cancel.
 func (f *Future) Bind(f2 *Future) {
-	select {
-	case <-f2.completeChannel:
-		f.Data = f2.Data
-		close(f.completeChannel)
-	case <-f2.cancelChannel:
-		f.Data = f2.Data
-		close(f.cancelChannel)
-	}
+	go func(){
+		select {
+		case <-f2.completeChannel:
+			f.Data = f2.Data
+			f.Complete()
+		case <-f2.cancelChannel:
+			f.Data = f2.Data
+			f.Cancel()
+		}
+	}()
 }
 
 // Wait will wait the given amount of time and return whether the future has been
@@ -60,24 +64,14 @@ func (f *Future) Wait(timeout time.Duration) error {
 
 // Complete will complete the future.
 func (f *Future) Complete() {
-	// return if future has already been canceled
-	select {
-	case <-f.cancelChannel:
-		return
-	default:
-	}
-
-	close(f.completeChannel)
+	f.completeOnce.Do(func() {
+		close(f.completeChannel)
+	})
 }
 
 // Cancel will cancel the future.
 func (f *Future) Cancel() {
-	// return if future has already been completed
-	select {
-	case <-f.completeChannel:
-		return
-	default:
-	}
-
-	close(f.cancelChannel)
+	f.cancelOnce.Do(func() {
+		close(f.cancelChannel)
+	})
 }

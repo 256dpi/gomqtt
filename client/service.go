@@ -496,7 +496,7 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 
 				// bind future in a own goroutine. the goroutine will be
 				// ultimately collected when the service is stopped
-				go cmd.future.Bind(f2.(*subscribeFuture).Future)
+				cmd.future.Bind(f2.(*subscribeFuture).Future)
 			}
 
 			// handle unsubscribe command
@@ -513,7 +513,7 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 
 				// bind future in a own goroutine. the goroutine will be
 				// ultimately collected when the service is stopped
-				go cmd.future.Bind(f2.(*future.Future))
+				cmd.future.Bind(f2.(*future.Future))
 			}
 
 			// handle publish command
@@ -530,7 +530,7 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 
 				// bind future in a own goroutine. the goroutine will be
 				// ultimately collected when the service is stopped
-				go cmd.future.Bind(f2.(*future.Future))
+				cmd.future.Bind(f2.(*future.Future))
 			}
 		case <-s.tomb.Dying():
 			// disconnect client on Stop
