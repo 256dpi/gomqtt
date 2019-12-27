@@ -18,8 +18,8 @@ import (
 	"gopkg.in/tomb.v2"
 )
 
-// ErrClientAlreadyConnecting is returned by Connect if there has been already a
-// connection attempt.
+// ErrClientAlreadyConnecting is returned by Connect if another connection
+// attempt is already underway.
 var ErrClientAlreadyConnecting = errors.New("client already connecting")
 
 // ErrClientNotConnected is returned by Publish, Subscribe and Unsubscribe if the
@@ -42,8 +42,8 @@ var ErrClientMissingPong = errors.New("client missing pong")
 // Connack.
 var ErrClientExpectedConnack = errors.New("client expected connack")
 
-// ErrFailedSubscription is returned when a submitted subscription is marked as
-// failed when Config.ValidateSubs must be set to true.
+// ErrFailedSubscription is returned when a subscription attempt failed and
+// Config.ValidateSubs has been set to true.
 var ErrFailedSubscription = errors.New("failed subscription")
 
 // A Callback is a function called by the client upon received messages or
@@ -51,9 +51,9 @@ var ErrFailedSubscription = errors.New("failed subscription")
 // called with an error to instantly close the client and prevent it from
 // sending any acknowledgments for the specified message.
 //
-// Note: Execution of the client is before the callback is called and resumed
-// after the callback returns. This means that waiting on a future inside the
-// callback will deadlock the client.
+// Note: Execution of the client is stopped before the callback is called and
+// resumed after the callback returns. This means that waiting on a future
+// inside the callback will deadlock the client.
 type Callback func(msg *packet.Message, err error) error
 
 // A Logger is a function called by the client to log activity.
