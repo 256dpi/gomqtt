@@ -386,7 +386,7 @@ func (s *Service) connect(kill chan struct{}) (*Client, bool) {
 	// set callback
 	client.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
-			s.err("Client", err)
+			s.err("Callback", err)
 			close(kill)
 			return nil
 		}
