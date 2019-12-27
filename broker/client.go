@@ -193,6 +193,8 @@ const (
 
 // A Client represents a remote client that is connected to the broker.
 type Client struct {
+	state uint32
+
 	// MaximumKeepAlive may be set during Setup to enforce a maximum keep alive
 	// for this client. Missing or higher intervals will be set to the specified
 	// value.
@@ -235,22 +237,17 @@ type Client struct {
 	// Ref can be used by the backend to attach a custom object to the client.
 	Ref interface{}
 
-	state   uint32
-	backend Backend
-	conn    transport.Conn
-
-	id      string
-	will    *packet.Message
-	session Session
-
-	ackQueue chan packet.Generic
-
+	backend         Backend
+	conn            transport.Conn
+	id              string
+	will            *packet.Message
+	session         Session
+	ackQueue        chan packet.Generic
 	publishTokens   chan struct{}
 	subscribeTokens chan struct{}
 	dequeueTokens   chan struct{}
-
-	tomb tomb.Tomb
-	done chan struct{}
+	tomb            tomb.Tomb
+	done            chan struct{}
 }
 
 // NewClient takes over a connection and returns a Client.
