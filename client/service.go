@@ -465,8 +465,8 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 					return false
 				}
 
-				// bind future
-				cmd.future.Bind(f2.(*subscribeFuture).Future)
+				// attach future
+				f2.(*subscribeFuture).Future.Attach(cmd.future)
 			}
 
 			// handle unsubscribe command
@@ -479,8 +479,8 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 					return false
 				}
 
-				// bind future
-				cmd.future.Bind(f2.(*future.Future))
+				// attach future
+				f2.(*future.Future).Attach(cmd.future)
 			}
 
 			// handle publish command
@@ -493,8 +493,8 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 					return false
 				}
 
-				// bind future
-				cmd.future.Bind(f2.(*future.Future))
+				// attach future
+				f2.(*future.Future).Attach(cmd.future)
 			}
 		case <-s.tomb.Dying():
 			// disconnect client on Stop

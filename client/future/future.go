@@ -141,10 +141,3 @@ func (f *Future) Attach(f2 *Future) {
 	// attach future
 	f.futures = append(f.futures, f2)
 }
-
-// Bind will tie the current future to the specified future. If the bound to
-// future is completed or canceled the current will as well. The result from the
-// bound future is copied to the current on complete and cancel.
-func (f *Future) Bind(f2 *Future) {
-	f2.Attach(f)
-}

@@ -49,28 +49,28 @@ func TestFutureTimeout(t *testing.T) {
 }
 
 func TestFutureBindBefore(t *testing.T) {
-	f := New()
-	f.Cancel(1)
+	f1 := New()
+	f1.Cancel(1)
 
-	ff := New()
-	ff.Bind(f)
+	f2 := New()
+	f1.Attach(f2)
 
-	err := ff.Wait(10 * time.Millisecond)
+	err := f2.Wait(10 * time.Millisecond)
 	assert.Equal(t, ErrCanceled, err)
-	assert.Equal(t, 1, ff.Result())
+	assert.Equal(t, 1, f2.Result())
 }
 
 func TestFutureBindAfter(t *testing.T) {
-	f := New()
+	f1 := New()
 
 	time.AfterFunc(time.Millisecond, func() {
-		f.Cancel(1)
+		f1.Cancel(1)
 	})
 
-	ff := New()
-	ff.Bind(f)
+	f2 := New()
+	f1.Attach(f2)
 
-	err := ff.Wait(10 * time.Millisecond)
+	err := f2.Wait(10 * time.Millisecond)
 	assert.Equal(t, ErrCanceled, err)
-	assert.Equal(t, 1, ff.Result())
+	assert.Equal(t, 1, f2.Result())
 }
