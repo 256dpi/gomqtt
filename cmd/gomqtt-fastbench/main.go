@@ -30,42 +30,43 @@ var received int32
 var delta int32
 var total int32
 
+var done = make(chan struct{})
 var wg sync.WaitGroup
 
-var payload []byte
+var payload = make([]byte, *length)
 
 func main() {
+	// parse flags
 	flag.Parse()
 
+	// run pprof interface
 	go func() {
 		panic(http.ListenAndServe("localhost:6061", nil))
 	}()
 
-	payload = make([]byte, *length)
-
+	// print info
 	fmt.Printf("Start benchmark of %s using %d pairs for %d seconds...\n", *broker, *pairs, *duration)
 
-	go func() {
-		finish := make(chan os.Signal, 1)
-		signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
+	// prepare finish signal
+	finish := make(chan os.Signal, 1)
+	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
 
-		<-finish
-		fmt.Println("Closing...")
-		os.Exit(0)
-	}()
-
+	// exit after duration if available
 	if *duration > 0 {
 		time.AfterFunc(time.Duration(*duration)*time.Second, func() {
-			fmt.Println("Finishing...")
-			os.Exit(0)
+			select {
+			case finish <- syscall.SIGTERM:
+			default:
+			}
 		})
 	}
 
-	wg.Add(*pairs * 2)
-
+	// launch pairs
 	for i := 0; i < *pairs; i++ {
+		// compute id
 		id := strconv.Itoa(i)
 
+		// prepare tokens
 		var tokens chan struct{}
 		if *inflight > 0 {
 			tokens = make(chan struct{}, *inflight)
@@ -74,84 +75,118 @@ func main() {
 			}
 		}
 
+		// launch consumer and publisher
+		wg.Add(2)
 		go consumer(id, tokens)
 		go publisher(id, tokens)
 	}
 
+	// launch reporter
 	go reporter()
 
+	// await finish
+	<-finish
+	close(done)
+
+	// wait for exit
 	wg.Wait()
 }
 
-func connection(id string) transport.Conn {
+func connect(id string) transport.Conn {
+	// dial broker
 	conn, err := transport.Dial(*broker)
 	if err != nil {
 		panic(err)
 	}
 
+	// set may delay
 	conn.SetMaxWriteDelay(10 * time.Millisecond)
 
+	// parse url
 	mqttURL, err := url.Parse(*broker)
 	if err != nil {
 		panic(err)
 	}
 
+	// prepare connect packet
 	connect := packet.NewConnect()
 	connect.ClientID = "gomqtt-benchmark/" + id
 
+	// add authentication if available
 	if mqttURL.User != nil {
 		connect.Username = mqttURL.User.Username()
 		pw, _ := mqttURL.User.Password()
 		connect.Password = pw
 	}
 
+	// send connect
 	err = conn.Send(connect, false)
 	if err != nil {
 		panic(err)
 	}
 
+	// receive connack
 	pkt, err := conn.Receive()
 	if err != nil {
 		panic(err)
 	}
 
-	if connack, ok := pkt.(*packet.Connack); ok {
-		if connack.ReturnCode == packet.ConnectionAccepted {
-			fmt.Printf("Connected: %s\n", id)
-
-			return conn
-		}
+	// coerce connack
+	connack, ok := pkt.(*packet.Connack)
+	if !ok {
+		panic("expected connack")
 	}
 
-	panic("connection failed")
+	// check return code
+	if connack.ReturnCode != packet.ConnectionAccepted {
+		panic("expected connection expected")
+	}
+
+	return conn
 }
 
 func consumer(id string, tokens chan<- struct{}) {
-	name := "consumer/" + id
-	conn := connection(name)
+	// ensure exit signal
+	defer wg.Done()
 
+	// connect
+	conn := connect("consumer/" + id)
+	defer conn.Close()
+
+	// ensure close
+	go func() {
+		<-done
+		conn.Close()
+	}()
+
+	// prepare subscribe
 	subscribe := packet.NewSubscribe()
 	subscribe.ID = 1
 	subscribe.Subscriptions = []packet.Subscription{
 		{Topic: id, QOS: 0},
 	}
 
+	// send subscribe
 	err := conn.Send(subscribe, false)
 	if err != nil {
 		panic(err)
 	}
 
+	// receive suback
 	_, err = conn.Receive()
 	if err != nil {
 		panic(err)
 	}
 
 	for {
+		// receive publish
 		_, err := conn.Receive()
 		if err != nil {
-			panic(err)
+			check(err)
+			return
 		}
 
+		// add token if available
 		if tokens != nil {
 			select {
 			case tokens <- struct{}{}:
@@ -159,6 +194,7 @@ func consumer(id string, tokens chan<- struct{}) {
 			}
 		}
 
+		// update statistics
 		atomic.AddInt32(&received, 1)
 		atomic.AddInt32(&delta, -1)
 		atomic.AddInt32(&total, 1)
@@ -166,48 +202,82 @@ func consumer(id string, tokens chan<- struct{}) {
 }
 
 func publisher(id string, tokens <-chan struct{}) {
-	name := "publisher/" + id
-	conn := connection(name)
+	// ensure exit signal
+	defer wg.Done()
 
+	// connect
+	conn := connect("publisher/" + id)
+	defer conn.Close()
+
+	// ensure close
+	go func() {
+		<-done
+		conn.Close()
+	}()
+
+	// prepare publish
 	publish := packet.NewPublish()
 	publish.Message.Topic = id
 	publish.Message.Payload = payload
 	publish.Message.Retain = *retained
 
 	for {
+		// get token if available
 		if tokens != nil {
-			<-tokens
+			select {
+			case <-tokens:
+			case <-done:
+				return
+			}
 		}
 
+		// send publish
 		err := conn.Send(publish, true)
 		if err != nil {
-			panic(err)
+			check(err)
+			return
 		}
 
+		// update statistics
 		atomic.AddInt32(&sent, 1)
 		atomic.AddInt32(&delta, 1)
 	}
 }
 
 func reporter() {
+	// prepare counter
 	var iterations int32
 
 	for {
+		// wait a second
 		time.Sleep(1 * time.Second)
 
+		// get counters
 		curSent := atomic.LoadInt32(&sent)
 		curReceived := atomic.LoadInt32(&received)
 		curDelta := atomic.LoadInt32(&delta)
 		curTotal := atomic.LoadInt32(&total)
 
+		// increment
 		iterations++
 
+		// print statistics
 		fmt.Printf("Sent: %d msgs - ", curSent)
 		fmt.Printf("Received: %d msgs ", curReceived)
 		fmt.Printf("(Buffered: %d msgs) ", curDelta)
 		fmt.Printf("(Average Throughput: %d msg/s)\n", curTotal/iterations)
 
+		// reset counters
 		atomic.StoreInt32(&sent, 0)
 		atomic.StoreInt32(&received, 0)
+	}
+}
+
+func check(err error) {
+	select {
+	case <-done:
+		println(err.Error())
+	default:
+		panic(err)
 	}
 }

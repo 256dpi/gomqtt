@@ -34,7 +34,7 @@ var total int32
 var done = make(chan struct{})
 var wg sync.WaitGroup
 
-var payload []byte
+var payload = make([]byte, *length)
 
 func main() {
 	// parse flags
@@ -44,9 +44,6 @@ func main() {
 	go func() {
 		panic(http.ListenAndServe("localhost:6061", nil))
 	}()
-
-	// prepare payload
-	payload = make([]byte, *length)
 
 	// print info
 	fmt.Printf("Start benchmark of %s using %d pairs for %d seconds...\n", *broker, *pairs, *duration)
