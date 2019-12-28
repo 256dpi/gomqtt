@@ -16,8 +16,7 @@ type memorySession struct {
 	subscriptions *topic.Tree
 	stored        chan *packet.Message
 	temporary     chan *packet.Message
-
-	owner *Client
+	owner         *Client
 }
 
 func newMemorySession(backlog int) *memorySession {
@@ -93,10 +92,9 @@ type MemoryBackend struct {
 	storedSessions    map[string]*memorySession
 	temporarySessions map[*Client]*memorySession
 	retainedMessages  *topic.Tree
-
-	globalMutex sync.Mutex
-	setupMutex  sync.Mutex
-	closing     bool
+	globalMutex       sync.Mutex
+	setupMutex        sync.Mutex
+	closing           bool
 }
 
 // NewMemoryBackend returns a new MemoryBackend.
