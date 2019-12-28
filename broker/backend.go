@@ -13,22 +13,23 @@ import (
 type memorySession struct {
 	*session.MemorySession
 
-	subscriptions *topic.Tree
-	stored        chan *packet.Message
-	temporary     chan *packet.Message
-	owner         *Client
+	subscriptions  *topic.Tree
+	storedQueue    chan *packet.Message
+	temporaryQueue chan *packet.Message
+	activeClient   *Client
 }
 
 func newMemorySession(backlog int) *memorySession {
 	return &memorySession{
-		MemorySession: session.NewMemorySession(),
-		subscriptions: topic.NewStandardTree(),
-		stored:        make(chan *packet.Message, backlog),
-		temporary:     make(chan *packet.Message, backlog),
+		MemorySession:  session.NewMemorySession(),
+		subscriptions:  topic.NewStandardTree(),
+		storedQueue:    make(chan *packet.Message, backlog),
+		temporaryQueue: make(chan *packet.Message, backlog),
 	}
 }
 
 func (s *memorySession) lookupSubscription(topic string) *packet.Subscription {
+	// find subscription
 	value := s.subscriptions.MatchFirst(topic)
 	if value != nil {
 		return value.(*packet.Subscription)
@@ -52,7 +53,8 @@ func (s *memorySession) applyQOS(msg *packet.Message) *packet.Message {
 }
 
 func (s *memorySession) reuse() {
-	s.temporary = make(chan *packet.Message, cap(s.temporary))
+	// reset temporary queue
+	s.temporaryQueue = make(chan *packet.Message, cap(s.temporaryQueue))
 }
 
 // ErrQueueFull is returned to a client that attempts two write to its own full
@@ -159,7 +161,9 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	if len(id) == 0 {
 		// create session
 		sess := newMemorySession(m.SessionQueueSize)
-		sess.owner = client
+
+		// set active client
+		sess.activeClient = client
 
 		// save session
 		m.temporarySessions[client] = sess
@@ -169,7 +173,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 
 	// client id is available
 
-	// retrieve existing client
+	// retrieve existing client. try stored sessions before temporary sessions
 	existingSession, ok := m.storedSessions[id]
 	if !ok {
 		if existingClient, ok2 := m.activeClients[id]; ok2 {
@@ -178,9 +182,9 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	}
 
 	// kill existing client if session is taken
-	if ok && existingSession.owner != nil {
+	if ok && existingSession.activeClient != nil {
 		// close client
-		existingSession.owner.Close()
+		existingSession.activeClient.Close()
 
 		// release global mutex to allow publish and termination, but leave the
 		// setup mutex to prevent setups
@@ -189,7 +193,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 		// wait for client to close
 		var err error
 		select {
-		case <-existingSession.owner.Closed():
+		case <-existingSession.activeClient.Closed():
 			// continue
 		case <-time.After(m.KillTimeout):
 			err = ErrKillTimeout
@@ -212,7 +216,9 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 
 		// create new session
 		sess := newMemorySession(m.SessionQueueSize)
-		sess.owner = client
+
+		// set active client
+		sess.activeClient = client
 
 		// save session
 		m.temporarySessions[client] = sess
@@ -228,7 +234,9 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 	if ok {
 		// reuse session
 		storedSession.reuse()
-		storedSession.owner = client
+
+		// set active client
+		storedSession.activeClient = client
 
 		// save client
 		m.activeClients[id] = client
@@ -238,7 +246,9 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 
 	// otherwise create fresh session
 	storedSession = newMemorySession(m.SessionQueueSize)
-	storedSession.owner = client
+
+	// set active client
+	storedSession.activeClient = client
 
 	// save session
 	m.storedSessions[id] = storedSession
@@ -260,18 +270,18 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, ac
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
 
+	// get session
+	sess := client.Session().(*memorySession)
+
 	// save subscription
 	for _, sub := range subs {
-		client.Session().(*memorySession).subscriptions.Set(sub.Topic, &sub)
+		sess.subscriptions.Set(sub.Topic, &sub)
 	}
 
 	// call ack if provided
 	if ack != nil {
 		ack()
 	}
-
-	// get session
-	sess := client.Session().(*memorySession)
 
 	// handle all subscriptions
 	for _, sub := range subs {
@@ -282,7 +292,7 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, ac
 		for _, value := range values {
 			// add to temporary queue or return error if queue is full
 			select {
-			case sess.temporary <- value.(*packet.Message):
+			case sess.temporaryQueue <- value.(*packet.Message):
 			default:
 				return ErrQueueFull
 			}
@@ -294,9 +304,12 @@ func (m *MemoryBackend) Subscribe(client *Client, subs []packet.Subscription, ac
 
 // Unsubscribe will delete the subscription.
 func (m *MemoryBackend) Unsubscribe(client *Client, topics []string, ack Ack) error {
+	// get session
+	sess := client.Session().(*memorySession)
+
 	// delete subscriptions
 	for _, t := range topics {
-		client.Session().(*memorySession).subscriptions.Empty(t)
+		sess.subscriptions.Empty(t)
 	}
 
 	// call ack if provided
@@ -329,25 +342,25 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 		}
 	}
 
+	// reset retained flag
+	msg.Retain = false
+
 	// use temporary queue by default
 	queue := func(s *memorySession) chan *packet.Message {
-		return s.temporary
+		return s.temporaryQueue
 	}
 
 	// use stored queue if qos > 0
 	if msg.QOS > 0 {
 		queue = func(s *memorySession) chan *packet.Message {
-			return s.stored
+			return s.storedQueue
 		}
 	}
-
-	// reset retained flag
-	msg.Retain = false
 
 	// add message to temporary sessions
 	for _, sess := range m.temporarySessions {
 		if sub := sess.lookupSubscription(msg.Topic); sub != nil {
-			if sess.owner == client {
+			if sess.activeClient == client {
 				// detect deadlock when adding to own queue
 				select {
 				case queue(sess) <- msg:
@@ -358,7 +371,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 				// wait for room since client is online
 				select {
 				case queue(sess) <- msg:
-				case <-sess.owner.Closing():
+				case <-sess.activeClient.Closing():
 				}
 			}
 		}
@@ -367,18 +380,18 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 	// add message to stored sessions
 	for _, sess := range m.storedSessions {
 		if sub := sess.lookupSubscription(msg.Topic); sub != nil {
-			if sess.owner == client {
+			if sess.activeClient == client {
 				// detect deadlock when adding to own queue
 				select {
 				case queue(sess) <- msg:
 				default:
 					return ErrQueueFull
 				}
-			} else if sess.owner != nil {
+			} else if sess.activeClient != nil {
 				// wait for room since client is online
 				select {
 				case queue(sess) <- msg:
-				case <-sess.owner.Closing():
+				case <-sess.activeClient.Closing():
 				}
 			} else {
 				// ignore message if offline queue is full
@@ -410,9 +423,9 @@ func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 
 	// get next message from queue
 	select {
-	case msg := <-sess.temporary:
+	case msg := <-sess.temporaryQueue:
 		return sess.applyQOS(msg), nil, nil
-	case msg := <-sess.stored:
+	case msg := <-sess.storedQueue:
 		return sess.applyQOS(msg), nil, nil
 	case <-client.Closing():
 		return nil, nil, nil
@@ -425,10 +438,12 @@ func (m *MemoryBackend) Terminate(client *Client) error {
 	m.globalMutex.Lock()
 	defer m.globalMutex.Unlock()
 
+	// get session
+	sess := client.Session().(*memorySession)
+
 	// release session if available
-	sess, ok := client.Session().(*memorySession)
-	if ok && sess != nil {
-		sess.owner = nil
+	if sess != nil {
+		sess.activeClient = nil
 	}
 
 	// remove any temporary session
@@ -462,15 +477,15 @@ func (m *MemoryBackend) Close(timeout time.Duration) bool {
 
 	// close temporary sessions
 	for _, sess := range m.temporarySessions {
-		sess.owner.Close()
-		clients = append(clients, sess.owner)
+		sess.activeClient.Close()
+		clients = append(clients, sess.activeClient)
 	}
 
-	// closed owned stored sessions
+	// closed active stored sessions
 	for _, sess := range m.storedSessions {
-		if sess.owner != nil {
-			sess.owner.Close()
-			clients = append(clients, sess.owner)
+		if sess.activeClient != nil {
+			sess.activeClient.Close()
+			clients = append(clients, sess.activeClient)
 		}
 	}
 
@@ -483,14 +498,14 @@ func (m *MemoryBackend) Close(timeout time.Duration) bool {
 	}
 
 	// prepare timeout
-	tm := time.After(timeout)
+	deadline := time.After(timeout)
 
 	// wait for clients to close
 	for _, client := range clients {
 		select {
 		case <-client.Closed():
 			continue
-		case <-tm:
+		case <-deadline:
 			return false
 		}
 	}

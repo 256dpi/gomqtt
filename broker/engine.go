@@ -76,7 +76,7 @@ func (e *Engine) Accept(server transport.Server) {
 func (e *Engine) Handle(conn transport.Conn) bool {
 	// check conn
 	if conn == nil {
-		panic("passed conn is nil")
+		panic("missing conn")
 	}
 
 	// acquire mutex

@@ -247,7 +247,7 @@ type Client struct {
 	subscribeTokens chan struct{}
 	dequeueTokens   chan struct{}
 	tomb            tomb.Tomb
-	done            chan struct{}
+	closed          chan struct{}
 }
 
 // NewClient takes over a connection and returns a Client.
@@ -257,7 +257,7 @@ func NewClient(backend Backend, conn transport.Conn) *Client {
 		state:   clientConnecting,
 		backend: backend,
 		conn:    conn,
-		done:    make(chan struct{}),
+		closed:  make(chan struct{}),
 	}
 
 	// start processor
@@ -270,7 +270,7 @@ func NewClient(backend Backend, conn transport.Conn) *Client {
 		c.cleanup()
 
 		// close channel
-		close(c.done)
+		close(c.closed)
 	}()
 
 	return c
@@ -305,7 +305,7 @@ func (c *Client) Closing() <-chan struct{} {
 
 // Closed returns a channel that is closed when the client is closed.
 func (c *Client) Closed() <-chan struct{} {
-	return c.done
+	return c.closed
 }
 
 /* goroutines */
@@ -798,6 +798,7 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		err := c.backend.Publish(c, &publish.Message, func() {
 			c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
+			// queue puback
 			select {
 			case c.ackQueue <- puback:
 			case <-c.tomb.Dying():
@@ -899,6 +900,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	err = c.backend.Publish(c, &publish.Message, func() {
 		c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
+		// queue pubcomp
 		select {
 		case c.ackQueue <- pubcomp:
 		case <-c.tomb.Dying():
