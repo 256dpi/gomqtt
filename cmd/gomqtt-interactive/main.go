@@ -19,10 +19,10 @@ func main() {
 	// parse flags
 	flag.Parse()
 
-	// create new shell.
+	// create new shell
 	shell := ishell.New()
 
-	// display welcome info.
+	// display welcome info
 	shell.Println("Interactive MQTT Client")
 
 	// prepare client
