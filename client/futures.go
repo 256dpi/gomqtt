@@ -9,10 +9,10 @@ import (
 
 // A GenericFuture is returned by publish and unsubscribe methods.
 type GenericFuture interface {
-	// Wait will block until the future is completed or canceled. It will return
-	// future.ErrCanceled if the future gets canceled. If the timeout is reached,
-	// future.ErrTimeoutExceeded is returned.
-	//
+	// Wait will wait the given amount of time and return whether the future has
+	// been completed, canceled or the request timed out. If no time has been
+	// provided the wait will never timeout.
+
 	// Note: Wait will not return any Client related errors.
 	Wait(timeout time.Duration) error
 }
