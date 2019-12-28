@@ -317,7 +317,8 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 
 	// this implementation is very basic and will block the backend on every
 	// publish. clients that stay connected but won't drain their queue will
-	// eventually deadlock the broker
+	// eventually deadlock the broker. full queues are skipped if the client is
+	// or is going offline
 
 	// check retain flag
 	if msg.Retain {
@@ -359,8 +360,7 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 				// wait for room since client is online
 				select {
 				case queue(sess) <- msg:
-				case <-sess.owner.Closed():
-				case <-client.Closed():
+				case <-sess.owner.Closing():
 				}
 			}
 		}
@@ -377,14 +377,13 @@ func (m *MemoryBackend) Publish(client *Client, msg *packet.Message, ack Ack) er
 					return ErrQueueFull
 				}
 			} else if sess.owner != nil {
-				// wait for room if client is online
+				// wait for room since client is online
 				select {
 				case queue(sess) <- msg:
-				case <-sess.owner.Closed():
-				case <-client.Closed():
+				case <-sess.owner.Closing():
 				}
 			} else {
-				// ignore message if stored queue is full
+				// ignore message if offline queue is full
 				select {
 				case queue(sess) <- msg:
 				default:
