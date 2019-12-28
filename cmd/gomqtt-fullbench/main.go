@@ -172,7 +172,7 @@ func publisher(id string, tokens <-chan struct{}) {
 	defer publisher.Close()
 
 	// prepare future queue
-	list := make(chan client.GenericFuture, *futures)
+	list := make(chan client.GenericFuture, *futures-2)
 
 	// run publisher
 	go func() {
