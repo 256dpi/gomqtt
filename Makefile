@@ -11,6 +11,7 @@ lint:
 
 install:
 	go install ...
+	go mod tidy
 
 cert:
 	mkcert -install
