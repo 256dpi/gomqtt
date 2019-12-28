@@ -17,32 +17,43 @@ import (
 )
 
 var url = flag.String("url", "tcp://0.0.0.0:1883", "broker url")
+var queue = flag.Int("queue", 100, "queue size")
+var publish = flag.Int("publish", 100, "parallel publishes")
+var inflight = flag.Int("inflight", 100, "inflight messages")
+var timeout = flag.Int("timeout", 1, "token timeout")
 
 func main() {
+	// parse flags
 	flag.Parse()
 
+	// run pprof interface
 	go func() {
 		panic(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	fmt.Printf("Starting broker on URL %s... ", *url)
+	// print info
+	fmt.Printf("Starting broker on URL %s...\n", *url)
 
+	// launch server
 	server, err := transport.Launch(*url)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Done!")
-
+	// prepare backend
 	backend := broker.NewMemoryBackend()
-	backend.SessionQueueSize = 100
-	backend.ClientParallelPublishes = 100
-	backend.ClientInflightMessages = 100
+	backend.SessionQueueSize = *queue
+	backend.ClientParallelPublishes = *publish
+	backend.ClientParallelSubscribes = *inflight
+	backend.ClientInflightMessages = *inflight
+	backend.ClientTokenTimeout = time.Duration(*timeout) * time.Second
 
+	// prepare counters
 	var published int32
 	var forwarded int32
 	var clients int32
 
+	// configure logger
 	backend.Logger = func(event broker.LogEvent, client *broker.Client, pkt packet.Generic, msg *packet.Message, err error) {
 		if event == broker.NewConnection {
 			atomic.AddInt32(&clients, 1)
@@ -55,38 +66,47 @@ func main() {
 		}
 	}
 
+	// prepare engine
 	engine := broker.NewEngine(backend)
+
+	// set error callback
+	engine.OnError = func(err error) {
+		println(err.Error())
+	}
+
+	// accept from server
 	engine.Accept(server)
 
+	// run reporter
 	go func() {
 		for {
-			<-time.After(1 * time.Second)
+			// wait a second
+			time.Sleep(time.Second)
 
+			// read counters
 			pub := atomic.LoadInt32(&published)
 			fwd := atomic.LoadInt32(&forwarded)
+
+			// print statistics
 			fmt.Printf("Publish Rate: %d msg/s, Forward Rate: %d msg/s, Clients: %d\n", pub, fwd, clients)
 
+			// reset counters
 			atomic.StoreInt32(&published, 0)
 			atomic.StoreInt32(&forwarded, 0)
 		}
 	}()
 
+	// await finish signal
 	finish := make(chan os.Signal, 1)
 	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
-
-	engine.OnError = func(err error) {
-		fmt.Println(err.Error())
-		finish <- nil
-	}
-
 	<-finish
 
+	// close backend
 	backend.Close(5 * time.Second)
 
-	server.Close()
+	// close server
+	_ = server.Close()
 
-	engine.OnError = nil
+	// close engine
 	engine.Close()
-
-	fmt.Println("Bye!")
 }
