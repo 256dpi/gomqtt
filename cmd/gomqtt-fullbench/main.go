@@ -31,42 +31,46 @@ var received int32
 var delta int32
 var total int32
 
+var done = make(chan struct{})
 var wg sync.WaitGroup
 
 var payload []byte
 
 func main() {
+	// parse flags
 	flag.Parse()
 
+	// run pprof interface
 	go func() {
 		panic(http.ListenAndServe("localhost:6061", nil))
 	}()
 
+	// prepare payload
 	payload = make([]byte, *length)
 
+	// print info
 	fmt.Printf("Start benchmark of %s using %d pairs for %d seconds...\n", *broker, *pairs, *duration)
 
-	go func() {
-		finish := make(chan os.Signal, 1)
-		signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
+	// prepare finish signal
+	finish := make(chan os.Signal, 1)
+	signal.Notify(finish, syscall.SIGINT, syscall.SIGTERM)
 
-		<-finish
-		fmt.Println("Closing...")
-		os.Exit(0)
-	}()
-
-	if int(*duration) > 0 {
+	// exit after duration if available
+	if *duration > 0 {
 		time.AfterFunc(time.Duration(*duration)*time.Second, func() {
-			fmt.Println("Finishing...")
-			os.Exit(0)
+			select {
+			case finish <- syscall.SIGTERM:
+			default:
+			}
 		})
 	}
 
-	wg.Add(*pairs * 2)
-
+	// launch pairs
 	for i := 0; i < *pairs; i++ {
+		// compute id
 		id := strconv.Itoa(i)
 
+		// prepare tokens
 		var tokens chan struct{}
 		if *inflight > 0 {
 			tokens = make(chan struct{}, *inflight)
@@ -75,26 +79,38 @@ func main() {
 			}
 		}
 
+		// launch consumer and publisher
+		wg.Add(2)
 		go consumer(id, tokens)
 		go publisher(id, tokens)
 	}
 
+	// launch reporter
+	wg.Add(1)
 	go reporter()
 
+	// await finish
+	<-finish
+	close(done)
+
+	// wait for exit
 	wg.Wait()
 }
 
 func connect(id string) *client.Client {
+	// create client
 	cl := client.New()
 
-	cfg := client.NewConfig(*broker)
-	cfg.ClientID = "gomqtt-benchmark/" + id
+	// prepare config
+	cfg := client.NewConfigWithClientID(*broker, "gomqtt-benchmark/"+id)
 
+	// connect client
 	cf, err := cl.Connect(cfg)
 	if err != nil {
 		panic(err)
 	}
 
+	// await connect
 	err = cf.Wait(5 * time.Second)
 	if err != nil {
 		panic(err)
@@ -104,14 +120,21 @@ func connect(id string) *client.Client {
 }
 
 func consumer(id string, tokens chan<- struct{}) {
-	name := "consumer/" + id
-	cl := connect(name)
+	// ensure exit signal
+	defer wg.Done()
 
-	cl.Callback = func(msg *packet.Message, err error) error {
+	// connect
+	consumer := connect("consumer/" + id)
+	defer consumer.Close()
+
+	// set callback
+	consumer.Callback = func(msg *packet.Message, err error) error {
+		// check error
 		if err != nil {
 			panic(err)
 		}
 
+		// add token
 		if tokens != nil {
 			select {
 			case tokens <- struct{}{}:
@@ -119,6 +142,7 @@ func consumer(id string, tokens chan<- struct{}) {
 			}
 		}
 
+		// update statistics
 		atomic.AddInt32(&received, 1)
 		atomic.AddInt32(&delta, -1)
 		atomic.AddInt32(&total, 1)
@@ -126,67 +150,107 @@ func consumer(id string, tokens chan<- struct{}) {
 		return nil
 	}
 
-	sf, err := cl.Subscribe(id, packet.QOS(*qos))
+	// subscribe topic
+	sf, err := consumer.Subscribe(id, packet.QOS(*qos))
 	if err != nil {
 		panic(err)
 	}
 
+	// await subscription
 	err = sf.Wait(5 * time.Second)
 	if err != nil {
 		panic(err)
 	}
+
+	// await finish
+	<-done
 }
 
 func publisher(id string, tokens <-chan struct{}) {
-	name := "publisher/" + id
-	cl := connect(name)
+	// ensure exit signal
+	defer wg.Done()
 
+	// connect
+	publisher := connect("publisher/" + id)
+	defer publisher.Close()
+
+	// prepare future queue
 	list := make(chan client.GenericFuture, *futures)
 
+	// run publisher
 	go func() {
 		for {
+			// get token if available
 			if tokens != nil {
-				<-tokens
+				select {
+				case <-tokens:
+				case <-done:
+					close(list)
+					return
+				}
 			}
 
-			pf, err := cl.Publish(id, payload, packet.QOS(*qos), *retained)
+			// publish message
+			future, err := publisher.Publish(id, payload, packet.QOS(*qos), *retained)
 			if err != nil {
 				panic(err)
 			}
 
-			list <- pf
+			// queue future
+			select {
+			case list <- future:
+			case <-done:
+				close(list)
+				return
+			}
 		}
 	}()
 
-	for pf := range list {
-		err := pf.Wait(5 * time.Second)
+	// handle futures
+	for future := range list {
+		// await result
+		err := future.Wait(5 * time.Second)
 		if err != nil {
 			panic(err)
 		}
 
+		// update statistics
 		atomic.AddInt32(&sent, 1)
 		atomic.AddInt32(&delta, 1)
 	}
 }
 
 func reporter() {
+	// ensure exit signal
+	defer wg.Done()
+
+	// count iterations
 	var iterations int32
 
 	for {
-		time.Sleep(1 * time.Second)
+		// wait a second
+		select {
+		case <-time.After(time.Second):
+		case <-done:
+			return
+		}
 
+		// load values
 		curSent := atomic.LoadInt32(&sent)
 		curReceived := atomic.LoadInt32(&received)
 		curDelta := atomic.LoadInt32(&delta)
 		curTotal := atomic.LoadInt32(&total)
 
+		// increment
 		iterations++
 
+		// print statistics
 		fmt.Printf("Sent: %d msgs - ", curSent)
 		fmt.Printf("Received: %d msgs ", curReceived)
 		fmt.Printf("(Buffered: %d msgs) ", curDelta)
 		fmt.Printf("(Average Throughput: %d msg/s)\n", curTotal/iterations)
 
+		// reset counters
 		atomic.StoreInt32(&sent, 0)
 		atomic.StoreInt32(&received, 0)
 	}
