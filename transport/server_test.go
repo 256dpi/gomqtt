@@ -22,8 +22,8 @@ func abstractServerTest(t *testing.T, protocol string) {
 		require.NoError(t, err)
 
 		pkt, err := conn1.Receive()
-		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
 
 		err = conn1.Send(packet.NewConnack(), false)
 		assert.NoError(t, err)
@@ -42,8 +42,8 @@ func abstractServerTest(t *testing.T, protocol string) {
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
-	assert.Equal(t, pkt.Type(), packet.CONNACK)
 	assert.NoError(t, err)
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
 
 	err = conn2.Close()
 	assert.NoError(t, err)

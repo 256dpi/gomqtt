@@ -14,8 +14,8 @@ import (
 func abstractConnConnectTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
-		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
 
 		err = conn1.Send(packet.NewConnack(), false)
 		assert.NoError(t, err)
@@ -29,8 +29,8 @@ func abstractConnConnectTest(t *testing.T, protocol string) {
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
-	assert.Equal(t, pkt.Type(), packet.CONNACK)
 	assert.NoError(t, err)
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
 
 	err = conn2.Close()
 	assert.NoError(t, err)
@@ -72,9 +72,11 @@ func abstractConnDecodeErrorTest(t *testing.T, protocol string) {
 		buf := []byte{0x00, 0x00} // < too small
 
 		if netConn, ok := conn1.(*NetConn); ok {
-			netConn.conn.Write(buf)
+			_, err := netConn.conn.Write(buf)
+			assert.NoError(t, err)
 		} else if webSocketConn, ok := conn1.(*WebSocketConn); ok {
-			webSocketConn.conn.WriteMessage(websocket.BinaryMessage, buf)
+			err := webSocketConn.conn.WriteMessage(websocket.BinaryMessage, buf)
+			assert.NoError(t, err)
 		}
 
 		pkt, err := conn1.Receive()
@@ -146,8 +148,8 @@ func abstractConnSendAndCloseTest(t *testing.T, protocol string) {
 	safeReceive(wait)
 
 	pkt, err := conn2.Receive()
-	assert.Equal(t, pkt.Type(), packet.CONNECT)
 	assert.NoError(t, err)
+	assert.Equal(t, pkt.Type(), packet.CONNECT)
 
 	pkt, err = conn2.Receive()
 	assert.Nil(t, pkt)
@@ -230,8 +232,8 @@ func abstractConnAddrTest(t *testing.T, protocol string) {
 func abstractConnAsyncSendTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
-		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
 
 		err = conn1.Send(packet.NewConnack(), true)
 		assert.NoError(t, err)
@@ -245,8 +247,8 @@ func abstractConnAsyncSendTest(t *testing.T, protocol string) {
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
-	assert.Equal(t, pkt.Type(), packet.CONNACK)
 	assert.NoError(t, err)
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
 
 	err = conn2.Close()
 	assert.NoError(t, err)
@@ -257,8 +259,8 @@ func abstractConnAsyncSendTest(t *testing.T, protocol string) {
 func abstractConnSendAfterAsyncSendTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
-		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
 
 		err = conn1.Send(packet.NewConnack(), true)
 		assert.NoError(t, err)
@@ -275,12 +277,12 @@ func abstractConnSendAfterAsyncSendTest(t *testing.T, protocol string) {
 	assert.NoError(t, err)
 
 	pkt, err := conn2.Receive()
-	assert.Equal(t, pkt.Type(), packet.CONNACK)
 	assert.NoError(t, err)
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
 
 	pkt, err = conn2.Receive()
-	assert.Equal(t, pkt.Type(), packet.CONNACK)
 	assert.NoError(t, err)
+	assert.Equal(t, pkt.Type(), packet.CONNACK)
 
 	err = conn2.Close()
 	assert.NoError(t, err)
@@ -312,8 +314,8 @@ func abstractConnAsyncSendAfterCloseTest(t *testing.T, protocol string) {
 func abstractConnCloseAfterAsyncSendTest(t *testing.T, protocol string) {
 	conn2, done := connectionPair(protocol, func(conn1 Conn) {
 		pkt, err := conn1.Receive()
-		assert.Equal(t, pkt.Type(), packet.CONNECT)
 		assert.NoError(t, err)
+		assert.Equal(t, pkt.Type(), packet.CONNECT)
 
 		pkt, err = conn1.Receive()
 		assert.Nil(t, pkt)
