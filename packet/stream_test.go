@@ -56,10 +56,11 @@ func TestDecoder(t *testing.T) {
 
 	var pkt Generic = NewConnect()
 	b := make([]byte, pkt.Len())
-	pkt.Encode(b)
+	_, err := pkt.Encode(b)
+	assert.NoError(t, err)
 	buf.Write(b)
 
-	pkt, err := dec.Read()
+	pkt, err = dec.Read()
 	assert.NoError(t, err)
 	assert.NotNil(t, pkt)
 }
@@ -103,6 +104,7 @@ func TestDecoderInvalidTypeError(t *testing.T) {
 	buf.Write([]byte{0x00, 0x00})
 
 	pkt, err := dec.Read()
+	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid packet type")
 	assert.Nil(t, pkt)
 }
