@@ -19,6 +19,7 @@ type Future struct {
 	result    interface{}
 	completed chan struct{}
 	cancelled chan struct{}
+	futures   []*Future
 	done      bool
 	mutex     sync.Mutex
 }
@@ -29,20 +30,6 @@ func New() *Future {
 		completed: make(chan struct{}),
 		cancelled: make(chan struct{}),
 	}
-}
-
-// Bind will tie the current future to the specified future. If the bound to
-// future is completed or canceled the current will as well. The result from the
-// bound future is copied to the current on complete and cancel.
-func (f *Future) Bind(f2 *Future) {
-	go func() {
-		err := f2.Wait(0)
-		if err == ErrCanceled {
-			f.Cancel(f2.Result())
-		} else {
-			f.Complete(f2.Result())
-		}
-	}()
 }
 
 // Wait will wait the given amount of time and return whether the future has been
@@ -86,6 +73,11 @@ func (f *Future) Complete(result interface{}) bool {
 	// set flag
 	f.done = true
 
+	// complete attached futures
+	for _, future := range f.futures {
+		future.Complete(result)
+	}
+
 	return true
 }
 
@@ -109,6 +101,11 @@ func (f *Future) Cancel(result interface{}) bool {
 	// set flag
 	f.done = true
 
+	// cancel attached futures
+	for _, future := range f.futures {
+		future.Cancel(result)
+	}
+
 	return true
 }
 
@@ -120,4 +117,34 @@ func (f *Future) Result() interface{} {
 	defer f.mutex.Unlock()
 
 	return f.result
+}
+
+// Attach will attach the specified future to this future. If this future is
+// completed or cancelled, all attach futures will be completed or cancelled as
+// well. If the this future has already been completed or cancelled the specified
+// future is completed or cancelled immediately.
+func (f *Future) Attach(f2 *Future) {
+	// acquire mutex
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	// check if done
+	if f.done {
+		select {
+		case <-f.completed:
+			f2.Complete(f.result)
+		case <-f.cancelled:
+			f2.Cancel(f.result)
+		}
+	}
+
+	// attach future
+	f.futures = append(f.futures, f2)
+}
+
+// Bind will tie the current future to the specified future. If the bound to
+// future is completed or canceled the current will as well. The result from the
+// bound future is copied to the current on complete and cancel.
+func (f *Future) Bind(f2 *Future) {
+	f2.Attach(f)
 }
