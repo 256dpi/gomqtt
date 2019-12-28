@@ -2,6 +2,7 @@ package broker
 
 import (
 	"errors"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -709,13 +710,19 @@ func (c *Client) processSubscribe(pkt *packet.Subscribe) error {
 		suback.ReturnCodes[i] = subscription.QOS
 	}
 
+	// prepare ack
+	var once sync.Once
+	ack := func() {
+		once.Do(func() {
+			select {
+			case c.ackQueue <- suback:
+			case <-c.tomb.Dying():
+			}
+		})
+	}
+
 	// subscribe client to queue
-	err := c.backend.Subscribe(c, pkt.Subscriptions, func() {
-		select {
-		case c.ackQueue <- suback:
-		case <-c.tomb.Dying():
-		}
-	})
+	err := c.backend.Subscribe(c, pkt.Subscriptions, ack)
 	if err != nil {
 		return c.die(BackendError, err)
 	}
@@ -744,13 +751,19 @@ func (c *Client) processUnsubscribe(pkt *packet.Unsubscribe) error {
 	unsuback := packet.NewUnsuback()
 	unsuback.ID = pkt.ID
 
+	// prepare ack
+	var once sync.Once
+	ack := func() {
+		once.Do(func() {
+			select {
+			case c.ackQueue <- unsuback:
+			case <-c.tomb.Dying():
+			}
+		})
+	}
+
 	// unsubscribe topics
-	err := c.backend.Unsubscribe(c, pkt.Topics, func() {
-		select {
-		case c.ackQueue <- unsuback:
-		case <-c.tomb.Dying():
-		}
-	})
+	err := c.backend.Unsubscribe(c, pkt.Topics, ack)
 	if err != nil {
 		return c.die(BackendError, err)
 	}
@@ -794,16 +807,22 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 		puback := packet.NewPuback()
 		puback.ID = publish.ID
 
-		// publish message and queue puback if ack is called
-		err := c.backend.Publish(c, &publish.Message, func() {
-			c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
+		// prepare ack
+		var once sync.Once
+		ack := func() {
+			once.Do(func() {
+				c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
-			// queue puback
-			select {
-			case c.ackQueue <- puback:
-			case <-c.tomb.Dying():
-			}
-		})
+				// queue puback
+				select {
+				case c.ackQueue <- puback:
+				case <-c.tomb.Dying():
+				}
+			})
+		}
+
+		// publish message and queue puback if ack is called
+		err := c.backend.Publish(c, &publish.Message, ack)
 		if err != nil {
 			return c.die(BackendError, err)
 		}
@@ -896,16 +915,22 @@ func (c *Client) processPubrel(id packet.ID) error {
 		return nil
 	}
 
-	// publish message and queue pubcomp if ack is called
-	err = c.backend.Publish(c, &publish.Message, func() {
-		c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
+	// prepare ack
+	var once sync.Once
+	ack := func() {
+		once.Do(func() {
+			c.backend.Log(MessageAcknowledged, c, nil, &publish.Message, nil)
 
-		// queue pubcomp
-		select {
-		case c.ackQueue <- pubcomp:
-		case <-c.tomb.Dying():
-		}
-	})
+			// queue pubcomp
+			select {
+			case c.ackQueue <- pubcomp:
+			case <-c.tomb.Dying():
+			}
+		})
+	}
+
+	// publish message and queue pubcomp if ack is called
+	err = c.backend.Publish(c, &publish.Message, ack)
 	if err != nil {
 		return c.die(BackendError, err)
 	}
