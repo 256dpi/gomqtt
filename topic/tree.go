@@ -22,6 +22,7 @@ func (n *node) removeValue(value interface{}) {
 		if v == value {
 			// remove without preserving order
 			n.values[i] = n.values[len(n.values)-1]
+			n.values[len(n.values)-1] = nil
 			n.values = n.values[:len(n.values)-1]
 			break
 		}
@@ -32,15 +33,16 @@ func (n *node) clearValues() {
 	n.values = []interface{}{}
 }
 
-func (n *node) string(i int) string {
+func (n *node) string(level int) string {
+	// print node length unless on root level
 	str := ""
-
-	if i != 0 {
+	if level != 0 {
 		str = fmt.Sprintf("%d", len(n.values))
 	}
 
+	// ident and append children
 	for key, node := range n.children {
-		str += fmt.Sprintf("\n| %s'%s' => %s", strings.Repeat(" ", i*2), key, node.string(i+1))
+		str += fmt.Sprintf("\n| %s'%s' => %s", strings.Repeat(" ", level*2), key, node.string(level+1))
 	}
 
 	return str
@@ -455,7 +457,8 @@ func (t *Tree) Reset() {
 	t.root = newNode()
 }
 
-// String will return a string representation of the tree.
+// String will return a string representation of the tree structure. The number
+// following the nodes show the number of stored values at that level.
 func (t *Tree) String() string {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()

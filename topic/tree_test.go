@@ -299,7 +299,7 @@ func TestTreeReset(t *testing.T) {
 func TestTreeString(t *testing.T) {
 	tree := NewStandardTree()
 
-	tree.Add("foo/bar", 1)
+	tree.Add("foo/bar", 42)
 
 	assert.Equal(t, "topic.Tree:\n| 'foo' => 0\n|   'bar' => 1", tree.String())
 }
