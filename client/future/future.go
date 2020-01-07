@@ -120,8 +120,8 @@ func (f *Future) Result() interface{} {
 }
 
 // Attach will attach the specified future to this future. If this future is
-// completed or cancelled, all attach futures will be completed or cancelled as
-// well. If the this future has already been completed or cancelled the specified
+// completed or cancelled, all attached futures will be completed or cancelled as
+// well. If this future has already been completed or cancelled the specified
 // future is completed or cancelled immediately.
 func (f *Future) Attach(f2 *Future) {
 	// acquire mutex

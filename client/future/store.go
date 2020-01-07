@@ -103,18 +103,22 @@ func (s *Store) Await(timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 
 	for {
-		// get futures
+		// get random future
+		var next *Future
 		s.mutex.RLock()
-		futures := s.All()
+		for _, f := range s.store {
+			next = f
+			break
+		}
 		s.mutex.RUnlock()
 
 		// return if no futures are left
-		if len(futures) == 0 {
+		if next == nil {
 			return nil
 		}
 
 		// wait for next future to complete
-		err := futures[0].Wait(deadline.Sub(time.Now()))
+		err := next.Wait(deadline.Sub(time.Now()))
 		if err != nil {
 			return err
 		}
