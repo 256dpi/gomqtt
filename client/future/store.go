@@ -103,7 +103,7 @@ func (s *Store) Await(timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 
 	for {
-		// Get random future
+		// get random future
 		var next *Future
 		s.mutex.RLock()
 		for _, f := range s.store {
