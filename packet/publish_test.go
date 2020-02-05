@@ -10,7 +10,7 @@ func TestPublishInterface(t *testing.T) {
 	pkt := NewPublish()
 
 	assert.Equal(t, pkt.Type(), PUBLISH)
-	assert.Equal(t, "<Publish ID=0 Message=<Message Topic=\"\" QOS=0 Retain=false Payload=[]> Dup=false>", pkt.String())
+	assert.Equal(t, "<Publish ID=0 Message=<Message Topic=\"\" QOS=0 Retain=false Payload=> Dup=false>", pkt.String())
 }
 
 func TestPublishDecode1(t *testing.T) {

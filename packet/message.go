@@ -21,7 +21,7 @@ type Message struct {
 
 // String returns a string representation of the message.
 func (m *Message) String() string {
-	return fmt.Sprintf("<Message Topic=%q QOS=%d Retain=%t Payload=%v>",
+	return fmt.Sprintf("<Message Topic=%q QOS=%d Retain=%t Payload=%x>",
 		m.Topic, m.QOS, m.Retain, m.Payload)
 }
 

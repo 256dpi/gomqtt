@@ -15,7 +15,7 @@ func TestConnectInterface(t *testing.T) {
 	}
 
 	assert.Equal(t, pkt.Type(), CONNECT)
-	assert.Equal(t, "<Connect ClientID=\"\" KeepAlive=0 Username=\"\" Password=\"\" CleanSession=true Will=<Message Topic=\"w\" QOS=1 Retain=false Payload=[109]> Version=4>", pkt.String())
+	assert.Equal(t, "<Connect ClientID=\"\" KeepAlive=0 Username=\"\" Password=\"\" CleanSession=true Will=<Message Topic=\"w\" QOS=1 Retain=false Payload=6d> Version=4>", pkt.String())
 }
 
 func TestConnectDecode1(t *testing.T) {
