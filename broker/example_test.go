@@ -102,12 +102,12 @@ func Example() {
 	// B [packet sent] <Connack SessionPresent=false ReturnCode=0>
 	// B [packet received] <Subscribe ID=1 Subscriptions=["test"=>0]>
 	// B [packet sent] <Suback ID=1 ReturnCodes=[0]>
-	// B [packet received] <Publish ID=0 Message=<Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]> Dup=false>
-	// B [message published] <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
-	// B [message dequeued] <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
-	// B [packet sent] <Publish ID=0 Message=<Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]> Dup=false>
-	// B [message forwarded] <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
-	// C [message] <Message Topic="test" QOS=0 Retain=false Payload=[116 101 115 116]>
+	// B [packet received] <Publish ID=0 Message=<Message Topic="test" QOS=0 Retain=false Payload=74657374> Dup=false>
+	// B [message published] <Message Topic="test" QOS=0 Retain=false Payload=74657374>
+	// B [message dequeued] <Message Topic="test" QOS=0 Retain=false Payload=74657374>
+	// B [packet sent] <Publish ID=0 Message=<Message Topic="test" QOS=0 Retain=false Payload=74657374> Dup=false>
+	// B [message forwarded] <Message Topic="test" QOS=0 Retain=false Payload=74657374>
+	// C [message] <Message Topic="test" QOS=0 Retain=false Payload=74657374>
 	// B [packet received] <Disconnect>
 	// B [client disconnected]
 	// B [lost connection]

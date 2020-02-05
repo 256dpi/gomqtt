@@ -13,7 +13,7 @@ func TestMessageString(t *testing.T) {
 		QOS:     QOSAtLeastOnce,
 	}
 
-	assert.Equal(t, "<Message Topic=\"w\" QOS=1 Retain=false Payload=[109]>", msg.String())
+	assert.Equal(t, "<Message Topic=\"w\" QOS=1 Retain=false Payload=6d>", msg.String())
 }
 
 func TestMessageCopy(t *testing.T) {
