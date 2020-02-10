@@ -104,17 +104,24 @@ func ReceiveMessage(config *Config, topic string, qos packet.QOS, timeout time.D
 	}
 
 	// create channel
-	msgCh := make(chan *packet.Message)
-	errCh := make(chan error)
+	msgCh := make(chan *packet.Message, 1)
+	errCh := make(chan error, 1)
 
 	// set callback
 	client.Callback = func(msg *packet.Message, err error) error {
 		if err != nil {
-			errCh <- err
+			select {
+			case errCh <- err:
+			default:
+			}
+
 			return nil
 		}
 
-		msgCh <- msg
+		select {
+		case msgCh <- msg:
+		default:
+		}
 		return nil
 	}
 
