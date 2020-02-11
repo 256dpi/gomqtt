@@ -98,6 +98,9 @@ type Service struct {
 	// configured to request one.
 	ResubscribeAllSubscriptions bool
 
+	// The time after which the queueing of a command is aborted.
+	QueueTimeout time.Duration
+
 	config        *Config
 	started       bool
 	backoff       *backoff.Backoff
@@ -124,6 +127,7 @@ func NewService(queueSize ...int) *Service {
 		ConnectTimeout:              5 * time.Second,
 		DisconnectTimeout:           10 * time.Second,
 		ResubscribeTimeout:          5 * time.Second,
+		QueueTimeout:                10 * time.Second,
 		ResubscribeAllSubscriptions: true,
 		subscriptions:               topic.NewStandardTree(),
 		commandQueue:                make(chan *command, qs),
@@ -197,11 +201,18 @@ func (s *Service) PublishMessage(msg *packet.Message) GenericFuture {
 	// allocate future
 	f := future.New()
 
-	// queue publish
-	s.commandQueue <- &command{
+	// prepare command
+	cmd := &command{
 		publish: true,
 		future:  f,
 		message: msg,
+	}
+
+	// queue publish
+	select {
+	case s.commandQueue <- cmd:
+	case <-time.After(s.QueueTimeout):
+		f.Cancel(nil)
 	}
 
 	return f
@@ -224,19 +235,21 @@ func (s *Service) SubscribeMultiple(subscriptions []packet.Subscription) Subscri
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	// save subscription
-	for _, v := range subscriptions {
-		s.subscriptions.Set(v.Topic, v)
-	}
-
 	// allocate future
 	f := future.New()
 
-	// queue subscribe
-	s.commandQueue <- &command{
+	// prepare command
+	cmd := &command{
 		subscribe:     true,
 		future:        f,
 		subscriptions: subscriptions,
+	}
+
+	// queue subscribe
+	select {
+	case s.commandQueue <- cmd:
+	case <-time.After(s.QueueTimeout):
+		f.Cancel(nil)
 	}
 
 	return &subscribeFuture{f}
@@ -257,19 +270,21 @@ func (s *Service) UnsubscribeMultiple(topics []string) GenericFuture {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	// remove subscription
-	for _, v := range topics {
-		s.subscriptions.Empty(v)
-	}
-
 	// allocate future
 	f := future.New()
 
-	// queue unsubscribe
-	s.commandQueue <- &command{
+	// prepare command
+	cmd := &command{
 		unsubscribe: true,
 		future:      f,
 		topics:      topics,
+	}
+
+	// queue unsubscribe
+	select {
+	case s.commandQueue <- cmd:
+	case <-time.After(s.QueueTimeout):
+		f.Cancel(nil)
 	}
 
 	return f
@@ -457,6 +472,11 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 		case cmd := <-s.commandQueue:
 			// handle subscribe command
 			if cmd.subscribe {
+				// store subscription
+				for _, v := range cmd.subscriptions {
+					s.subscriptions.Set(v.Topic, v)
+				}
+
 				// perform subscribe
 				f2, err := client.SubscribeMultiple(cmd.subscriptions)
 				if err != nil {
@@ -471,6 +491,11 @@ func (s *Service) dispatcher(client *Client, kill chan struct{}) bool {
 
 			// handle unsubscribe command
 			if cmd.unsubscribe {
+				// delete subscription
+				for _, v := range cmd.topics {
+					s.subscriptions.Empty(v)
+				}
+
 				// perform unsubscribe
 				f2, err := client.UnsubscribeMultiple(cmd.topics)
 				if err != nil {
