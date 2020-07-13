@@ -26,7 +26,7 @@ type Config struct {
 	// CleanSession can be set to request a clean session.
 	CleanSession bool
 
-	// KeepAlive should be time duration string e.g. "30s".
+	// KeepAlive should be time a duration string e.g. "30s".
 	KeepAlive string
 
 	// Will message is registered on the broker upon connect if set.
