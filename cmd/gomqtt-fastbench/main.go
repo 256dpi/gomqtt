@@ -111,7 +111,6 @@ func connect(id string) transport.Conn {
 	// prepare connect packet
 	connect := packet.NewConnect()
 	connect.ClientID = "gomqtt-benchmark/" + id
-	connect.KeepAlive = 10 // seconds
 
 	// add authentication if available
 	if mqttURL.User != nil {
