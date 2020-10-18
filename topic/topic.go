@@ -3,7 +3,6 @@ package topic
 
 import (
 	"errors"
-	"regexp"
 	"strings"
 )
 
@@ -12,8 +11,6 @@ var ErrZeroLength = errors.New("zero length topic")
 
 // ErrWildcards is returned by Parse if a topic contains invalid wildcards.
 var ErrWildcards = errors.New("invalid use of wildcards")
-
-var multiSlashRegex = regexp.MustCompile(`/+`)
 
 func trimSlash(r rune) bool {
 	return r == '/'
@@ -28,7 +25,9 @@ func Parse(topic string, allowWildcards bool) (string, error) {
 	}
 
 	// normalize topic
-	topic = multiSlashRegex.ReplaceAllLiteralString(topic, "/")
+	if hasAdjacentSlashes(topic) {
+		topic = collapseSlashes(topic)
+	}
 
 	// remove trailing slashes
 	topic = strings.TrimRightFunc(topic, trimSlash)
@@ -71,4 +70,30 @@ func Parse(topic string, allowWildcards bool) (string, error) {
 // is expected to be tested and normalized using Parse beforehand.
 func ContainsWildcards(topic string) bool {
 	return strings.Contains(topic, "+") || strings.Contains(topic, "#")
+}
+
+func hasAdjacentSlashes(str string) bool {
+	var last rune
+	for _, r := range str {
+		if r == '/' && last == '/' {
+			return true
+		}
+		last = r
+	}
+
+	return false
+}
+
+func collapseSlashes(str string) string {
+	var b strings.Builder
+	var last rune
+	for _, r := range str {
+		if r == '/' && last == '/' {
+			continue
+		}
+		b.WriteRune(r)
+		last = r
+	}
+
+	return b.String()
 }
