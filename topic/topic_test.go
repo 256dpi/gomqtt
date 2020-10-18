@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewTopic(t *testing.T) {
+func TestParse(t *testing.T) {
 	tests := map[string]string{
 		"topic/hello":         "topic/hello",
 		"topic//hello":        "topic/hello",
@@ -28,7 +28,7 @@ func TestNewTopic(t *testing.T) {
 	}
 }
 
-func TestZeroLengthError(t *testing.T) {
+func TestParseZeroLengthError(t *testing.T) {
 	_, err := Parse("", true)
 	assert.Equal(t, ErrZeroLength, err)
 
@@ -39,7 +39,7 @@ func TestZeroLengthError(t *testing.T) {
 	assert.Equal(t, ErrZeroLength, err)
 }
 
-func TestTopicDisallowWildcards(t *testing.T) {
+func TestParseDisallowWildcards(t *testing.T) {
 	tests := map[string]bool{
 		"topic":            true,
 		"topic/hello":      true,
@@ -61,7 +61,7 @@ func TestTopicDisallowWildcards(t *testing.T) {
 	}
 }
 
-func TestTopicAllowWildcards(t *testing.T) {
+func TestParseAllowWildcards(t *testing.T) {
 	tests := map[string]bool{
 		"topic":            true,
 		"topic/hello":      true,
@@ -93,8 +93,17 @@ func TestTopicAllowWildcards(t *testing.T) {
 	}
 }
 
-func TestTopicContainsWildcards(t *testing.T) {
+func TestContainsWildcards(t *testing.T) {
 	assert.True(t, ContainsWildcards("topic/+"))
 	assert.True(t, ContainsWildcards("topic/#"))
 	assert.False(t, ContainsWildcards("topic/hello"))
+}
+
+func BenchmarkParse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := Parse("foo", true)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
