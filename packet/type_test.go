@@ -1,9 +1,14 @@
 package packet
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func TestTypes(t *testing.T) {
+	assert.Len(t, Types(), 14)
+}
 
 func TestTypeString(t *testing.T) {
 	assert.Equal(t, "Unknown", Type(99).String())
@@ -14,24 +19,7 @@ func TestTypeValid(t *testing.T) {
 }
 
 func TestTypeNew(t *testing.T) {
-	list := []Type{
-		CONNECT,
-		CONNACK,
-		PUBLISH,
-		PUBACK,
-		PUBREC,
-		PUBREL,
-		PUBCOMP,
-		SUBSCRIBE,
-		SUBACK,
-		UNSUBSCRIBE,
-		UNSUBACK,
-		PINGREQ,
-		PINGRESP,
-		DISCONNECT,
-	}
-
-	for _, tt := range list {
+	for _, tt := range Types() {
 		m, err := tt.New()
 		assert.NotNil(t, m)
 		assert.NoError(t, err)

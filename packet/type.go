@@ -27,6 +27,12 @@ const (
 	DISCONNECT
 )
 
+// Types returns a list of all known packet types.
+func Types() []Type {
+	return []Type{CONNECT, CONNACK, PUBLISH, PUBACK, PUBREC, PUBREL, PUBCOMP,
+		SUBSCRIBE, SUBACK, UNSUBSCRIBE, UNSUBACK, PINGREQ, PINGRESP, DISCONNECT}
+}
+
 // String returns the type as a string.
 func (t Type) String() string {
 	switch t {
