@@ -15,6 +15,10 @@ var ErrWildcards = errors.New("invalid use of wildcards")
 
 var multiSlashRegex = regexp.MustCompile(`/+`)
 
+func trimSlash(r rune) bool {
+	return r == '/'
+}
+
 // Parse removes duplicate and trailing slashes from the supplied
 // string and returns the normalized topic.
 func Parse(topic string, allowWildcards bool) (string, error) {
@@ -24,10 +28,10 @@ func Parse(topic string, allowWildcards bool) (string, error) {
 	}
 
 	// normalize topic
-	topic = multiSlashRegex.ReplaceAllString(topic, "/")
+	topic = multiSlashRegex.ReplaceAllLiteralString(topic, "/")
 
 	// remove trailing slashes
-	topic = strings.TrimRight(topic, "/")
+	topic = strings.TrimRightFunc(topic, trimSlash)
 
 	// check again for zero length
 	if topic == "" {
