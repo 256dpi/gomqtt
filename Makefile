@@ -1,12 +1,6 @@
-all: fmt vet lint
-
-fmt:
+check:
 	go fmt ./...
-
-vet:
 	go vet ./...
-
-lint:
 	golint ./...
 
 install:
