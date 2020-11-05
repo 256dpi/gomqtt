@@ -11,7 +11,7 @@ before_install:
   - go get github.com/modocache/gover
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
-  - go get github.com/FiloSottile/mkcert
+  - go get filippo.io/mkcert
   - make cert
 script:
   - go test -coverprofile=broker.coverprofile ./broker
