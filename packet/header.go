@@ -68,6 +68,11 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 		return total, 0, 0, makeError(t, "error reading remaining length")
 	}
 
+	// check remaining length
+	if rl > maxVarUint {
+		return total, 0, 0, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxVarUint)
+	}
+
 	// check remaining buffer
 	if rl > len(src[total:]) {
 		return total, 0, 0, makeError(t, "remaining length (%d) is greater than remaining buffer (%d)", rl, len(src[total:]))

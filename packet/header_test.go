@@ -29,7 +29,7 @@ func TestHeaderDecodeError3(t *testing.T) {
 }
 
 func TestHeaderDecodeError4(t *testing.T) {
-	// remaining length to big
+	// invalid remaining length
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0xff}
 
 	n, _, _, err := headerDecode(buf, 6)
@@ -39,6 +39,26 @@ func TestHeaderDecodeError4(t *testing.T) {
 }
 
 func TestHeaderDecodeError5(t *testing.T) {
+	// remaining length to big
+	buf := []byte{0x62, 0xff, 0xff, 0xff, 0xff, 0x1}
+
+	n, _, _, err := headerDecode(buf, 6)
+
+	assert.Error(t, err)
+	assert.Equal(t, 1, n)
+}
+
+func TestHeaderDecodeError6(t *testing.T) {
+	// source to small
+	buf := []byte{0x62, 0xff, 0x1}
+
+	n, _, _, err := headerDecode(buf, 6)
+
+	assert.Error(t, err)
+	assert.Equal(t, 3, n)
+}
+
+func TestHeaderDecodeError7(t *testing.T) {
 	buf := []byte{0x66, 0x00, 0x01} // < wrong flags
 
 	n, _, _, err := headerDecode(buf, 6)
