@@ -4,19 +4,9 @@ import (
 	"encoding/binary"
 )
 
-const maxRemainingLength = 268435455 // 256 MB
-
 func headerLen(rl int) int {
 	// add packet type and flag byte + remaining length
-	if rl <= 127 {
-		return 2
-	} else if rl <= 16383 {
-		return 3
-	} else if rl <= 2097151 {
-		return 4
-	}
-
-	return 5
+	return 1 + varUintLen(uint64(rl))
 }
 
 func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
@@ -26,8 +16,8 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	}
 
 	// check remaining length
-	if rl > maxRemainingLength || rl < 0 {
-		return 0, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxRemainingLength)
+	if rl > maxVarUint || rl < 0 {
+		return 0, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxVarUint)
 	}
 
 	// check header length
