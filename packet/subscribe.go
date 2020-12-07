@@ -108,7 +108,7 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 		}
 
 		// read qos and add subscription
-		sp.Subscriptions = append(sp.Subscriptions, Subscription{t, qos})
+		sp.Subscriptions = append(sp.Subscriptions, Subscription{Topic: t, QOS: qos})
 		total++
 
 		// decrement counter

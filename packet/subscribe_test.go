@@ -185,9 +185,9 @@ func TestSubscribeEncode(t *testing.T) {
 	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
-		{"gomqtt", 0},
-		{"/a/b/#/c", 1},
-		{"/a/b/#/cdd", 2},
+		{Topic:"gomqtt", QOS:0},
+		{Topic:"/a/b/#/c", QOS:1},
+		{Topic:"/a/b/#/cdd", QOS:2},
 	}
 
 	dst := make([]byte, pkt.Len())
@@ -212,7 +212,7 @@ func TestSubscribeEncodeError2(t *testing.T) {
 	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
-		{string(make([]byte, 65536)), 0}, // too big
+		{Topic: string(make([]byte, 65536)), QOS: 0}, // too big
 	}
 
 	dst := make([]byte, pkt.Len())
@@ -235,7 +235,7 @@ func TestSubscribeEncodeError4(t *testing.T) {
 	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
-		{string(make([]byte, 10)), 0x81}, // invalid qos
+		{Topic: string(make([]byte, 10)), QOS: 0x81}, // invalid qos
 	}
 
 	dst := make([]byte, pkt.Len())
@@ -287,7 +287,7 @@ func BenchmarkSubscribeEncode(b *testing.B) {
 	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
-		{"t", 0},
+		{Topic: "t", QOS: 0},
 	}
 
 	buf := make([]byte, pkt.Len())
