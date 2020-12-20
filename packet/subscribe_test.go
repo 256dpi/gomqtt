@@ -18,7 +18,7 @@ func TestSubscribeInterface(t *testing.T) {
 }
 
 func TestSubscribeDecode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		35,
 		0, // packet ID MSB
@@ -38,10 +38,10 @@ func TestSubscribeDecode(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 	assert.Equal(t, 3, len(pkt.Subscriptions))
 	assert.Equal(t, "gomqtt", pkt.Subscriptions[0].Topic)
 	assert.Equal(t, QOS(0), pkt.Subscriptions[0].QOS)
@@ -52,32 +52,32 @@ func TestSubscribeDecode(t *testing.T) {
 }
 
 func TestSubscribeDecodeError1(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		9, // < too much
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubscribeDecodeError2(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		0,
 		// < missing packet id
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubscribeDecodeError3(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		2,
 		0, // packet ID MSB
@@ -86,13 +86,13 @@ func TestSubscribeDecodeError3(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubscribeDecodeError4(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		5,
 		0, // packet ID MSB
@@ -103,13 +103,13 @@ func TestSubscribeDecodeError4(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubscribeDecodeError5(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		5,
 		0, // packet ID MSB
@@ -121,13 +121,13 @@ func TestSubscribeDecodeError5(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubscribeDecodeError6(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		5,
 		0, // packet ID MSB
@@ -139,13 +139,13 @@ func TestSubscribeDecodeError6(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubscribeDecodeError7(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		5,
 		0, // packet ID MSB
@@ -157,13 +157,13 @@ func TestSubscribeDecodeError7(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubscribeEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		35,
 		0, // packet ID MSB
@@ -194,8 +194,8 @@ func TestSubscribeEncode(t *testing.T) {
 	n, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
-	assert.Equal(t, pktBytes, dst)
+	assert.Equal(t, len(packet), n)
+	assert.Equal(t, packet, dst)
 }
 
 func TestSubscribeEncodeError1(t *testing.T) {
@@ -245,7 +245,7 @@ func TestSubscribeEncodeError4(t *testing.T) {
 }
 
 func TestSubscribeEqualDecodeEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		35,
 		0, // packet ID MSB
@@ -265,22 +265,22 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 
 	dst := make([]byte, pkt.Len())
 	n2, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n2)
-	assert.Equal(t, pktBytes, dst[:n2])
+	assert.Equal(t, len(packet), n2)
+	assert.Equal(t, packet, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n3)
+	assert.Equal(t, len(packet), n3)
 }
 
 func BenchmarkSubscribeEncode(b *testing.B) {
@@ -301,7 +301,7 @@ func BenchmarkSubscribeEncode(b *testing.B) {
 }
 
 func BenchmarkSubscribeDecode(b *testing.B) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		6,
 		0, // packet ID MSB
@@ -315,7 +315,7 @@ func BenchmarkSubscribeDecode(b *testing.B) {
 	pkt := NewSubscribe()
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(pktBytes)
+		_, err := pkt.Decode(packet)
 		if err != nil {
 			panic(err)
 		}

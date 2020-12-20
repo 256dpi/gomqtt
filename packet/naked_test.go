@@ -8,32 +8,32 @@ import (
 )
 
 func TestNakedDecode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
-	n, err := nakedDecode(pktBytes, DISCONNECT)
+	n, err := nakedDecode(packet, DISCONNECT)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
 }
 
 func TestNakedDecodeError1(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(DISCONNECT << 4),
 		1, // < wrong remaining length
 		0,
 	}
 
-	n, err := nakedDecode(pktBytes, DISCONNECT)
+	n, err := nakedDecode(packet, DISCONNECT)
 
 	assert.Error(t, err)
 	assert.Equal(t, 2, n)
 }
 
 func TestNakedEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
@@ -43,16 +43,16 @@ func TestNakedEncode(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
-	assert.Equal(t, pktBytes, dst[:n])
+	assert.Equal(t, packet, dst[:n])
 }
 
 func TestNakedEqualDecodeEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
-	n, err := nakedDecode(pktBytes, DISCONNECT)
+	n, err := nakedDecode(packet, DISCONNECT)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
@@ -62,7 +62,7 @@ func TestNakedEqualDecodeEncode(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n2)
-	assert.Equal(t, pktBytes, dst[:n2])
+	assert.Equal(t, packet, dst[:n2])
 
 	n3, err := nakedDecode(dst, DISCONNECT)
 
@@ -82,13 +82,13 @@ func BenchmarkNakedEncode(b *testing.B) {
 }
 
 func BenchmarkNakedDecode(b *testing.B) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(DISCONNECT << 4),
 		0,
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err := nakedDecode(pktBytes, DISCONNECT)
+		_, err := nakedDecode(packet, DISCONNECT)
 		if err != nil {
 			panic(err)
 		}

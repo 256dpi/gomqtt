@@ -24,7 +24,7 @@ func TestConnackInterface(t *testing.T) {
 }
 
 func TestConnackDecode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
@@ -33,7 +33,7 @@ func TestConnackDecode(t *testing.T) {
 
 	pkt := NewConnack()
 
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
@@ -42,7 +42,7 @@ func TestConnackDecode(t *testing.T) {
 }
 
 func TestConnackDecodeError1(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		3, // < wrong size
 		0, // session not present
@@ -51,12 +51,12 @@ func TestConnackDecodeError1(t *testing.T) {
 
 	pkt := NewConnack()
 
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 	assert.Error(t, err)
 }
 
 func TestConnackDecodeError2(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
@@ -65,12 +65,12 @@ func TestConnackDecodeError2(t *testing.T) {
 
 	pkt := NewConnack()
 
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 	assert.Error(t, err)
 }
 
 func TestConnackDecodeError3(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		2,
 		64, // < wrong value
@@ -79,12 +79,12 @@ func TestConnackDecodeError3(t *testing.T) {
 
 	pkt := NewConnack()
 
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 	assert.Error(t, err)
 }
 
 func TestConnackDecodeError4(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		2,
 		0,
@@ -93,12 +93,12 @@ func TestConnackDecodeError4(t *testing.T) {
 
 	pkt := NewConnack()
 
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 	assert.Error(t, err)
 }
 
 func TestConnackDecodeError5(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		1, // < wrong remaining length
 		0,
@@ -107,12 +107,12 @@ func TestConnackDecodeError5(t *testing.T) {
 
 	pkt := NewConnack()
 
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 	assert.Error(t, err)
 }
 
 func TestConnackEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		2,
 		1, // session present
@@ -128,7 +128,7 @@ func TestConnackEncode(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
-	assert.Equal(t, pktBytes, dst[:n])
+	assert.Equal(t, packet, dst[:n])
 }
 
 func TestConnackEncodeError1(t *testing.T) {
@@ -153,7 +153,7 @@ func TestConnackEncodeError2(t *testing.T) {
 }
 
 func TestConnackEqualDecodeEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
@@ -161,7 +161,7 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := NewConnack()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
@@ -171,7 +171,7 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n2)
-	assert.Equal(t, pktBytes, dst[:n2])
+	assert.Equal(t, packet, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
@@ -195,7 +195,7 @@ func BenchmarkConnackEncode(b *testing.B) {
 }
 
 func BenchmarkConnackDecode(b *testing.B) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNACK << 4),
 		2,
 		0, // session not present
@@ -205,7 +205,7 @@ func BenchmarkConnackDecode(b *testing.B) {
 	pkt := NewConnack()
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(pktBytes)
+		_, err := pkt.Decode(packet)
 		if err != nil {
 			panic(err)
 		}

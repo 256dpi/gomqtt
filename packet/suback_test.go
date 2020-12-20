@@ -15,7 +15,7 @@ func TestSubackInterface(t *testing.T) {
 }
 
 func TestSubackDecode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBACK << 4),
 		6,
 		0,    // packet ID MSB
@@ -27,15 +27,15 @@ func TestSubackDecode(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 	assert.Equal(t, 4, len(pkt.ReturnCodes))
 }
 
 func TestSubackDecodeError1(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBACK << 4),
 		1, // < wrong remaining length
 		0, // packet ID MSB
@@ -44,13 +44,13 @@ func TestSubackDecodeError1(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubackDecodeError2(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBACK << 4),
 		6,
 		0,    // packet ID MSB
@@ -62,26 +62,26 @@ func TestSubackDecodeError2(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubackDecodeError3(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBACK << 4),
 		1, // < wrong remaining length
 		0, // packet ID MSB
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubackDecodeError4(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(PUBCOMP << 4), // < wrong packet type
 		3,
 		0, // packet ID MSB
@@ -90,13 +90,13 @@ func TestSubackDecodeError4(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubackDecodeError5(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBACK << 4),
 		3,
 		0, // packet ID MSB
@@ -105,13 +105,13 @@ func TestSubackDecodeError5(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestSubackEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBACK << 4),
 		6,
 		0,    // packet ID MSB
@@ -130,8 +130,8 @@ func TestSubackEncode(t *testing.T) {
 	n, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
-	assert.Equal(t, pktBytes, dst[:n])
+	assert.Equal(t, len(packet), n)
+	assert.Equal(t, packet, dst[:n])
 }
 
 func TestSubackEncodeError1(t *testing.T) {
@@ -171,7 +171,7 @@ func TestSubackEncodeError3(t *testing.T) {
 }
 
 func TestSubackEqualDecodeEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBACK << 4),
 		6,
 		0,    // packet ID MSB
@@ -183,22 +183,22 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 
 	dst := make([]byte, 100)
 	n2, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n2)
-	assert.Equal(t, pktBytes, dst[:n2])
+	assert.Equal(t, len(packet), n2)
+	assert.Equal(t, packet, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n3)
+	assert.Equal(t, len(packet), n3)
 }
 
 func BenchmarkSubackEncode(b *testing.B) {
@@ -217,7 +217,7 @@ func BenchmarkSubackEncode(b *testing.B) {
 }
 
 func BenchmarkSubackDecode(b *testing.B) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(SUBACK << 4),
 		3,
 		0, // packet ID MSB
@@ -228,7 +228,7 @@ func BenchmarkSubackDecode(b *testing.B) {
 	pkt := NewSuback()
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(pktBytes)
+		_, err := pkt.Decode(packet)
 		if err != nil {
 			panic(err)
 		}

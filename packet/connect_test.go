@@ -19,7 +19,7 @@ func TestConnectInterface(t *testing.T) {
 }
 
 func TestConnectDecode1(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		58,
 		0, // Protocol String MSB
@@ -47,10 +47,10 @@ func TestConnectDecode1(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 	assert.Equal(t, uint16(10), pkt.KeepAlive)
 	assert.Equal(t, "gomqtt", pkt.ClientID)
 	assert.Equal(t, "will", pkt.Will.Topic)
@@ -61,7 +61,7 @@ func TestConnectDecode1(t *testing.T) {
 }
 
 func TestConnectDecode2(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		58,
 		0, // Protocol String MSB
@@ -89,10 +89,10 @@ func TestConnectDecode2(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 	assert.Equal(t, uint16(10), pkt.KeepAlive)
 	assert.Equal(t, "gomqtt", pkt.ClientID)
 	assert.Equal(t, "will", pkt.Will.Topic)
@@ -103,7 +103,7 @@ func TestConnectDecode2(t *testing.T) {
 }
 
 func TestConnectDecodeError1(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		60, // < wrong remaining length
 		0,  // Protocol String MSB
@@ -112,13 +112,13 @@ func TestConnectDecodeError1(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError2(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		6,
 		0, // Protocol String MSB
@@ -127,13 +127,13 @@ func TestConnectDecodeError2(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError3(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		6,
 		0, // Protocol String MSB
@@ -143,13 +143,13 @@ func TestConnectDecodeError3(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError4(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		8,
 		0,                       // Protocol String MSB
@@ -159,13 +159,13 @@ func TestConnectDecodeError4(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError5(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		7,
 		0, // Protocol String MSB
@@ -175,13 +175,13 @@ func TestConnectDecodeError5(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError6(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		7,
 		0, // Protocol String MSB
@@ -192,13 +192,13 @@ func TestConnectDecodeError6(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError7(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		7,
 		0, // Protocol String MSB
@@ -209,13 +209,13 @@ func TestConnectDecodeError7(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError8(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		7,
 		0, // Protocol String MSB
@@ -226,13 +226,13 @@ func TestConnectDecodeError8(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError9(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		7,
 		0, // Protocol String MSB
@@ -243,13 +243,13 @@ func TestConnectDecodeError9(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError10(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		7,
 		0, // Protocol String MSB
@@ -260,13 +260,13 @@ func TestConnectDecodeError10(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError11(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		7,
 		0, // Protocol String MSB
@@ -279,13 +279,13 @@ func TestConnectDecodeError11(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError12(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		7,
 		0, // Protocol String MSB
@@ -301,13 +301,13 @@ func TestConnectDecodeError12(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError13(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		6,
 		0, // Protocol String MSB
@@ -322,13 +322,13 @@ func TestConnectDecodeError13(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError14(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		6,
 		0, // Protocol String MSB
@@ -345,13 +345,13 @@ func TestConnectDecodeError14(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError15(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		6,
 		0, // Protocol String MSB
@@ -370,13 +370,13 @@ func TestConnectDecodeError15(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError16(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		6,
 		0, // Protocol String MSB
@@ -393,13 +393,13 @@ func TestConnectDecodeError16(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectDecodeError17(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		6,
 		0, // Protocol String MSB
@@ -418,13 +418,13 @@ func TestConnectDecodeError17(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestConnectEncode1(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		58,
 		0, // Protocol String MSB
@@ -467,12 +467,12 @@ func TestConnectEncode1(t *testing.T) {
 	n, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
-	assert.Equal(t, pktBytes, dst[:n])
+	assert.Equal(t, len(packet), n)
+	assert.Equal(t, packet, dst[:n])
 }
 
 func TestConnectEncode2(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		14,
 		0, // Protocol String MSB
@@ -495,12 +495,12 @@ func TestConnectEncode2(t *testing.T) {
 	n, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
-	assert.Equal(t, pktBytes, dst[:n])
+	assert.Equal(t, len(packet), n)
+	assert.Equal(t, packet, dst[:n])
 }
 
 func TestConnectEncode3(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		12,
 		0, // Protocol String MSB
@@ -523,8 +523,8 @@ func TestConnectEncode3(t *testing.T) {
 	n, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
-	assert.Equal(t, pktBytes, dst[:n])
+	assert.Equal(t, len(packet), n)
+	assert.Equal(t, packet, dst[:n])
 }
 
 func TestConnectEncodeError1(t *testing.T) {
@@ -659,7 +659,7 @@ func TestConnectEncodeError11(t *testing.T) {
 }
 
 func TestConnectEqualDecodeEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		58,
 		0, // Protocol String MSB
@@ -687,22 +687,22 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 
 	dst := make([]byte, pkt.Len())
 	n2, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n2)
-	assert.Equal(t, pktBytes, dst[:n2])
+	assert.Equal(t, len(packet), n2)
+	assert.Equal(t, packet, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n3)
+	assert.Equal(t, len(packet), n3)
 }
 
 func BenchmarkConnectEncode(b *testing.B) {
@@ -729,7 +729,7 @@ func BenchmarkConnectEncode(b *testing.B) {
 }
 
 func BenchmarkConnectDecode(b *testing.B) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(CONNECT << 4),
 		25,
 		0, // Protocol String MSB
@@ -759,7 +759,7 @@ func BenchmarkConnectDecode(b *testing.B) {
 	pkt := NewConnect()
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(pktBytes)
+		_, err := pkt.Decode(packet)
 		if err != nil {
 			panic(err)
 		}

@@ -15,7 +15,7 @@ func TestUnsubscribeInterface(t *testing.T) {
 }
 
 func TestUnsubscribeDecode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		32,
 		0, // packet ID MSB
@@ -32,10 +32,10 @@ func TestUnsubscribeDecode(t *testing.T) {
 	}
 
 	pkt := NewUnsubscribe()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 	assert.Equal(t, 3, len(pkt.Topics))
 	assert.Equal(t, "gomqtt", pkt.Topics[0])
 	assert.Equal(t, "/a/b/#/c", pkt.Topics[1])
@@ -43,7 +43,7 @@ func TestUnsubscribeDecode(t *testing.T) {
 }
 
 func TestUnsubscribeDecodeError1(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		2,
 		0, // packet ID MSB
@@ -52,13 +52,13 @@ func TestUnsubscribeDecodeError1(t *testing.T) {
 	}
 
 	pkt := NewUnsubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestUnsubscribeDecodeError2(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		6, // < wrong remaining length
 		0, // packet ID MSB
@@ -66,26 +66,26 @@ func TestUnsubscribeDecodeError2(t *testing.T) {
 	}
 
 	pkt := NewUnsubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestUnsubscribeDecodeError3(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		0,
 		// missing packet id
 	}
 
 	pkt := NewUnsubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestUnsubscribeDecodeError4(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		10,
 		0, // packet ID MSB
@@ -96,13 +96,13 @@ func TestUnsubscribeDecodeError4(t *testing.T) {
 	}
 
 	pkt := NewUnsubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestUnsubscribeDecodeError5(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		10,
 		0, // packet ID MSB
@@ -113,13 +113,13 @@ func TestUnsubscribeDecodeError5(t *testing.T) {
 	}
 
 	pkt := NewUnsubscribe()
-	_, err := pkt.Decode(pktBytes)
+	_, err := pkt.Decode(packet)
 
 	assert.Error(t, err)
 }
 
 func TestUnsubscribeEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		32,
 		0, // packet ID MSB
@@ -147,8 +147,8 @@ func TestUnsubscribeEncode(t *testing.T) {
 	n, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
-	assert.Equal(t, pktBytes, dst[:n])
+	assert.Equal(t, len(packet), n)
+	assert.Equal(t, packet, dst[:n])
 }
 
 func TestUnsubscribeEncodeError1(t *testing.T) {
@@ -187,7 +187,7 @@ func TestUnsubscribeEncodeError3(t *testing.T) {
 }
 
 func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		32,
 		0, // packet ID MSB
@@ -204,22 +204,22 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := NewUnsubscribe()
-	n, err := pkt.Decode(pktBytes)
+	n, err := pkt.Decode(packet)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n)
+	assert.Equal(t, len(packet), n)
 
 	dst := make([]byte, 100)
 	n2, err := pkt.Encode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n2)
-	assert.Equal(t, pktBytes, dst[:n2])
+	assert.Equal(t, len(packet), n2)
+	assert.Equal(t, packet, dst[:n2])
 
 	n3, err := pkt.Decode(dst)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(pktBytes), n3)
+	assert.Equal(t, len(packet), n3)
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
@@ -238,7 +238,7 @@ func BenchmarkUnsubscribeEncode(b *testing.B) {
 }
 
 func BenchmarkUnsubscribeDecode(b *testing.B) {
-	pktBytes := []byte{
+	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		5,
 		0, // packet ID MSB
@@ -251,7 +251,7 @@ func BenchmarkUnsubscribeDecode(b *testing.B) {
 	pkt := NewUnsubscribe()
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(pktBytes)
+		_, err := pkt.Decode(packet)
 		if err != nil {
 			panic(err)
 		}
