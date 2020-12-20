@@ -185,9 +185,9 @@ func TestSubscribeEncode(t *testing.T) {
 	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
-		{Topic:"gomqtt", QOS:0},
-		{Topic:"/a/b/#/c", QOS:1},
-		{Topic:"/a/b/#/cdd", QOS:2},
+		{Topic: "gomqtt", QOS: 0},
+		{Topic: "/a/b/#/c", QOS: 1},
+		{Topic: "/a/b/#/cdd", QOS: 2},
 	}
 
 	dst := make([]byte, pkt.Len())

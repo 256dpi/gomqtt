@@ -5,20 +5,57 @@ import (
 	"math"
 )
 
-const maxVarUint = 268435455
+const maxVarint = 268435455
 
-func varUintLen(n uint64) int {
+func varintLen(n uint64) int {
 	if n < 128 {
 		return 1
 	} else if n < 16384 {
 		return 2
 	} else if n < 2097152 {
 		return 3
-	} else if n <= maxVarUint {
+	} else if n <= maxVarint {
 		return 4
 	}
 
 	return 0
+}
+
+func readVarint(buf []byte, t Type) (uint64, int, error) {
+	// limit buf
+	if len(buf) > 4 {
+		buf = buf[:4]
+	}
+
+	// read number
+	num, n := binary.Uvarint(buf)
+	if n <= 0 {
+		return 0, 0, makeError(t, "error reading variable integer")
+	}
+
+	// check size
+	if num > maxVarint {
+		return 0, n, makeError(t, "variable integer (%d) out of bound (max %d, min 0)", num, maxVarint)
+	}
+
+	return num, n, nil
+}
+
+func writeVarint(buf []byte, num uint64, t Type) (int, error) {
+	// check size
+	if num > maxVarint {
+		return 0, makeError(t, "variable integer out of bound")
+	}
+
+	// check length
+	if len(buf) < varintLen(num) {
+		return 0, makeError(t, "insufficient buffer size")
+	}
+
+	// write remaining length
+	n := binary.PutUvarint(buf, num)
+
+	return n, nil
 }
 
 func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {

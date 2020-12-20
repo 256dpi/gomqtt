@@ -81,7 +81,7 @@ func TestHeaderEncode2(t *testing.T) {
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
 	buf := make([]byte, 5)
-	n, err := headerEncode(buf, 0, maxVarUint, 5, PUBREL)
+	n, err := headerEncode(buf, 0, maxVarint, 5, PUBREL)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 5, n)
@@ -104,7 +104,7 @@ func TestHeaderEncodeError2(t *testing.T) {
 
 	buf := make([]byte, 2)
 	// overload max remaining length
-	n, err := headerEncode(buf, 0, maxVarUint+1, 2, PUBREL)
+	n, err := headerEncode(buf, 0, maxVarint+1, 2, PUBREL)
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)

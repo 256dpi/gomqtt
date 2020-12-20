@@ -1,12 +1,8 @@
 package packet
 
-import (
-	"encoding/binary"
-)
-
 func headerLen(rl int) int {
 	// add packet type and flag byte + remaining length
-	return 1 + varUintLen(uint64(rl))
+	return 1 + varintLen(uint64(rl))
 }
 
 func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
@@ -16,8 +12,8 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	}
 
 	// check remaining length
-	if rl > maxVarUint || rl < 0 {
-		return 0, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxVarUint)
+	if rl > maxVarint || rl < 0 {
+		return 0, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxVarint)
 	}
 
 	// check header length
@@ -32,7 +28,10 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	dst[0] = typeAndFlags
 
 	// write remaining length
-	n := binary.PutUvarint(dst[1:], uint64(rl))
+	n, err := writeVarint(dst[1:], uint64(rl), t)
+	if err != nil {
+		return 0, err
+	}
 
 	return 1 + n, nil
 }
@@ -40,7 +39,7 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 func headerDecode(src []byte, t Type) (int, byte, int, error) {
 	// check buffer size
 	if len(src) < 2 {
-		return 0, 0, 0, makeError(t, "insufficient buffer size, expected %d, got %d", 2, len(src))
+		return 0, 0, 0, makeError(t, "insufficient buffer size, expected 2, got %d", len(src))
 	}
 
 	// read type and flags
@@ -59,18 +58,11 @@ func headerDecode(src []byte, t Type) (int, byte, int, error) {
 	}
 
 	// read remaining length
-	_rl, m := binary.Uvarint(src[total:])
+	_rl, n, err := readVarint(src[total:], t)
 	rl := int(_rl)
-	total += m
-
-	// check resulting remaining length
-	if m <= 0 {
-		return total, 0, 0, makeError(t, "error reading remaining length")
-	}
-
-	// check remaining length
-	if rl > maxVarUint {
-		return total, 0, 0, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxVarUint)
+	total += n
+	if err != nil {
+		return total, 0, 0, err
 	}
 
 	// check remaining buffer

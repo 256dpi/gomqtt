@@ -8,32 +8,72 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func binaryVarUintLen(n uint64) int {
+func binaryVarintLen(n uint64) int {
 	return binary.PutUvarint(make([]byte, binary.MaxVarintLen64), n)
 }
 
-func TestVarUintLen(t *testing.T) {
-	assert.Equal(t, 1, varUintLen(1))
-	assert.Equal(t, 1, varUintLen(127))
-	assert.Equal(t, 2, varUintLen(128))
-	assert.Equal(t, 2, varUintLen(16383))
-	assert.Equal(t, 3, varUintLen(16384))
-	assert.Equal(t, 3, varUintLen(2097151))
-	assert.Equal(t, 4, varUintLen(2097152))
-	assert.Equal(t, 4, varUintLen(268435455))
-	assert.Equal(t, 0, varUintLen(268435456))
-	assert.Equal(t, 0, varUintLen(math.MaxUint64))
+func TestVarintLen(t *testing.T) {
+	assert.Equal(t, 1, varintLen(1))
+	assert.Equal(t, 1, varintLen(127))
+	assert.Equal(t, 2, varintLen(128))
+	assert.Equal(t, 2, varintLen(16383))
+	assert.Equal(t, 3, varintLen(16384))
+	assert.Equal(t, 3, varintLen(2097151))
+	assert.Equal(t, 4, varintLen(2097152))
+	assert.Equal(t, 4, varintLen(268435455))
+	assert.Equal(t, 0, varintLen(268435456))
+	assert.Equal(t, 0, varintLen(math.MaxUint64))
 
-	assert.Equal(t, 1, binaryVarUintLen(1))
-	assert.Equal(t, 1, binaryVarUintLen(127))
-	assert.Equal(t, 2, binaryVarUintLen(128))
-	assert.Equal(t, 2, binaryVarUintLen(16383))
-	assert.Equal(t, 3, binaryVarUintLen(16384))
-	assert.Equal(t, 3, binaryVarUintLen(2097151))
-	assert.Equal(t, 4, binaryVarUintLen(2097152))
-	assert.Equal(t, 4, binaryVarUintLen(268435455))
-	assert.Equal(t, 5, binaryVarUintLen(268435456))
-	assert.Equal(t, 10, binaryVarUintLen(math.MaxUint64))
+	assert.Equal(t, 1, binaryVarintLen(1))
+	assert.Equal(t, 1, binaryVarintLen(127))
+	assert.Equal(t, 2, binaryVarintLen(128))
+	assert.Equal(t, 2, binaryVarintLen(16383))
+	assert.Equal(t, 3, binaryVarintLen(16384))
+	assert.Equal(t, 3, binaryVarintLen(2097151))
+	assert.Equal(t, 4, binaryVarintLen(2097152))
+	assert.Equal(t, 4, binaryVarintLen(268435455))
+	assert.Equal(t, 5, binaryVarintLen(268435456))
+	assert.Equal(t, 10, binaryVarintLen(math.MaxUint64))
+}
+
+func TestReadVarint(t *testing.T) {
+	num, n, err := readVarint([]byte{}, CONNECT)
+	assert.Error(t, err)
+	assert.Zero(t, num)
+	assert.Zero(t, n)
+
+	num, n, err = readVarint([]byte{0xff, 0xff}, CONNECT)
+	assert.Error(t, err)
+	assert.Zero(t, num)
+	assert.Equal(t, 0, n)
+
+	num, n, err = readVarint([]byte{0xff, 0xff, 0xff, 0xff, 0x1}, CONNECT)
+	assert.Error(t, err)
+	assert.Zero(t, num)
+	assert.Equal(t, 0, n)
+
+	num, n, err = readVarint([]byte{0xff, 0x42}, CONNECT)
+	assert.NoError(t, err)
+	assert.Equal(t, 8575, int(num))
+	assert.Equal(t, 2, n)
+}
+
+func TestWriteVarint(t *testing.T) {
+	n, err := writeVarint([]byte{}, 42, CONNECT)
+	assert.Error(t, err)
+	assert.Zero(t, n)
+
+	n, err = writeVarint([]byte{0}, 8575, CONNECT)
+	assert.Error(t, err)
+	assert.Zero(t, n)
+
+	n, err = writeVarint([]byte{0, 0, 0, 0}, maxVarint+1, CONNECT)
+	assert.Error(t, err)
+	assert.Zero(t, n)
+
+	n, err = writeVarint([]byte{0, 0}, 8575, CONNECT)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
 }
 
 var (
