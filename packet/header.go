@@ -7,18 +7,7 @@ func headerLen(rl int) int {
 
 func encodeHeader(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	// check buffer length
-	if len(dst) < tl {
-		return 0, insufficientBufferSize(t)
-	}
-
-	// check remaining length
-	if rl > maxVarint || rl < 0 {
-		return 0, makeError(t, "remaining length (%d) out of bound (max %d, min 0)", rl, maxVarint)
-	}
-
-	// check header length
-	hl := headerLen(rl)
-	if len(dst) < hl {
+	if len(dst) < headerLen(rl) || len(dst) < tl {
 		return 0, insufficientBufferSize(t)
 	}
 
