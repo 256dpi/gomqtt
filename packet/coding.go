@@ -5,6 +5,53 @@ import (
 	"math"
 )
 
+func readUint(buf []byte, width int, t Type) (uint64, int, error) {
+	// check buffer
+	if len(buf) < width {
+		return 0, 0, insufficientBufferSize(t)
+	}
+
+	// read number
+	var num uint64
+	switch width {
+	case 1:
+		num = uint64(buf[0])
+	case 2:
+		num = uint64(binary.BigEndian.Uint16(buf))
+	case 4:
+		num = uint64(binary.BigEndian.Uint32(buf))
+	case 8:
+		num = binary.BigEndian.Uint64(buf)
+	default:
+		panic("unsupported uint width")
+	}
+
+	return num, width, nil
+}
+
+func writeUint(buf []byte, num uint64, width int, t Type) (int, error) {
+	// check buffer
+	if len(buf) < width {
+		return 0, insufficientBufferSize(t)
+	}
+
+	// write number
+	switch width {
+	case 1:
+		buf[0] = uint8(num)
+	case 2:
+		binary.BigEndian.PutUint16(buf, uint16(num))
+	case 4:
+		binary.BigEndian.PutUint32(buf, uint32(num))
+	case 8:
+		binary.BigEndian.PutUint64(buf, num)
+	default:
+		panic("unsupported uint width")
+	}
+
+	return width, nil
+}
+
 const maxVarint = 268435455
 
 func varintLen(n uint64) int {
@@ -63,13 +110,14 @@ func writeLPString(buf []byte, str string, t Type) (int, error) {
 }
 
 func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
-	// check buffer
-	if len(buf) < 2 {
-		return nil, 0, makeError(t, "insufficient buffer size, expected 2, got %d", len(buf))
+	// read length
+	l, n, err := readUint(buf, 2, t)
+	if err != nil {
+		return nil, n, err
 	}
 
-	// read length
-	length := int(binary.BigEndian.Uint16(buf))
+	// get length
+	length := int(l)
 
 	// check length
 	if len(buf) < 2+length {
@@ -100,16 +148,14 @@ func writeLPBytes(buf []byte, bytes []byte, t Type) (int, error) {
 		return 0, makeError(t, "length %d greater than allowed %d bytes", length, math.MaxUint16)
 	}
 
-	// check buffer
-	if len(buf) < 2+length {
-		return 0, makeError(t, "insufficient buffer size, expected %d, got %d", 2+length, len(buf))
+	// write length
+	n, err := writeUint(buf, uint64(length), 2, t)
+	if err != nil {
+		return n, err
 	}
 
-	// write length
-	binary.BigEndian.PutUint16(buf, uint16(length))
-
 	// write bytes
-	copy(buf[2:], bytes)
+	n += copy(buf[2:], bytes)
 
-	return 2 + length, nil
+	return n, nil
 }

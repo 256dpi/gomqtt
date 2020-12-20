@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"encoding/binary"
 	"fmt"
 	"strings"
 )
@@ -33,8 +32,7 @@ func (up *Unsubscribe) String() string {
 		topics = append(topics, fmt.Sprintf("%q", t))
 	}
 
-	return fmt.Sprintf("<Unsubscribe Topics=[%s]>",
-		strings.Join(topics, ", "))
+	return fmt.Sprintf("<Unsubscribe Topics=[%s]>", strings.Join(topics, ", "))
 }
 
 // Len returns the byte length of the encoded packet.
@@ -58,10 +56,14 @@ func (up *Unsubscribe) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	up.ID = ID(binary.BigEndian.Uint16(src[total:]))
-	total += 2
+	pid, n, err := readUint(src[total:], 2, UNSUBSCRIBE)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
-	// check packet id
+	// set packet id
+	up.ID = ID(pid)
 	if !up.ID.Valid() {
 		return total, makeError(up.Type(), "packet id must be grater than zero")
 	}
@@ -112,8 +114,11 @@ func (up *Unsubscribe) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], uint16(up.ID))
-	total += 2
+	n, err := writeUint(dst[total:], uint64(up.ID), 2, UNSUBSCRIBE)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	// write topics
 	for _, t := range up.Topics {

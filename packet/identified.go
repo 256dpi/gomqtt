@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"encoding/binary"
 	"fmt"
 )
 
@@ -24,10 +23,14 @@ func identifiedDecode(src []byte, t Type) (int, ID, error) {
 	}
 
 	// read packet id
-	packetID := ID(binary.BigEndian.Uint16(src[total:]))
-	total += 2
+	pid, n, err := readUint(src[total:], 2, SUBSCRIBE)
+	total += n
+	if err != nil {
+		return total, 0, err
+	}
 
-	// check packet id
+	// get packet id
+	packetID := ID(pid)
 	if !packetID.Valid() {
 		return total, 0, makeError(t, "packet id must be grater than zero")
 	}
@@ -49,8 +52,11 @@ func identifiedEncode(dst []byte, id ID, t Type) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], uint16(id))
-	total += 2
+	n, err := writeUint(dst[total:], uint64(id), 2, t)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	return total, nil
 }

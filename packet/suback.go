@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"encoding/binary"
 	"fmt"
 	"strings"
 )
@@ -65,10 +64,14 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	sp.ID = ID(binary.BigEndian.Uint16(src[total:]))
-	total += 2
+	pid, n, err := readUint(src[total:], 2, SUBACK)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
-	// check packet id
+	// set packet id
+	sp.ID = ID(pid)
 	if !sp.ID.Valid() {
 		return total, makeError(sp.Type(), "packet id must be grater than zero")
 	}
@@ -116,8 +119,11 @@ func (sp *Suback) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], uint16(sp.ID))
-	total += 2
+	n, err := writeUint(dst[total:], uint64(sp.ID), 2, SUBACK)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	// write return codes
 	for _, rc := range sp.ReturnCodes {

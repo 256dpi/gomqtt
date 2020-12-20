@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"encoding/binary"
 	"fmt"
 	"strings"
 )
@@ -73,10 +72,14 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 	}
 
 	// read packet id
-	sp.ID = ID(binary.BigEndian.Uint16(src[total:]))
-	total += 2
+	pid, n, err := readUint(src[total:], 2, SUBSCRIBE)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
-	// check packet id
+	// set packet id
+	sp.ID = ID(pid)
 	if !sp.ID.Valid() {
 		return total, makeError(sp.Type(), "packet id must be grater than zero")
 	}
@@ -90,7 +93,7 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 	// read subscriptions
 	for sl > 0 {
 		// read topic
-		t, n, err := readLPString(src[total:], sp.Type())
+		topic, n, err := readLPString(src[total:], sp.Type())
 		total += n
 		if err != nil {
 			return total, err
@@ -102,17 +105,23 @@ func (sp *Subscribe) Decode(src []byte) (int, error) {
 		}
 
 		// read qos
-		qos := QOS(src[total])
+		_qos, n, err := readUint(src[total:], 1, sp.Type())
+		total += n
+		if err != nil {
+			return total, err
+		}
+
+		// get qos
+		qos := QOS(_qos)
 		if !qos.Successful() {
 			return total, makeError(sp.Type(), "invalid QOS level (%d)", qos)
 		}
 
-		// read qos and add subscription
-		sp.Subscriptions = append(sp.Subscriptions, Subscription{Topic: t, QOS: qos})
-		total++
+		// add subscription
+		sp.Subscriptions = append(sp.Subscriptions, Subscription{Topic: topic, QOS: qos})
 
 		// decrement counter
-		sl = sl - n - 1
+		sl -= 2 + len(topic) + 1
 	}
 
 	// check for empty subscription list
@@ -139,26 +148,32 @@ func (sp *Subscribe) Encode(dst []byte) (int, error) {
 	}
 
 	// write packet id
-	binary.BigEndian.PutUint16(dst[total:], uint16(sp.ID))
-	total += 2
+	n, err := writeUint(dst[total:], uint64(sp.ID), 2, SUBSCRIBE)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	// write subscriptions
-	for _, t := range sp.Subscriptions {
+	for _, sub := range sp.Subscriptions {
 		// write topic
-		n, err := writeLPString(dst[total:], t.Topic, sp.Type())
+		n, err = writeLPString(dst[total:], sub.Topic, sp.Type())
 		total += n
 		if err != nil {
 			return total, err
 		}
 
 		// check qos
-		if !t.QOS.Successful() {
-			return total, makeError(sp.Type(), "invalid QOS level (%d)", t.QOS)
+		if !sub.QOS.Successful() {
+			return total, makeError(sp.Type(), "invalid QOS level (%d)", sub.QOS)
 		}
 
 		// write qos
-		dst[total] = byte(t.QOS)
-		total++
+		n, err = writeUint(dst[total:], uint64(sub.QOS), 1, sp.Type())
+		total += n
+		if err != nil {
+			return total, err
+		}
 	}
 
 	return total, nil

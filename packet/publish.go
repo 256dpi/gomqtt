@@ -1,9 +1,6 @@
 package packet
 
-import (
-	"encoding/binary"
-	"fmt"
-)
+import "fmt"
 
 // A Publish packet is sent from a client to a server or from server to a client
 // to transport an application message.
@@ -79,10 +76,14 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 		}
 
 		// read packet id
-		pp.ID = ID(binary.BigEndian.Uint16(src[total:]))
-		total += 2
+		pid, n, err := readUint(src[total:], 2, PUBLISH)
+		total += n
+		if err != nil {
+			return total, err
+		}
 
-		// check packet id
+		// set packet id
+		pp.ID = ID(pid)
 		if !pp.ID.Valid() {
 			return total, makeError(pp.Type(), "packet id must be grater than zero")
 		}
@@ -151,8 +152,11 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 
 	// write packet id
 	if pp.Message.QOS != 0 {
-		binary.BigEndian.PutUint16(dst[total:], uint16(pp.ID))
-		total += 2
+		n, err := writeUint(dst[total:], uint64(pp.ID), 2, pp.Type())
+		total += n
+		if err != nil {
+			return total, err
+		}
 	}
 
 	// write payload

@@ -2,7 +2,6 @@ package packet
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 )
 
@@ -165,8 +164,14 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 	}
 
 	// read keep alive
-	cp.KeepAlive = binary.BigEndian.Uint16(src[total:])
-	total += 2
+	ka, n, err := readUint(src[total:], 2, CONNECT)
+	total += n
+	if err != nil {
+		return total, err
+	}
+
+	// set keep alive
+	cp.KeepAlive = uint16(ka)
 
 	// read client id
 	cp.ClientID, n, err = readLPString(src[total:], cp.Type())
@@ -309,11 +314,14 @@ func (cp *Connect) Encode(dst []byte) (int, error) {
 	total++
 
 	// write keep alive
-	binary.BigEndian.PutUint16(dst[total:], cp.KeepAlive)
-	total += 2
+	n, err := writeUint(dst[total:], uint64(cp.KeepAlive), 2, cp.Type())
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	// write client id
-	n, err := writeLPString(dst[total:], cp.ClientID, cp.Type())
+	n, err = writeLPString(dst[total:], cp.ClientID, cp.Type())
 	total += n
 	if err != nil {
 		return total, err
