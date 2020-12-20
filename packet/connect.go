@@ -97,7 +97,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, makeError(cp.Type(), "insufficient buffer size, expected %d, got %d", total+1, len(src))
+		return total, insufficientBufferSize(cp.Type())
 	}
 
 	// read version
@@ -119,7 +119,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+1 {
-		return total, makeError(cp.Type(), "insufficient buffer size, expected %d, got %d", total+1, len(src))
+		return total, insufficientBufferSize(cp.Type())
 	}
 
 	// read connect flags

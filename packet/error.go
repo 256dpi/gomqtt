@@ -18,3 +18,7 @@ func makeError(typ Type, format string, arguments ...interface{}) *Error {
 func (e *Error) Error() string {
 	return fmt.Sprintf(e.format, e.arguments...)
 }
+
+func insufficientBufferSize(t Type) error {
+	return makeError(t, "insufficient buffer size")
+}

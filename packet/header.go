@@ -8,7 +8,7 @@ func headerLen(rl int) int {
 func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	// check buffer length
 	if len(dst) < tl {
-		return 0, makeError(t, "insufficient buffer size, expected %d, got %d", tl, len(dst))
+		return 0, insufficientBufferSize(t)
 	}
 
 	// check remaining length
@@ -19,7 +19,7 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	// check header length
 	hl := headerLen(rl)
 	if len(dst) < hl {
-		return 0, makeError(t, "insufficient buffer size, expected %d, got %d", hl, len(dst))
+		return 0, insufficientBufferSize(t)
 	}
 
 	// write type and flags
@@ -39,7 +39,7 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 func headerDecode(src []byte, t Type) (int, byte, int, error) {
 	// check buffer size
 	if len(src) < 2 {
-		return 0, 0, 0, makeError(t, "insufficient buffer size, expected 2, got %d", len(src))
+		return 0, 0, 0, insufficientBufferSize(t)
 	}
 
 	// read type and flags

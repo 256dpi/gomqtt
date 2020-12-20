@@ -56,7 +56,7 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, makeError(sp.Type(), "insufficient buffer size, expected %d, got %d", total+2, len(src))
+		return total, insufficientBufferSize(sp.Type())
 	}
 
 	// check remaining length

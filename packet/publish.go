@@ -75,7 +75,7 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 	if pp.Message.QOS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
-			return total, makeError(pp.Type(), "insufficient buffer size, expected %d, got %d", total+2, len(src))
+			return total, insufficientBufferSize(pp.Type())
 		}
 
 		// read packet id

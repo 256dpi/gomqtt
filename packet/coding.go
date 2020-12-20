@@ -49,7 +49,7 @@ func writeVarint(buf []byte, num uint64, t Type) (int, error) {
 
 	// check length
 	if len(buf) < varintLen(num) {
-		return 0, makeError(t, "insufficient buffer size")
+		return 0, insufficientBufferSize(t)
 	}
 
 	// write remaining length

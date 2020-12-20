@@ -54,7 +54,7 @@ func (up *Unsubscribe) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, makeError(up.Type(), "insufficient buffer size, expected %d, got %d", total+2, len(src))
+		return total, insufficientBufferSize(up.Type())
 	}
 
 	// read packet id
