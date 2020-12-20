@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSubackInterface(t *testing.T) {
+func TestSuback(t *testing.T) {
 	pkt := NewSuback()
 	pkt.ReturnCodes = []QOS{0, 1}
 

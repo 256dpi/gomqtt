@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPublishInterface(t *testing.T) {
+func TestPublish(t *testing.T) {
 	pkt := NewPublish()
 
 	assert.Equal(t, pkt.Type(), PUBLISH)

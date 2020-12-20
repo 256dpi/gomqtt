@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUnsubscribeInterface(t *testing.T) {
+func TestUnsubscribe(t *testing.T) {
 	pkt := NewUnsubscribe()
 	pkt.Topics = []string{"foo", "bar"}
 

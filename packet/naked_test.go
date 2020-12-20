@@ -7,6 +7,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func testNaked(t *testing.T, _t Type) {
+	pkt, err := _t.New()
+	assert.NoError(t, err)
+	assert.Equal(t, _t, pkt.Type())
+	assert.Equal(t, fmt.Sprintf("<%s>", pkt.Type().String()), pkt.String())
+
+	buf := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, buf)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
+
+	n, err = pkt.Decode(M4, buf)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
+}
+
+func TestDisconnect(t *testing.T) {
+	testNaked(t, DISCONNECT)
+}
+
+func TestPingreq(t *testing.T) {
+	testNaked(t, PINGREQ)
+}
+
+func TestPingresp(t *testing.T) {
+	testNaked(t, PINGRESP)
+}
+
 func TestNakedDecode(t *testing.T) {
 	packet := []byte{
 		byte(DISCONNECT << 4),
@@ -97,32 +125,4 @@ func BenchmarkNakedDecode(b *testing.B) {
 			panic(err)
 		}
 	}
-}
-
-func testNakedImplementation(t *testing.T, _t Type) {
-	pkt, err := _t.New()
-	assert.NoError(t, err)
-	assert.Equal(t, _t, pkt.Type())
-	assert.Equal(t, fmt.Sprintf("<%s>", pkt.Type().String()), pkt.String())
-
-	buf := make([]byte, pkt.Len(M4))
-	n, err := pkt.Encode(M4, buf)
-	assert.NoError(t, err)
-	assert.Equal(t, 2, n)
-
-	n, err = pkt.Decode(M4, buf)
-	assert.NoError(t, err)
-	assert.Equal(t, 2, n)
-}
-
-func TestDisconnectImplementation(t *testing.T) {
-	testNakedImplementation(t, DISCONNECT)
-}
-
-func TestPingreqImplementation(t *testing.T) {
-	testNakedImplementation(t, PINGREQ)
-}
-
-func TestPingrespImplementation(t *testing.T) {
-	testNakedImplementation(t, PINGRESP)
 }

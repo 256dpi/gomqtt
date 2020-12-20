@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSubscribeInterface(t *testing.T) {
+func TestSubscribe(t *testing.T) {
 	pkt := NewSubscribe()
 	pkt.Subscriptions = []Subscription{
 		{Topic: "foo", QOS: QOSAtMostOnce},
