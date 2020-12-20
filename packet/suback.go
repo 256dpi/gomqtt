@@ -22,31 +22,31 @@ func NewSuback() *Suback {
 }
 
 // Type returns the packets type.
-func (sp *Suback) Type() Type {
+func (s *Suback) Type() Type {
 	return SUBACK
 }
 
 // String returns a string representation of the packet.
-func (sp *Suback) String() string {
+func (s *Suback) String() string {
 	var codes []string
 
-	for _, c := range sp.ReturnCodes {
+	for _, c := range s.ReturnCodes {
 		codes = append(codes, fmt.Sprintf("%d", c))
 	}
 
 	return fmt.Sprintf("<Suback ID=%d ReturnCodes=[%s]>",
-		sp.ID, strings.Join(codes, ", "))
+		s.ID, strings.Join(codes, ", "))
 }
 
 // Len returns the byte length of the encoded packet.
-func (sp *Suback) Len() int {
-	ml := sp.len()
+func (s *Suback) Len() int {
+	ml := s.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (sp *Suback) Decode(src []byte) (int, error) {
+func (s *Suback) Decode(src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, SUBACK)
 	if err != nil {
@@ -55,12 +55,12 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 
 	// check buffer length
 	if len(src) < total+2 {
-		return total, insufficientBufferSize(sp.Type())
+		return total, insufficientBufferSize(SUBACK)
 	}
 
 	// check remaining length
 	if rl <= 2 {
-		return total, makeError(sp.Type(), "expected remaining length to be greater than 2, got %d", rl)
+		return total, makeError(SUBACK, "expected remaining length to be greater than 2, got %d", rl)
 	}
 
 	// read packet id
@@ -71,25 +71,25 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 	}
 
 	// set packet id
-	sp.ID = ID(pid)
-	if !sp.ID.Valid() {
-		return total, makeError(sp.Type(), "packet id must be grater than zero")
+	s.ID = ID(pid)
+	if !s.ID.Valid() {
+		return total, makeError(SUBACK, "packet id must be grater than zero")
 	}
 
 	// calculate number of return codes
 	rcl := rl - 2
 
 	// read return codes
-	sp.ReturnCodes = make([]QOS, rcl)
+	s.ReturnCodes = make([]QOS, rcl)
 	for i, rc := range src[total : total+rcl] {
-		sp.ReturnCodes[i] = QOS(rc)
+		s.ReturnCodes[i] = QOS(rc)
 		total++
 	}
 
 	// validate return codes
-	for i, code := range sp.ReturnCodes {
+	for i, code := range s.ReturnCodes {
 		if !code.Successful() && code != QOSFailure {
-			return total, makeError(sp.Type(), "invalid return code %d for topic %d", code, i)
+			return total, makeError(SUBACK, "invalid return code %d for topic %d", code, i)
 		}
 	}
 
@@ -99,34 +99,34 @@ func (sp *Suback) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (sp *Suback) Encode(dst []byte) (int, error) {
+func (s *Suback) Encode(dst []byte) (int, error) {
 	// check return codes
-	for i, code := range sp.ReturnCodes {
+	for i, code := range s.ReturnCodes {
 		if !code.Successful() && code != QOSFailure {
-			return 0, makeError(sp.Type(), "invalid return code %d for topic %d", code, i)
+			return 0, makeError(SUBACK, "invalid return code %d for topic %d", code, i)
 		}
 	}
 
 	// check packet id
-	if !sp.ID.Valid() {
-		return 0, makeError(sp.Type(), "packet id must be grater than zero")
+	if !s.ID.Valid() {
+		return 0, makeError(SUBACK, "packet id must be grater than zero")
 	}
 
 	// encode header
-	total, err := encodeHeader(dst, 0, sp.len(), sp.Len(), SUBACK)
+	total, err := encodeHeader(dst, 0, s.len(), s.Len(), SUBACK)
 	if err != nil {
 		return total, err
 	}
 
 	// write packet id
-	n, err := writeUint(dst[total:], uint64(sp.ID), 2, SUBACK)
+	n, err := writeUint(dst[total:], uint64(s.ID), 2, SUBACK)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write return codes
-	for _, rc := range sp.ReturnCodes {
+	for _, rc := range s.ReturnCodes {
 		dst[total] = byte(rc)
 		total++
 	}
@@ -135,6 +135,6 @@ func (sp *Suback) Encode(dst []byte) (int, error) {
 }
 
 // Returns the payload length.
-func (sp *Suback) len() int {
-	return 2 + len(sp.ReturnCodes)
+func (s *Suback) len() int {
+	return 2 + len(s.ReturnCodes)
 }

@@ -15,7 +15,8 @@ func TestIdentifiedDecode(t *testing.T) {
 		7, // packet ID LSB
 	}
 
-	n, pid, err := identifiedDecode(packet, PUBACK)
+	var pid ID
+	n, err := identifiedDecode(packet, &pid, PUBACK)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
 	assert.Equal(t, ID(7), pid)
@@ -29,7 +30,8 @@ func TestIdentifiedDecodeError1(t *testing.T) {
 		7, // packet ID LSB
 	}
 
-	n, pid, err := identifiedDecode(packet, PUBACK)
+	var pid ID
+	n, err := identifiedDecode(packet, &pid, PUBACK)
 	assert.Error(t, err)
 	assert.Equal(t, 2, n)
 	assert.Equal(t, ID(0), pid)
@@ -43,7 +45,8 @@ func TestIdentifiedDecodeError2(t *testing.T) {
 		// < insufficient bytes
 	}
 
-	n, pid, err := identifiedDecode(packet, PUBACK)
+	var pid ID
+	n, err := identifiedDecode(packet, &pid, PUBACK)
 	assert.Error(t, err)
 	assert.Equal(t, 2, n)
 	assert.Equal(t, ID(0), pid)
@@ -57,7 +60,8 @@ func TestIdentifiedDecodeError3(t *testing.T) {
 		0, // packet ID MSB < zero id
 	}
 
-	n, pid, err := identifiedDecode(packet, PUBACK)
+	var pid ID
+	n, err := identifiedDecode(packet, &pid, PUBACK)
 	assert.Error(t, err)
 	assert.Equal(t, 4, n)
 	assert.Equal(t, ID(0), pid)
@@ -116,7 +120,8 @@ func TestIdentifiedEqualDecodeEncode(t *testing.T) {
 	assert.Equal(t, 4, n2)
 	assert.Equal(t, packet, dst[:n2])
 
-	n3, pid, err := identifiedDecode(packet, PUBACK)
+	var pid ID
+	n3, err := identifiedDecode(packet, &pid, PUBACK)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n3)
 	assert.Equal(t, ID(7), pid)

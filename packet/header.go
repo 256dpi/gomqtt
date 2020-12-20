@@ -48,11 +48,13 @@ func decodeHeader(src []byte, t Type) (int, byte, int, error) {
 
 	// read remaining length
 	_rl, n, err := readVarint(src[total:], t)
-	rl := int(_rl)
 	total += n
 	if err != nil {
 		return total, 0, 0, err
 	}
+
+	// get remaining length
+	rl := int(_rl)
 
 	// check remaining buffer
 	if rl > len(src[total:]) {

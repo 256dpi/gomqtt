@@ -121,7 +121,7 @@ func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 
 	// check length
 	if len(buf) < 2+length {
-		return nil, 2, makeError(t, "insufficient buffer size, expected %d, got %d", 2+length, len(buf))
+		return nil, 2, insufficientBufferSize(t)
 	}
 
 	// get bytes

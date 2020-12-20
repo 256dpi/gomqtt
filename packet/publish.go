@@ -24,25 +24,25 @@ func NewPublish() *Publish {
 }
 
 // Type returns the packets type.
-func (pp *Publish) Type() Type {
+func (p *Publish) Type() Type {
 	return PUBLISH
 }
 
 // String returns a string representation of the packet.
-func (pp *Publish) String() string {
+func (p *Publish) String() string {
 	return fmt.Sprintf("<Publish ID=%d Message=%s Dup=%t>",
-		pp.ID, pp.Message.String(), pp.Dup)
+		p.ID, p.Message.String(), p.Dup)
 }
 
 // Len returns the byte length of the encoded packet.
-func (pp *Publish) Len() int {
-	ml := pp.len()
+func (p *Publish) Len() int {
+	ml := p.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (pp *Publish) Decode(src []byte) (int, error) {
+func (p *Publish) Decode(src []byte) (int, error) {
 	// decode header
 	hl, flags, rl, err := decodeHeader(src, PUBLISH)
 	total := hl
@@ -51,28 +51,28 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 	}
 
 	// read flags
-	pp.Dup = ((flags >> 3) & 0x1) == 1
-	pp.Message.Retain = (flags & 0x1) == 1
-	pp.Message.QOS = QOS((flags >> 1) & 0x3)
+	p.Dup = ((flags >> 3) & 0x1) == 1
+	p.Message.Retain = (flags & 0x1) == 1
+	p.Message.QOS = QOS((flags >> 1) & 0x3)
 
 	// check qos
-	if !pp.Message.QOS.Successful() {
-		return total, makeError(pp.Type(), "invalid QOS level (%d)", pp.Message.QOS)
+	if !p.Message.QOS.Successful() {
+		return total, makeError(PUBLISH, "invalid QOS level (%d)", p.Message.QOS)
 	}
 
 	// read topic
 	n := 0
-	pp.Message.Topic, n, err = readLPString(src[total:], pp.Type())
+	p.Message.Topic, n, err = readLPString(src[total:], PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// check quality of service
-	if pp.Message.QOS != 0 {
+	if p.Message.QOS != 0 {
 		// check buffer length
 		if len(src) < total+2 {
-			return total, insufficientBufferSize(pp.Type())
+			return total, insufficientBufferSize(PUBLISH)
 		}
 
 		// read packet id
@@ -83,9 +83,9 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 		}
 
 		// set packet id
-		pp.ID = ID(pid)
-		if !pp.ID.Valid() {
-			return total, makeError(pp.Type(), "packet id must be grater than zero")
+		p.ID = ID(pid)
+		if !p.ID.Valid() {
+			return total, makeError(PUBLISH, "packet id must be grater than zero")
 		}
 	}
 
@@ -94,9 +94,9 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 
 	// read payload
 	if l > 0 {
-		pp.Message.Payload = make([]byte, l)
-		copy(pp.Message.Payload, src[total:total+l])
-		total += len(pp.Message.Payload)
+		p.Message.Payload = make([]byte, l)
+		copy(p.Message.Payload, src[total:total+l])
+		total += len(p.Message.Payload)
 	}
 
 	return total, nil
@@ -105,54 +105,54 @@ func (pp *Publish) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pp *Publish) Encode(dst []byte) (int, error) {
+func (p *Publish) Encode(dst []byte) (int, error) {
 	// check topic length
-	if len(pp.Message.Topic) == 0 {
-		return 0, makeError(pp.Type(), "topic name is empty")
+	if len(p.Message.Topic) == 0 {
+		return 0, makeError(PUBLISH, "topic name is empty")
 	}
 
 	// prepare flags
 	var flags byte
 
 	// set dup flag
-	if pp.Dup {
+	if p.Dup {
 		flags |= 0x8 // 00001000
 	}
 
 	// set retain flag
-	if pp.Message.Retain {
+	if p.Message.Retain {
 		flags |= 0x1 // 00000001
 	}
 
 	// check qos
-	if !pp.Message.QOS.Successful() {
-		return 0, makeError(pp.Type(), "invalid QOS level %d", pp.Message.QOS)
+	if !p.Message.QOS.Successful() {
+		return 0, makeError(PUBLISH, "invalid QOS level %d", p.Message.QOS)
 	}
 
 	// check packet id
-	if pp.Message.QOS > 0 && !pp.ID.Valid() {
-		return 0, makeError(pp.Type(), "packet id must be grater than zero")
+	if p.Message.QOS > 0 && !p.ID.Valid() {
+		return 0, makeError(PUBLISH, "packet id must be grater than zero")
 	}
 
 	// set qos
-	flags = (flags & 249) | (byte(pp.Message.QOS) << 1) // 249 = 11111001
+	flags = (flags & 249) | (byte(p.Message.QOS) << 1) // 249 = 11111001
 
 	// encode header
-	total, err := encodeHeader(dst, flags, pp.len(), pp.Len(), PUBLISH)
+	total, err := encodeHeader(dst, flags, p.len(), p.Len(), PUBLISH)
 	if err != nil {
 		return total, err
 	}
 
 	// write topic
-	n, err := writeLPString(dst[total:], pp.Message.Topic, pp.Type())
+	n, err := writeLPString(dst[total:], p.Message.Topic, PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write packet id
-	if pp.Message.QOS != 0 {
-		n, err := writeUint(dst[total:], uint64(pp.ID), 2, pp.Type())
+	if p.Message.QOS != 0 {
+		n, err := writeUint(dst[total:], uint64(p.ID), 2, PUBLISH)
 		total += n
 		if err != nil {
 			return total, err
@@ -160,16 +160,16 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 	}
 
 	// write payload
-	copy(dst[total:], pp.Message.Payload)
-	total += len(pp.Message.Payload)
+	copy(dst[total:], p.Message.Payload)
+	total += len(p.Message.Payload)
 
 	return total, nil
 }
 
 // Returns the payload length.
-func (pp *Publish) len() int {
-	total := 2 + len(pp.Message.Topic) + len(pp.Message.Payload)
-	if pp.Message.QOS != 0 {
+func (p *Publish) len() int {
+	total := 2 + len(p.Message.Topic) + len(p.Message.Payload)
+	if p.Message.QOS != 0 {
 		total += 2
 	}
 

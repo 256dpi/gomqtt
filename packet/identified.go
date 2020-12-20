@@ -10,32 +10,35 @@ func identifiedLen() int {
 }
 
 // decodes an identified packet
-func identifiedDecode(src []byte, t Type) (int, ID, error) {
+func identifiedDecode(src []byte, id *ID, t Type) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, t)
 	if err != nil {
-		return total, 0, err
+		return total, err
 	}
 
 	// check remaining length
 	if rl != 2 {
-		return total, 0, makeError(t, "expected remaining length to be 2")
+		return total, makeError(t, "expected remaining length to be 2")
 	}
 
 	// read packet id
-	pid, n, err := readUint(src[total:], 2, SUBSCRIBE)
+	pid, n, err := readUint(src[total:], 2, t)
 	total += n
 	if err != nil {
-		return total, 0, err
+		return total, err
 	}
 
 	// get packet id
 	packetID := ID(pid)
 	if !packetID.Valid() {
-		return total, 0, makeError(t, "packet id must be grater than zero")
+		return total, makeError(t, "packet id must be grater than zero")
 	}
 
-	return total, packetID, nil
+	// set packet id
+	*id = packetID
+
+	return total, nil
 }
 
 // encodes an identified packet
@@ -73,33 +76,31 @@ func NewPuback() *Puback {
 }
 
 // Type returns the packets type.
-func (pp *Puback) Type() Type {
+func (p *Puback) Type() Type {
 	return PUBACK
 }
 
 // Len returns the byte length of the encoded packet.
-func (pp *Puback) Len() int {
+func (p *Puback) Len() int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (pp *Puback) Decode(src []byte) (int, error) {
-	n, pid, err := identifiedDecode(src, PUBACK)
-	pp.ID = pid
-	return n, err
+func (p *Puback) Decode(src []byte) (int, error) {
+	return identifiedDecode(src, &p.ID, PUBACK)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pp *Puback) Encode(dst []byte) (int, error) {
-	return identifiedEncode(dst, pp.ID, PUBACK)
+func (p *Puback) Encode(dst []byte) (int, error) {
+	return identifiedEncode(dst, p.ID, PUBACK)
 }
 
 // String returns a string representation of the packet.
-func (pp *Puback) String() string {
-	return fmt.Sprintf("<Puback ID=%d>", pp.ID)
+func (p *Puback) String() string {
+	return fmt.Sprintf("<Puback ID=%d>", p.ID)
 }
 
 // A Pubcomp packet is the response to a Pubrel. It is the fourth and
@@ -109,41 +110,37 @@ type Pubcomp struct {
 	ID ID
 }
 
-var _ Generic = (*Pubcomp)(nil)
-
 // NewPubcomp creates a new Pubcomp packet.
 func NewPubcomp() *Pubcomp {
 	return &Pubcomp{}
 }
 
 // Type returns the packets type.
-func (pp *Pubcomp) Type() Type {
+func (p *Pubcomp) Type() Type {
 	return PUBCOMP
 }
 
 // Len returns the byte length of the encoded packet.
-func (pp *Pubcomp) Len() int {
+func (p *Pubcomp) Len() int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (pp *Pubcomp) Decode(src []byte) (int, error) {
-	n, pid, err := identifiedDecode(src, PUBCOMP)
-	pp.ID = pid
-	return n, err
+func (p *Pubcomp) Decode(src []byte) (int, error) {
+	return identifiedDecode(src, &p.ID, PUBCOMP)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pp *Pubcomp) Encode(dst []byte) (int, error) {
-	return identifiedEncode(dst, pp.ID, PUBCOMP)
+func (p *Pubcomp) Encode(dst []byte) (int, error) {
+	return identifiedEncode(dst, p.ID, PUBCOMP)
 }
 
 // String returns a string representation of the packet.
-func (pp *Pubcomp) String() string {
-	return fmt.Sprintf("<Pubcomp ID=%d>", pp.ID)
+func (p *Pubcomp) String() string {
+	return fmt.Sprintf("<Pubcomp ID=%d>", p.ID)
 }
 
 // A Pubrec packet is the response to a Publish packet with QOS 2. It is the
@@ -159,33 +156,31 @@ func NewPubrec() *Pubrec {
 }
 
 // Type returns the packets type.
-func (pp *Pubrec) Type() Type {
+func (p *Pubrec) Type() Type {
 	return PUBREC
 }
 
 // Len returns the byte length of the encoded packet.
-func (pp *Pubrec) Len() int {
+func (p *Pubrec) Len() int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (pp *Pubrec) Decode(src []byte) (int, error) {
-	n, pid, err := identifiedDecode(src, PUBREC)
-	pp.ID = pid
-	return n, err
+func (p *Pubrec) Decode(src []byte) (int, error) {
+	return identifiedDecode(src, &p.ID, PUBREC)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pp *Pubrec) Encode(dst []byte) (int, error) {
-	return identifiedEncode(dst, pp.ID, PUBREC)
+func (p *Pubrec) Encode(dst []byte) (int, error) {
+	return identifiedEncode(dst, p.ID, PUBREC)
 }
 
 // String returns a string representation of the packet.
-func (pp *Pubrec) String() string {
-	return fmt.Sprintf("<Pubrec ID=%d>", pp.ID)
+func (p *Pubrec) String() string {
+	return fmt.Sprintf("<Pubrec ID=%d>", p.ID)
 }
 
 // A Pubrel packet is the response to a Pubrec packet. It is the third packet of
@@ -195,41 +190,37 @@ type Pubrel struct {
 	ID ID
 }
 
-var _ Generic = (*Pubrel)(nil)
-
 // NewPubrel creates a new Pubrel packet.
 func NewPubrel() *Pubrel {
 	return &Pubrel{}
 }
 
 // Type returns the packets type.
-func (pp *Pubrel) Type() Type {
+func (p *Pubrel) Type() Type {
 	return PUBREL
 }
 
 // Len returns the byte length of the encoded packet.
-func (pp *Pubrel) Len() int {
+func (p *Pubrel) Len() int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (pp *Pubrel) Decode(src []byte) (int, error) {
-	n, pid, err := identifiedDecode(src, PUBREL)
-	pp.ID = pid
-	return n, err
+func (p *Pubrel) Decode(src []byte) (int, error) {
+	return identifiedDecode(src, &p.ID, PUBREL)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (pp *Pubrel) Encode(dst []byte) (int, error) {
-	return identifiedEncode(dst, pp.ID, PUBREL)
+func (p *Pubrel) Encode(dst []byte) (int, error) {
+	return identifiedEncode(dst, p.ID, PUBREL)
 }
 
 // String returns a string representation of the packet.
-func (pp *Pubrel) String() string {
-	return fmt.Sprintf("<Pubrel ID=%d>", pp.ID)
+func (p *Pubrel) String() string {
+	return fmt.Sprintf("<Pubrel ID=%d>", p.ID)
 }
 
 // An Unsuback packet is sent by the server to the client to confirm receipt of
@@ -245,31 +236,29 @@ func NewUnsuback() *Unsuback {
 }
 
 // Type returns the packets type.
-func (up *Unsuback) Type() Type {
+func (u *Unsuback) Type() Type {
 	return UNSUBACK
 }
 
 // Len returns the byte length of the encoded packet.
-func (up *Unsuback) Len() int {
+func (u *Unsuback) Len() int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (up *Unsuback) Decode(src []byte) (int, error) {
-	n, pid, err := identifiedDecode(src, UNSUBACK)
-	up.ID = pid
-	return n, err
+func (u *Unsuback) Decode(src []byte) (int, error) {
+	return identifiedDecode(src, &u.ID, UNSUBACK)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (up *Unsuback) Encode(dst []byte) (int, error) {
-	return identifiedEncode(dst, up.ID, UNSUBACK)
+func (u *Unsuback) Encode(dst []byte) (int, error) {
+	return identifiedEncode(dst, u.ID, UNSUBACK)
 }
 
 // String returns a string representation of the packet.
-func (up *Unsuback) String() string {
-	return fmt.Sprintf("<Unsuback ID=%d>", up.ID)
+func (u *Unsuback) String() string {
+	return fmt.Sprintf("<Unsuback ID=%d>", u.ID)
 }
