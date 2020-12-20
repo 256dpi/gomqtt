@@ -129,23 +129,23 @@ func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 	length := int(l)
 
 	// check length
-	if len(buf) < 2+length {
-		return nil, 2, insufficientBufferSize(t)
+	if len(buf[n:]) < length {
+		return nil, n, insufficientBufferSize(t)
 	}
 
 	// get bytes
-	bytes := buf[2 : 2+length]
+	bytes := buf[n : n+length]
 
 	// return input buffer if not safe
 	if !safe {
-		return bytes, 2 + length, nil
+		return bytes, n + length, nil
 	}
 
 	// otherwise copy buffer
 	cpy := make([]byte, length)
-	copy(cpy, bytes)
+	n += copy(cpy, bytes)
 
-	return cpy, 2 + length, nil
+	return cpy, n, nil
 }
 
 func writeLPBytes(buf []byte, bytes []byte, t Type) (int, error) {
@@ -161,6 +161,11 @@ func writeLPBytes(buf []byte, bytes []byte, t Type) (int, error) {
 	n, err := writeUint(buf, uint64(length), 2, t)
 	if err != nil {
 		return n, err
+	}
+
+	// check buffer
+	if len(buf) < length {
+		return n, insufficientBufferSize(t)
 	}
 
 	// write bytes
