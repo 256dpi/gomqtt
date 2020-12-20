@@ -18,6 +18,42 @@ func nakedEncode(dst []byte, t Type) (int, error) {
 	return encodeHeader(dst, 0, 0, nakedLen(), t)
 }
 
+type Auth struct {
+}
+
+// NewAuth creates a new Auth packet.
+func NewAuth() *Auth {
+	return &Auth{}
+}
+
+// Type returns the packets type.
+func (ap *Auth) Type() Type {
+	return AUTH
+}
+
+// Len returns the byte length of the encoded packet.
+func (ap *Auth) Len() int {
+	return nakedLen()
+}
+
+// Decode reads from the byte slice argument. It returns the total number of
+// bytes decoded, and whether there have been any errors during the process.
+func (ap *Auth) Decode(src []byte) (int, error) {
+	return nakedDecode(src, AUTH)
+}
+
+// Encode writes the packet bytes into the byte slice from the argument. It
+// returns the number of bytes encoded and whether there's any errors along
+// the way. If there is an error, the byte slice should be considered invalid.
+func (ap *Auth) Encode(dst []byte) (int, error) {
+	return nakedEncode(dst, AUTH)
+}
+
+// String returns a string representation of the packet.
+func (ap *Auth) String() string {
+	return "<Auth>"
+}
+
 // A Disconnect packet is sent from the client to the server.
 // It indicates that the client is disconnecting cleanly.
 type Disconnect struct{}
