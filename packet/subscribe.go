@@ -179,7 +179,6 @@ func (s *Subscribe) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
-// Returns the payload length.
 func (s *Subscribe) len() int {
 	// packet ID
 	total := 2

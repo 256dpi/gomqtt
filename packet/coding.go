@@ -5,6 +5,15 @@ import (
 	"math"
 )
 
+func readUint8(buf []byte, t Type) (uint8, int, error) {
+	num, n, err := readUint(buf, 1, t)
+	return uint8(num), n, err
+}
+
+func writeUint8(buf []byte, num uint8, t Type) (int, error) {
+	return writeUint(buf, uint64(num), 1, t)
+}
+
 func readUint(buf []byte, width int, t Type) (uint64, int, error) {
 	// check buffer
 	if len(buf) < width {

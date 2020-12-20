@@ -50,11 +50,6 @@ func (u *Unsubscribe) Decode(src []byte) (int, error) {
 		return total, err
 	}
 
-	// check buffer length
-	if len(src) < total+2 {
-		return total, insufficientBufferSize(UNSUBSCRIBE)
-	}
-
 	// read packet id
 	pid, n, err := readUint(src[total:], 2, UNSUBSCRIBE)
 	total += n
@@ -68,26 +63,24 @@ func (u *Unsubscribe) Decode(src []byte) (int, error) {
 		return total, makeError(UNSUBSCRIBE, "packet id must be grater than zero")
 	}
 
-	// prepare counter
-	tl := rl - 2
-
 	// reset topics
 	u.Topics = u.Topics[:0]
 
 	// read topics
+	tl := rl - 2
 	for tl > 0 {
 		// read topic
-		t, n, err := readLPString(src[total:], UNSUBSCRIBE)
+		topic, n, err := readLPString(src[total:], UNSUBSCRIBE)
 		total += n
 		if err != nil {
 			return total, err
 		}
 
 		// append to list
-		u.Topics = append(u.Topics, t)
+		u.Topics = append(u.Topics, topic)
 
 		// decrement counter
-		tl = tl - n - 1
+		tl -= n
 	}
 
 	// check for empty list
@@ -102,15 +95,15 @@ func (u *Unsubscribe) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (u *Unsubscribe) Encode(dst []byte) (int, error) {
-	// check packet id
-	if !u.ID.Valid() {
-		return 0, makeError(UNSUBSCRIBE, "packet id must be grater than zero")
-	}
-
 	// encode header
 	total, err := encodeHeader(dst, 0, u.len(), u.Len(), UNSUBSCRIBE)
 	if err != nil {
 		return total, err
+	}
+
+	// check packet id
+	if !u.ID.Valid() {
+		return 0, makeError(UNSUBSCRIBE, "packet id must be grater than zero")
 	}
 
 	// write packet id
@@ -121,9 +114,9 @@ func (u *Unsubscribe) Encode(dst []byte) (int, error) {
 	}
 
 	// write topics
-	for _, t := range u.Topics {
+	for _, topic := range u.Topics {
 		// write topic
-		n, err := writeLPString(dst[total:], t, UNSUBSCRIBE)
+		n, err := writeLPString(dst[total:], topic, UNSUBSCRIBE)
 		total += n
 		if err != nil {
 			return total, err
@@ -133,7 +126,6 @@ func (u *Unsubscribe) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
-// Returns the payload length.
 func (u *Unsubscribe) len() int {
 	// packet ID
 	total := 2

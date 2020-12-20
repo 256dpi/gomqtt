@@ -79,34 +79,41 @@ func (c *Connack) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 func (c *Connack) Decode(src []byte) (int, error) {
 	// decode header
-	total, _, rl, err := decodeHeader(src, CONNACK)
+	total, _, _, err := decodeHeader(src, CONNACK)
 	if err != nil {
 		return total, err
 	}
 
-	// check remaining length
-	if rl != 2 {
-		return total, makeError(CONNACK, "expected remaining length to be 2")
-	}
-
 	// read connack flags
-	connackFlags := src[total]
-	c.SessionPresent = connackFlags&0x1 == 1
-	total++
+	connackFlags, n, err := readUint8(src[total:], CONNACK)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	// check flags
 	if connackFlags&254 != 0 {
 		return total, makeError(CONNACK, "bits 7-1 in acknowledge flags are not 0")
 	}
 
-	// read return code
-	c.ReturnCode = ConnackCode(src[total])
-	total++
+	// set session present
+	c.SessionPresent = connackFlags&0x1 == 1
 
-	// check return code
-	if !c.ReturnCode.Valid() {
+	// read return code
+	rc, n, err := readUint8(src[total:], CONNACK)
+	total += n
+	if err != nil {
+		return total, err
+	}
+
+	// get return code
+	returnCode := ConnackCode(rc)
+	if !returnCode.Valid() {
 		return total, makeError(CONNACK, "invalid return code (%d)", c.ReturnCode)
 	}
+
+	// set return code
+	c.ReturnCode = returnCode
 
 	return total, nil
 }
@@ -121,22 +128,32 @@ func (c *Connack) Encode(dst []byte) (int, error) {
 		return total, err
 	}
 
-	// set session present flag
+	// get connack flags
+	var flags uint8
 	if c.SessionPresent {
-		dst[total] = 1 // 00000001
+		flags = 0x1 // 00000001
 	} else {
-		dst[total] = 0 // 00000000
+		flags = 0x0 // 00000000
 	}
-	total++
+
+	// write flags
+	n, err := writeUint8(dst[total:], flags, CONNACK)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	// check return code
 	if !c.ReturnCode.Valid() {
 		return total, makeError(CONNACK, "invalid return code (%d)", c.ReturnCode)
 	}
 
-	// set return code
-	dst[total] = byte(c.ReturnCode)
-	total++
+	// write return code
+	n, err = writeUint8(dst[total:], uint8(c.ReturnCode), CONNACK)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	return total, nil
 }

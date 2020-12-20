@@ -7,12 +7,14 @@ import (
 
 // The supported MQTT versions.
 const (
-	Version311 byte = 4
 	Version31  byte = 3
+	Version311 byte = 4
 )
 
-var version311Name = []byte("MQTT")
-var version31Name = []byte("MQIsdp")
+var versionNames = map[byte][]byte{
+	Version31:  []byte("MQIsdp"),
+	Version311: []byte("MQTT"),
+}
 
 // A Connect packet is sent by a client to the server after a network
 // connection has been established.
@@ -94,16 +96,14 @@ func (c *Connect) Decode(src []byte) (int, error) {
 		return total, err
 	}
 
-	// check buffer length
-	if len(src) < total+1 {
-		return total, insufficientBufferSize(CONNECT)
+	// read version
+	versionByte, n, err := readUint8(src[total:], CONNECT)
+	total += n
+	if err != nil {
+		return total, err
 	}
 
-	// read version
-	versionByte := src[total]
-	total++
-
-	// check protocol string and version
+	// check protocol version
 	if versionByte != Version311 && versionByte != Version31 {
 		return total, makeError(CONNECT, "invalid protocol version (%d)", versionByte)
 	}
@@ -112,18 +112,16 @@ func (c *Connect) Decode(src []byte) (int, error) {
 	c.Version = versionByte
 
 	// check protocol version string
-	if !bytes.Equal(protoName, version311Name) && !bytes.Equal(protoName, version31Name) {
-		return total, makeError(CONNECT, "invalid protocol version description (%s)", protoName)
+	if !bytes.Equal(protoName, versionNames[c.Version]) {
+		return total, makeError(CONNECT, "invalid protocol version string (%s)", protoName)
 	}
 
-	// check buffer length
-	if len(src) < total+1 {
-		return total, insufficientBufferSize(CONNECT)
+	// get connect flags
+	connectFlags, n, err := readUint8(src[total:], CONNECT)
+	total += n
+	if err != nil {
+		return total, err
 	}
-
-	// read connect flags
-	connectFlags := src[total]
-	total++
 
 	// read flags
 	usernameFlag := ((connectFlags >> 7) & 0x1) == 1
@@ -156,11 +154,6 @@ func (c *Connect) Decode(src []byte) (int, error) {
 	// check auth flags
 	if !usernameFlag && passwordFlag {
 		return total, makeError(CONNECT, "password flag is set but username flag is not set")
-	}
-
-	// check buffer length
-	if len(src) < total+2 {
-		return total, makeError(CONNECT, "insufficient buffer size, expected %d, got %d", total+2, len(src))
 	}
 
 	// read keep alive
@@ -243,24 +236,19 @@ func (c *Connect) Encode(dst []byte) (int, error) {
 		return total, makeError(CONNECT, "unsupported protocol version %d", c.Version)
 	}
 
-	// write version string, length has been checked beforehand
-	if c.Version == Version311 {
-		n, err := writeLPBytes(dst[total:], version311Name, CONNECT)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	} else if c.Version == Version31 {
-		n, err := writeLPBytes(dst[total:], version31Name, CONNECT)
-		if err != nil {
-			return total, err
-		}
-		total += n
+	// write version string
+	n, err := writeLPBytes(dst[total:], versionNames[c.Version], CONNECT)
+	total += n
+	if err != nil {
+		return total, err
 	}
 
 	// write version value
-	dst[total] = c.Version
-	total++
+	n, err = writeUint8(dst[total:], c.Version, CONNECT)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	// prepare connect flags
 	var connectFlags byte
@@ -310,11 +298,14 @@ func (c *Connect) Encode(dst []byte) (int, error) {
 	}
 
 	// write connect flags
-	dst[total] = connectFlags
-	total++
+	n, err = writeUint8(dst[total:], connectFlags, CONNECT)
+	total += n
+	if err != nil {
+		return total, err
+	}
 
 	// write keep alive
-	n, err := writeUint(dst[total:], uint64(c.KeepAlive), 2, CONNECT)
+	n, err = writeUint(dst[total:], uint64(c.KeepAlive), 2, CONNECT)
 	total += n
 	if err != nil {
 		return total, err
@@ -370,7 +361,6 @@ func (c *Connect) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
-// Returns the payload length.
 func (c *Connect) len() int {
 	// prepare total
 	total := 0

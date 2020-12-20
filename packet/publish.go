@@ -61,12 +61,14 @@ func (p *Publish) Decode(src []byte) (int, error) {
 	}
 
 	// read topic
-	n := 0
-	p.Message.Topic, n, err = readLPString(src[total:], PUBLISH)
+	topic, n, err := readLPString(src[total:], PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
 	}
+
+	// set topic
+	p.Message.Topic = topic
 
 	// check quality of service
 	if p.Message.QOS != 0 {
@@ -166,9 +168,11 @@ func (p *Publish) Encode(dst []byte) (int, error) {
 	return total, nil
 }
 
-// Returns the payload length.
 func (p *Publish) len() int {
+	// topic + payload
 	total := 2 + len(p.Message.Topic) + len(p.Message.Payload)
+
+	// packet iD
 	if p.Message.QOS != 0 {
 		total += 2
 	}

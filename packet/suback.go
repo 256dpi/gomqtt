@@ -53,16 +53,6 @@ func (s *Suback) Decode(src []byte) (int, error) {
 		return total, err
 	}
 
-	// check buffer length
-	if len(src) < total+2 {
-		return total, insufficientBufferSize(SUBACK)
-	}
-
-	// check remaining length
-	if rl <= 2 {
-		return total, makeError(SUBACK, "expected remaining length to be greater than 2, got %d", rl)
-	}
-
 	// read packet id
 	pid, n, err := readUint(src[total:], 2, SUBACK)
 	total += n
@@ -78,19 +68,30 @@ func (s *Suback) Decode(src []byte) (int, error) {
 
 	// calculate number of return codes
 	rcl := rl - 2
-
-	// read return codes
-	s.ReturnCodes = make([]QOS, rcl)
-	for i, rc := range src[total : total+rcl] {
-		s.ReturnCodes[i] = QOS(rc)
-		total++
+	if rcl < 1 {
+		return total, makeError(SUBACK, "expected at least one return code")
 	}
 
-	// validate return codes
-	for i, code := range s.ReturnCodes {
-		if !code.Successful() && code != QOSFailure {
-			return total, makeError(SUBACK, "invalid return code %d for topic %d", code, i)
+	// prepare return codes
+	s.ReturnCodes = make([]QOS, 0, rcl)
+
+	// read return codes
+	for i := 0; i < rcl; i++ {
+		// read return code
+		rc, n, err := readUint8(src[total:], SUBACK)
+		total += n
+		if err != nil {
+			return total, err
 		}
+
+		// get return code
+		returnCode := QOS(rc)
+		if !returnCode.Successful() && returnCode != QOSFailure {
+			return total, makeError(SUBACK, "invalid return code %d", returnCode)
+		}
+
+		// add return code
+		s.ReturnCodes = append(s.ReturnCodes, returnCode)
 	}
 
 	return total, nil
@@ -100,22 +101,15 @@ func (s *Suback) Decode(src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (s *Suback) Encode(dst []byte) (int, error) {
-	// check return codes
-	for i, code := range s.ReturnCodes {
-		if !code.Successful() && code != QOSFailure {
-			return 0, makeError(SUBACK, "invalid return code %d for topic %d", code, i)
-		}
+	// encode header
+	total, err := encodeHeader(dst, 0, s.len(), s.Len(), SUBACK)
+	if err != nil {
+		return total, err
 	}
 
 	// check packet id
 	if !s.ID.Valid() {
 		return 0, makeError(SUBACK, "packet id must be grater than zero")
-	}
-
-	// encode header
-	total, err := encodeHeader(dst, 0, s.len(), s.Len(), SUBACK)
-	if err != nil {
-		return total, err
 	}
 
 	// write packet id
@@ -127,14 +121,22 @@ func (s *Suback) Encode(dst []byte) (int, error) {
 
 	// write return codes
 	for _, rc := range s.ReturnCodes {
-		dst[total] = byte(rc)
-		total++
+		// check return code
+		if !rc.Successful() && rc != QOSFailure {
+			return 0, makeError(SUBACK, "invalid return code %d", rc)
+		}
+
+		// write return code
+		n, err := writeUint8(dst[total:], uint8(rc), SUBACK)
+		total += n
+		if err != nil {
+			return total, err
+		}
 	}
 
 	return total, nil
 }
 
-// Returns the payload length.
 func (s *Suback) len() int {
 	return 2 + len(s.ReturnCodes)
 }
