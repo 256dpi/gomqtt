@@ -33,11 +33,6 @@ func readVarint(buf []byte, t Type) (uint64, int, error) {
 		return 0, 0, makeError(t, "error reading variable integer")
 	}
 
-	// check size
-	if num > maxVarint {
-		return 0, n, makeError(t, "variable integer (%d) out of bound (max %d, min 0)", num, maxVarint)
-	}
-
 	return num, n, nil
 }
 
