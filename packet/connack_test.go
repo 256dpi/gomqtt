@@ -18,9 +18,22 @@ func TestConnackReturnCodes(t *testing.T) {
 
 func TestConnack(t *testing.T) {
 	pkt := NewConnack()
+	pkt.SessionPresent = true
+	pkt.ReturnCode = BadUsernameOrPassword
 
 	assert.Equal(t, pkt.Type(), CONNACK)
-	assert.Equal(t, "<Connack SessionPresent=false ReturnCode=0>", pkt.String())
+	assert.Equal(t, "<Connack SessionPresent=true ReturnCode=4>", pkt.String())
+
+	buf := make([]byte, pkt.Len(M4))
+	n1, err := pkt.Encode(M4, buf)
+	assert.NoError(t, err)
+
+	pkt2 := NewConnack()
+	n2, err := pkt2.Decode(M4, buf)
+	assert.NoError(t, err)
+
+	assert.Equal(t, pkt, pkt2)
+	assert.Equal(t, n1, n2)
 }
 
 func TestConnackDecode(t *testing.T) {
@@ -150,33 +163,6 @@ func TestConnackEncodeError2(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 3, n)
-}
-
-func TestConnackEqualDecodeEncode(t *testing.T) {
-	packet := []byte{
-		byte(CONNACK << 4),
-		2,
-		0, // session not present
-		0, // connection accepted
-	}
-
-	pkt := NewConnack()
-	n, err := pkt.Decode(M4, packet)
-
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
-
-	dst := make([]byte, pkt.Len(M4))
-	n2, err := pkt.Encode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n2)
-	assert.Equal(t, packet, dst[:n2])
-
-	n3, err := pkt.Decode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n3)
 }
 
 func BenchmarkConnackEncode(b *testing.B) {

@@ -8,13 +8,25 @@ import (
 
 func TestSubscribe(t *testing.T) {
 	pkt := NewSubscribe()
+	pkt.ID = 1
 	pkt.Subscriptions = []Subscription{
 		{Topic: "foo", QOS: QOSAtMostOnce},
 		{Topic: "bar", QOS: QOSAtLeastOnce},
 	}
 
 	assert.Equal(t, pkt.Type(), SUBSCRIBE)
-	assert.Equal(t, "<Subscribe ID=0 Subscriptions=[\"foo\"=>0, \"bar\"=>1]>", pkt.String())
+	assert.Equal(t, `<Subscribe ID=1 Subscriptions=["foo"=>0, "bar"=>1]>`, pkt.String())
+
+	buf := make([]byte, pkt.Len(M4))
+	n1, err := pkt.Encode(M4, buf)
+	assert.NoError(t, err)
+
+	pkt2 := NewSubscribe()
+	n2, err := pkt2.Decode(M4, buf)
+	assert.NoError(t, err)
+
+	assert.Equal(t, pkt, pkt2)
+	assert.Equal(t, n1, n2)
 }
 
 func TestSubscribeDecode(t *testing.T) {
@@ -242,45 +254,6 @@ func TestSubscribeEncodeError4(t *testing.T) {
 	_, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
-}
-
-func TestSubscribeEqualDecodeEncode(t *testing.T) {
-	packet := []byte{
-		byte(SUBSCRIBE<<4) | 2,
-		35,
-		0, // packet ID MSB
-		7, // packet ID LSB
-		0, // topic name MSB
-		6, // topic name LSB
-		'g', 'o', 'm', 'q', 't', 't',
-		0, // QOS
-		0, // topic name MSB
-		8, // topic name LSB
-		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		1,  // QOS
-		0,  // topic name MSB
-		10, // topic name LSB
-		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-		2, // QOS
-	}
-
-	pkt := NewSubscribe()
-	n, err := pkt.Decode(M4, packet)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n)
-
-	dst := make([]byte, pkt.Len(M4))
-	n2, err := pkt.Encode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n2)
-	assert.Equal(t, packet, dst[:n2])
-
-	n3, err := pkt.Decode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n3)
 }
 
 func BenchmarkSubscribeEncode(b *testing.B) {

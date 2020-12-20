@@ -8,9 +8,24 @@ import (
 
 func TestPublish(t *testing.T) {
 	pkt := NewPublish()
+	pkt.ID = 1
+	pkt.Message.Topic = "foo"
+	pkt.Message.QOS = 2
+	pkt.Dup = true
 
 	assert.Equal(t, pkt.Type(), PUBLISH)
-	assert.Equal(t, "<Publish ID=0 Message=<Message Topic=\"\" QOS=0 Retain=false Payload=> Dup=false>", pkt.String())
+	assert.Equal(t, `<Publish ID=1 Message=<Message Topic="foo" QOS=2 Retain=false Payload=> Dup=true>`, pkt.String())
+
+	buf := make([]byte, pkt.Len(M4))
+	n1, err := pkt.Encode(M4, buf)
+	assert.NoError(t, err)
+
+	pkt2 := NewPublish()
+	n2, err := pkt2.Decode(M4, buf)
+	assert.NoError(t, err)
+
+	assert.Equal(t, pkt, pkt2)
+	assert.Equal(t, n1, n2)
 }
 
 func TestPublishDecode1(t *testing.T) {
@@ -247,37 +262,6 @@ func TestPublishEncodeError5(t *testing.T) {
 	_, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
-}
-
-func TestPublishEqualDecodeEncode(t *testing.T) {
-	packet := []byte{
-		byte(PUBLISH<<4) | 2,
-		22,
-		0, // topic name MSB
-		6, // topic name LSB
-		'g', 'o', 'm', 'q', 't', 't',
-		0, // packet ID MSB
-		7, // packet ID LSB
-		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-	}
-
-	pkt := NewPublish()
-	n, err := pkt.Decode(M4, packet)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n)
-
-	dst := make([]byte, pkt.Len(M4))
-	n2, err := pkt.Encode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n2)
-	assert.Equal(t, packet, dst[:n2])
-
-	n3, err := pkt.Decode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n3)
 }
 
 func BenchmarkPublishEncode(b *testing.B) {

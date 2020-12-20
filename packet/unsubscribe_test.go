@@ -8,10 +8,22 @@ import (
 
 func TestUnsubscribe(t *testing.T) {
 	pkt := NewUnsubscribe()
+	pkt.ID = 1
 	pkt.Topics = []string{"foo", "bar"}
 
 	assert.Equal(t, pkt.Type(), UNSUBSCRIBE)
-	assert.Equal(t, "<Unsubscribe Topics=[\"foo\", \"bar\"]>", pkt.String())
+	assert.Equal(t, `<Unsubscribe ID=1 Topics=["foo", "bar"]>`, pkt.String())
+
+	buf := make([]byte, pkt.Len(M4))
+	n1, err := pkt.Encode(M4, buf)
+	assert.NoError(t, err)
+
+	pkt2 := NewUnsubscribe()
+	n2, err := pkt2.Decode(M4, buf)
+	assert.NoError(t, err)
+
+	assert.Equal(t, pkt, pkt2)
+	assert.Equal(t, n1, n2)
 }
 
 func TestUnsubscribeDecode(t *testing.T) {
@@ -184,42 +196,6 @@ func TestUnsubscribeEncodeError3(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)
-}
-
-func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
-	packet := []byte{
-		byte(UNSUBSCRIBE<<4) | 2,
-		32,
-		0, // packet ID MSB
-		7, // packet ID LSB
-		0, // topic name MSB
-		6, // topic name LSB
-		'g', 'o', 'm', 'q', 't', 't',
-		0, // topic name MSB
-		8, // topic name LSB
-		'/', 'a', '/', 'b', '/', '#', '/', 'c',
-		0,  // topic name MSB
-		10, // topic name LSB
-		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-	}
-
-	pkt := NewUnsubscribe()
-	n, err := pkt.Decode(M4, packet)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n)
-
-	dst := make([]byte, 100)
-	n2, err := pkt.Encode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n2)
-	assert.Equal(t, packet, dst[:n2])
-
-	n3, err := pkt.Decode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n3)
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
