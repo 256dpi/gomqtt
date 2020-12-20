@@ -223,6 +223,8 @@ func TestUnsubscribeEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkUnsubscribeEncode(b *testing.B) {
+	b.ReportAllocs()
+
 	pkt := NewUnsubscribe()
 	pkt.ID = 1
 	pkt.Topics = []string{"t"}
@@ -238,6 +240,8 @@ func BenchmarkUnsubscribeEncode(b *testing.B) {
 }
 
 func BenchmarkUnsubscribeDecode(b *testing.B) {
+	b.ReportAllocs()
+
 	packet := []byte{
 		byte(UNSUBSCRIBE<<4) | 2,
 		5,

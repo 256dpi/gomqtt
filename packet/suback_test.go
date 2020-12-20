@@ -202,6 +202,8 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkSubackEncode(b *testing.B) {
+	b.ReportAllocs()
+
 	pkt := NewSuback()
 	pkt.ID = 1
 	pkt.ReturnCodes = []QOS{0}
@@ -217,6 +219,8 @@ func BenchmarkSubackEncode(b *testing.B) {
 }
 
 func BenchmarkSubackDecode(b *testing.B) {
+	b.ReportAllocs()
+
 	packet := []byte{
 		byte(SUBACK << 4),
 		3,

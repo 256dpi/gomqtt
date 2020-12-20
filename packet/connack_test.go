@@ -180,6 +180,8 @@ func TestConnackEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkConnackEncode(b *testing.B) {
+	b.ReportAllocs()
+
 	pkt := NewConnack()
 	pkt.ReturnCode = ConnectionAccepted
 	pkt.SessionPresent = true
@@ -195,6 +197,8 @@ func BenchmarkConnackEncode(b *testing.B) {
 }
 
 func BenchmarkConnackDecode(b *testing.B) {
+	b.ReportAllocs()
+
 	packet := []byte{
 		byte(CONNACK << 4),
 		2,

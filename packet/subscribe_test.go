@@ -284,6 +284,8 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkSubscribeEncode(b *testing.B) {
+	b.ReportAllocs()
+
 	pkt := NewSubscribe()
 	pkt.ID = 7
 	pkt.Subscriptions = []Subscription{
@@ -301,6 +303,8 @@ func BenchmarkSubscribeEncode(b *testing.B) {
 }
 
 func BenchmarkSubscribeDecode(b *testing.B) {
+	b.ReportAllocs()
+
 	packet := []byte{
 		byte(SUBSCRIBE<<4) | 2,
 		6,

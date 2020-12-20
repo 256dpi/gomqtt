@@ -706,6 +706,8 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkConnectEncode(b *testing.B) {
+	b.ReportAllocs()
+
 	pkt := NewConnect()
 	pkt.Will = &Message{
 		Topic:   "w",
@@ -729,6 +731,8 @@ func BenchmarkConnectEncode(b *testing.B) {
 }
 
 func BenchmarkConnectDecode(b *testing.B) {
+	b.ReportAllocs()
+
 	packet := []byte{
 		byte(CONNECT << 4),
 		25,

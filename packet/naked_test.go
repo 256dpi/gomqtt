@@ -71,6 +71,8 @@ func TestNakedEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkNakedEncode(b *testing.B) {
+	b.ReportAllocs()
+
 	buf := make([]byte, nakedLen())
 
 	for i := 0; i < b.N; i++ {
@@ -82,6 +84,8 @@ func BenchmarkNakedEncode(b *testing.B) {
 }
 
 func BenchmarkNakedDecode(b *testing.B) {
+	b.ReportAllocs()
+
 	packet := []byte{
 		byte(DISCONNECT << 4),
 		0,

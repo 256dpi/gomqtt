@@ -115,7 +115,7 @@ func readLPString(buf []byte, t Type) (string, int, error) {
 }
 
 func writeLPString(buf []byte, str string, t Type) (int, error) {
-	return writeLPBytes(buf, []byte(str), t)
+	return writeLPBytes(buf, cast(str), t)
 }
 
 func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {

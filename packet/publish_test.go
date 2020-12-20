@@ -281,6 +281,8 @@ func TestPublishEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkPublishEncode(b *testing.B) {
+	b.ReportAllocs()
+
 	pkt := NewPublish()
 	pkt.Message.Topic = "t"
 	pkt.Message.QOS = QOSAtLeastOnce
@@ -298,6 +300,8 @@ func BenchmarkPublishEncode(b *testing.B) {
 }
 
 func BenchmarkPublishDecode(b *testing.B) {
+	b.ReportAllocs()
+
 	packet := []byte{
 		byte(PUBLISH<<4) | 2,
 		6,

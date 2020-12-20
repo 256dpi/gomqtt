@@ -128,6 +128,8 @@ func TestIdentifiedEqualDecodeEncode(t *testing.T) {
 }
 
 func BenchmarkIdentifiedEncode(b *testing.B) {
+	b.ReportAllocs()
+
 	pkt := &Puback{}
 	pkt.ID = 1
 
@@ -142,6 +144,8 @@ func BenchmarkIdentifiedEncode(b *testing.B) {
 }
 
 func BenchmarkIdentifiedDecode(b *testing.B) {
+	b.ReportAllocs()
+
 	packet := []byte{
 		byte(PUBACK << 4),
 		2,
