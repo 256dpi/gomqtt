@@ -19,6 +19,13 @@ func nakedEncode(dst []byte, t Type) (int, error) {
 }
 
 type Auth struct {
+	ReasonCode byte
+
+	Properties []Property
+	// AuthenticationMethod string
+	// AuthenticationData []byte
+	// ReasonString string
+	// UserProperties map[string][]byte
 }
 
 // NewAuth creates a new Auth packet.
@@ -56,7 +63,15 @@ func (ap *Auth) String() string {
 
 // A Disconnect packet is sent from the client to the server.
 // It indicates that the client is disconnecting cleanly.
-type Disconnect struct{}
+type Disconnect struct {
+	ReasonCode byte
+
+	Properties []Property
+	// SessionExpiryInterval uint64
+	// ReasonString string
+	// ServerReference string
+	// UserProperties map[string][]byte
+}
 
 // NewDisconnect creates a new Disconnect packet.
 func NewDisconnect() *Disconnect {

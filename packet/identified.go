@@ -68,6 +68,12 @@ func identifiedEncode(dst []byte, id ID, t Type) (int, error) {
 type Puback struct {
 	// The packet identifier.
 	ID ID
+
+	ReasonCode byte
+
+	Properties []Property
+	// ReasonString string
+	// UserProperties map[string][]byte
 }
 
 // NewPuback creates a new Puback packet.
@@ -108,6 +114,12 @@ func (p *Puback) String() string {
 type Pubcomp struct {
 	// The packet identifier.
 	ID ID
+
+	ReasonCode byte
+
+	Properties []Property
+	// ReasonString string
+	// UserProperties map[string][]byte
 }
 
 // NewPubcomp creates a new Pubcomp packet.
@@ -148,6 +160,12 @@ func (p *Pubcomp) String() string {
 type Pubrec struct {
 	// Shared packet identifier.
 	ID ID
+
+	ReasonCode byte
+
+	Properties []Property
+	// ReasonString string
+	// UserProperties map[string][]byte
 }
 
 // NewPubrec creates a new Pubrec packet.
@@ -188,6 +206,12 @@ func (p *Pubrec) String() string {
 type Pubrel struct {
 	// Shared packet identifier.
 	ID ID
+
+	ReasonCode byte
+
+	Properties []Property
+	// ReasonString string
+	// UserProperties map[string][]byte
 }
 
 // NewPubrel creates a new Pubrel packet.
@@ -228,6 +252,12 @@ func (p *Pubrel) String() string {
 type Unsuback struct {
 	// Shared packet identifier.
 	ID ID
+
+	ReasonCode byte
+
+	Properties []Property
+	// ReasonString string
+	// UserProperties map[string][]byte
 }
 
 // NewUnsuback creates a new Unsuback packet.

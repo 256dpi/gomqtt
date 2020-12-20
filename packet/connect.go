@@ -41,6 +41,28 @@ type Connect struct {
 
 	// The MQTT version 3 or 4 (defaults to 4 when 0).
 	Version byte
+
+	CleanStart bool
+
+	WillProperties []Property
+	// WillDelayInterval uint32
+	// WillPayloadFormatIndicator byte
+	// WillMessageExpiryInterval uint32
+	// WillContentType string
+	// WillResponseTopic string
+	// WillCorrelationData []byte
+	// WillUserProperties map[string][]byte
+
+	Properties []Property
+	// SessionExpiryInterval uint32
+	// ReceiveMaximum uint16
+	// MaximumPacketSize uint32
+	// TopicAliasMaximum uint16
+	// RequestResponseInformation bool
+	// RequestProblemInformation bool
+	// AuthenticationMethod string
+	// AuthenticationData []byte
+	// UserProperties map[string][]byte
 }
 
 // NewConnect creates a new Connect packet.

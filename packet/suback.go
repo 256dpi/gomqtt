@@ -14,6 +14,12 @@ type Suback struct {
 
 	// The packet identifier.
 	ID ID
+
+	ReasonCode byte
+
+	Properties []Property
+	// ReasonString string
+	// UserProperties map[string][]byte
 }
 
 // NewSuback creates a new Suback packet.
