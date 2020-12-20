@@ -9,11 +9,13 @@ import (
 const (
 	Version31  byte = 3
 	Version311 byte = 4
+	Version5   byte = 5
 )
 
 var versionNames = map[byte][]byte{
 	Version31:  []byte("MQIsdp"),
 	Version311: []byte("MQTT"),
+	Version5:   []byte("MQTT"),
 }
 
 // A Connect packet is sent by a client to the server after a network
@@ -104,7 +106,7 @@ func (c *Connect) Decode(src []byte) (int, error) {
 	}
 
 	// check protocol version
-	if versionByte != Version311 && versionByte != Version31 {
+	if versionByte < Version31 || versionByte > Version5 {
 		return total, makeError(CONNECT, "invalid protocol version (%d)", versionByte)
 	}
 
