@@ -7,7 +7,7 @@ import (
 )
 
 func TestTypes(t *testing.T) {
-	assert.Len(t, Types(), 14)
+	assert.Len(t, Types(), 15)
 }
 
 func TestTypeString(t *testing.T) {

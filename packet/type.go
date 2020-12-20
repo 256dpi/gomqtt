@@ -25,12 +25,14 @@ const (
 	PINGREQ
 	PINGRESP
 	DISCONNECT
+	AUTH
 )
 
 // Types returns a list of all known packet types.
 func Types() []Type {
 	return []Type{CONNECT, CONNACK, PUBLISH, PUBACK, PUBREC, PUBREL, PUBCOMP,
-		SUBSCRIBE, SUBACK, UNSUBSCRIBE, UNSUBACK, PINGREQ, PINGRESP, DISCONNECT}
+		SUBSCRIBE, SUBACK, UNSUBSCRIBE, UNSUBACK, PINGREQ, PINGRESP, DISCONNECT,
+		AUTH}
 }
 
 // String returns the type as a string.
@@ -64,6 +66,8 @@ func (t Type) String() string {
 		return "Pingresp"
 	case DISCONNECT:
 		return "Disconnect"
+	case AUTH:
+		return "Auth"
 	}
 
 	return "Unknown"
@@ -98,6 +102,8 @@ func (t Type) defaultFlags() byte {
 	case PINGRESP:
 		return 0
 	case DISCONNECT:
+		return 0
+	case AUTH:
 		return 0
 	}
 
@@ -136,6 +142,8 @@ func (t Type) New() (Generic, error) {
 		return NewPingresp(), nil
 	case DISCONNECT:
 		return NewDisconnect(), nil
+	case AUTH:
+		return NewAuth(), nil
 	}
 
 	return nil, ErrInvalidPacketType
@@ -143,5 +151,5 @@ func (t Type) New() (Generic, error) {
 
 // Valid returns a boolean indicating whether the type is valid or not.
 func (t Type) Valid() bool {
-	return t >= CONNECT && t <= DISCONNECT
+	return t >= CONNECT && t <= AUTH
 }
