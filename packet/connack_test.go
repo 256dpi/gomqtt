@@ -16,7 +16,7 @@ func TestConnackReturnCodes(t *testing.T) {
 	assert.Equal(t, "invalid connack code", ConnackCode(6).String())
 }
 
-func TestConnackInterface(t *testing.T) {
+func TestConnack(t *testing.T) {
 	pkt := NewConnack()
 
 	assert.Equal(t, pkt.Type(), CONNACK)

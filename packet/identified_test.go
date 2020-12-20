@@ -7,6 +7,54 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func testIdentified(t *testing.T, pkt Generic) {
+	assert.Equal(t, fmt.Sprintf("<%s ID=1>", pkt.Type().String()), pkt.String())
+
+	buf := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, buf)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
+
+	n, err = pkt.Decode(M4, buf)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, n)
+}
+
+func TestPuback(t *testing.T) {
+	pkt := NewPuback()
+	pkt.ID = 1
+
+	testIdentified(t, pkt)
+}
+
+func TestPubcomp(t *testing.T) {
+	pkt := NewPubcomp()
+	pkt.ID = 1
+
+	testIdentified(t, pkt)
+}
+
+func TestPubrec(t *testing.T) {
+	pkt := NewPubrec()
+	pkt.ID = 1
+
+	testIdentified(t, pkt)
+}
+
+func TestPubrel(t *testing.T) {
+	pkt := NewPubrel()
+	pkt.ID = 1
+
+	testIdentified(t, pkt)
+}
+
+func TestUnsuback(t *testing.T) {
+	pkt := NewUnsuback()
+	pkt.ID = 1
+
+	testIdentified(t, pkt)
+}
+
 func TestIdentifiedDecode(t *testing.T) {
 	packet := []byte{
 		byte(PUBACK << 4),
@@ -161,52 +209,4 @@ func BenchmarkIdentifiedDecode(b *testing.B) {
 			panic(err)
 		}
 	}
-}
-
-func testIdentifiedImplementation(t *testing.T, pkt Generic) {
-	assert.Equal(t, fmt.Sprintf("<%s ID=1>", pkt.Type().String()), pkt.String())
-
-	buf := make([]byte, pkt.Len(M4))
-	n, err := pkt.Encode(M4, buf)
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
-
-	n, err = pkt.Decode(M4, buf)
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
-}
-
-func TestPubackImplementation(t *testing.T) {
-	pkt := NewPuback()
-	pkt.ID = 1
-
-	testIdentifiedImplementation(t, pkt)
-}
-
-func TestPubcompImplementation(t *testing.T) {
-	pkt := NewPubcomp()
-	pkt.ID = 1
-
-	testIdentifiedImplementation(t, pkt)
-}
-
-func TestPubrecImplementation(t *testing.T) {
-	pkt := NewPubrec()
-	pkt.ID = 1
-
-	testIdentifiedImplementation(t, pkt)
-}
-
-func TestPubrelImplementation(t *testing.T) {
-	pkt := NewPubrel()
-	pkt.ID = 1
-
-	testIdentifiedImplementation(t, pkt)
-}
-
-func TestUnsubackImplementation(t *testing.T) {
-	pkt := NewUnsuback()
-	pkt.ID = 1
-
-	testIdentifiedImplementation(t, pkt)
 }

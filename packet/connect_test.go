@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConnectInterface(t *testing.T) {
+func TestConnect(t *testing.T) {
 	pkt := NewConnect()
 	pkt.Will = &Message{
 		Topic:   "w",
