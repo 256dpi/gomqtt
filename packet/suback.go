@@ -49,7 +49,7 @@ func (sp *Suback) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 func (sp *Suback) Decode(src []byte) (int, error) {
 	// decode header
-	total, _, rl, err := headerDecode(src, SUBACK)
+	total, _, rl, err := decodeHeader(src, SUBACK)
 	if err != nil {
 		return total, err
 	}
@@ -110,7 +110,7 @@ func (sp *Suback) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	total, err := headerEncode(dst, 0, sp.len(), sp.Len(), SUBACK)
+	total, err := encodeHeader(dst, 0, sp.len(), sp.Len(), SUBACK)
 	if err != nil {
 		return total, err
 	}

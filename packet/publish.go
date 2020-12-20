@@ -47,7 +47,7 @@ func (pp *Publish) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 func (pp *Publish) Decode(src []byte) (int, error) {
 	// decode header
-	hl, flags, rl, err := headerDecode(src, PUBLISH)
+	hl, flags, rl, err := decodeHeader(src, PUBLISH)
 	total := hl
 	if err != nil {
 		return total, err
@@ -137,7 +137,7 @@ func (pp *Publish) Encode(dst []byte) (int, error) {
 	flags = (flags & 249) | (byte(pp.Message.QOS) << 1) // 249 = 11111001
 
 	// encode header
-	total, err := headerEncode(dst, flags, pp.len(), pp.Len(), PUBLISH)
+	total, err := encodeHeader(dst, flags, pp.len(), pp.Len(), PUBLISH)
 	if err != nil {
 		return total, err
 	}

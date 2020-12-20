@@ -79,7 +79,7 @@ func (cp *Connack) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 func (cp *Connack) Decode(src []byte) (int, error) {
 	// decode header
-	total, _, rl, err := headerDecode(src, CONNACK)
+	total, _, rl, err := decodeHeader(src, CONNACK)
 	if err != nil {
 		return total, err
 	}
@@ -116,7 +116,7 @@ func (cp *Connack) Decode(src []byte) (int, error) {
 // the way. If there is an error, the byte slice should be considered invalid.
 func (cp *Connack) Encode(dst []byte) (int, error) {
 	// encode header
-	total, err := headerEncode(dst, 0, 2, cp.Len(), CONNACK)
+	total, err := encodeHeader(dst, 0, 2, cp.Len(), CONNACK)
 	if err != nil {
 		return total, err
 	}

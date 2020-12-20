@@ -8,7 +8,7 @@ func nakedLen() int {
 // decodes a naked packet
 func nakedDecode(src []byte, t Type) (int, error) {
 	// decode header
-	hl, _, rl, err := headerDecode(src, t)
+	hl, _, rl, err := decodeHeader(src, t)
 
 	// check remaining length
 	if rl != 0 {
@@ -21,7 +21,7 @@ func nakedDecode(src []byte, t Type) (int, error) {
 // encodes a naked packet
 func nakedEncode(dst []byte, t Type) (int, error) {
 	// encode header
-	return headerEncode(dst, 0, 0, nakedLen(), t)
+	return encodeHeader(dst, 0, 0, nakedLen(), t)
 }
 
 // A Disconnect packet is sent from the client to the server.

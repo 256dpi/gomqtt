@@ -47,7 +47,7 @@ func (up *Unsubscribe) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 func (up *Unsubscribe) Decode(src []byte) (int, error) {
 	// decode header
-	total, _, rl, err := headerDecode(src, UNSUBSCRIBE)
+	total, _, rl, err := decodeHeader(src, UNSUBSCRIBE)
 	if err != nil {
 		return total, err
 	}
@@ -106,7 +106,7 @@ func (up *Unsubscribe) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	total, err := headerEncode(dst, 0, up.len(), up.Len(), UNSUBSCRIBE)
+	total, err := encodeHeader(dst, 0, up.len(), up.Len(), UNSUBSCRIBE)
 	if err != nil {
 		return total, err
 	}

@@ -83,7 +83,7 @@ func (cp *Connect) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 func (cp *Connect) Decode(src []byte) (int, error) {
 	// decode header
-	total, _, _, err := headerDecode(src, CONNECT)
+	total, _, _, err := decodeHeader(src, CONNECT)
 	if err != nil {
 		return total, err
 	}
@@ -223,7 +223,7 @@ func (cp *Connect) Decode(src []byte) (int, error) {
 // the way. If there is an error, the byte slice should be considered invalid.
 func (cp *Connect) Encode(dst []byte) (int, error) {
 	// encode header
-	total, err := headerEncode(dst, 0, cp.len(), cp.Len(), CONNECT)
+	total, err := encodeHeader(dst, 0, cp.len(), cp.Len(), CONNECT)
 	if err != nil {
 		return total, err
 	}

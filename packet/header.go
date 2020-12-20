@@ -5,7 +5,7 @@ func headerLen(rl int) int {
 	return 1 + varintLen(uint64(rl))
 }
 
-func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
+func encodeHeader(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	// check buffer length
 	if len(dst) < tl {
 		return 0, insufficientBufferSize(t)
@@ -36,7 +36,7 @@ func headerEncode(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	return 1 + n, nil
 }
 
-func headerDecode(src []byte, t Type) (int, byte, int, error) {
+func decodeHeader(src []byte, t Type) (int, byte, int, error) {
 	// check buffer size
 	if len(src) < 2 {
 		return 0, 0, 0, insufficientBufferSize(t)

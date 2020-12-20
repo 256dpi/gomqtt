@@ -62,7 +62,7 @@ func (sp *Subscribe) Len() int {
 // bytes decoded, and whether there have been any errors during the process.
 func (sp *Subscribe) Decode(src []byte) (int, error) {
 	// decode header
-	total, _, rl, err := headerDecode(src, SUBSCRIBE)
+	total, _, rl, err := decodeHeader(src, SUBSCRIBE)
 	if err != nil {
 		return total, err
 	}
@@ -133,7 +133,7 @@ func (sp *Subscribe) Encode(dst []byte) (int, error) {
 	}
 
 	// encode header
-	total, err := headerEncode(dst, 0, sp.len(), sp.Len(), SUBSCRIBE)
+	total, err := encodeHeader(dst, 0, sp.len(), sp.Len(), SUBSCRIBE)
 	if err != nil {
 		return total, err
 	}

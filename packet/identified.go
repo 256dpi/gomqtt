@@ -13,7 +13,7 @@ func identifiedLen() int {
 // decodes an identified packet
 func identifiedDecode(src []byte, t Type) (int, ID, error) {
 	// decode header
-	total, _, rl, err := headerDecode(src, t)
+	total, _, rl, err := decodeHeader(src, t)
 	if err != nil {
 		return total, 0, err
 	}
@@ -43,7 +43,7 @@ func identifiedEncode(dst []byte, id ID, t Type) (int, error) {
 	}
 
 	// encode header
-	total, err := headerEncode(dst, 0, 2, identifiedLen(), t)
+	total, err := encodeHeader(dst, 0, 2, identifiedLen(), t)
 	if err != nil {
 		return total, err
 	}
