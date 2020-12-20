@@ -52,6 +52,25 @@ type Connack struct {
 	// is unable to process it for some reason, then the server should attempt
 	// to send a Connack containing a non-zero ReturnCode.
 	ReturnCode ConnackCode
+
+	ReasonCode byte
+
+	Properties []Property
+	// SessionExpiryInterval uint32
+	// ReceiveMaximum uint16
+	// MaximumQOS byte
+	// RetainAvailable bool
+	// MaximumPacketSize uint32
+	// AssignedClientID string
+	// TopicAliasMaximum uint16
+	// ReasonString string
+	// UserProperties map[string][]byte
+	// WildcardSubscriptionAvailable bool
+	// SubscriptionIdentifiersAvailable bool
+	// SharedSubscriptionAvailable bool
+	// ServerKeepAlive uint16
+	// ResponseInformation string
+	// ServerReference string
 }
 
 // NewConnack creates a new Connack packet.

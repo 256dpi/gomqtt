@@ -12,6 +12,15 @@ type Subscription struct {
 
 	// The requested maximum QOS level.
 	QOS QOS
+
+	MaxQOS            QOS
+	NoLocal           bool
+	RetainAsPublished bool
+	RetainHandling    byte
+
+	Properties []Property
+	// SubscriptionIdentifier uint64
+	// UserProperties map[string][]byte
 }
 
 func (s *Subscription) String() string {
