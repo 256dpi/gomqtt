@@ -36,14 +36,14 @@ func (u *Unsubscribe) String() string {
 }
 
 // Len returns the byte length of the encoded packet.
-func (u *Unsubscribe) Len() int {
+func (u *Unsubscribe) Len(m Mode) int {
 	ml := u.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (u *Unsubscribe) Decode(src []byte) (int, error) {
+func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, UNSUBSCRIBE)
 	if err != nil {
@@ -94,9 +94,9 @@ func (u *Unsubscribe) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (u *Unsubscribe) Encode(dst []byte) (int, error) {
+func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
-	total, err := encodeHeader(dst, 0, u.len(), u.Len(), UNSUBSCRIBE)
+	total, err := encodeHeader(dst, 0, u.len(), u.Len(m), UNSUBSCRIBE)
 	if err != nil {
 		return total, err
 	}

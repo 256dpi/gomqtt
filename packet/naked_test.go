@@ -105,12 +105,12 @@ func testNakedImplementation(t *testing.T, _t Type) {
 	assert.Equal(t, _t, pkt.Type())
 	assert.Equal(t, fmt.Sprintf("<%s>", pkt.Type().String()), pkt.String())
 
-	buf := make([]byte, pkt.Len())
-	n, err := pkt.Encode(buf)
+	buf := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, buf)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
 
-	n, err = pkt.Decode(buf)
+	n, err = pkt.Decode(M4, buf)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
 }

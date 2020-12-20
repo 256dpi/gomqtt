@@ -38,7 +38,7 @@ func TestSubscribeDecode(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	n, err := pkt.Decode(packet)
+	n, err := pkt.Decode(M4, packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -58,7 +58,7 @@ func TestSubscribeDecodeError1(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -71,7 +71,7 @@ func TestSubscribeDecodeError2(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -86,7 +86,7 @@ func TestSubscribeDecodeError3(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -103,7 +103,7 @@ func TestSubscribeDecodeError4(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -121,7 +121,7 @@ func TestSubscribeDecodeError5(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -139,7 +139,7 @@ func TestSubscribeDecodeError6(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -157,7 +157,7 @@ func TestSubscribeDecodeError7(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -190,8 +190,8 @@ func TestSubscribeEncode(t *testing.T) {
 		{Topic: "/a/b/#/cdd", QOS: 2},
 	}
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -203,7 +203,7 @@ func TestSubscribeEncodeError1(t *testing.T) {
 	pkt.ID = 7
 
 	dst := make([]byte, 1) // < too small
-	_, err := pkt.Encode(dst)
+	_, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 }
@@ -215,8 +215,8 @@ func TestSubscribeEncodeError2(t *testing.T) {
 		{Topic: string(make([]byte, 65536)), QOS: 0}, // too big
 	}
 
-	dst := make([]byte, pkt.Len())
-	_, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	_, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 }
@@ -225,8 +225,8 @@ func TestSubscribeEncodeError3(t *testing.T) {
 	pkt := NewSubscribe()
 	pkt.ID = 0 // < zero packet id
 
-	dst := make([]byte, pkt.Len())
-	_, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	_, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 }
@@ -238,8 +238,8 @@ func TestSubscribeEncodeError4(t *testing.T) {
 		{Topic: string(make([]byte, 10)), QOS: 0x81}, // invalid qos
 	}
 
-	dst := make([]byte, pkt.Len())
-	_, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	_, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 }
@@ -265,19 +265,19 @@ func TestSubscribeEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := NewSubscribe()
-	n, err := pkt.Decode(packet)
+	n, err := pkt.Decode(M4, packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
 
-	dst := make([]byte, pkt.Len())
-	n2, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n2, err := pkt.Encode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n2)
 	assert.Equal(t, packet, dst[:n2])
 
-	n3, err := pkt.Decode(dst)
+	n3, err := pkt.Decode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n3)
@@ -292,10 +292,10 @@ func BenchmarkSubscribeEncode(b *testing.B) {
 		{Topic: "t", QOS: 0},
 	}
 
-	buf := make([]byte, pkt.Len())
+	buf := make([]byte, pkt.Len(M4))
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Encode(buf)
+		_, err := pkt.Encode(M4, buf)
 		if err != nil {
 			panic(err)
 		}
@@ -319,7 +319,7 @@ func BenchmarkSubscribeDecode(b *testing.B) {
 	pkt := NewSubscribe()
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(packet)
+		_, err := pkt.Decode(M4, packet)
 		if err != nil {
 			panic(err)
 		}

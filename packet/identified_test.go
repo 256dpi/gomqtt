@@ -108,7 +108,7 @@ func TestIdentifiedEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := &Puback{}
-	n, err := pkt.Decode(packet)
+	n, err := pkt.Decode(M4, packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
@@ -133,10 +133,10 @@ func BenchmarkIdentifiedEncode(b *testing.B) {
 	pkt := &Puback{}
 	pkt.ID = 1
 
-	buf := make([]byte, pkt.Len())
+	buf := make([]byte, pkt.Len(M4))
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Encode(buf)
+		_, err := pkt.Encode(M4, buf)
 		if err != nil {
 			panic(err)
 		}
@@ -156,7 +156,7 @@ func BenchmarkIdentifiedDecode(b *testing.B) {
 	pkt := &Puback{}
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(packet)
+		_, err := pkt.Decode(M4, packet)
 		if err != nil {
 			panic(err)
 		}
@@ -166,12 +166,12 @@ func BenchmarkIdentifiedDecode(b *testing.B) {
 func testIdentifiedImplementation(t *testing.T, pkt Generic) {
 	assert.Equal(t, fmt.Sprintf("<%s ID=1>", pkt.Type().String()), pkt.String())
 
-	buf := make([]byte, pkt.Len())
-	n, err := pkt.Encode(buf)
+	buf := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, buf)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
 
-	n, err = pkt.Decode(buf)
+	n, err = pkt.Decode(M4, buf)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
 }

@@ -77,8 +77,8 @@ func TestNetConnCloseWhileReadError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
-		buf := make([]byte, pkt.Len())
-		_, err := pkt.Encode(buf)
+		buf := make([]byte, pkt.Len(packet.M4))
+		_, err := pkt.Encode(packet.M4, buf)
 		assert.NoError(t, err)
 
 		netConn := conn1.(*NetConn)
@@ -100,8 +100,8 @@ func TestNetConnCloseWhileDetectError(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
-		buf := make([]byte, pkt.Len())
-		_, err := pkt.Encode(buf)
+		buf := make([]byte, pkt.Len(packet.M4))
+		_, err := pkt.Encode(packet.M4, buf)
 		assert.NoError(t, err)
 
 		netConn := conn1.(*NetConn)
@@ -123,8 +123,8 @@ func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 	conn2, done := connectionPair("tcp", func(conn1 Conn) {
 		pkt := packet.NewPublish()
 		pkt.Message.Topic = "foo/bar/baz"
-		buf := make([]byte, pkt.Len())
-		_, err := pkt.Encode(buf)
+		buf := make([]byte, pkt.Len(packet.M4))
+		_, err := pkt.Encode(packet.M4, buf)
 		assert.NoError(t, err)
 
 		netConn := conn1.(*NetConn)
@@ -161,7 +161,7 @@ func BenchmarkNetConn(b *testing.B) {
 		}
 	}
 
-	b.SetBytes(int64(pkt.Len() * 2))
+	b.SetBytes(int64(pkt.Len(packet.M4) * 2))
 
 	safeReceive(done)
 }
@@ -186,7 +186,7 @@ func BenchmarkNetConnAsync(b *testing.B) {
 		}
 	}
 
-	b.SetBytes(int64(pkt.Len() * 2))
+	b.SetBytes(int64(pkt.Len(packet.M4) * 2))
 
 	safeReceive(done)
 }
