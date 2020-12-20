@@ -173,3 +173,35 @@ func writeLPBytes(buf []byte, bytes []byte, t Type) (int, error) {
 
 	return n, nil
 }
+
+func readPair(buf []byte, t Type) (string, string, int, error) {
+	// read key
+	key, nk, err := readLPString(buf, t)
+	if err != nil {
+		return "", "", nk, err
+	}
+
+	// read value
+	value, nv, err := readLPString(buf[nk:], t)
+	if err != nil {
+		return key, "", nk + nv, err
+	}
+
+	return key, value, nk + nv, nil
+}
+
+func writePair(buf []byte, key, value string, t Type) (int, error) {
+	// write key
+	nk, err := writeLPString(buf, key, t)
+	if err != nil {
+		return nk, err
+	}
+
+	// write value
+	nv, err := writeLPString(buf, value, t)
+	if err != nil {
+		return nk + nv, err
+	}
+
+	return nk + nv, nil
+}
