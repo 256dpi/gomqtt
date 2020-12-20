@@ -17,10 +17,6 @@ type Subscription struct {
 	NoLocal           bool
 	RetainAsPublished bool
 	RetainHandling    byte
-
-	Properties []Property
-	// SubscriptionIdentifier uint64
-	// UserProperties map[string][]byte
 }
 
 func (s *Subscription) String() string {
@@ -36,6 +32,10 @@ type Subscribe struct {
 
 	// The packet identifier.
 	ID ID
+
+	Properties []Property
+	// SubscriptionIdentifier uint64
+	// UserProperties map[string][]byte
 }
 
 // NewSubscribe creates a new Subscribe packet.

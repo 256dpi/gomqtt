@@ -35,7 +35,7 @@ func (u *Unsubscribe) String() string {
 		topics = append(topics, fmt.Sprintf("%q", t))
 	}
 
-	return fmt.Sprintf("<Unsubscribe Topics=[%s]>", strings.Join(topics, ", "))
+	return fmt.Sprintf("<Unsubscribe ID=%d Topics=[%s]>", u.ID, strings.Join(topics, ", "))
 }
 
 // Len returns the byte length of the encoded packet.

@@ -8,14 +8,31 @@ import (
 
 func TestConnect(t *testing.T) {
 	pkt := NewConnect()
+	pkt.ClientID = "c"
+	pkt.KeepAlive = 5
+	pkt.Username = "u"
+	pkt.Password = "p"
+	pkt.CleanSession = true
 	pkt.Will = &Message{
 		Topic:   "w",
 		Payload: []byte("m"),
 		QOS:     QOSAtLeastOnce,
+		Retain:  true,
 	}
 
 	assert.Equal(t, pkt.Type(), CONNECT)
-	assert.Equal(t, "<Connect ClientID=\"\" KeepAlive=0 Username=\"\" Password=\"\" CleanSession=true Will=<Message Topic=\"w\" QOS=1 Retain=false Payload=6d> Version=4>", pkt.String())
+	assert.Equal(t, `<Connect ClientID="c" KeepAlive=5 Username="u" Password="p" CleanSession=true Will=<Message Topic="w" QOS=1 Retain=true Payload=6d> Version=4>`, pkt.String())
+
+	buf := make([]byte, pkt.Len(M4))
+	n1, err := pkt.Encode(M4, buf)
+	assert.NoError(t, err)
+
+	pkt2 := NewConnect()
+	n2, err := pkt2.Decode(M4, buf)
+	assert.NoError(t, err)
+
+	assert.Equal(t, pkt, pkt2)
+	assert.Equal(t, n1, n2)
 }
 
 func TestConnectDecode1(t *testing.T) {
@@ -656,53 +673,6 @@ func TestConnectEncodeError11(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, 9, n)
-}
-
-func TestConnectEqualDecodeEncode(t *testing.T) {
-	packet := []byte{
-		byte(CONNECT << 4),
-		58,
-		0, // Protocol String MSB
-		4, // Protocol String LSB
-		'M', 'Q', 'T', 'T',
-		4,   // Protocol level 4
-		238, // Connect Flags
-		0,   // Keep Alive MSB
-		10,  // Keep Alive LSB
-		0,   // Client ID MSB
-		6,   // Client ID LSB
-		'g', 'o', 'm', 'q', 't', 't',
-		0, // Will Topic MSB
-		4, // Will Topic LSB
-		'w', 'i', 'l', 'l',
-		0,  // Will Message MSB
-		12, // Will Message LSB
-		's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		0, // Username ID MSB
-		6, // Username ID LSB
-		'g', 'o', 'm', 'q', 't', 't',
-		0,  // Password ID MSB
-		10, // Password ID LSB
-		'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
-	}
-
-	pkt := NewConnect()
-	n, err := pkt.Decode(M4, packet)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n)
-
-	dst := make([]byte, pkt.Len(M4))
-	n2, err := pkt.Encode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n2)
-	assert.Equal(t, packet, dst[:n2])
-
-	n3, err := pkt.Decode(M4, dst)
-
-	assert.NoError(t, err)
-	assert.Equal(t, len(packet), n3)
 }
 
 func BenchmarkConnectEncode(b *testing.B) {
