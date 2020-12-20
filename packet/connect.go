@@ -77,14 +77,14 @@ func (c *Connect) String() string {
 }
 
 // Len returns the byte length of the encoded packet.
-func (c *Connect) Len() int {
+func (c *Connect) Len(m Mode) int {
 	ml := c.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (c *Connect) Decode(src []byte) (int, error) {
+func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, CONNECT)
 	if err != nil {
@@ -221,9 +221,9 @@ func (c *Connect) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (c *Connect) Encode(dst []byte) (int, error) {
+func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
-	total, err := encodeHeader(dst, 0, c.len(), c.Len(), CONNECT)
+	total, err := encodeHeader(dst, 0, c.len(), c.Len(m), CONNECT)
 	if err != nil {
 		return total, err
 	}

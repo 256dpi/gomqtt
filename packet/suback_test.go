@@ -27,7 +27,7 @@ func TestSubackDecode(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	n, err := pkt.Decode(packet)
+	n, err := pkt.Decode(M4, packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -44,7 +44,7 @@ func TestSubackDecodeError1(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -62,7 +62,7 @@ func TestSubackDecodeError2(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -75,7 +75,7 @@ func TestSubackDecodeError3(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -90,7 +90,7 @@ func TestSubackDecodeError4(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -105,7 +105,7 @@ func TestSubackDecodeError5(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -127,7 +127,7 @@ func TestSubackEncode(t *testing.T) {
 	pkt.ReturnCodes = []QOS{0, 1, 2, 0x80}
 
 	dst := make([]byte, 10)
-	n, err := pkt.Encode(dst)
+	n, err := pkt.Encode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -139,8 +139,8 @@ func TestSubackEncodeError1(t *testing.T) {
 	pkt.ID = 7
 	pkt.ReturnCodes = []QOS{0x81}
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)
@@ -151,8 +151,8 @@ func TestSubackEncodeError2(t *testing.T) {
 	pkt.ID = 7
 	pkt.ReturnCodes = []QOS{0x80}
 
-	dst := make([]byte, pkt.Len()-1)
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4)-1)
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)
@@ -163,8 +163,8 @@ func TestSubackEncodeError3(t *testing.T) {
 	pkt.ID = 0 // < zero packet id
 	pkt.ReturnCodes = []QOS{0x80}
 
-	dst := make([]byte, pkt.Len()-1)
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4)-1)
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)
@@ -183,19 +183,19 @@ func TestSubackEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := NewSuback()
-	n, err := pkt.Decode(packet)
+	n, err := pkt.Decode(M4, packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
 
 	dst := make([]byte, 100)
-	n2, err := pkt.Encode(dst)
+	n2, err := pkt.Encode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n2)
 	assert.Equal(t, packet, dst[:n2])
 
-	n3, err := pkt.Decode(dst)
+	n3, err := pkt.Decode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n3)
@@ -208,10 +208,10 @@ func BenchmarkSubackEncode(b *testing.B) {
 	pkt.ID = 1
 	pkt.ReturnCodes = []QOS{0}
 
-	buf := make([]byte, pkt.Len())
+	buf := make([]byte, pkt.Len(M4))
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Encode(buf)
+		_, err := pkt.Encode(M4, buf)
 		if err != nil {
 			panic(err)
 		}
@@ -232,7 +232,7 @@ func BenchmarkSubackDecode(b *testing.B) {
 	pkt := NewSuback()
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(packet)
+		_, err := pkt.Decode(M4, packet)
 		if err != nil {
 			panic(err)
 		}

@@ -99,8 +99,8 @@ func TestWebSocketChunkedMessage(t *testing.T) {
 	pkt.Message.Payload = []byte("world")
 
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
-		buf := make([]byte, pkt.Len())
-		_, err := pkt.Encode(buf)
+		buf := make([]byte, pkt.Len(packet.M4))
+		_, err := pkt.Encode(packet.M4, buf)
 		assert.NoError(t, err)
 
 		err = conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.BinaryMessage, buf[:7])
@@ -130,12 +130,12 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 	pkt.Message.Payload = []byte("world")
 
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
-		buf := make([]byte, pkt.Len()*2)
+		buf := make([]byte, pkt.Len(packet.M4)*2)
 
-		_, err := pkt.Encode(buf)
+		_, err := pkt.Encode(packet.M4, buf)
 		assert.NoError(t, err)
 
-		_, err = pkt.Encode(buf[pkt.Len():])
+		_, err = pkt.Encode(packet.M4, buf[pkt.Len(packet.M4):])
 		assert.NoError(t, err)
 
 		err = conn1.(*WebSocketConn).UnderlyingConn().WriteMessage(websocket.BinaryMessage, buf)
@@ -197,7 +197,7 @@ func BenchmarkWebSocketConn(b *testing.B) {
 		}
 	}
 
-	b.SetBytes(int64(pkt.Len() * 2))
+	b.SetBytes(int64(pkt.Len(packet.M4) * 2))
 
 	safeReceive(done)
 }
@@ -222,7 +222,7 @@ func BenchmarkWebSocketConnAsync(b *testing.B) {
 		}
 	}
 
-	b.SetBytes(int64(pkt.Len() * 2))
+	b.SetBytes(int64(pkt.Len(packet.M4) * 2))
 
 	safeReceive(done)
 }

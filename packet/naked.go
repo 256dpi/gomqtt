@@ -32,20 +32,20 @@ func (ap *Auth) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (ap *Auth) Len() int {
+func (ap *Auth) Len(m Mode) int {
 	return nakedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (ap *Auth) Decode(src []byte) (int, error) {
+func (ap *Auth) Decode(m Mode, src []byte) (int, error) {
 	return nakedDecode(src, AUTH)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (ap *Auth) Encode(dst []byte) (int, error) {
+func (ap *Auth) Encode(m Mode, dst []byte) (int, error) {
 	return nakedEncode(dst, AUTH)
 }
 
@@ -69,20 +69,20 @@ func (d *Disconnect) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (d *Disconnect) Len() int {
+func (d *Disconnect) Len(m Mode) int {
 	return nakedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (d *Disconnect) Decode(src []byte) (int, error) {
+func (d *Disconnect) Decode(m Mode, src []byte) (int, error) {
 	return nakedDecode(src, DISCONNECT)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (d *Disconnect) Encode(dst []byte) (int, error) {
+func (d *Disconnect) Encode(m Mode, dst []byte) (int, error) {
 	return nakedEncode(dst, DISCONNECT)
 }
 
@@ -105,20 +105,20 @@ func (p *Pingreq) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (p *Pingreq) Len() int {
+func (p *Pingreq) Len(m Mode) int {
 	return nakedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (p *Pingreq) Decode(src []byte) (int, error) {
+func (p *Pingreq) Decode(m Mode, src []byte) (int, error) {
 	return nakedDecode(src, PINGREQ)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (p *Pingreq) Encode(dst []byte) (int, error) {
+func (p *Pingreq) Encode(m Mode, dst []byte) (int, error) {
 	return nakedEncode(dst, PINGREQ)
 }
 
@@ -142,20 +142,20 @@ func (p *Pingresp) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (p *Pingresp) Len() int {
+func (p *Pingresp) Len(m Mode) int {
 	return nakedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (p *Pingresp) Decode(src []byte) (int, error) {
+func (p *Pingresp) Decode(m Mode, src []byte) (int, error) {
 	return nakedDecode(src, PINGRESP)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (p *Pingresp) Encode(dst []byte) (int, error) {
+func (p *Pingresp) Encode(m Mode, dst []byte) (int, error) {
 	return nakedEncode(dst, PINGRESP)
 }
 

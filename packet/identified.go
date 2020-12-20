@@ -81,20 +81,20 @@ func (p *Puback) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (p *Puback) Len() int {
+func (p *Puback) Len(m Mode) int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (p *Puback) Decode(src []byte) (int, error) {
+func (p *Puback) Decode(m Mode, src []byte) (int, error) {
 	return identifiedDecode(src, &p.ID, PUBACK)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (p *Puback) Encode(dst []byte) (int, error) {
+func (p *Puback) Encode(m Mode, dst []byte) (int, error) {
 	return identifiedEncode(dst, p.ID, PUBACK)
 }
 
@@ -121,20 +121,20 @@ func (p *Pubcomp) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (p *Pubcomp) Len() int {
+func (p *Pubcomp) Len(m Mode) int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (p *Pubcomp) Decode(src []byte) (int, error) {
+func (p *Pubcomp) Decode(m Mode, src []byte) (int, error) {
 	return identifiedDecode(src, &p.ID, PUBCOMP)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (p *Pubcomp) Encode(dst []byte) (int, error) {
+func (p *Pubcomp) Encode(m Mode, dst []byte) (int, error) {
 	return identifiedEncode(dst, p.ID, PUBCOMP)
 }
 
@@ -161,20 +161,20 @@ func (p *Pubrec) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (p *Pubrec) Len() int {
+func (p *Pubrec) Len(m Mode) int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (p *Pubrec) Decode(src []byte) (int, error) {
+func (p *Pubrec) Decode(m Mode, src []byte) (int, error) {
 	return identifiedDecode(src, &p.ID, PUBREC)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (p *Pubrec) Encode(dst []byte) (int, error) {
+func (p *Pubrec) Encode(m Mode, dst []byte) (int, error) {
 	return identifiedEncode(dst, p.ID, PUBREC)
 }
 
@@ -201,20 +201,20 @@ func (p *Pubrel) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (p *Pubrel) Len() int {
+func (p *Pubrel) Len(m Mode) int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (p *Pubrel) Decode(src []byte) (int, error) {
+func (p *Pubrel) Decode(m Mode, src []byte) (int, error) {
 	return identifiedDecode(src, &p.ID, PUBREL)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (p *Pubrel) Encode(dst []byte) (int, error) {
+func (p *Pubrel) Encode(m Mode, dst []byte) (int, error) {
 	return identifiedEncode(dst, p.ID, PUBREL)
 }
 
@@ -241,20 +241,20 @@ func (u *Unsuback) Type() Type {
 }
 
 // Len returns the byte length of the encoded packet.
-func (u *Unsuback) Len() int {
+func (u *Unsuback) Len(m Mode) int {
 	return identifiedLen()
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (u *Unsuback) Decode(src []byte) (int, error) {
+func (u *Unsuback) Decode(m Mode, src []byte) (int, error) {
 	return identifiedDecode(src, &u.ID, UNSUBACK)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (u *Unsuback) Encode(dst []byte) (int, error) {
+func (u *Unsuback) Encode(m Mode, dst []byte) (int, error) {
 	return identifiedEncode(dst, u.ID, UNSUBACK)
 }
 

@@ -35,14 +35,14 @@ func (p *Publish) String() string {
 }
 
 // Len returns the byte length of the encoded packet.
-func (p *Publish) Len() int {
+func (p *Publish) Len(m Mode) int {
 	ml := p.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (p *Publish) Decode(src []byte) (int, error) {
+func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	hl, flags, rl, err := decodeHeader(src, PUBLISH)
 	total := hl
@@ -107,7 +107,7 @@ func (p *Publish) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (p *Publish) Encode(dst []byte) (int, error) {
+func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 	// check topic length
 	if len(p.Message.Topic) == 0 {
 		return 0, makeError(PUBLISH, "topic name is empty")
@@ -140,7 +140,7 @@ func (p *Publish) Encode(dst []byte) (int, error) {
 	flags = (flags & 249) | (byte(p.Message.QOS) << 1) // 249 = 11111001
 
 	// encode header
-	total, err := encodeHeader(dst, flags, p.len(), p.Len(), PUBLISH)
+	total, err := encodeHeader(dst, flags, p.len(), p.Len(m), PUBLISH)
 	if err != nil {
 		return total, err
 	}

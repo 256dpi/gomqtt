@@ -55,8 +55,8 @@ func TestDecoder(t *testing.T) {
 	dec := NewDecoder(buf)
 
 	var pkt Generic = NewConnect()
-	b := make([]byte, pkt.Len())
-	_, err := pkt.Encode(b)
+	b := make([]byte, pkt.Len(M4))
+	_, err := pkt.Encode(M4, b)
 	assert.NoError(t, err)
 	buf.Write(b)
 

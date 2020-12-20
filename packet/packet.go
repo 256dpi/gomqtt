@@ -36,6 +36,15 @@ func (id ID) Valid() bool {
 	return id != 0
 }
 
+// Mode defines the encoding/decoding mode.
+type Mode struct {
+	// UseV5 will use MQTT V5 encoding/decoding.
+	UseV5 bool
+}
+
+var M4 = Mode{UseV5: false}
+var M5 = Mode{UseV5: false}
+
 // Generic is an MQTT control packet that can be encoded to a buffer or decoded
 // from a buffer.
 type Generic interface {
@@ -43,16 +52,16 @@ type Generic interface {
 	Type() Type
 
 	// Len returns the byte length of the encoded packet.
-	Len() int
+	Len(m Mode) int
 
 	// Decode reads from the byte slice argument. It returns the total number of
 	// bytes decoded, and whether there have been any errors during the process.
-	Decode(src []byte) (int, error)
+	Decode(m Mode, src []byte) (int, error)
 
 	// Encode writes the packet bytes into the byte slice from the argument. It
 	// returns the number of bytes encoded and whether there's any errors along
 	// the way. If there is an error, the byte slice should be considered invalid.
-	Encode(dst []byte) (int, error)
+	Encode(m Mode, dst []byte) (int, error)
 
 	// String returns a string representation of the packet.
 	String() string
@@ -128,7 +137,7 @@ func Fuzz(data []byte) int {
 	}
 
 	// decode it from the buffer.
-	_, err = pkt.Decode(data)
+	_, err = pkt.Decode(Mode{}, data)
 	if err != nil {
 		return 0
 	}

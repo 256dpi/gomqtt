@@ -47,7 +47,7 @@ func TestConnectDecode1(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	n, err := pkt.Decode(packet)
+	n, err := pkt.Decode(M4, packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -89,7 +89,7 @@ func TestConnectDecode2(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	n, err := pkt.Decode(packet)
+	n, err := pkt.Decode(M4, packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -112,7 +112,7 @@ func TestConnectDecodeError1(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -127,7 +127,7 @@ func TestConnectDecodeError2(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -143,7 +143,7 @@ func TestConnectDecodeError3(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -159,7 +159,7 @@ func TestConnectDecodeError4(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -175,7 +175,7 @@ func TestConnectDecodeError5(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -192,7 +192,7 @@ func TestConnectDecodeError6(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -209,7 +209,7 @@ func TestConnectDecodeError7(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -226,7 +226,7 @@ func TestConnectDecodeError8(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -243,7 +243,7 @@ func TestConnectDecodeError9(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -260,7 +260,7 @@ func TestConnectDecodeError10(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -279,7 +279,7 @@ func TestConnectDecodeError11(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -301,7 +301,7 @@ func TestConnectDecodeError12(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -322,7 +322,7 @@ func TestConnectDecodeError13(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -345,7 +345,7 @@ func TestConnectDecodeError14(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -370,7 +370,7 @@ func TestConnectDecodeError15(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -393,7 +393,7 @@ func TestConnectDecodeError16(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -418,7 +418,7 @@ func TestConnectDecodeError17(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	_, err := pkt.Decode(packet)
+	_, err := pkt.Decode(M4, packet)
 
 	assert.Error(t, err)
 }
@@ -463,8 +463,8 @@ func TestConnectEncode1(t *testing.T) {
 	pkt.Username = "gomqtt"
 	pkt.Password = "verysecret"
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -491,8 +491,8 @@ func TestConnectEncode2(t *testing.T) {
 	pkt.KeepAlive = 10
 	pkt.Version = Version31
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -519,8 +519,8 @@ func TestConnectEncode3(t *testing.T) {
 	pkt.KeepAlive = 10
 	pkt.Version = 0
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
@@ -531,7 +531,7 @@ func TestConnectEncodeError1(t *testing.T) {
 	pkt := NewConnect()
 
 	dst := make([]byte, 4) // < too small buffer
-	n, err := pkt.Encode(dst)
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)
@@ -544,8 +544,8 @@ func TestConnectEncodeError2(t *testing.T) {
 		QOS:   3, // < wrong qos
 	}
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 9, n)
@@ -555,8 +555,8 @@ func TestConnectEncodeError3(t *testing.T) {
 	pkt := NewConnect()
 	pkt.ClientID = string(make([]byte, 65536)) // < too big
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 14, n)
@@ -568,8 +568,8 @@ func TestConnectEncodeError4(t *testing.T) {
 		Topic: string(make([]byte, 65536)), // < too big
 	}
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 16, n)
@@ -582,8 +582,8 @@ func TestConnectEncodeError5(t *testing.T) {
 		Payload: make([]byte, 65536), // < too big
 	}
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 19, n)
@@ -593,8 +593,8 @@ func TestConnectEncodeError6(t *testing.T) {
 	pkt := NewConnect()
 	pkt.Username = string(make([]byte, 65536)) // < too big
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 16, n)
@@ -604,8 +604,8 @@ func TestConnectEncodeError7(t *testing.T) {
 	pkt := NewConnect()
 	pkt.Password = "p" // < missing username
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 14, n)
@@ -616,8 +616,8 @@ func TestConnectEncodeError8(t *testing.T) {
 	pkt.Username = "u"
 	pkt.Password = string(make([]byte, 65536)) // < too big
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 19, n)
@@ -629,8 +629,8 @@ func TestConnectEncodeError9(t *testing.T) {
 		// < missing topic
 	}
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 9, n)
@@ -640,8 +640,8 @@ func TestConnectEncodeError10(t *testing.T) {
 	pkt := NewConnect()
 	pkt.Version = 255
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 2, n)
@@ -651,8 +651,8 @@ func TestConnectEncodeError11(t *testing.T) {
 	pkt := NewConnect()
 	pkt.CleanSession = false // < client id is empty
 
-	dst := make([]byte, pkt.Len())
-	n, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n, err := pkt.Encode(M4, dst)
 
 	assert.Error(t, err)
 	assert.Equal(t, 9, n)
@@ -687,19 +687,19 @@ func TestConnectEqualDecodeEncode(t *testing.T) {
 	}
 
 	pkt := NewConnect()
-	n, err := pkt.Decode(packet)
+	n, err := pkt.Decode(M4, packet)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n)
 
-	dst := make([]byte, pkt.Len())
-	n2, err := pkt.Encode(dst)
+	dst := make([]byte, pkt.Len(M4))
+	n2, err := pkt.Encode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n2)
 	assert.Equal(t, packet, dst[:n2])
 
-	n3, err := pkt.Decode(dst)
+	n3, err := pkt.Decode(M4, dst)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(packet), n3)
@@ -720,10 +720,10 @@ func BenchmarkConnectEncode(b *testing.B) {
 	pkt.Username = "u"
 	pkt.Password = "p"
 
-	buf := make([]byte, pkt.Len())
+	buf := make([]byte, pkt.Len(M4))
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Encode(buf)
+		_, err := pkt.Encode(M4, buf)
 		if err != nil {
 			panic(err)
 		}
@@ -763,7 +763,7 @@ func BenchmarkConnectDecode(b *testing.B) {
 	pkt := NewConnect()
 
 	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(packet)
+		_, err := pkt.Decode(M4, packet)
 		if err != nil {
 			panic(err)
 		}

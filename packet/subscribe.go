@@ -52,14 +52,14 @@ func (s *Subscribe) String() string {
 }
 
 // Len returns the byte length of the encoded packet.
-func (s *Subscribe) Len() int {
+func (s *Subscribe) Len(m Mode) int {
 	ml := s.len()
 	return headerLen(ml) + ml
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (s *Subscribe) Decode(src []byte) (int, error) {
+func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, SUBSCRIBE)
 	if err != nil {
@@ -135,14 +135,14 @@ func (s *Subscribe) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (s *Subscribe) Encode(dst []byte) (int, error) {
+func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 	// check packet id
 	if !s.ID.Valid() {
 		return 0, makeError(SUBSCRIBE, "packet id must be grater than zero")
 	}
 
 	// encode header
-	total, err := encodeHeader(dst, 0, s.len(), s.Len(), SUBSCRIBE)
+	total, err := encodeHeader(dst, 0, s.len(), s.Len(m), SUBSCRIBE)
 	if err != nil {
 		return total, err
 	}

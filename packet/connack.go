@@ -71,13 +71,13 @@ func (c *Connack) String() string {
 }
 
 // Len returns the byte length of the encoded packet.
-func (c *Connack) Len() int {
+func (c *Connack) Len(m Mode) int {
 	return headerLen(2) + 2
 }
 
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
-func (c *Connack) Decode(src []byte) (int, error) {
+func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, CONNACK)
 	if err != nil {
@@ -121,9 +121,9 @@ func (c *Connack) Decode(src []byte) (int, error) {
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
-func (c *Connack) Encode(dst []byte) (int, error) {
+func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
-	total, err := encodeHeader(dst, 0, 2, c.Len(), CONNACK)
+	total, err := encodeHeader(dst, 0, 2, c.Len(m), CONNACK)
 	if err != nil {
 		return total, err
 	}

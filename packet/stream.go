@@ -35,13 +35,13 @@ func NewEncoder(writer io.Writer) *Encoder {
 // Write encodes and writes the passed packet to the write buffer.
 func (e *Encoder) Write(pkt Generic, async bool) error {
 	// reset and potentially grow buffer
-	packetLength := pkt.Len()
+	packetLength := pkt.Len(Mode{})
 	e.buffer.Reset()
 	e.buffer.Grow(packetLength)
 	buf := e.buffer.Bytes()[0:packetLength]
 
 	// encode packet
-	_, err := pkt.Encode(buf)
+	_, err := pkt.Encode(Mode{}, buf)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (d *Decoder) Read() (Generic, error) {
 		}
 
 		// decode buffer
-		_, err = pkt.Decode(buf)
+		_, err = pkt.Decode(Mode{}, buf)
 		if err != nil {
 			return nil, err
 		}
