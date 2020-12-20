@@ -58,6 +58,15 @@ func writeVarint(buf []byte, num uint64, t Type) (int, error) {
 	return n, nil
 }
 
+func readLPString(buf []byte, t Type) (string, int, error) {
+	bytes, n, err := readLPBytes(buf, false, t)
+	return string(bytes), n, err
+}
+
+func writeLPString(buf []byte, str string, t Type) (int, error) {
+	return writeLPBytes(buf, []byte(str), t)
+}
+
 func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 	// check buffer
 	if len(buf) < 2 {
@@ -87,11 +96,6 @@ func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 	return cpy, 2 + length, nil
 }
 
-func readLPString(buf []byte, t Type) (string, int, error) {
-	bytes, n, err := readLPBytes(buf, false, t)
-	return string(bytes), n, err
-}
-
 func writeLPBytes(buf []byte, bytes []byte, t Type) (int, error) {
 	// get length
 	length := len(bytes)
@@ -113,8 +117,4 @@ func writeLPBytes(buf []byte, bytes []byte, t Type) (int, error) {
 	copy(buf[2:], bytes)
 
 	return 2 + length, nil
-}
-
-func writeLPString(buf []byte, str string, t Type) (int, error) {
-	return writeLPBytes(buf, []byte(str), t)
 }

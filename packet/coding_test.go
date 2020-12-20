@@ -76,74 +76,40 @@ func TestWriteVarint(t *testing.T) {
 	assert.Equal(t, 2, n)
 }
 
-var (
-	testStrings = []string{
-		"this is a test",
-		"hope it succeeds",
-		"but just in case",
-		"send me your millions",
-		"",
-	}
+func TestReadLPBString(t *testing.T) {
+	str, n, err := readLPString([]byte{}, CONNECT)
+	assert.Error(t, err)
+	assert.Empty(t, str)
+	assert.Zero(t, n)
 
-	testBytes = []byte{
-		0x0, 0xe, 't', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 't', 'e', 's', 't',
-		0x0, 0x10, 'h', 'o', 'p', 'e', ' ', 'i', 't', ' ', 's', 'u', 'c', 'c', 'e', 'e', 'd', 's',
-		0x0, 0x10, 'b', 'u', 't', ' ', 'j', 'u', 's', 't', ' ', 'i', 'n', ' ', 'c', 'a', 's', 'e',
-		0x0, 0x15, 's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'y', 'o', 'u', 'r', ' ', 'm', 'i', 'l', 'l', 'i', 'o', 'n', 's',
-		0x0, 0x0,
-	}
-)
+	str, n, err = readLPString([]byte{0xff, 0xff, 0xff, 0xff}, CONNECT)
+	assert.Error(t, err)
+	assert.Empty(t, str)
+	assert.Equal(t, 2, n)
 
-func TestReadLPBytes(t *testing.T) {
-	total := 0
+	str, n, err = readLPString([]byte{0x0, 0x0}, CONNECT)
+	assert.NoError(t, err)
+	assert.Equal(t, "", str)
+	assert.Equal(t, 2, n)
 
-	for _, str := range testStrings {
-		b, n, err := readLPBytes(testBytes[total:], true, CONNECT)
-
-		assert.NoError(t, err)
-		assert.Equal(t, []byte(str), b)
-		assert.Equal(t, len(str)+2, n)
-
-		total += n
-	}
+	str, n, err = readLPString([]byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, CONNECT)
+	assert.NoError(t, err)
+	assert.Equal(t, "Hello", str)
+	assert.Equal(t, 7, n)
 }
 
-func TestReadLPBytesErrors(t *testing.T) {
-	_, _, err := readLPBytes([]byte{}, true, CONNECT)
+func TestWriteLPString(t *testing.T) {
+	n, err := writeLPString([]byte{}, string(make([]byte, 65536)), CONNECT)
 	assert.Error(t, err)
+	assert.Zero(t, n)
 
-	_, _, err = readLPBytes([]byte{0xff, 0xff, 0xff, 0xff}, true, CONNECT)
+	n, err = writeLPString([]byte{}, string(make([]byte, 10)), CONNECT)
 	assert.Error(t, err)
-}
+	assert.Zero(t, n)
 
-func TestReadLPStringErrors(t *testing.T) {
-	_, _, err := readLPString([]byte{}, CONNECT)
-	assert.Error(t, err)
-
-	_, _, err = readLPString([]byte{0xff, 0xff, 0xff, 0xff}, CONNECT)
-	assert.Error(t, err)
-}
-
-func TestWriteLPBytes(t *testing.T) {
-	total := 0
-	buf := make([]byte, 127)
-
-	for _, str := range testStrings {
-		n, err := writeLPBytes(buf[total:], []byte(str), CONNECT)
-
-		assert.NoError(t, err)
-		assert.Equal(t, 2+len(str), n)
-
-		total += n
-	}
-
-	assert.Equal(t, testBytes, buf[:total])
-}
-
-func TestWriteLPBytesErrors(t *testing.T) {
-	_, err := writeLPBytes([]byte{}, make([]byte, 65536), CONNECT)
-	assert.Error(t, err)
-
-	_, err = writeLPBytes([]byte{}, make([]byte, 10), CONNECT)
-	assert.Error(t, err)
+	buf := make([]byte, 7)
+	n, err = writeLPString(buf, "Hello", CONNECT)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, buf)
+	assert.Equal(t, 7, n)
 }
