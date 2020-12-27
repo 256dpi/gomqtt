@@ -73,7 +73,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 	tl := rl - 2
 	for tl > 0 {
 		// read topic
-		topic, n, err := readLPString(src[total:], UNSUBSCRIBE)
+		topic, n, err := readString(src[total:], UNSUBSCRIBE)
 		total += n
 		if err != nil {
 			return total, err
@@ -119,7 +119,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	// write topics
 	for _, topic := range u.Topics {
 		// write topic
-		n, err := writeLPString(dst[total:], topic, UNSUBSCRIBE)
+		n, err := writeString(dst[total:], topic, UNSUBSCRIBE)
 		total += n
 		if err != nil {
 			return total, err

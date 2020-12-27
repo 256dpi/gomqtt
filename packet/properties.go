@@ -203,9 +203,9 @@ func (p *Property) decode(buf []byte, t Type) (int, error) {
 	case VARINT:
 		p.Uint64, n, err = readVarint(buf, t)
 	case STRING:
-		p.String, n, err = readLPString(buf, t)
+		p.String, n, err = readString(buf, t)
 	case BYTES:
-		p.Bytes, n, err = readLPBytes(buf, true, t)
+		p.Bytes, n, err = readBytes(buf, true, t)
 	case PAIR:
 		p.Key, p.Value, n, err = readPair(buf, t)
 	default:
@@ -227,9 +227,9 @@ func (p *Property) encode(buf []byte, t Type) (int, error) {
 	case VARINT:
 		return writeVarint(buf, p.Uint64, t)
 	case STRING:
-		return writeLPString(buf, p.String, t)
+		return writeString(buf, p.String, t)
 	case BYTES:
-		return writeLPBytes(buf, p.Bytes, t)
+		return writeBytes(buf, p.Bytes, t)
 	case PAIR:
 		return writePair(buf, p.Key, p.Value, t)
 	default:

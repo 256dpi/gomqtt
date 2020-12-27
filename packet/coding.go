@@ -109,16 +109,16 @@ func writeVarint(buf []byte, num uint64, t Type) (int, error) {
 	return n, nil
 }
 
-func readLPString(buf []byte, t Type) (string, int, error) {
-	bytes, n, err := readLPBytes(buf, false, t)
+func readString(buf []byte, t Type) (string, int, error) {
+	bytes, n, err := readBytes(buf, false, t)
 	return string(bytes), n, err
 }
 
-func writeLPString(buf []byte, str string, t Type) (int, error) {
-	return writeLPBytes(buf, cast(str), t)
+func writeString(buf []byte, str string, t Type) (int, error) {
+	return writeBytes(buf, cast(str), t)
 }
 
-func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
+func readBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 	// read length
 	l, n, err := readUint(buf, 2, t)
 	if err != nil {
@@ -148,7 +148,7 @@ func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 	return cpy, n, nil
 }
 
-func writeLPBytes(buf []byte, bytes []byte, t Type) (int, error) {
+func writeBytes(buf []byte, bytes []byte, t Type) (int, error) {
 	// get length
 	length := len(bytes)
 
@@ -176,13 +176,13 @@ func writeLPBytes(buf []byte, bytes []byte, t Type) (int, error) {
 
 func readPair(buf []byte, t Type) (string, string, int, error) {
 	// read key
-	key, nk, err := readLPString(buf, t)
+	key, nk, err := readString(buf, t)
 	if err != nil {
 		return "", "", nk, err
 	}
 
 	// read value
-	value, nv, err := readLPString(buf[nk:], t)
+	value, nv, err := readString(buf[nk:], t)
 	if err != nil {
 		return key, "", nk + nv, err
 	}
@@ -192,13 +192,13 @@ func readPair(buf []byte, t Type) (string, string, int, error) {
 
 func writePair(buf []byte, key, value string, t Type) (int, error) {
 	// write key
-	nk, err := writeLPString(buf, key, t)
+	nk, err := writeString(buf, key, t)
 	if err != nil {
 		return nk, err
 	}
 
 	// write value
-	nv, err := writeLPString(buf, value, t)
+	nv, err := writeString(buf, value, t)
 	if err != nil {
 		return nk + nv, err
 	}

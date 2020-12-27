@@ -102,7 +102,7 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 	// read subscriptions
 	for sl > 0 {
 		// read topic
-		topic, n, err := readLPString(src[total:], SUBSCRIBE)
+		topic, n, err := readString(src[total:], SUBSCRIBE)
 		total += n
 		if err != nil {
 			return total, err
@@ -166,7 +166,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 	// write subscriptions
 	for _, sub := range s.Subscriptions {
 		// write topic
-		n, err = writeLPString(dst[total:], sub.Topic, SUBSCRIBE)
+		n, err = writeString(dst[total:], sub.Topic, SUBSCRIBE)
 		total += n
 		if err != nil {
 			return total, err
