@@ -17,187 +17,169 @@ func TestConnackReturnCodes(t *testing.T) {
 }
 
 func TestConnack(t *testing.T) {
-	pkt := NewConnack()
-	pkt.SessionPresent = true
-	pkt.ReturnCode = BadUsernameOrPassword
+	multiTest(t, func(t *testing.T, m Mode) {
+		pkt := NewConnack()
+		pkt.SessionPresent = true
+		pkt.ReturnCode = BadUsernameOrPassword
 
-	assert.Equal(t, pkt.Type(), CONNACK)
-	assert.Equal(t, "<Connack SessionPresent=true ReturnCode=4>", pkt.String())
+		assert.Equal(t, pkt.Type(), CONNACK)
+		assert.Equal(t, "<Connack SessionPresent=true ReturnCode=4>", pkt.String())
 
-	buf := make([]byte, pkt.Len(M4))
-	n1, err := pkt.Encode(M4, buf)
-	assert.NoError(t, err)
+		buf := make([]byte, pkt.Len(m))
+		n1, err := pkt.Encode(m, buf)
+		assert.NoError(t, err)
 
-	pkt2 := NewConnack()
-	n2, err := pkt2.Decode(M4, buf)
-	assert.NoError(t, err)
+		pkt2 := NewConnack()
+		n2, err := pkt2.Decode(m, buf)
+		assert.NoError(t, err)
 
-	assert.Equal(t, pkt, pkt2)
-	assert.Equal(t, n1, n2)
+		assert.Equal(t, pkt, pkt2)
+		assert.Equal(t, n1, n2)
+	})
 }
 
 func TestConnackDecode(t *testing.T) {
-	packet := []byte{
-		byte(CONNACK << 4),
-		2,
-		0, // session not present
-		0, // connection accepted
-	}
+	multiTest(t, func(t *testing.T, m Mode) {
+		packet := []byte{
+			byte(CONNACK << 4),
+			2,
+			0, // session not present
+			0, // connection accepted
+		}
 
-	pkt := NewConnack()
+		pkt := NewConnack()
+		n, err := pkt.Decode(m, packet)
+		assert.NoError(t, err)
+		assert.Equal(t, 4, n)
+		assert.False(t, pkt.SessionPresent)
+		assert.Equal(t, ConnectionAccepted, pkt.ReturnCode)
 
-	n, err := pkt.Decode(M4, packet)
+		packet = []byte{
+			byte(CONNACK << 4),
+			3, // < wrong size
+			0, // session not present
+			0, // connection accepted
+		}
 
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
-	assert.False(t, pkt.SessionPresent)
-	assert.Equal(t, ConnectionAccepted, pkt.ReturnCode)
-}
+		pkt = NewConnack()
+		_, err = pkt.Decode(m, packet)
+		assert.Error(t, err)
 
-func TestConnackDecodeError1(t *testing.T) {
-	packet := []byte{
-		byte(CONNACK << 4),
-		3, // < wrong size
-		0, // session not present
-		0, // connection accepted
-	}
+		packet = []byte{
+			byte(CONNACK << 4),
+			2,
+			0, // session not present
+			// < wrong packet size
+		}
 
-	pkt := NewConnack()
+		pkt = NewConnack()
+		_, err = pkt.Decode(m, packet)
+		assert.Error(t, err)
 
-	_, err := pkt.Decode(M4, packet)
-	assert.Error(t, err)
-}
+		packet = []byte{
+			byte(CONNACK << 4),
+			2,
+			64, // < wrong value
+			0,  // connection accepted
+		}
 
-func TestConnackDecodeError2(t *testing.T) {
-	packet := []byte{
-		byte(CONNACK << 4),
-		2,
-		0, // session not present
-		// < wrong packet size
-	}
+		pkt = NewConnack()
+		_, err = pkt.Decode(m, packet)
+		assert.Error(t, err)
 
-	pkt := NewConnack()
+		packet = []byte{
+			byte(CONNACK << 4),
+			2,
+			0,
+			6, // < wrong code
+		}
 
-	_, err := pkt.Decode(M4, packet)
-	assert.Error(t, err)
-}
+		pkt = NewConnack()
+		_, err = pkt.Decode(m, packet)
+		assert.Error(t, err)
 
-func TestConnackDecodeError3(t *testing.T) {
-	packet := []byte{
-		byte(CONNACK << 4),
-		2,
-		64, // < wrong value
-		0,  // connection accepted
-	}
+		packet = []byte{
+			byte(CONNACK << 4),
+			1, // < wrong remaining length
+			0,
+			6,
+		}
 
-	pkt := NewConnack()
-
-	_, err := pkt.Decode(M4, packet)
-	assert.Error(t, err)
-}
-
-func TestConnackDecodeError4(t *testing.T) {
-	packet := []byte{
-		byte(CONNACK << 4),
-		2,
-		0,
-		6, // < wrong code
-	}
-
-	pkt := NewConnack()
-
-	_, err := pkt.Decode(M4, packet)
-	assert.Error(t, err)
-}
-
-func TestConnackDecodeError5(t *testing.T) {
-	packet := []byte{
-		byte(CONNACK << 4),
-		1, // < wrong remaining length
-		0,
-		6,
-	}
-
-	pkt := NewConnack()
-
-	_, err := pkt.Decode(M4, packet)
-	assert.Error(t, err)
+		pkt = NewConnack()
+		_, err = pkt.Decode(m, packet)
+		assert.Error(t, err)
+	})
 }
 
 func TestConnackEncode(t *testing.T) {
-	packet := []byte{
-		byte(CONNACK << 4),
-		2,
-		1, // session present
-		0, // connection accepted
-	}
+	multiTest(t, func(t *testing.T, m Mode) {
+		packet := []byte{
+			byte(CONNACK << 4),
+			2,
+			1, // session present
+			0, // connection accepted
+		}
 
-	pkt := NewConnack()
-	pkt.ReturnCode = ConnectionAccepted
-	pkt.SessionPresent = true
+		pkt := NewConnack()
+		pkt.ReturnCode = ConnectionAccepted
+		pkt.SessionPresent = true
 
-	dst := make([]byte, pkt.Len(M4))
-	n, err := pkt.Encode(M4, dst)
+		dst := make([]byte, pkt.Len(m))
+		n, err := pkt.Encode(m, dst)
+		assert.NoError(t, err)
+		assert.Equal(t, 4, n)
+		assert.Equal(t, packet, dst[:n])
 
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
-	assert.Equal(t, packet, dst[:n])
-}
+		pkt = NewConnack()
+		dst = make([]byte, 3) // < wrong buffer size
 
-func TestConnackEncodeError1(t *testing.T) {
-	pkt := NewConnack()
+		n, err = pkt.Encode(m, dst)
+		assert.Error(t, err)
+		assert.Equal(t, 0, n)
 
-	dst := make([]byte, 3) // < wrong buffer size
-	n, err := pkt.Encode(M4, dst)
+		pkt = NewConnack()
+		pkt.ReturnCode = 11 // < wrong return code
 
-	assert.Error(t, err)
-	assert.Equal(t, 0, n)
-}
-
-func TestConnackEncodeError2(t *testing.T) {
-	pkt := NewConnack()
-	pkt.ReturnCode = 11 // < wrong return code
-
-	dst := make([]byte, pkt.Len(M4))
-	n, err := pkt.Encode(M4, dst)
-
-	assert.Error(t, err)
-	assert.Equal(t, 3, n)
+		dst = make([]byte, pkt.Len(m))
+		n, err = pkt.Encode(m, dst)
+		assert.Error(t, err)
+		assert.Equal(t, 3, n)
+	})
 }
 
 func BenchmarkConnackEncode(b *testing.B) {
-	b.ReportAllocs()
+	benchTest(b, func(b *testing.B, m Mode) {
+		pkt := NewConnack()
+		pkt.ReturnCode = ConnectionAccepted
+		pkt.SessionPresent = true
 
-	pkt := NewConnack()
-	pkt.ReturnCode = ConnectionAccepted
-	pkt.SessionPresent = true
+		buf := make([]byte, pkt.Len(m))
 
-	buf := make([]byte, pkt.Len(M4))
-
-	for i := 0; i < b.N; i++ {
-		_, err := pkt.Encode(M4, buf)
-		if err != nil {
-			panic(err)
+		for i := 0; i < b.N; i++ {
+			_, err := pkt.Encode(m, buf)
+			if err != nil {
+				panic(err)
+			}
 		}
-	}
+	})
 }
 
 func BenchmarkConnackDecode(b *testing.B) {
-	b.ReportAllocs()
-
-	packet := []byte{
-		byte(CONNACK << 4),
-		2,
-		0, // session not present
-		0, // connection accepted
-	}
-
-	pkt := NewConnack()
-
-	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(M4, packet)
-		if err != nil {
-			panic(err)
+	benchTest(b, func(b *testing.B, m Mode) {
+		packet := []byte{
+			byte(CONNACK << 4),
+			2,
+			0, // session not present
+			0, // connection accepted
 		}
-	}
+
+		pkt := NewConnack()
+
+		for i := 0; i < b.N; i++ {
+			_, err := pkt.Decode(m, packet)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
 }

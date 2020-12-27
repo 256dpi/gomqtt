@@ -10,7 +10,7 @@ func identifiedLen() int {
 }
 
 // decodes an identified packet
-func identifiedDecode(src []byte, id *ID, t Type) (int, error) {
+func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, t)
 	if err != nil {
@@ -42,7 +42,7 @@ func identifiedDecode(src []byte, id *ID, t Type) (int, error) {
 }
 
 // encodes an identified packet
-func identifiedEncode(dst []byte, id ID, t Type) (int, error) {
+func identifiedEncode(m Mode, dst []byte, id ID, t Type) (int, error) {
 	// check packet id
 	if !id.Valid() {
 		return 0, makeError(t, "packet id must be grater than zero")
@@ -94,14 +94,14 @@ func (p *Puback) Len(m Mode) int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (p *Puback) Decode(m Mode, src []byte) (int, error) {
-	return identifiedDecode(src, &p.ID, PUBACK)
+	return identifiedDecode(m, src, &p.ID, PUBACK)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (p *Puback) Encode(m Mode, dst []byte) (int, error) {
-	return identifiedEncode(dst, p.ID, PUBACK)
+	return identifiedEncode(m, dst, p.ID, PUBACK)
 }
 
 // String returns a string representation of the packet.
@@ -140,14 +140,14 @@ func (p *Pubcomp) Len(m Mode) int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (p *Pubcomp) Decode(m Mode, src []byte) (int, error) {
-	return identifiedDecode(src, &p.ID, PUBCOMP)
+	return identifiedDecode(m, src, &p.ID, PUBCOMP)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (p *Pubcomp) Encode(m Mode, dst []byte) (int, error) {
-	return identifiedEncode(dst, p.ID, PUBCOMP)
+	return identifiedEncode(m, dst, p.ID, PUBCOMP)
 }
 
 // String returns a string representation of the packet.
@@ -186,14 +186,14 @@ func (p *Pubrec) Len(m Mode) int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (p *Pubrec) Decode(m Mode, src []byte) (int, error) {
-	return identifiedDecode(src, &p.ID, PUBREC)
+	return identifiedDecode(m, src, &p.ID, PUBREC)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (p *Pubrec) Encode(m Mode, dst []byte) (int, error) {
-	return identifiedEncode(dst, p.ID, PUBREC)
+	return identifiedEncode(m, dst, p.ID, PUBREC)
 }
 
 // String returns a string representation of the packet.
@@ -232,14 +232,14 @@ func (p *Pubrel) Len(m Mode) int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (p *Pubrel) Decode(m Mode, src []byte) (int, error) {
-	return identifiedDecode(src, &p.ID, PUBREL)
+	return identifiedDecode(m, src, &p.ID, PUBREL)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (p *Pubrel) Encode(m Mode, dst []byte) (int, error) {
-	return identifiedEncode(dst, p.ID, PUBREL)
+	return identifiedEncode(m, dst, p.ID, PUBREL)
 }
 
 // String returns a string representation of the packet.
@@ -278,14 +278,14 @@ func (u *Unsuback) Len(m Mode) int {
 // Decode reads from the byte slice argument. It returns the total number of
 // bytes decoded, and whether there have been any errors during the process.
 func (u *Unsuback) Decode(m Mode, src []byte) (int, error) {
-	return identifiedDecode(src, &u.ID, UNSUBACK)
+	return identifiedDecode(m, src, &u.ID, UNSUBACK)
 }
 
 // Encode writes the packet bytes into the byte slice from the argument. It
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (u *Unsuback) Encode(m Mode, dst []byte) (int, error) {
-	return identifiedEncode(dst, u.ID, UNSUBACK)
+	return identifiedEncode(m, dst, u.ID, UNSUBACK)
 }
 
 // String returns a string representation of the packet.

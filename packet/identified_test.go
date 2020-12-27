@@ -8,16 +8,18 @@ import (
 )
 
 func testIdentified(t *testing.T, pkt Generic) {
-	assert.Equal(t, fmt.Sprintf("<%s ID=1>", pkt.Type().String()), pkt.String())
+	multiTest(t, func(t *testing.T, m Mode) {
+		assert.Equal(t, fmt.Sprintf("<%s ID=1>", pkt.Type().String()), pkt.String())
 
-	buf := make([]byte, pkt.Len(M4))
-	n, err := pkt.Encode(M4, buf)
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
+		buf := make([]byte, pkt.Len(m))
+		n, err := pkt.Encode(m, buf)
+		assert.NoError(t, err)
+		assert.Equal(t, 4, n)
 
-	n, err = pkt.Decode(M4, buf)
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
+		n, err = pkt.Decode(m, buf)
+		assert.NoError(t, err)
+		assert.Equal(t, 4, n)
+	})
 }
 
 func TestPuback(t *testing.T) {
@@ -56,129 +58,122 @@ func TestUnsuback(t *testing.T) {
 }
 
 func TestIdentifiedDecode(t *testing.T) {
-	packet := []byte{
-		byte(PUBACK << 4),
-		2,
-		0, // packet ID MSB
-		7, // packet ID LSB
-	}
+	multiTest(t, func(t *testing.T, m Mode) {
 
-	var pid ID
-	n, err := identifiedDecode(packet, &pid, PUBACK)
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
-	assert.Equal(t, ID(7), pid)
-}
+		packet := []byte{
+			byte(PUBACK << 4),
+			2,
+			0, // packet ID MSB
+			7, // packet ID LSB
+		}
 
-func TestIdentifiedDecodeError1(t *testing.T) {
-	packet := []byte{
-		byte(PUBACK << 4),
-		1, // < wrong remaining length
-		0, // packet ID MSB
-		7, // packet ID LSB
-	}
+		var pid ID
+		n, err := identifiedDecode(m, packet, &pid, PUBACK)
+		assert.NoError(t, err)
+		assert.Equal(t, 4, n)
+		assert.Equal(t, ID(7), pid)
 
-	var pid ID
-	n, err := identifiedDecode(packet, &pid, PUBACK)
-	assert.Error(t, err)
-	assert.Equal(t, 2, n)
-	assert.Equal(t, ID(0), pid)
-}
+		packet = []byte{
+			byte(PUBACK << 4),
+			1, // < wrong remaining length
+			0, // packet ID MSB
+			7, // packet ID LSB
+		}
 
-func TestIdentifiedDecodeError2(t *testing.T) {
-	packet := []byte{
-		byte(PUBACK << 4),
-		2,
-		7, // packet ID LSB
-		// < insufficient bytes
-	}
+		pid = 0
+		n, err = identifiedDecode(m, packet, &pid, PUBACK)
+		assert.Error(t, err)
+		assert.Equal(t, 2, n)
+		assert.Equal(t, ID(0), pid)
 
-	var pid ID
-	n, err := identifiedDecode(packet, &pid, PUBACK)
-	assert.Error(t, err)
-	assert.Equal(t, 2, n)
-	assert.Equal(t, ID(0), pid)
-}
+		packet = []byte{
+			byte(PUBACK << 4),
+			2,
+			7, // packet ID LSB
+			// < insufficient bytes
+		}
 
-func TestIdentifiedDecodeError3(t *testing.T) {
-	packet := []byte{
-		byte(PUBACK << 4),
-		2,
-		0, // packet ID LSB
-		0, // packet ID MSB < zero id
-	}
+		pid = 0
+		n, err = identifiedDecode(m, packet, &pid, PUBACK)
+		assert.Error(t, err)
+		assert.Equal(t, 2, n)
+		assert.Equal(t, ID(0), pid)
 
-	var pid ID
-	n, err := identifiedDecode(packet, &pid, PUBACK)
-	assert.Error(t, err)
-	assert.Equal(t, 4, n)
-	assert.Equal(t, ID(0), pid)
+		packet = []byte{
+			byte(PUBACK << 4),
+			2,
+			0, // packet ID LSB
+			0, // packet ID MSB < zero id
+		}
+
+		pid = 0
+		n, err = identifiedDecode(m, packet, &pid, PUBACK)
+		assert.Error(t, err)
+		assert.Equal(t, 4, n)
+		assert.Equal(t, ID(0), pid)
+	})
 }
 
 func TestIdentifiedEncode(t *testing.T) {
-	packet := []byte{
-		byte(PUBACK << 4),
-		2,
-		0, // packet ID MSB
-		7, // packet ID LSB
-	}
+	multiTest(t, func(t *testing.T, m Mode) {
+		packet := []byte{
+			byte(PUBACK << 4),
+			2,
+			0, // packet ID MSB
+			7, // packet ID LSB
+		}
 
-	dst := make([]byte, identifiedLen())
-	n, err := identifiedEncode(dst, 7, PUBACK)
+		dst := make([]byte, identifiedLen())
+		n, err := identifiedEncode(m, dst, 7, PUBACK)
 
-	assert.NoError(t, err)
-	assert.Equal(t, 4, n)
-	assert.Equal(t, packet, dst[:n])
-}
+		assert.NoError(t, err)
+		assert.Equal(t, 4, n)
+		assert.Equal(t, packet, dst[:n])
 
-func TestIdentifiedEncodeError1(t *testing.T) {
-	dst := make([]byte, 3) // < insufficient buffer
-	n, err := identifiedEncode(dst, 7, PUBACK)
+		dst = make([]byte, 3) // < insufficient buffer
+		n, err = identifiedEncode(m, dst, 7, PUBACK)
+		assert.Error(t, err)
+		assert.Equal(t, 0, n)
 
-	assert.Error(t, err)
-	assert.Equal(t, 0, n)
-}
-
-func TestIdentifiedEncodeError2(t *testing.T) {
-	dst := make([]byte, identifiedLen())
-	n, err := identifiedEncode(dst, 0, PUBACK) // < zero id
-
-	assert.Error(t, err)
-	assert.Equal(t, 0, n)
+		dst = make([]byte, identifiedLen())
+		n, err = identifiedEncode(m, dst, 0, PUBACK) // < zero id
+		assert.Error(t, err)
+		assert.Equal(t, 0, n)
+	})
 }
 
 func BenchmarkIdentifiedEncode(b *testing.B) {
-	b.ReportAllocs()
+	benchTest(b, func(b *testing.B, m Mode) {
+		pkt := &Puback{}
+		pkt.ID = 1
 
-	pkt := &Puback{}
-	pkt.ID = 1
+		buf := make([]byte, pkt.Len(m))
 
-	buf := make([]byte, pkt.Len(M4))
-
-	for i := 0; i < b.N; i++ {
-		_, err := pkt.Encode(M4, buf)
-		if err != nil {
-			panic(err)
+		for i := 0; i < b.N; i++ {
+			_, err := pkt.Encode(m, buf)
+			if err != nil {
+				panic(err)
+			}
 		}
-	}
+	})
 }
 
 func BenchmarkIdentifiedDecode(b *testing.B) {
-	b.ReportAllocs()
-
-	packet := []byte{
-		byte(PUBACK << 4),
-		2,
-		0, // packet ID MSB
-		1, // packet ID LSB
-	}
-
-	pkt := &Puback{}
-
-	for i := 0; i < b.N; i++ {
-		_, err := pkt.Decode(M4, packet)
-		if err != nil {
-			panic(err)
+	benchTest(b, func(b *testing.B, m Mode) {
+		packet := []byte{
+			byte(PUBACK << 4),
+			2,
+			0, // packet ID MSB
+			1, // packet ID LSB
 		}
-	}
+
+		pkt := &Puback{}
+
+		for i := 0; i < b.N; i++ {
+			_, err := pkt.Decode(m, packet)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
 }
