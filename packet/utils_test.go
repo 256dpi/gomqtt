@@ -1,6 +1,9 @@
 package packet
 
-import "io"
+import (
+	"io"
+	"testing"
+)
 
 type errorWriter struct {
 	writer io.Writer
@@ -29,4 +32,26 @@ func (r *errorReader) Read(p []byte) (int, error) {
 
 	r.after--
 	return r.reader.Read(p)
+}
+
+func multiTest(t *testing.T, fn func(t *testing.T, m Mode)) {
+	t.Run("M4", func(t *testing.T) {
+		fn(t, M4)
+	})
+
+	t.Run("M5", func(t *testing.T) {
+		fn(t, M5)
+	})
+}
+
+func benchTest(b *testing.B, fn func(b *testing.B, m Mode)) {
+	b.ReportAllocs()
+
+	b.Run("M4", func(b *testing.B) {
+		fn(b, M4)
+	})
+
+	b.Run("M5", func(b *testing.B) {
+		fn(b, M5)
+	})
 }
