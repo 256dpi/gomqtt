@@ -114,7 +114,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read protocol string
-	protoName, n, err := readLPBytes(src[total:], false, CONNECT)
+	protoName, n, err := readBytes(src[total:], false, CONNECT)
 	total += n
 	if err != nil {
 		return total, err
@@ -191,7 +191,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	c.KeepAlive = uint16(ka)
 
 	// read client id
-	c.ClientID, n, err = readLPString(src[total:], CONNECT)
+	c.ClientID, n, err = readString(src[total:], CONNECT)
 	total += n
 	if err != nil {
 		return total, err
@@ -205,14 +205,14 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	// check will
 	if c.Will != nil {
 		// read will topic
-		c.Will.Topic, n, err = readLPString(src[total:], CONNECT)
+		c.Will.Topic, n, err = readString(src[total:], CONNECT)
 		total += n
 		if err != nil {
 			return total, err
 		}
 
 		// read will payload
-		c.Will.Payload, n, err = readLPBytes(src[total:], true, CONNECT)
+		c.Will.Payload, n, err = readBytes(src[total:], true, CONNECT)
 		total += n
 		if err != nil {
 			return total, err
@@ -221,7 +221,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// read username
 	if usernameFlag {
-		c.Username, n, err = readLPString(src[total:], CONNECT)
+		c.Username, n, err = readString(src[total:], CONNECT)
 		total += n
 		if err != nil {
 			return total, err
@@ -230,7 +230,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// read password
 	if passwordFlag {
-		c.Password, n, err = readLPString(src[total:], CONNECT)
+		c.Password, n, err = readString(src[total:], CONNECT)
 		total += n
 		if err != nil {
 			return total, err
@@ -261,7 +261,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write version string
-	n, err := writeLPBytes(dst[total:], versionNames[c.Version], CONNECT)
+	n, err := writeBytes(dst[total:], versionNames[c.Version], CONNECT)
 	total += n
 	if err != nil {
 		return total, err
@@ -336,7 +336,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write client id
-	n, err = writeLPString(dst[total:], c.ClientID, CONNECT)
+	n, err = writeString(dst[total:], c.ClientID, CONNECT)
 	total += n
 	if err != nil {
 		return total, err
@@ -345,14 +345,14 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	// check will
 	if c.Will != nil {
 		// write will topic
-		n, err = writeLPString(dst[total:], c.Will.Topic, CONNECT)
+		n, err = writeString(dst[total:], c.Will.Topic, CONNECT)
 		total += n
 		if err != nil {
 			return total, err
 		}
 
 		// write will payload
-		n, err = writeLPBytes(dst[total:], c.Will.Payload, CONNECT)
+		n, err = writeBytes(dst[total:], c.Will.Payload, CONNECT)
 		total += n
 		if err != nil {
 			return total, err
@@ -366,7 +366,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// write username
 	if len(c.Username) > 0 {
-		n, err = writeLPString(dst[total:], c.Username, CONNECT)
+		n, err = writeString(dst[total:], c.Username, CONNECT)
 		total += n
 		if err != nil {
 			return total, err
@@ -375,7 +375,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// write password
 	if len(c.Password) > 0 {
-		n, err = writeLPString(dst[total:], c.Password, CONNECT)
+		n, err = writeString(dst[total:], c.Password, CONNECT)
 		total += n
 		if err != nil {
 			return total, err

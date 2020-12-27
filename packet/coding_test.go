@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func binaryVarintLen(n uint64) int {
-	return binary.PutUvarint(make([]byte, binary.MaxVarintLen64), n)
-}
-
 func TestVarintLen(t *testing.T) {
+	nativeVarintLen := func(n uint64) int {
+		return binary.PutUvarint(make([]byte, binary.MaxVarintLen64), n)
+	}
+
 	assert.Equal(t, 1, varintLen(1))
 	assert.Equal(t, 1, varintLen(127))
 	assert.Equal(t, 2, varintLen(128))
@@ -24,16 +24,16 @@ func TestVarintLen(t *testing.T) {
 	assert.Equal(t, 0, varintLen(268435456))
 	assert.Equal(t, 0, varintLen(math.MaxUint64))
 
-	assert.Equal(t, 1, binaryVarintLen(1))
-	assert.Equal(t, 1, binaryVarintLen(127))
-	assert.Equal(t, 2, binaryVarintLen(128))
-	assert.Equal(t, 2, binaryVarintLen(16383))
-	assert.Equal(t, 3, binaryVarintLen(16384))
-	assert.Equal(t, 3, binaryVarintLen(2097151))
-	assert.Equal(t, 4, binaryVarintLen(2097152))
-	assert.Equal(t, 4, binaryVarintLen(268435455))
-	assert.Equal(t, 5, binaryVarintLen(268435456))
-	assert.Equal(t, 10, binaryVarintLen(math.MaxUint64))
+	assert.Equal(t, 1, nativeVarintLen(1))
+	assert.Equal(t, 1, nativeVarintLen(127))
+	assert.Equal(t, 2, nativeVarintLen(128))
+	assert.Equal(t, 2, nativeVarintLen(16383))
+	assert.Equal(t, 3, nativeVarintLen(16384))
+	assert.Equal(t, 3, nativeVarintLen(2097151))
+	assert.Equal(t, 4, nativeVarintLen(2097152))
+	assert.Equal(t, 4, nativeVarintLen(268435455))
+	assert.Equal(t, 5, nativeVarintLen(268435456))
+	assert.Equal(t, 10, nativeVarintLen(math.MaxUint64))
 }
 
 func TestReadVarint(t *testing.T) {
@@ -76,39 +76,39 @@ func TestWriteVarint(t *testing.T) {
 	assert.Equal(t, 2, n)
 }
 
-func TestReadLPBString(t *testing.T) {
-	str, n, err := readLPString([]byte{}, CONNECT)
+func TestReadString(t *testing.T) {
+	str, n, err := readString([]byte{}, CONNECT)
 	assert.Error(t, err)
 	assert.Empty(t, str)
 	assert.Zero(t, n)
 
-	str, n, err = readLPString([]byte{0xff, 0xff, 0xff, 0xff}, CONNECT)
+	str, n, err = readString([]byte{0xff, 0xff, 0xff, 0xff}, CONNECT)
 	assert.Error(t, err)
 	assert.Empty(t, str)
 	assert.Equal(t, 2, n)
 
-	str, n, err = readLPString([]byte{0x0, 0x0}, CONNECT)
+	str, n, err = readString([]byte{0x0, 0x0}, CONNECT)
 	assert.NoError(t, err)
 	assert.Equal(t, "", str)
 	assert.Equal(t, 2, n)
 
-	str, n, err = readLPString([]byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, CONNECT)
+	str, n, err = readString([]byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, CONNECT)
 	assert.NoError(t, err)
 	assert.Equal(t, "Hello", str)
 	assert.Equal(t, 7, n)
 }
 
-func TestWriteLPString(t *testing.T) {
-	n, err := writeLPString([]byte{}, string(make([]byte, 65536)), CONNECT)
+func TestWriteString(t *testing.T) {
+	n, err := writeString([]byte{}, string(make([]byte, 65536)), CONNECT)
 	assert.Error(t, err)
 	assert.Zero(t, n)
 
-	n, err = writeLPString([]byte{}, string(make([]byte, 10)), CONNECT)
+	n, err = writeString([]byte{}, string(make([]byte, 10)), CONNECT)
 	assert.Error(t, err)
 	assert.Zero(t, n)
 
 	buf := make([]byte, 7)
-	n, err = writeLPString(buf, "Hello", CONNECT)
+	n, err = writeString(buf, "Hello", CONNECT)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, buf)
 	assert.Equal(t, 7, n)

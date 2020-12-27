@@ -71,7 +71,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read topic
-	topic, n, err := readLPString(src[total:], PUBLISH)
+	topic, n, err := readString(src[total:], PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
@@ -156,7 +156,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write topic
-	n, err := writeLPString(dst[total:], p.Message.Topic, PUBLISH)
+	n, err := writeString(dst[total:], p.Message.Topic, PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
