@@ -54,60 +54,40 @@ func TestConnackDecode(t *testing.T) {
 		assert.False(t, pkt.SessionPresent)
 		assert.Equal(t, ConnectionAccepted, pkt.ReturnCode)
 
-		packet = []byte{
+		assertDecodeError(t, m, CONNACK, []byte{
 			byte(CONNACK << 4),
 			3, // < remaining length: wrong size
 			0, // session not present
 			0, // connection accepted
-		}
+		})
 
-		pkt = NewConnack()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNACK, []byte{
 			byte(CONNACK << 4),
 			2, // remaining length
 			0, // session not present
 			// < wrong packet size
-		}
+		})
 
-		pkt = NewConnack()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNACK, []byte{
 			byte(CONNACK << 4),
 			2,  // remaining length
 			64, // < wrong value
 			0,  // connection accepted
-		}
+		})
 
-		pkt = NewConnack()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNACK, []byte{
 			byte(CONNACK << 4),
 			2, // remaining length
 			0,
 			6, // < wrong code
-		}
+		})
 
-		pkt = NewConnack()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNACK, []byte{
 			byte(CONNACK << 4),
 			1, // < wrong remaining length
 			0,
 			6,
-		}
-
-		pkt = NewConnack()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
+		})
 	})
 }
 

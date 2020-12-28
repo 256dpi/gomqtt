@@ -74,60 +74,40 @@ func TestPublishDecode(t *testing.T) {
 		assert.Equal(t, false, pkt.Message.Retain)
 		assert.Equal(t, false, pkt.Dup)
 
-		packet = []byte{
+		assertDecodeError(t, m, PUBLISH, []byte{
 			byte(PUBLISH << 4),
 			2, // < remaining length: too much
-		}
+		})
 
-		pkt = NewPublish()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, PUBLISH, []byte{
 			byte(PUBLISH<<4) | 6, // < wrong qos
 			0,                    // remaining length
-		}
+		})
 
-		pkt = NewPublish()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, PUBLISH, []byte{
 			byte(PUBLISH << 4),
 			0, // remaining length
 			// < missing topic stuff
-		}
+		})
 
-		pkt = NewPublish()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, PUBLISH, []byte{
 			byte(PUBLISH << 4),
 			2, // remaining length
 			0, // topic
 			1,
 			// < missing topic string
-		}
+		})
 
-		pkt = NewPublish()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, PUBLISH, []byte{
 			byte(PUBLISH<<4) | 2,
 			2, // remaining length
 			0, // topic
 			1,
 			't',
 			// < missing packet id
-		}
+		})
 
-		pkt = NewPublish()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, PUBLISH, []byte{
 			byte(PUBLISH<<4) | 2,
 			2, // remaining length
 			0, // topic
@@ -135,11 +115,7 @@ func TestPublishDecode(t *testing.T) {
 			't',
 			0,
 			0, // < zero packet id
-		}
-
-		pkt = NewPublish()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
+		})
 	})
 }
 

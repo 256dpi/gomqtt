@@ -64,38 +64,26 @@ func TestSubscribeDecode(t *testing.T) {
 		assert.Equal(t, "/a/b/#/cdd", pkt.Subscriptions[2].Topic)
 		assert.Equal(t, QOS(2), pkt.Subscriptions[2].QOS)
 
-		packet = []byte{
+		assertDecodeError(t, m, SUBSCRIBE, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			9, // < remaining length: too much
-		}
+		})
 
-		pkt = NewSubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBSCRIBE, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			0, // remaining length
 			// < missing packet id
-		}
+		})
 
-		pkt = NewSubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBSCRIBE, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			2, // remaining length
 			0, // packet id
 			7,
 			// < missing subscription
-		}
+		})
 
-		pkt = NewSubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBSCRIBE, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			5, // remaining length
 			0, // packet id
@@ -103,13 +91,9 @@ func TestSubscribeDecode(t *testing.T) {
 			0, // topic
 			2, // < wrong size
 			's',
-		}
+		})
 
-		pkt = NewSubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBSCRIBE, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			5, // remaining length
 			0, // packet id
@@ -118,13 +102,9 @@ func TestSubscribeDecode(t *testing.T) {
 			1,
 			's',
 			// < missing qos
-		}
+		})
 
-		pkt = NewSubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBSCRIBE, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			5, // remaining length
 			0, // packet id
@@ -133,13 +113,9 @@ func TestSubscribeDecode(t *testing.T) {
 			1,
 			's',
 			0,
-		}
+		})
 
-		pkt = NewSubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBSCRIBE, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			5, // remaining length
 			0, // packet id
@@ -148,11 +124,7 @@ func TestSubscribeDecode(t *testing.T) {
 			1,
 			's',
 			0x81, // < invalid qos
-		}
-
-		pkt = NewSubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
+		})
 	})
 }
 
