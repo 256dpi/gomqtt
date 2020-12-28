@@ -114,7 +114,7 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 		}
 
 		// read qos
-		_qos, n, err := readUint(src[total:], 1, SUBSCRIBE)
+		_qos, n, err := readUint8(src[total:], SUBSCRIBE)
 		total += n
 		if err != nil {
 			return total, err
@@ -178,7 +178,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 		}
 
 		// write qos
-		n, err = writeUint(dst[total:], uint64(sub.QOS), 1, SUBSCRIBE)
+		n, err = writeUint8(dst[total:], uint8(sub.QOS), SUBSCRIBE)
 		total += n
 		if err != nil {
 			return total, err
