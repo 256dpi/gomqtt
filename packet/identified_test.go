@@ -59,7 +59,6 @@ func TestUnsuback(t *testing.T) {
 
 func TestIdentifiedDecode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
-
 		packet := []byte{
 			byte(PUBACK << 4),
 			2, // remaining length
