@@ -41,28 +41,28 @@ func TestConnectDecode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(CONNECT << 4),
-			58,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			58, // remaining length
+			0,  // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4,   // Protocol Level
-			206, // Connect Flags
-			0,   // Keep Alive MSB
-			10,  // Keep Alive LSB
-			0,   // Client ID MSB
-			6,   // Client ID LSB
+			4,   // protocol level
+			206, // connect flags
+			0,   // keep alive
+			10,
+			0, // client id
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // Will Topic MSB
-			4, // Will Topic LSB
+			0, // will topic
+			4,
 			'w', 'i', 'l', 'l',
-			0,  // Will Message MSB
-			12, // Will Message LSB
+			0, // will message
+			12,
 			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-			0, // Username ID MSB
-			6, // Username ID LSB
+			0, // username
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0,  // Password ID MSB
-			10, // Password ID LSB
+			0, // password
+			10,
 			'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
 		}
 
@@ -80,28 +80,28 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			58,
-			0, // Protocol String MSB
-			6, // Protocol String LSB
+			58, // remaining length
+			0,  // protocol string
+			6,
 			'M', 'Q', 'I', 's', 'd', 'p',
-			3,   // Protocol Level
-			206, // Connect Flags
-			0,   // Keep Alive MSB
-			10,  // Keep Alive LSB
-			0,   // Client ID MSB
-			6,   // Client ID LSB
+			3,   // protocol level
+			206, // connect flags
+			0,   // keep alive
+			10,
+			0, // client id
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // Will Topic MSB
-			4, // Will Topic LSB
+			0, // will topic
+			4,
 			'w', 'i', 'l', 'l',
-			0,  // Will Message MSB
-			12, // Will Message LSB
+			0, // will message
+			12,
 			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-			0, // Username ID MSB
-			6, // Username ID LSB
+			0, // username
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0,  // Password ID MSB
-			10, // Password ID LSB
+			0, // password
+			10,
 			'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
 		}
 
@@ -120,8 +120,8 @@ func TestConnectDecode(t *testing.T) {
 		packet = []byte{
 			byte(CONNECT << 4),
 			60, // < wrong remaining length
-			0,  // Protocol String MSB
-			5,  // Protocol String LSB
+			0,  // protocol string
+			5,
 			'M', 'Q', 'T', 'T',
 		}
 
@@ -131,9 +131,9 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			6,
-			0, // Protocol String MSB
-			5, // Protocol String LSB < invalid size
+			6, // remaining length
+			0, // protocol string
+			5, // < invalid size
 			'M', 'Q', 'T', 'T',
 		}
 
@@ -143,11 +143,11 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			6,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			6, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			// Protocol Level < missing
+			// < protocol level: missing
 		}
 
 		pkt = NewConnect()
@@ -156,9 +156,9 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			8,
-			0,                       // Protocol String MSB
-			5,                       // Protocol String LSB
+			8, // remaining length
+			0, // protocol string
+			5,
 			'M', 'Q', 'T', 'T', 'X', // < wrong protocol string
 			4,
 		}
@@ -169,11 +169,11 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			7,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			7, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			5, // Protocol Level < wrong id
+			5, // < protocol level: wrong level
 		}
 
 		pkt = NewConnect()
@@ -182,12 +182,12 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			7,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			7, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4, // Protocol Level
-			// Connect Flags < missing
+			4, // protocol level
+			// < connect flags: missing
 		}
 
 		pkt = NewConnect()
@@ -196,12 +196,12 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			7,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			7, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4, // Protocol Level
-			1, // Connect Flags < reserved bit set to one
+			4, // protocol level
+			1, // < connect flags: reserved bit set to one
 		}
 
 		pkt = NewConnect()
@@ -210,12 +210,12 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			7,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			7, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4,  // Protocol Level
-			24, // Connect Flags < invalid qos
+			4,  // protocol level
+			24, // < connect flags: invalid qos
 		}
 
 		pkt = NewConnect()
@@ -224,12 +224,12 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			7,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			7, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4, // Protocol Level
-			8, // Connect Flags < will flag set to zero but others not
+			4, // protocol level
+			8, // < connect flags: will flag set to zero but others not
 		}
 
 		pkt = NewConnect()
@@ -238,12 +238,12 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			7,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			7, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4,  // Protocol Level
-			64, // Connect Flags < password flag set but not username
+			4,  // protocol level
+			64, // < connect flags: password flag set but not username
 		}
 
 		pkt = NewConnect()
@@ -252,14 +252,14 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			7,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			7, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4, // Protocol Level
-			0, // Connect Flags
-			0, // Keep Alive MSB < missing
-			// Keep Alive LSB < missing
+			4, // protocol level
+			0, // connect flags
+			0, // < keep alive: missing
+			// < keep alive: missing
 		}
 
 		pkt = NewConnect()
@@ -268,16 +268,16 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			7,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			7, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4, // Protocol Level
-			0, // Connect Flags
-			0, // Keep Alive MSB
-			1, // Keep Alive LSB
-			0, // Client ID MSB
-			2, // Client ID LSB < wrong size
+			4, // protocol level
+			0, // connect flags
+			0, // keep alive
+			1,
+			0, // client id
+			2, // < wrong size
 			'x',
 		}
 
@@ -287,16 +287,16 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			6,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			6, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4, // Protocol Level
-			0, // Connect Flags < clean session false
-			0, // Keep Alive MSB
-			1, // Keep Alive LSB
-			0, // Client ID MSB
-			0, // Client ID LSB
+			4, // protocol level
+			0, // < connect flags: clean session false
+			0, // keep alive
+			1,
+			0, // client id
+			0,
 		}
 
 		pkt = NewConnect()
@@ -305,18 +305,18 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			6,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			6, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4, // Protocol Level
-			6, // Connect Flags
-			0, // Keep Alive MSB
-			1, // Keep Alive LSB
-			0, // Client ID MSB
-			0, // Client ID LSB
-			0, // Will Topic MSB
-			1, // Will Topic LSB < wrong size
+			4, // protocol level
+			6, // connect flags
+			0, // keep alive
+			1,
+			0, // client id
+			0,
+			0, // will topic
+			1, // < wrong size
 		}
 
 		pkt = NewConnect()
@@ -325,20 +325,20 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			6,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			6, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4, // Protocol Level
-			6, // Connect Flags
-			0, // Keep Alive MSB
-			1, // Keep Alive LSB
-			0, // Client ID MSB
-			0, // Client ID LSB
-			0, // Will Topic MSB
-			0, // Will Topic LSB
-			0, // Will Payload MSB
-			1, // Will Payload LSB < wrong size
+			4, // protocol level
+			6, // connect flags
+			0, // keep alive
+			1,
+			0, // client id
+			0,
+			0, // will topic
+			0,
+			0, // will payload
+			1, // < wrong size
 		}
 
 		pkt = NewConnect()
@@ -347,18 +347,18 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			6,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			6, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4,   // Protocol Level
-			194, // Connect Flags
-			0,   // Keep Alive MSB
-			1,   // Keep Alive LSB
-			0,   // Client ID MSB
-			0,   // Client ID LSB
-			0,   // Username MSB
-			1,   // Username LSB < wrong size
+			4,   // protocol level
+			194, // connect flags
+			0,   // keep alive
+			1,
+			0, // client id
+			0,
+			0, // username
+			1, // < wrong size
 		}
 
 		pkt = NewConnect()
@@ -367,20 +367,20 @@ func TestConnectDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			6,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			6, // remaining length
+			0, // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4,   // Protocol Level
-			194, // Connect Flags
-			0,   // Keep Alive MSB
-			1,   // Keep Alive LSB
-			0,   // Client ID MSB
-			0,   // Client ID LSB
-			0,   // Username MSB
-			0,   // Username LSB
-			0,   // Password MSB
-			1,   // Password LSB < wrong size
+			4,   // protocol level
+			194, // connect flags
+			0,   // keep alive
+			1,
+			0, // client id
+			0,
+			0, // username
+			0,
+			0, // password
+			1, // < wrong size
 		}
 
 		pkt = NewConnect()
@@ -394,28 +394,28 @@ func TestConnectEncode(t *testing.T) {
 
 		packet := []byte{
 			byte(CONNECT << 4),
-			58,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			58, // remaining length
+			0,  // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4,   // Protocol level 4
-			204, // Connect Flags
-			0,   // Keep Alive MSB
-			10,  // Keep Alive LSB
-			0,   // Client ID MSB
-			6,   // Client ID LSB
+			4,   // protocol level 4
+			204, // connect flags
+			0,   // keep alive
+			10,
+			0, // client id
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // Will Topic MSB
-			4, // Will Topic LSB
+			0, // will topic
+			4,
 			'w', 'i', 'l', 'l',
-			0,  // Will Message MSB
-			12, // Will Message LSB
+			0, // will message
+			12,
 			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-			0, // Username ID MSB
-			6, // Username ID LSB
+			0, // username
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0,  // Password ID MSB
-			10, // Password ID LSB
+			0, // password
+			10,
 			'v', 'e', 'r', 'y', 's', 'e', 'c', 'r', 'e', 't',
 		}
 
@@ -439,16 +439,16 @@ func TestConnectEncode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			14,
-			0, // Protocol String MSB
-			6, // Protocol String LSB
+			14, // remaining length
+			0,  // protocol string
+			6,
 			'M', 'Q', 'I', 's', 'd', 'p',
-			3,  // Protocol level 4
-			2,  // Connect Flags
-			0,  // Keep Alive MSB
-			10, // Keep Alive LSB
-			0,  // Client ID MSB
-			0,  // Client ID LSB
+			3, // protocol level 4
+			2, // connect flags
+			0, // keep alive
+			10,
+			0, // client id
+			0,
 		}
 
 		pkt = NewConnect()
@@ -464,16 +464,16 @@ func TestConnectEncode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNECT << 4),
-			12,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			12, // remaining length
+			0,  // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4,  // Protocol level 4
-			2,  // Connect Flags
-			0,  // Keep Alive MSB
-			10, // Keep Alive LSB
-			0,  // Client ID MSB
-			0,  // Client ID LSB
+			4, // protocol level 4
+			2, // connect flags
+			0, // keep alive
+			10,
+			0, // client id
+			0,
 		}
 
 		pkt = NewConnect()
@@ -616,28 +616,28 @@ func BenchmarkConnectDecode(b *testing.B) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		packet := []byte{
 			byte(CONNECT << 4),
-			25,
-			0, // Protocol String MSB
-			4, // Protocol String LSB
+			25, // remaining length
+			0,  // protocol string
+			4,
 			'M', 'Q', 'T', 'T',
-			4,   // Protocol level 4
-			206, // Connect Flags
-			0,   // Keep Alive MSB
-			10,  // Keep Alive LSB
-			0,   // Client ID MSB
-			1,   // Client ID LSB
+			4,   // protocol level 4
+			206, // connect flags
+			0,   // keep alive
+			10,
+			0, // client id
+			1,
 			'i',
-			0, // Will Topic MSB
-			1, // Will Topic LSB
+			0, // will topic
+			1,
 			'w',
-			0, // Will Message MSB
-			1, // Will Message LSB
+			0, // will message
+			1,
 			'm',
-			0, // Username ID MSB
-			1, // Username ID LSB
+			0, // username
+			1,
 			'u',
-			0, // Password ID MSB
-			1, // Password ID LSB
+			0, // password
+			1,
 			'p',
 		}
 

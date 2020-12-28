@@ -35,21 +35,21 @@ func TestSubscribeDecode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			35,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			0, // topic name MSB
-			6, // topic name LSB
+			35, // remaining length
+			0,  // packet id
+			7,
+			0, // topic
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // QOS
-			0, // topic name MSB
-			8, // topic name LSB
+			0, // qos
+			0, // topic
+			8,
 			'/', 'a', '/', 'b', '/', '#', '/', 'c',
-			1,  // QOS
-			0,  // topic name MSB
-			10, // topic name LSB
+			1, // qos
+			0, // topic
+			10,
 			'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-			2, // QOS
+			2, // qos
 		}
 
 		pkt := NewSubscribe()
@@ -66,7 +66,7 @@ func TestSubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			9, // < too much
+			9, // < remaining length: too much
 		}
 
 		pkt = NewSubscribe()
@@ -75,7 +75,7 @@ func TestSubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			0,
+			0, // remaining length
 			// < missing packet id
 		}
 
@@ -85,9 +85,9 @@ func TestSubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			2,
-			0, // packet ID MSB
-			7, // packet ID LSB
+			2, // remaining length
+			0, // packet id
+			7,
 			// < missing subscription
 		}
 
@@ -97,11 +97,11 @@ func TestSubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			5,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			0, // topic name MSB
-			2, // topic name LSB < wrong size
+			5, // remaining length
+			0, // packet id
+			7,
+			0, // topic
+			2, // < wrong size
 			's',
 		}
 
@@ -111,11 +111,11 @@ func TestSubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			5,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			0, // topic name MSB
-			1, // topic name LSB
+			5, // remaining length
+			0, // packet id
+			7,
+			0, // topic
+			1,
 			's',
 			// < missing qos
 		}
@@ -126,11 +126,11 @@ func TestSubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			5,
-			0, // packet ID MSB
-			0, // packet ID LSB < zero packet id
-			0, // topic name MSB
-			1, // topic name LSB
+			5, // remaining length
+			0, // packet id
+			0, // < zero packet id
+			0, // topic
+			1,
 			's',
 			0,
 		}
@@ -141,11 +141,11 @@ func TestSubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			5,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			0, // topic name MSB
-			1, // topic name LSB
+			5, // remaining length
+			0, // packet id
+			7,
+			0, // topic
+			1,
 			's',
 			0x81, // < invalid qos
 		}
@@ -160,21 +160,21 @@ func TestSubscribeEncode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			35,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			0, // topic name MSB
-			6, // topic name LSB
+			35, // remaining length
+			0,  // packet id
+			7,
+			0, // topic name
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // QOS
-			0, // topic name MSB
-			8, // topic name LSB
+			0, // qos
+			0, // topic
+			8,
 			'/', 'a', '/', 'b', '/', '#', '/', 'c',
-			1,  // QOS
-			0,  // topic name MSB
-			10, // topic name LSB
+			1, // qos
+			0, // topic
+			10,
 			'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-			2, // QOS
+			2, // qos
 		}
 
 		pkt := NewSubscribe()
@@ -250,13 +250,13 @@ func BenchmarkSubscribeDecode(b *testing.B) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		packet := []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			6,
-			0, // packet ID MSB
-			1, // packet ID LSB
-			0, // topic name MSB
-			1, // topic name LSB
+			6, // remaining length
+			0, // packet id
+			1,
+			0, // topic name
+			1,
 			't',
-			0, // QOS
+			0, // qos
 		}
 
 		pkt := NewSubscribe()
