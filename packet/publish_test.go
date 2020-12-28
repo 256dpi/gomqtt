@@ -34,12 +34,12 @@ func TestPublishDecode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(PUBLISH<<4) | 11,
-			22,
-			0, // topic name MSB
-			6, // topic name LSB
+			22, // remaining length
+			0,  // topic
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // packet ID MSB
-			7, // packet ID LSB
+			0, // packet id
+			7,
 			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 		}
 
@@ -56,9 +56,9 @@ func TestPublishDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBLISH << 4),
-			20,
-			0, // topic name MSB
-			6, // topic name LSB
+			20, // remaining length
+			0,  // topic
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
 			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 		}
@@ -76,7 +76,7 @@ func TestPublishDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBLISH << 4),
-			2, // < too much
+			2, // < remaining length: too much
 		}
 
 		pkt = NewPublish()
@@ -85,7 +85,7 @@ func TestPublishDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBLISH<<4) | 6, // < wrong qos
-			0,
+			0,                    // remaining length
 		}
 
 		pkt = NewPublish()
@@ -94,7 +94,7 @@ func TestPublishDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBLISH << 4),
-			0,
+			0, // remaining length
 			// < missing topic stuff
 		}
 
@@ -104,9 +104,9 @@ func TestPublishDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBLISH << 4),
-			2,
-			0, // topic name MSB
-			1, // topic name LSB
+			2, // remaining length
+			0, // topic
+			1,
 			// < missing topic string
 		}
 
@@ -116,9 +116,9 @@ func TestPublishDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBLISH<<4) | 2,
-			2,
-			0, // topic name MSB
-			1, // topic name LSB
+			2, // remaining length
+			0, // topic
+			1,
 			't',
 			// < missing packet id
 		}
@@ -129,9 +129,9 @@ func TestPublishDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBLISH<<4) | 2,
-			2,
-			0, // topic name MSB
-			1, // topic name LSB
+			2, // remaining length
+			0, // topic
+			1,
 			't',
 			0,
 			0, // < zero packet id
@@ -147,12 +147,12 @@ func TestPublishEncode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(PUBLISH<<4) | 11,
-			22,
-			0, // topic name MSB
-			6, // topic name LSB
+			22, // remaining length
+			0,  // topic
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // packet ID MSB
-			7, // packet ID LSB
+			0, // packet id
+			7,
 			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 		}
 
@@ -172,9 +172,9 @@ func TestPublishEncode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBLISH << 4),
-			20,
-			0, // topic name MSB
-			6, // topic name LSB
+			20, // remaining length
+			0,  // topic
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
 			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
 		}
@@ -252,12 +252,12 @@ func BenchmarkPublishDecode(b *testing.B) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		packet := []byte{
 			byte(PUBLISH<<4) | 2,
-			6,
-			0, // topic name MSB
-			1, // topic name LSB
+			6, // remaining length
+			0, // topic
+			1,
 			't',
-			0, // packet ID MSB
-			1, // packet ID LSB
+			0, // packet id
+			1,
 			'p',
 		}
 

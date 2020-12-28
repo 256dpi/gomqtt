@@ -32,9 +32,9 @@ func TestSubackDecode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(SUBACK << 4),
-			6,
-			0,    // packet ID MSB
-			7,    // packet ID LSB
+			6, // remaining length
+			0, // packet id
+			7,
 			0,    // return code 1
 			1,    // return code 2
 			2,    // return code 3
@@ -50,8 +50,8 @@ func TestSubackDecode(t *testing.T) {
 		packet = []byte{
 			byte(SUBACK << 4),
 			1, // < wrong remaining length
-			0, // packet ID MSB
-			7, // packet ID LSB
+			0, // packet id
+			7,
 			0, // return code 1
 		}
 
@@ -61,9 +61,9 @@ func TestSubackDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBACK << 4),
-			6,
-			0,    // packet ID MSB
-			7,    // packet ID LSB
+			6, // remaining length
+			0, // packet id
+			7,
 			0,    // return code 1
 			1,    // return code 2
 			2,    // return code 3
@@ -77,7 +77,7 @@ func TestSubackDecode(t *testing.T) {
 		packet = []byte{
 			byte(SUBACK << 4),
 			1, // < wrong remaining length
-			0, // packet ID MSB
+			0, // packet id
 		}
 
 		pkt = NewSuback()
@@ -86,9 +86,9 @@ func TestSubackDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBCOMP << 4), // < wrong packet type
-			3,
-			0, // packet ID MSB
-			7, // packet ID LSB
+			3,                  // remaining length
+			0,                  // packet id
+			7,
 			0, // return code 1
 		}
 
@@ -98,9 +98,9 @@ func TestSubackDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(SUBACK << 4),
-			3,
-			0, // packet ID MSB
-			0, // packet ID LSB < zero packet id
+			3, // remaining length
+			0, // packet id
+			0, // < zero packet id
 			0,
 		}
 
@@ -114,9 +114,9 @@ func TestSubackEncode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(SUBACK << 4),
-			6,
-			0,    // packet ID MSB
-			7,    // packet ID LSB
+			6, // remaining length
+			0, // packet id
+			7,
 			0,    // return code 1
 			1,    // return code 2
 			2,    // return code 3
@@ -183,9 +183,9 @@ func BenchmarkSubackDecode(b *testing.B) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		packet := []byte{
 			byte(SUBACK << 4),
-			3,
-			0, // packet ID MSB
-			1, // packet ID LSB
+			3, // remaining length
+			0, // packet id
+			1,
 			0, // return code 1
 		}
 

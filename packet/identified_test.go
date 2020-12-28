@@ -62,9 +62,9 @@ func TestIdentifiedDecode(t *testing.T) {
 
 		packet := []byte{
 			byte(PUBACK << 4),
-			2,
-			0, // packet ID MSB
-			7, // packet ID LSB
+			2, // remaining length
+			0, // packet id
+			7,
 		}
 
 		var pid ID
@@ -76,8 +76,8 @@ func TestIdentifiedDecode(t *testing.T) {
 		packet = []byte{
 			byte(PUBACK << 4),
 			1, // < wrong remaining length
-			0, // packet ID MSB
-			7, // packet ID LSB
+			0, // packet id
+			7,
 		}
 
 		pid = 0
@@ -88,8 +88,8 @@ func TestIdentifiedDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBACK << 4),
-			2,
-			7, // packet ID LSB
+			2, // remaining length
+			7, // packet id
 			// < insufficient bytes
 		}
 
@@ -101,9 +101,9 @@ func TestIdentifiedDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(PUBACK << 4),
-			2,
-			0, // packet ID LSB
-			0, // packet ID MSB < zero id
+			2, // remaining length
+			0, // packet id
+			0, // < zero id
 		}
 
 		pid = 0
@@ -118,9 +118,9 @@ func TestIdentifiedEncode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(PUBACK << 4),
-			2,
-			0, // packet ID MSB
-			7, // packet ID LSB
+			2, // remaining length
+			0, // packet id
+			7,
 		}
 
 		dst := make([]byte, identifiedLen())
@@ -162,9 +162,9 @@ func BenchmarkIdentifiedDecode(b *testing.B) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		packet := []byte{
 			byte(PUBACK << 4),
-			2,
-			0, // packet ID MSB
-			1, // packet ID LSB
+			2, // remaining length
+			0, // packet id
+			1,
 		}
 
 		pkt := &Puback{}

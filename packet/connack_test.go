@@ -42,7 +42,7 @@ func TestConnackDecode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(CONNACK << 4),
-			2,
+			2, // remaining length
 			0, // session not present
 			0, // connection accepted
 		}
@@ -56,7 +56,7 @@ func TestConnackDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNACK << 4),
-			3, // < wrong size
+			3, // < remaining length: wrong size
 			0, // session not present
 			0, // connection accepted
 		}
@@ -67,7 +67,7 @@ func TestConnackDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNACK << 4),
-			2,
+			2, // remaining length
 			0, // session not present
 			// < wrong packet size
 		}
@@ -78,7 +78,7 @@ func TestConnackDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNACK << 4),
-			2,
+			2,  // remaining length
 			64, // < wrong value
 			0,  // connection accepted
 		}
@@ -89,7 +89,7 @@ func TestConnackDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(CONNACK << 4),
-			2,
+			2, // remaining length
 			0,
 			6, // < wrong code
 		}
@@ -115,7 +115,7 @@ func TestConnackEncode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(CONNACK << 4),
-			2,
+			2, // remaining length
 			1, // session present
 			0, // connection accepted
 		}
@@ -168,7 +168,7 @@ func BenchmarkConnackDecode(b *testing.B) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		packet := []byte{
 			byte(CONNACK << 4),
-			2,
+			2, // remaining length
 			0, // session not present
 			0, // connection accepted
 		}

@@ -41,7 +41,7 @@ func TestNakedDecode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(DISCONNECT << 4),
-			0,
+			0, // remaining length
 		}
 
 		n, err := nakedDecode(m, packet, DISCONNECT)
@@ -69,7 +69,7 @@ func TestNakedEncode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(DISCONNECT << 4),
-			0,
+			0, // remaining length
 		}
 
 		dst := make([]byte, nakedLen())
@@ -97,7 +97,7 @@ func BenchmarkNakedDecode(b *testing.B) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		packet := []byte{
 			byte(DISCONNECT << 4),
-			0,
+			0, // remaining length
 		}
 
 		for i := 0; i < b.N; i++ {

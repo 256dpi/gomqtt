@@ -32,17 +32,17 @@ func TestUnsubscribeDecode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
-			32,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			0, // topic name MSB
-			6, // topic name LSB
+			32, // remaining length
+			0,  // packet id
+			7,
+			0, // topic
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // topic name MSB
-			8, // topic name LSB
+			0, // topic
+			8,
 			'/', 'a', '/', 'b', '/', '#', '/', 'c',
-			0,  // topic name MSB
-			10, // topic name LSB
+			0, // topic
+			10,
 			'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 		}
 
@@ -57,10 +57,10 @@ func TestUnsubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
-			2,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			// empty topic list
+			2, // remaining length
+			0, // packet id
+			7,
+			// < empty topic list
 		}
 
 		pkt = NewUnsubscribe()
@@ -70,8 +70,8 @@ func TestUnsubscribeDecode(t *testing.T) {
 		packet = []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			6, // < wrong remaining length
-			0, // packet ID MSB
-			7, // packet ID LSB
+			0, // packet id
+			7,
 		}
 
 		pkt = NewUnsubscribe()
@@ -80,7 +80,7 @@ func TestUnsubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
-			0,
+			0, // remaining length
 			// missing packet id
 		}
 
@@ -90,11 +90,11 @@ func TestUnsubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
-			10,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			0, // topic name MSB
-			9, // topic name LSB < wrong size
+			10, // remaining length
+			0,  // packet id
+			7,
+			0, // topic
+			9, // < wrong size
 			'g', 'o', 'm', 'q', 't', 't',
 		}
 
@@ -104,11 +104,11 @@ func TestUnsubscribeDecode(t *testing.T) {
 
 		packet = []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
-			10,
-			0, // packet ID MSB
-			0, // packet ID LSB < zero packet id
-			0, // topic name MSB
-			6, // topic name LSB
+			10, // remaining length
+			0,  // packet ID
+			0,  // < zero packet id
+			0,  // topic name
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
 		}
 
@@ -122,17 +122,17 @@ func TestUnsubscribeEncode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
 		packet := []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
-			32,
-			0, // packet ID MSB
-			7, // packet ID LSB
-			0, // topic name MSB
-			6, // topic name LSB
+			32, // remaining length
+			0,  // packet id
+			7,
+			0, // topic
+			6,
 			'g', 'o', 'm', 'q', 't', 't',
-			0, // topic name MSB
-			8, // topic name LSB
+			0, // topic
+			8,
 			'/', 'a', '/', 'b', '/', '#', '/', 'c',
-			0,  // topic name MSB
-			10, // topic name LSB
+			0, // topic
+			10,
 			'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
 		}
 
@@ -199,11 +199,11 @@ func BenchmarkUnsubscribeDecode(b *testing.B) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		packet := []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
-			5,
-			0, // packet ID MSB
-			1, // packet ID LSB
-			0, // topic name MSB
-			1, // topic name LSB
+			5, // remaining length
+			0, // packet id
+			1,
+			0, // topic
+			1,
 			't',
 		}
 
