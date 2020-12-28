@@ -47,19 +47,14 @@ func TestNakedDecode(t *testing.T) {
 		n, err := nakedDecode(m, packet, DISCONNECT)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, n)
-	})
-}
 
-func TestNakedDecodeError1(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
+		packet = []byte{
 			byte(DISCONNECT << 4),
 			1, // < wrong remaining length
 			0,
 		}
 
-		n, err := nakedDecode(m, packet, DISCONNECT)
-
+		n, err = nakedDecode(m, packet, DISCONNECT)
 		assert.Error(t, err)
 		assert.Equal(t, 2, n)
 	})
