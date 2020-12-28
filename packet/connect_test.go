@@ -117,70 +117,50 @@ func TestConnectDecode(t *testing.T) {
 		assert.Equal(t, "verysecret", pkt.Password)
 		assert.Equal(t, Version31, pkt.Version)
 
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			60, // < wrong remaining length
 			0,  // protocol string
 			5,
 			'M', 'Q', 'T', 'T',
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
 			5, // < invalid size
 			'M', 'Q', 'T', 'T',
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
 			// < protocol level: missing
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			8, // remaining length
 			0, // protocol string
 			5,
 			'M', 'Q', 'T', 'T', 'X', // < wrong protocol string
 			4,
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
 			5, // < protocol level: wrong level
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -188,13 +168,9 @@ func TestConnectDecode(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
 			// < connect flags: missing
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -202,13 +178,9 @@ func TestConnectDecode(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
 			1, // < connect flags: reserved bit set to one
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -216,13 +188,9 @@ func TestConnectDecode(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4,  // protocol level
 			24, // < connect flags: invalid qos
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -230,13 +198,9 @@ func TestConnectDecode(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
 			8, // < connect flags: will flag set to zero but others not
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -244,13 +208,9 @@ func TestConnectDecode(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4,  // protocol level
 			64, // < connect flags: password flag set but not username
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -260,13 +220,9 @@ func TestConnectDecode(t *testing.T) {
 			0, // connect flags
 			0, // < keep alive: missing
 			// < keep alive: missing
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -279,13 +235,9 @@ func TestConnectDecode(t *testing.T) {
 			0, // client id
 			2, // < wrong size
 			'x',
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -297,13 +249,9 @@ func TestConnectDecode(t *testing.T) {
 			1,
 			0, // client id
 			0,
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -317,13 +265,9 @@ func TestConnectDecode(t *testing.T) {
 			0,
 			0, // will topic
 			1, // < wrong size
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -339,13 +283,9 @@ func TestConnectDecode(t *testing.T) {
 			0,
 			0, // will payload
 			1, // < wrong size
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -359,13 +299,9 @@ func TestConnectDecode(t *testing.T) {
 			0,
 			0, // username
 			1, // < wrong size
-		}
+		})
 
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, CONNECT, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -381,11 +317,7 @@ func TestConnectDecode(t *testing.T) {
 			0,
 			0, // password
 			1, // < wrong size
-		}
-
-		pkt = NewConnect()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
+		})
 	})
 }
 

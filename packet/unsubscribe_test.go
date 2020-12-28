@@ -55,40 +55,28 @@ func TestUnsubscribeDecode(t *testing.T) {
 		assert.Equal(t, "/a/b/#/c", pkt.Topics[1])
 		assert.Equal(t, "/a/b/#/cdd", pkt.Topics[2])
 
-		packet = []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			2, // remaining length
 			0, // packet id
 			7,
 			// < empty topic list
-		}
+		})
 
-		pkt = NewUnsubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			6, // < wrong remaining length
 			0, // packet id
 			7,
-		}
+		})
 
-		pkt = NewUnsubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			0, // remaining length
 			// missing packet id
-		}
+		})
 
-		pkt = NewUnsubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			10, // remaining length
 			0,  // packet id
@@ -96,13 +84,9 @@ func TestUnsubscribeDecode(t *testing.T) {
 			0, // topic
 			9, // < wrong size
 			'g', 'o', 'm', 'q', 't', 't',
-		}
+		})
 
-		pkt = NewUnsubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			10, // remaining length
 			0,  // packet ID
@@ -110,11 +94,7 @@ func TestUnsubscribeDecode(t *testing.T) {
 			0,  // topic name
 			6,
 			'g', 'o', 'm', 'q', 't', 't',
-		}
-
-		pkt = NewUnsubscribe()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
+		})
 	})
 }
 

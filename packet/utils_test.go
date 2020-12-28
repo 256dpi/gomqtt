@@ -3,6 +3,8 @@ package packet
 import (
 	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type errorWriter struct {
@@ -54,4 +56,10 @@ func benchTest(b *testing.B, fn func(b *testing.B, m Mode)) {
 	b.Run("M5", func(b *testing.B) {
 		fn(b, M5)
 	})
+}
+
+func assertDecodeError(t *testing.T, m Mode, typ Type, packet []byte) {
+	pkt, _ := typ.New()
+	_, err := pkt.Decode(m, packet)
+	assert.Error(t, err)
 }

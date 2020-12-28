@@ -47,19 +47,15 @@ func TestSubackDecode(t *testing.T) {
 		assert.Equal(t, len(packet), n)
 		assert.Equal(t, 4, len(pkt.ReturnCodes))
 
-		packet = []byte{
+		assertDecodeError(t, m, SUBACK, []byte{
 			byte(SUBACK << 4),
 			1, // < wrong remaining length
 			0, // packet id
 			7,
 			0, // return code 1
-		}
+		})
 
-		pkt = NewSuback()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBACK, []byte{
 			byte(SUBACK << 4),
 			6, // remaining length
 			0, // packet id
@@ -68,45 +64,29 @@ func TestSubackDecode(t *testing.T) {
 			1,    // return code 2
 			2,    // return code 3
 			0x81, // < wrong return code
-		}
+		})
 
-		pkt = NewSuback()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBACK, []byte{
 			byte(SUBACK << 4),
 			1, // < wrong remaining length
 			0, // packet id
-		}
+		})
 
-		pkt = NewSuback()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBACK, []byte{
 			byte(PUBCOMP << 4), // < wrong packet type
 			3,                  // remaining length
 			0,                  // packet id
 			7,
 			0, // return code 1
-		}
+		})
 
-		pkt = NewSuback()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
-
-		packet = []byte{
+		assertDecodeError(t, m, SUBACK, []byte{
 			byte(SUBACK << 4),
 			3, // remaining length
 			0, // packet id
 			0, // < zero packet id
 			0,
-		}
-
-		pkt = NewSuback()
-		_, err = pkt.Decode(m, packet)
-		assert.Error(t, err)
+		})
 	})
 }
 
