@@ -111,9 +111,7 @@ func TestIdentifiedEncode(t *testing.T) {
 		assert.Equal(t, packet, dst[:n])
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Puback{
-			ID: 7,
-		})
+		assertEncodeError(t, m, 1, 1, &Puback{})
 
 		assertEncodeError(t, m, 0, 2, &Puback{
 			ID: 0, // < zero id

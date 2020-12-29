@@ -114,10 +114,7 @@ func TestSubackEncode(t *testing.T) {
 		assert.Equal(t, packet, dst[:n])
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Suback{
-			ID:          7,
-			ReturnCodes: []QOS{0x80},
-		})
+		assertEncodeError(t, m, 1, 1, &Suback{})
 
 		assertEncodeError(t, m, 0, 4, &Suback{
 			ID:          7,
