@@ -117,7 +117,7 @@ func TestConnectDecode(t *testing.T) {
 		assert.Equal(t, "verysecret", pkt.Password)
 		assert.Equal(t, Version31, pkt.Version)
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 2, []byte{
 			byte(CONNECT << 4),
 			60, // < wrong remaining length
 			0,  // protocol string
@@ -125,7 +125,7 @@ func TestConnectDecode(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 4, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -133,7 +133,7 @@ func TestConnectDecode(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 8, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -142,7 +142,7 @@ func TestConnectDecode(t *testing.T) {
 			// < protocol level: missing
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			8, // remaining length
 			0, // protocol string
@@ -151,7 +151,7 @@ func TestConnectDecode(t *testing.T) {
 			4,
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 9, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -160,7 +160,7 @@ func TestConnectDecode(t *testing.T) {
 			5, // < protocol level: wrong level
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 9, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -170,7 +170,7 @@ func TestConnectDecode(t *testing.T) {
 			// < connect flags: missing
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -180,7 +180,7 @@ func TestConnectDecode(t *testing.T) {
 			1, // < connect flags: reserved bit set to one
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -190,7 +190,7 @@ func TestConnectDecode(t *testing.T) {
 			24, // < connect flags: invalid qos
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -200,7 +200,7 @@ func TestConnectDecode(t *testing.T) {
 			8, // < connect flags: will flag set to zero but others not
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -210,7 +210,7 @@ func TestConnectDecode(t *testing.T) {
 			64, // < connect flags: password flag set but not username
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -222,7 +222,7 @@ func TestConnectDecode(t *testing.T) {
 			// < keep alive: missing
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -237,7 +237,7 @@ func TestConnectDecode(t *testing.T) {
 			'x',
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -251,7 +251,7 @@ func TestConnectDecode(t *testing.T) {
 			0,
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -267,7 +267,7 @@ func TestConnectDecode(t *testing.T) {
 			1, // < wrong size
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 18, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -285,7 +285,7 @@ func TestConnectDecode(t *testing.T) {
 			1, // < wrong size
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -301,7 +301,7 @@ func TestConnectDecode(t *testing.T) {
 			1, // < wrong size
 		})
 
-		assertDecodeError(t, m, CONNECT, []byte{
+		assertDecodeError(t, m, CONNECT, 18, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -323,7 +323,6 @@ func TestConnectDecode(t *testing.T) {
 
 func TestConnectEncode(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
-
 		packet := []byte{
 			byte(CONNECT << 4),
 			58, // remaining length
