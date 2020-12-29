@@ -145,15 +145,15 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
-	// check packet id
-	if !s.ID.Valid() {
-		return 0, makeError(SUBSCRIBE, "packet id must be grater than zero")
-	}
-
 	// encode header
 	total, err := encodeHeader(dst, 0, s.len(), SUBSCRIBE)
 	if err != nil {
 		return total, err
+	}
+
+	// check packet id
+	if !s.ID.Valid() {
+		return total, makeError(SUBSCRIBE, "packet id must be grater than zero")
 	}
 
 	// write packet id
