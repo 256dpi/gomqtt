@@ -80,21 +80,15 @@ func (c *Connect) Type() Type {
 
 // String returns a string representation of the packet.
 func (c *Connect) String() string {
+	// prepare will
 	will := "nil"
-
 	if c.Will != nil {
 		will = c.Will.String()
 	}
 
-	return fmt.Sprintf("<Connect ClientID=%q KeepAlive=%d Username=%q "+
-		"Password=%q CleanSession=%t Will=%s Version=%d>",
-		c.ClientID,
-		c.KeepAlive,
-		c.Username,
-		c.Password,
-		c.CleanSession,
-		will,
-		c.Version,
+	return fmt.Sprintf(
+		"<Connect ClientID=%q KeepAlive=%d Username=%q Password=%q CleanSession=%t Will=%s Version=%d>",
+		c.ClientID, c.KeepAlive, c.Username, c.Password, c.CleanSession, will, c.Version,
 	)
 }
 

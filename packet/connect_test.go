@@ -225,7 +225,7 @@ func TestConnectDecode(t *testing.T) {
 		assertDecodeError(t, m, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
 			13, // remaining length
-			0, // protocol string
+			0,  // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
@@ -240,7 +240,7 @@ func TestConnectDecode(t *testing.T) {
 		assertDecodeError(t, m, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
 			12, // remaining length
-			0, // protocol string
+			0,  // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
@@ -254,7 +254,7 @@ func TestConnectDecode(t *testing.T) {
 		assertDecodeError(t, m, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
 			14, // remaining length
-			0, // protocol string
+			0,  // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
@@ -270,7 +270,7 @@ func TestConnectDecode(t *testing.T) {
 		assertDecodeError(t, m, CONNECT, 18, []byte{
 			byte(CONNECT << 4),
 			16, // remaining length
-			0, // protocol string
+			0,  // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
@@ -288,7 +288,7 @@ func TestConnectDecode(t *testing.T) {
 		assertDecodeError(t, m, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
 			14, // remaining length
-			0, // protocol string
+			0,  // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
 			4,   // protocol level
@@ -304,7 +304,7 @@ func TestConnectDecode(t *testing.T) {
 		assertDecodeError(t, m, CONNECT, 18, []byte{
 			byte(CONNECT << 4),
 			16, // remaining length
-			0, // protocol string
+			0,  // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
 			4,   // protocol level

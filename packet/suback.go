@@ -34,14 +34,16 @@ func (s *Suback) Type() Type {
 
 // String returns a string representation of the packet.
 func (s *Suback) String() string {
-	var codes []string
-
+	// collect return codes
+	var returnCodes []string
 	for _, c := range s.ReturnCodes {
-		codes = append(codes, fmt.Sprintf("%d", c))
+		returnCodes = append(returnCodes, fmt.Sprintf("%d", c))
 	}
 
-	return fmt.Sprintf("<Suback ID=%d ReturnCodes=[%s]>",
-		s.ID, strings.Join(codes, ", "))
+	return fmt.Sprintf(
+		"<Suback ID=%d ReturnCodes=[%s]>",
+		s.ID, strings.Join(returnCodes, ", "),
+	)
 }
 
 // Len returns the byte length of the encoded packet.
