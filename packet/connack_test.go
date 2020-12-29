@@ -110,20 +110,12 @@ func TestConnackEncode(t *testing.T) {
 		assert.Equal(t, 4, n)
 		assert.Equal(t, packet, dst[:n])
 
-		pkt = NewConnack()
-		dst = make([]byte, 3) // < wrong buffer size
+		// wrong buffer size
+		assertEncodeError(t, m, 3, 0, &Connack{})
 
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 0, n)
-
-		pkt = NewConnack()
-		pkt.ReturnCode = 11 // < wrong return code
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 3, n)
+		assertEncodeError(t, m, 0, 3, &Connack{
+			ReturnCode: 11, // < wrong return code
+		})
 	})
 }
 

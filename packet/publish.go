@@ -118,11 +118,6 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 // returns the number of bytes encoded and whether there's any errors along
 // the way. If there is an error, the byte slice should be considered invalid.
 func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
-	// check topic length
-	if len(p.Message.Topic) == 0 {
-		return 0, makeError(PUBLISH, "topic name is empty")
-	}
-
 	// prepare flags
 	var flags byte
 
@@ -141,11 +136,6 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 		return 0, makeError(PUBLISH, "invalid QOS level %d", p.Message.QOS)
 	}
 
-	// check packet id
-	if p.Message.QOS > 0 && !p.ID.Valid() {
-		return 0, makeError(PUBLISH, "packet id must be grater than zero")
-	}
-
 	// set qos
 	flags = (flags & 249) | (byte(p.Message.QOS) << 1) // 249 = 11111001
 
@@ -155,11 +145,21 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 		return total, err
 	}
 
+	// check topic length
+	if len(p.Message.Topic) == 0 {
+		return total, makeError(PUBLISH, "topic name is empty")
+	}
+
 	// write topic
 	n, err := writeString(dst[total:], p.Message.Topic, PUBLISH)
 	total += n
 	if err != nil {
 		return total, err
+	}
+
+	// check packet id
+	if p.Message.QOS > 0 && !p.ID.Valid() {
+		return total, makeError(PUBLISH, "packet id must be grater than zero")
 	}
 
 	// write packet id

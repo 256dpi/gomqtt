@@ -130,31 +130,20 @@ func TestUnsubscribeEncode(t *testing.T) {
 		assert.Equal(t, len(packet), n)
 		assert.Equal(t, packet, dst[:n])
 
-		pkt = NewUnsubscribe()
-		pkt.ID = 7
-		pkt.Topics = []string{"gomqtt"}
+		// small buffer
+		assertEncodeError(t, m, 1, 0, &Unsubscribe{
+			ID:     7,
+			Topics: []string{"gomqtt"},
+		})
 
-		dst = make([]byte, 1) // < too small
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 0, n)
+		assertEncodeError(t, m, 0, 6, &Unsubscribe{
+			ID:     7,
+			Topics: []string{string(make([]byte, 65536))}, // too big
+		})
 
-		pkt = NewUnsubscribe()
-		pkt.ID = 7
-		pkt.Topics = []string{string(make([]byte, 65536))}
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 6, n)
-
-		pkt = NewUnsubscribe()
-		pkt.ID = 0 // < zero packet id
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 0, n)
+		assertEncodeError(t, m, 0, 0, &Unsubscribe{
+			ID: 0, // < missing
+		})
 	})
 }
 

@@ -418,103 +418,80 @@ func TestConnectEncode(t *testing.T) {
 		assert.Equal(t, len(packet), n)
 		assert.Equal(t, packet, dst[:n])
 
-		pkt = NewConnect()
+		// too small buffer
+		assertEncodeError(t, m, 4, 0, &Connect{
+			CleanSession: true,
+			Version:      4,
+		})
 
-		dst = make([]byte, 4) // < too small buffer
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 0, n)
+		assertEncodeError(t, m, 0, 9, &Connect{
+			CleanSession: true,
+			Version:      4,
+			Will: &Message{
+				Topic: "t",
+				QOS:   3, // < wrong qos
+			},
+		})
 
-		pkt = NewConnect()
-		pkt.Will = &Message{
-			Topic: "t",
-			QOS:   3, // < wrong qos
-		}
+		assertEncodeError(t, m, 0, 14, &Connect{
+			CleanSession: true,
+			Version:      4,
+			ClientID:     string(make([]byte, 65536)), // < too big
+		})
 
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 9, n)
+		assertEncodeError(t, m, 0, 16, &Connect{
+			CleanSession: true,
+			Version:      4,
+			Will: &Message{
+				Topic: string(make([]byte, 65536)), // < too big
+			},
+		})
 
-		pkt = NewConnect()
-		pkt.ClientID = string(make([]byte, 65536)) // < too big
+		assertEncodeError(t, m, 0, 19, &Connect{
+			CleanSession: true,
+			Version:      4,
+			Will: &Message{
+				Topic:   "t",
+				Payload: make([]byte, 65536), // < too big
+			},
+		})
 
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 14, n)
+		assertEncodeError(t, m, 0, 16, &Connect{
+			CleanSession: true,
+			Version:      4,
+			Username:     string(make([]byte, 65536)), // < too big
+		})
 
-		pkt = NewConnect()
-		pkt.Will = &Message{
-			Topic: string(make([]byte, 65536)), // < too big
-		}
+		assertEncodeError(t, m, 0, 14, &Connect{
+			CleanSession: true,
+			Version:      4,
+			Username:     "", // < missing
+			Password:     "p",
+		})
 
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 16, n)
+		assertEncodeError(t, m, 0, 19, &Connect{
+			CleanSession: true,
+			Version:      4,
+			Username:     "u",
+			Password:     string(make([]byte, 65536)), // < too big
+		})
 
-		pkt = NewConnect()
-		pkt.Will = &Message{
-			Topic:   "t",
-			Payload: make([]byte, 65536), // < too big
-		}
+		assertEncodeError(t, m, 0, 9, &Connect{
+			CleanSession: true,
+			Version:      4,
+			Will: &Message{
+				Topic: "", // < missing
+			},
+		})
 
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 19, n)
+		assertEncodeError(t, m, 0, 2, &Connect{
+			Version: 255, // < invalid
+		})
 
-		pkt = NewConnect()
-		pkt.Username = string(make([]byte, 65536)) // < too big
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 16, n)
-
-		pkt = NewConnect()
-		pkt.Password = "p" // < missing username
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 14, n)
-
-		pkt = NewConnect()
-		pkt.Username = "u"
-		pkt.Password = string(make([]byte, 65536)) // < too big
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 19, n)
-
-		pkt = NewConnect()
-		pkt.Will = &Message{
-			// < missing topic
-		}
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 9, n)
-
-		pkt = NewConnect()
-		pkt.Version = 255
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 2, n)
-
-		pkt = NewConnect()
-		pkt.CleanSession = false // < client id is empty
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-		assert.Equal(t, 9, n)
+		assertEncodeError(t, m, 0, 9, &Connect{
+			CleanSession: false,
+			ClientID:     "", // < missing
+		})
 	})
 }
 
