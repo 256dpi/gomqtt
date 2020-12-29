@@ -19,7 +19,7 @@ func encodeHeader(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
 	// write remaining length
 	n, err := writeVarint(dst[1:], uint64(rl), t)
 	if err != nil {
-		return 0, err
+		return n, err
 	}
 
 	return 1 + n, nil

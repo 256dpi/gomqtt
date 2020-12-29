@@ -115,7 +115,7 @@ func (s *Suback) Encode(m Mode, dst []byte) (int, error) {
 
 	// check packet id
 	if !s.ID.Valid() {
-		return 0, makeError(SUBACK, "packet id must be grater than zero")
+		return total, makeError(SUBACK, "packet id must be grater than zero")
 	}
 
 	// write packet id
@@ -129,7 +129,7 @@ func (s *Suback) Encode(m Mode, dst []byte) (int, error) {
 	for _, rc := range s.ReturnCodes {
 		// check return code
 		if !rc.Successful() && rc != QOSFailure {
-			return 0, makeError(SUBACK, "invalid return code %d", rc)
+			return total, makeError(SUBACK, "invalid return code %d", rc)
 		}
 
 		// write return code

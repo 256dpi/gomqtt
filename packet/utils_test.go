@@ -64,3 +64,13 @@ func assertDecodeError(t *testing.T, m Mode, typ Type, read int, packet []byte) 
 	assert.Error(t, err)
 	assert.Equal(t, read, n)
 }
+
+func assertEncodeError(t *testing.T, m Mode, len, written int, pkt Generic) {
+	if len == 0 {
+		len = pkt.Len(m)
+	}
+	dst := make([]byte, len)
+	n, err := pkt.Encode(m, dst)
+	assert.Error(t, err)
+	assert.Equal(t, written, n)
+}

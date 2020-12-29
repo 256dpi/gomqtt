@@ -165,43 +165,39 @@ func TestPublishEncode(t *testing.T) {
 		assert.Equal(t, len(packet), n)
 		assert.Equal(t, packet, dst[:n])
 
-		pkt = NewPublish()
-		pkt.Message.Topic = "" // < empty topic
+		// buffer too small
+		assertEncodeError(t, m, 1, 0, &Publish{
+			Message: Message{
+				Topic: "test",
+			},
+		})
 
-		dst = make([]byte, pkt.Len(m))
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
+		assertEncodeError(t, m, 0, 2, &Publish{
+			Message: Message{
+				Topic: "", // < missing
+			},
+		})
 
-		pkt = NewPublish()
-		pkt.Message.Topic = "t"
-		pkt.Message.QOS = 3 // < wrong qos
+		assertEncodeError(t, m, 0, 0, &Publish{
+			Message: Message{
+				Topic: "test",
+				QOS:   3, // < invalid
+			},
+		})
 
-		dst = make([]byte, pkt.Len(m))
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
+		assertEncodeError(t, m, 0, 4, &Publish{
+			Message: Message{
+				Topic: string(make([]byte, 65536)), // < too big
+			},
+		})
 
-		pkt = NewPublish()
-		pkt.Message.Topic = "t"
-
-		dst = make([]byte, 1) // < too small
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-
-		pkt = NewPublish()
-		pkt.Message.Topic = string(make([]byte, 65536)) // < too big
-
-		dst = make([]byte, pkt.Len(m))
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-
-		pkt = NewPublish()
-		pkt.Message.Topic = "test"
-		pkt.Message.QOS = 1
-		pkt.ID = 0 // < zero packet id
-
-		dst = make([]byte, pkt.Len(m))
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
+		assertEncodeError(t, m, 0, 8, &Publish{
+			ID: 0, // < missing
+			Message: Message{
+				Topic: "test",
+				QOS:   1,
+			},
+		})
 	})
 }
 

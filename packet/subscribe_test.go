@@ -163,39 +163,40 @@ func TestSubscribeEncode(t *testing.T) {
 		assert.Equal(t, len(packet), n)
 		assert.Equal(t, packet, dst)
 
-		pkt = NewSubscribe()
-		pkt.ID = 7
+		// small buffer
+		assertEncodeError(t, m, 1, 0, &Subscribe{
+			ID: 7,
+			Subscriptions: []Subscription{
+				{
+					QOS:   0,
+					Topic: "gomqtt",
+				},
+			},
+		})
 
-		dst = make([]byte, 1) // < too small
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
+		assertEncodeError(t, m, 0, 0, &Subscribe{
+			ID: 0, // < missing
+		})
 
-		pkt = NewSubscribe()
-		pkt.ID = 7
-		pkt.Subscriptions = []Subscription{
-			{Topic: string(make([]byte, 65536)), QOS: 0}, // too big
-		}
+		assertEncodeError(t, m, 0, 6, &Subscribe{
+			ID: 7,
+			Subscriptions: []Subscription{
+				{
+					Topic: string(make([]byte, 65536)), // < too big
+					QOS:   0,
+				},
+			},
+		})
 
-		dst = make([]byte, pkt.Len(m))
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-
-		pkt = NewSubscribe()
-		pkt.ID = 0 // < zero packet id
-
-		dst = make([]byte, pkt.Len(m))
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
-
-		pkt = NewSubscribe()
-		pkt.ID = 7
-		pkt.Subscriptions = []Subscription{
-			{Topic: string(make([]byte, 10)), QOS: 0x81}, // invalid qos
-		}
-
-		dst = make([]byte, pkt.Len(m))
-		_, err = pkt.Encode(m, dst)
-		assert.Error(t, err)
+		assertEncodeError(t, m, 0, 16, &Subscribe{
+			ID: 7,
+			Subscriptions: []Subscription{
+				{
+					Topic: string(make([]byte, 10)),
+					QOS:   0x81, // < invalid qos
+				},
+			},
+		})
 	})
 }
 
