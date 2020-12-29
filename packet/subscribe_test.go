@@ -200,45 +200,11 @@ func TestSubscribeEncode(t *testing.T) {
 	})
 }
 
-func BenchmarkSubscribeEncode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		pkt := NewSubscribe()
-		pkt.ID = 7
-		pkt.Subscriptions = []Subscription{
+func BenchmarkSubscribe(b *testing.B) {
+	benchPacket(b, &Subscribe{
+		Subscriptions: []Subscription{
 			{Topic: "t", QOS: 0},
-		}
-
-		buf := make([]byte, pkt.Len(m))
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Encode(m, buf)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-}
-
-func BenchmarkSubscribeDecode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		packet := []byte{
-			byte(SUBSCRIBE<<4) | 2,
-			6, // remaining length
-			0, // packet id
-			1,
-			0, // topic name
-			1,
-			't',
-			0, // qos
-		}
-
-		pkt := NewSubscribe()
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Decode(m, packet)
-			if err != nil {
-				panic(err)
-			}
-		}
+		},
+		ID: 7,
 	})
 }

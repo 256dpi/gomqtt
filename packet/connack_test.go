@@ -119,39 +119,9 @@ func TestConnackEncode(t *testing.T) {
 	})
 }
 
-func BenchmarkConnackEncode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		pkt := NewConnack()
-		pkt.ReturnCode = ConnectionAccepted
-		pkt.SessionPresent = true
-
-		buf := make([]byte, pkt.Len(m))
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Encode(m, buf)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-}
-
-func BenchmarkConnackDecode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		packet := []byte{
-			byte(CONNACK << 4),
-			2, // remaining length
-			0, // session not present
-			0, // connection accepted
-		}
-
-		pkt := NewConnack()
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Decode(m, packet)
-			if err != nil {
-				panic(err)
-			}
-		}
+func BenchmarkConnack(b *testing.B) {
+	benchPacket(b, &Connack{
+		ReturnCode:     ConnectionAccepted,
+		SessionPresent: true,
 	})
 }

@@ -46,18 +46,6 @@ func multiTest(t *testing.T, fn func(t *testing.T, m Mode)) {
 	})
 }
 
-func benchTest(b *testing.B, fn func(b *testing.B, m Mode)) {
-	b.ReportAllocs()
-
-	b.Run("M4", func(b *testing.B) {
-		fn(b, M4)
-	})
-
-	b.Run("M5", func(b *testing.B) {
-		fn(b, M5)
-	})
-}
-
 func assertDecodeError(t *testing.T, m Mode, typ Type, read int, packet []byte) {
 	pkt, _ := typ.New()
 	n, err := pkt.Decode(m, packet)
@@ -73,4 +61,40 @@ func assertEncodeError(t *testing.T, m Mode, len, written int, pkt Generic) {
 	n, err := pkt.Encode(m, dst)
 	assert.Error(t, err)
 	assert.Equal(t, written, n)
+}
+
+func benchTest(b *testing.B, fn func(b *testing.B, m Mode)) {
+	b.ReportAllocs()
+
+	b.Run("M4", func(b *testing.B) {
+		fn(b, M4)
+	})
+
+	b.Run("M5", func(b *testing.B) {
+		fn(b, M5)
+	})
+}
+
+func benchPacket(b *testing.B, pkt Generic) {
+	benchTest(b, func(b *testing.B, m Mode) {
+		buf := make([]byte, pkt.Len(m))
+
+		b.Run("Encode", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, err := pkt.Encode(m, buf)
+				if err != nil {
+					panic(err)
+				}
+			}
+		})
+
+		b.Run("Decode", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, err := pkt.Decode(m, buf)
+				if err != nil {
+					panic(err)
+				}
+			}
+		})
+	})
 }
