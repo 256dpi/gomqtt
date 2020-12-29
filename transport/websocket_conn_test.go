@@ -132,7 +132,7 @@ func TestWebSocketCoalescedMessage(t *testing.T) {
 	conn2, done := connectionPair("ws", func(conn1 Conn) {
 		buf := make([]byte, pkt.Len(packet.M4)*2)
 
-		_, err := pkt.Encode(packet.M4, buf)
+		_, err := pkt.Encode(packet.M4, buf[:pkt.Len(packet.M4)])
 		assert.NoError(t, err)
 
 		_, err = pkt.Encode(packet.M4, buf[pkt.Len(packet.M4):])
