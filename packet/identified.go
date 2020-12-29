@@ -43,15 +43,15 @@ func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 
 // encodes an identified packet
 func identifiedEncode(m Mode, dst []byte, id ID, t Type) (int, error) {
-	// check packet id
-	if !id.Valid() {
-		return 0, makeError(t, "packet id must be grater than zero")
-	}
-
 	// encode header
 	total, err := encodeHeader(dst, 0, 2, identifiedLen(), t)
 	if err != nil {
 		return total, err
+	}
+
+	// check packet id
+	if !id.Valid() {
+		return total, makeError(t, "packet id must be grater than zero")
 	}
 
 	// write packet id

@@ -48,15 +48,11 @@ func TestNakedDecode(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 2, n)
 
-		packet = []byte{
+		assertDecodeError(t, m, DISCONNECT, 2, []byte{
 			byte(DISCONNECT << 4),
 			1, // < wrong remaining length
 			0,
-		}
-
-		n, err = nakedDecode(m, packet, DISCONNECT)
-		assert.Error(t, err)
-		assert.Equal(t, 2, n)
+		})
 	})
 }
 
@@ -72,6 +68,9 @@ func TestNakedEncode(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 2, n)
 		assert.Equal(t, packet, dst[:n])
+
+		// small buffer
+		assertEncodeError(t, m, 1, 0, &Disconnect{})
 	})
 }
 

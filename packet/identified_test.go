@@ -72,44 +72,26 @@ func TestIdentifiedDecode(t *testing.T) {
 		assert.Equal(t, 4, n)
 		assert.Equal(t, ID(7), pid)
 
-		packet = []byte{
+		assertDecodeError(t, m, PUBACK, 2, []byte{
 			byte(PUBACK << 4),
 			1, // < wrong remaining length
 			0, // packet id
 			7,
-		}
+		})
 
-		pid = 0
-		n, err = identifiedDecode(m, packet, &pid, PUBACK)
-		assert.Error(t, err)
-		assert.Equal(t, 2, n)
-		assert.Equal(t, ID(0), pid)
-
-		packet = []byte{
+		assertDecodeError(t, m, PUBACK, 2, []byte{
 			byte(PUBACK << 4),
 			2, // remaining length
 			7, // packet id
 			// < insufficient bytes
-		}
+		})
 
-		pid = 0
-		n, err = identifiedDecode(m, packet, &pid, PUBACK)
-		assert.Error(t, err)
-		assert.Equal(t, 2, n)
-		assert.Equal(t, ID(0), pid)
-
-		packet = []byte{
+		assertDecodeError(t, m, PUBACK, 4, []byte{
 			byte(PUBACK << 4),
 			2, // remaining length
 			0, // packet id
 			0, // < zero id
-		}
-
-		pid = 0
-		n, err = identifiedDecode(m, packet, &pid, PUBACK)
-		assert.Error(t, err)
-		assert.Equal(t, 4, n)
-		assert.Equal(t, ID(0), pid)
+		})
 	})
 }
 
@@ -124,20 +106,18 @@ func TestIdentifiedEncode(t *testing.T) {
 
 		dst := make([]byte, identifiedLen())
 		n, err := identifiedEncode(m, dst, 7, PUBACK)
-
 		assert.NoError(t, err)
 		assert.Equal(t, 4, n)
 		assert.Equal(t, packet, dst[:n])
 
-		dst = make([]byte, 3) // < insufficient buffer
-		n, err = identifiedEncode(m, dst, 7, PUBACK)
-		assert.Error(t, err)
-		assert.Equal(t, 0, n)
+		// small buffer
+		assertEncodeError(t, m, 1, 0, &Puback{
+			ID: 7,
+		})
 
-		dst = make([]byte, identifiedLen())
-		n, err = identifiedEncode(m, dst, 0, PUBACK) // < zero id
-		assert.Error(t, err)
-		assert.Equal(t, 0, n)
+		assertEncodeError(t, m, 0, 2, &Puback{
+			ID: 0, // < zero id
+		})
 	})
 }
 
