@@ -125,6 +125,18 @@ func TestSubscribeDecode(t *testing.T) {
 			's',
 			0x81, // < invalid qos
 		})
+
+		assertDecodeError(t, m, SUBSCRIBE, 8, []byte{
+			byte(SUBSCRIBE<<4) | 2,
+			7, // remaining length
+			0, // packet id
+			7,
+			0, // topic
+			1,
+			's',
+			0, // qos
+			0, // < superfluous byte
+		})
 	})
 }
 

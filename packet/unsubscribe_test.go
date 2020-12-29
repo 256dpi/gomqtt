@@ -95,6 +95,17 @@ func TestUnsubscribeDecode(t *testing.T) {
 			6,
 			'g', 'o', 'm', 'q', 't', 't',
 		})
+
+		assertDecodeError(t, m, UNSUBSCRIBE, 12, []byte{
+			byte(UNSUBSCRIBE<<4) | 2,
+			11, // remaining length
+			0,  // packet ID
+			7,
+			0, // topic name
+			6,
+			'g', 'o', 'm', 'q', 't', 't',
+			0, // < superfluous byte
+		})
 	})
 }
 

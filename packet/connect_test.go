@@ -318,6 +318,21 @@ func TestConnectDecode(t *testing.T) {
 			0, // password
 			1, // < wrong size
 		})
+
+		assertDecodeError(t, m, CONNECT, 16, []byte{
+			byte(CONNECT << 4),
+			15, // remaining length
+			0,  // protocol string
+			6,
+			'M', 'Q', 'I', 's', 'd', 'p',
+			3, // protocol level
+			2, // connect flags
+			0, // keep alive
+			10,
+			0, // client id
+			0,
+			0, // < superfluous byte
+		})
 	})
 }
 
