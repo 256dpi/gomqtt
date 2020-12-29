@@ -136,6 +136,11 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	// set return code
 	c.ReturnCode = returnCode
 
+	// check buffer
+	if len(src[total:]) != 0 {
+		return total, makeError(CONNACK, "leftover buffer length (%d)", len(src[total:]))
+	}
+
 	return total, nil
 }
 

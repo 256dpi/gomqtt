@@ -12,14 +12,9 @@ func identifiedLen() int {
 // decodes an identified packet
 func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 	// decode header
-	total, _, rl, err := decodeHeader(src, t)
+	total, _, _, err := decodeHeader(src, t)
 	if err != nil {
 		return total, err
-	}
-
-	// check remaining length
-	if rl != 2 {
-		return total, makeError(t, "expected remaining length to be 2")
 	}
 
 	// read packet id
@@ -37,6 +32,11 @@ func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 
 	// set packet id
 	*id = packetID
+
+	// check buffer
+	if len(src[total:]) != 0 {
+		return total, makeError(CONNACK, "leftover buffer length (%d)", len(src[total:]))
+	}
 
 	return total, nil
 }

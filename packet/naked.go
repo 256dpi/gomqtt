@@ -6,12 +6,17 @@ func nakedLen() int {
 
 func nakedDecode(m Mode, src []byte, t Type) (int, error) {
 	// decode header
-	hl, _, rl, err := decodeHeader(src, t)
-	if rl != 0 {
-		return hl, makeError(t, "expected zero remaining length")
+	total, _, _, err := decodeHeader(src, t)
+	if err != nil {
+		return total, err
 	}
 
-	return hl, err
+	// check buffer
+	if len(src[total:]) != 0 {
+		return total, makeError(CONNACK, "leftover buffer length (%d)", len(src[total:]))
+	}
+
+	return total, nil
 }
 
 func nakedEncode(m Mode, dst []byte, t Type) (int, error) {

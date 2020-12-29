@@ -92,6 +92,14 @@ func TestIdentifiedDecode(t *testing.T) {
 			0, // packet id
 			0, // < zero id
 		})
+
+		assertDecodeError(t, m, PUBACK, 4, []byte{
+			byte(PUBACK << 4),
+			3, // remaining length
+			0, // packet id
+			7,
+			0, // < superfluous byte
+		})
 	})
 }
 

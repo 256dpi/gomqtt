@@ -43,8 +43,8 @@ func TestConnackDecode(t *testing.T) {
 		packet := []byte{
 			byte(CONNACK << 4),
 			2, // remaining length
-			0, // session not present
-			0, // connection accepted
+			0, // session present
+			0, // return code
 		}
 
 		pkt := NewConnack()
@@ -57,14 +57,14 @@ func TestConnackDecode(t *testing.T) {
 		assertDecodeError(t, m, CONNACK, 2, []byte{
 			byte(CONNACK << 4),
 			3, // < remaining length: wrong size
-			0, // session not present
-			0, // connection accepted
+			0, // session present
+			0, // return code
 		})
 
 		assertDecodeError(t, m, CONNACK, 2, []byte{
 			byte(CONNACK << 4),
 			2, // remaining length
-			0, // session not present
+			0, // session present
 			// < wrong packet size
 		})
 
@@ -72,21 +72,29 @@ func TestConnackDecode(t *testing.T) {
 			byte(CONNACK << 4),
 			2,  // remaining length
 			64, // < wrong value
-			0,  // connection accepted
+			0,  // return code
 		})
 
 		assertDecodeError(t, m, CONNACK, 4, []byte{
 			byte(CONNACK << 4),
 			2, // remaining length
-			0,
-			6, // < wrong code
+			0, // session present
+			6, // < wrong return code
 		})
 
 		assertDecodeError(t, m, CONNACK, 2, []byte{
 			byte(CONNACK << 4),
 			1, // < wrong remaining length
-			0,
-			6,
+			0, // session present
+			6, // return code
+		})
+
+		assertDecodeError(t, m, CONNACK, 4, []byte{
+			byte(CONNACK << 4),
+			3, // remaining length
+			0, // session present
+			6, // return code
+			0, // < superfluous byte
 		})
 	})
 }
@@ -97,7 +105,7 @@ func TestConnackEncode(t *testing.T) {
 			byte(CONNACK << 4),
 			2, // remaining length
 			1, // session present
-			0, // connection accepted
+			0, // return code
 		}
 
 		pkt := NewConnack()

@@ -53,6 +53,12 @@ func TestNakedDecode(t *testing.T) {
 			1, // < wrong remaining length
 			0,
 		})
+
+		assertDecodeError(t, m, DISCONNECT, 2, []byte{
+			byte(DISCONNECT << 4),
+			1, // remaining length
+			0, // < superfluous byte
+		})
 	})
 }
 
