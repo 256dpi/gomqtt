@@ -115,8 +115,8 @@ func TestConnackEncode(t *testing.T) {
 		dst := make([]byte, pkt.Len(m))
 		n, err := pkt.Encode(m, dst)
 		assert.NoError(t, err)
-		assert.Equal(t, 4, n)
-		assert.Equal(t, packet, dst[:n])
+		assert.Equal(t, pkt.Len(m), n)
+		assert.Equal(t, packet, dst)
 
 		// small buffer
 		assertEncodeError(t, m, 1, 1, &Connack{})

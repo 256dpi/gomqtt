@@ -69,7 +69,7 @@ func TestIdentifiedDecode(t *testing.T) {
 		var pid ID
 		n, err := identifiedDecode(m, packet, &pid, PUBACK)
 		assert.NoError(t, err)
-		assert.Equal(t, 4, n)
+		assert.Equal(t, len(packet), n)
 		assert.Equal(t, ID(7), pid)
 
 		assertDecodeError(t, m, PUBACK, 2, []byte{
@@ -115,8 +115,8 @@ func TestIdentifiedEncode(t *testing.T) {
 		dst := make([]byte, identifiedLen())
 		n, err := identifiedEncode(m, dst, 7, PUBACK)
 		assert.NoError(t, err)
-		assert.Equal(t, 4, n)
-		assert.Equal(t, packet, dst[:n])
+		assert.Equal(t, identifiedLen(), n)
+		assert.Equal(t, packet, dst)
 
 		// small buffer
 		assertEncodeError(t, m, 1, 1, &Puback{})

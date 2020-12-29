@@ -144,7 +144,7 @@ func TestPublishEncode(t *testing.T) {
 		n, err := pkt.Encode(m, dst)
 		assert.NoError(t, err)
 		assert.Equal(t, len(packet), n)
-		assert.Equal(t, packet, dst[:n])
+		assert.Equal(t, packet, dst)
 
 		packet = []byte{
 			byte(PUBLISH << 4),
@@ -163,7 +163,7 @@ func TestPublishEncode(t *testing.T) {
 		n, err = pkt.Encode(m, dst)
 		assert.NoError(t, err)
 		assert.Equal(t, len(packet), n)
-		assert.Equal(t, packet, dst[:n])
+		assert.Equal(t, packet, dst)
 
 		// small buffer
 		assertEncodeError(t, m, 1, 1, &Publish{})

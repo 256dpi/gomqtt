@@ -17,11 +17,11 @@ func testNaked(t *testing.T, typ Type) {
 		buf := make([]byte, pkt.Len(m))
 		n, err := pkt.Encode(m, buf)
 		assert.NoError(t, err)
-		assert.Equal(t, 2, n)
+		assert.Equal(t, pkt.Len(m), n)
 
 		n, err = pkt.Decode(m, buf)
 		assert.NoError(t, err)
-		assert.Equal(t, 2, n)
+		assert.Equal(t, pkt.Len(m), n)
 	})
 }
 
@@ -72,8 +72,8 @@ func TestNakedEncode(t *testing.T) {
 		dst := make([]byte, nakedLen())
 		n, err := nakedEncode(m, dst, DISCONNECT)
 		assert.NoError(t, err)
-		assert.Equal(t, 2, n)
-		assert.Equal(t, packet, dst[:n])
+		assert.Equal(t, nakedLen(), n)
+		assert.Equal(t, packet, dst)
 
 		// small buffer
 		assertEncodeError(t, m, 1, 1, &Disconnect{})
