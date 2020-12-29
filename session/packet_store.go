@@ -43,6 +43,8 @@ func (s *PacketStore) Save(pkt packet.Generic) {
 	id, ok := packet.GetID(pkt)
 	if ok {
 		s.packets[id] = pkt
+	} else {
+		panic("failed to get packet id")
 	}
 }
 
