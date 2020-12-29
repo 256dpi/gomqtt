@@ -17,7 +17,7 @@ const (
 
 // Valid checks if the ConnackCode is valid.
 func (cc ConnackCode) Valid() bool {
-	return cc <= 5
+	return cc <= NotAuthorized
 }
 
 // String returns the corresponding error string for the ConnackCode.

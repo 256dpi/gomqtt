@@ -233,7 +233,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// check buffer
 	if len(src[total:]) != 0 {
-		return total, makeError(CONNACK, "leftover buffer length (%d)", len(src[total:]))
+		return total, makeError(CONNECT, "leftover buffer length (%d)", len(src[total:]))
 	}
 
 	return total, nil
