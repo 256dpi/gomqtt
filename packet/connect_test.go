@@ -157,7 +157,7 @@ func TestConnectDecode(t *testing.T) {
 			0, // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
-			5, // < protocol level: wrong level
+			7, // < protocol level: wrong level
 		})
 
 		assertDecodeError(t, m, CONNECT, 9, []byte{
