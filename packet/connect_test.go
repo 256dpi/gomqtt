@@ -418,11 +418,8 @@ func TestConnectEncode(t *testing.T) {
 		assert.Equal(t, len(packet), n)
 		assert.Equal(t, packet, dst[:n])
 
-		// too small buffer
-		assertEncodeError(t, m, 1, 1, &Connect{
-			CleanSession: true,
-			Version:      4,
-		})
+		// small buffer
+		assertEncodeError(t, m, 1, 1, &Connect{})
 
 		assertEncodeError(t, m, 0, 9, &Connect{
 			CleanSession: true,
@@ -436,14 +433,14 @@ func TestConnectEncode(t *testing.T) {
 		assertEncodeError(t, m, 0, 14, &Connect{
 			CleanSession: true,
 			Version:      4,
-			ClientID:     string(make([]byte, 65536)), // < too big
+			ClientID:     longString, // < too big
 		})
 
 		assertEncodeError(t, m, 0, 16, &Connect{
 			CleanSession: true,
 			Version:      4,
 			Will: &Message{
-				Topic: string(make([]byte, 65536)), // < too big
+				Topic: longString, // < too big
 			},
 		})
 
@@ -459,7 +456,7 @@ func TestConnectEncode(t *testing.T) {
 		assertEncodeError(t, m, 0, 16, &Connect{
 			CleanSession: true,
 			Version:      4,
-			Username:     string(make([]byte, 65536)), // < too big
+			Username:     longString, // < too big
 		})
 
 		assertEncodeError(t, m, 0, 14, &Connect{
@@ -473,7 +470,7 @@ func TestConnectEncode(t *testing.T) {
 			CleanSession: true,
 			Version:      4,
 			Username:     "u",
-			Password:     string(make([]byte, 65536)), // < too big
+			Password:     longString, // < too big
 		})
 
 		assertEncodeError(t, m, 0, 9, &Connect{

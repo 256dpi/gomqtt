@@ -164,15 +164,7 @@ func TestSubscribeEncode(t *testing.T) {
 		assert.Equal(t, packet, dst)
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Subscribe{
-			ID: 7,
-			Subscriptions: []Subscription{
-				{
-					QOS:   0,
-					Topic: "gomqtt",
-				},
-			},
-		})
+		assertEncodeError(t, m, 1, 1, &Subscribe{})
 
 		assertEncodeError(t, m, 0, 2, &Subscribe{
 			ID: 0, // < missing
@@ -182,7 +174,7 @@ func TestSubscribeEncode(t *testing.T) {
 			ID: 7,
 			Subscriptions: []Subscription{
 				{
-					Topic: string(make([]byte, 65536)), // < too big
+					Topic: longString, // < too big
 					QOS:   0,
 				},
 			},

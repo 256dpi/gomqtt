@@ -99,7 +99,7 @@ func TestReadString(t *testing.T) {
 }
 
 func TestWriteString(t *testing.T) {
-	n, err := writeString([]byte{}, string(make([]byte, 65536)), CONNECT)
+	n, err := writeString([]byte{}, longString, CONNECT)
 	assert.Error(t, err)
 	assert.Zero(t, n)
 

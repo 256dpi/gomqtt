@@ -165,12 +165,8 @@ func TestPublishEncode(t *testing.T) {
 		assert.Equal(t, len(packet), n)
 		assert.Equal(t, packet, dst[:n])
 
-		// buffer too small
-		assertEncodeError(t, m, 1, 1, &Publish{
-			Message: Message{
-				Topic: "test",
-			},
-		})
+		// small buffer
+		assertEncodeError(t, m, 1, 1, &Publish{})
 
 		assertEncodeError(t, m, 0, 2, &Publish{
 			Message: Message{
@@ -187,7 +183,7 @@ func TestPublishEncode(t *testing.T) {
 
 		assertEncodeError(t, m, 0, 4, &Publish{
 			Message: Message{
-				Topic: string(make([]byte, 65536)), // < too big
+				Topic: longString, // < too big
 			},
 		})
 

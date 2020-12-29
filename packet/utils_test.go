@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var longString = string(make([]byte, 65536))
+
 type errorWriter struct {
 	writer io.Writer
 	after  int
