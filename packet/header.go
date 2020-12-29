@@ -20,6 +20,11 @@ func encodeHeader(dst []byte, flags byte, rl int, t Type) (int, error) {
 		return total, err
 	}
 
+	// check buffer
+	if rl != len(dst[total:]) {
+		return total, makeError(t, "remaining length (%d) does not equal remaining buffer size (%d)", rl, len(dst[total:]))
+	}
+
 	return total, nil
 }
 

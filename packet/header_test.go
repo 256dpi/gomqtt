@@ -12,6 +12,11 @@ func TestDecodeHeader(t *testing.T) {
 	assert.Error(t, err)
 
 	// source to small
+	buf = []byte{}
+	_, _, _, err = decodeHeader(buf, 0)
+	assert.Error(t, err)
+
+	// source to small
 	buf = []byte{0x62}
 	_, _, _, err = decodeHeader(buf, 0)
 	assert.Error(t, err)
@@ -45,17 +50,23 @@ func TestDecodeHeader(t *testing.T) {
 }
 
 func TestEncodeHeader(t *testing.T) {
-	buf := make([]byte, 3)
+	buf := make([]byte, 3+321)
 	n, err := encodeHeader(buf, 0, 321, PUBREL)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, n)
-	assert.Equal(t, []byte{0x62, 193, 2}, buf)
+	assert.Equal(t, []byte{0x62, 193, 2}, buf[:3])
 
-	buf = make([]byte, 5)
+	buf = make([]byte, 5+maxVarint)
 	n, err = encodeHeader(buf, 0, maxVarint, PUBREL)
 	assert.NoError(t, err)
 	assert.Equal(t, 5, n)
-	assert.Equal(t, []byte{0x62, 0xff, 0xff, 0xff, 0x7f}, buf)
+	assert.Equal(t, []byte{0x62, 0xff, 0xff, 0xff, 0x7f}, buf[:5])
+
+	buf = make([]byte, 0) // < wrong buffer size
+	n, err = encodeHeader(buf, 0, 0, PUBREL)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, []byte{}, buf)
 
 	buf = make([]byte, 1) // < wrong buffer size
 	n, err = encodeHeader(buf, 0, 0, PUBREL)

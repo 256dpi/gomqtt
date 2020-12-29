@@ -107,7 +107,7 @@ func TestSubackEncode(t *testing.T) {
 		pkt.ID = 7
 		pkt.ReturnCodes = []QOS{0, 1, 2, 0x80}
 
-		dst := make([]byte, 10)
+		dst := make([]byte, pkt.Len(m))
 		n, err := pkt.Encode(m, dst)
 		assert.NoError(t, err)
 		assert.Equal(t, len(packet), n)
