@@ -111,7 +111,7 @@ func TestConnackEncode(t *testing.T) {
 		assert.Equal(t, packet, dst[:n])
 
 		// wrong buffer size
-		assertEncodeError(t, m, 3, 0, &Connack{})
+		assertEncodeError(t, m, 1, 1, &Connack{})
 
 		assertEncodeError(t, m, 0, 3, &Connack{
 			ReturnCode: 11, // < wrong return code

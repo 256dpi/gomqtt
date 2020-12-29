@@ -151,7 +151,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// encode header
-	total, err := encodeHeader(dst, 0, s.len(), s.Len(m), SUBSCRIBE)
+	total, err := encodeHeader(dst, 0, s.len(), SUBSCRIBE)
 	if err != nil {
 		return total, err
 	}

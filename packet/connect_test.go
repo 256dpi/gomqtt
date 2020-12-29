@@ -419,7 +419,7 @@ func TestConnectEncode(t *testing.T) {
 		assert.Equal(t, packet, dst[:n])
 
 		// too small buffer
-		assertEncodeError(t, m, 4, 0, &Connect{
+		assertEncodeError(t, m, 1, 1, &Connect{
 			CleanSession: true,
 			Version:      4,
 		})

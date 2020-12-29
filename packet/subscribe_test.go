@@ -164,7 +164,7 @@ func TestSubscribeEncode(t *testing.T) {
 		assert.Equal(t, packet, dst)
 
 		// small buffer
-		assertEncodeError(t, m, 1, 0, &Subscribe{
+		assertEncodeError(t, m, 1, 1, &Subscribe{
 			ID: 7,
 			Subscriptions: []Subscription{
 				{

@@ -5,24 +5,22 @@ func headerLen(rl int) int {
 	return 1 + varintLen(uint64(rl))
 }
 
-func encodeHeader(dst []byte, flags byte, rl int, tl int, t Type) (int, error) {
-	// check buffer length
-	if len(dst) < headerLen(rl) || len(dst) < tl {
-		return 0, insufficientBufferSize(t)
-	}
-
+func encodeHeader(dst []byte, flags byte, rl int, t Type) (int, error) {
 	// write type and flags
-	typeAndFlags := byte(t)<<4 | (t.defaultFlags() & 0xf)
-	typeAndFlags |= flags
-	dst[0] = typeAndFlags
+	typeAndFlags := byte(t)<<4 | (t.defaultFlags() & 0xf) | flags
+	total, err := writeUint8(dst, typeAndFlags, t)
+	if err != nil {
+		return total, err
+	}
 
 	// write remaining length
 	n, err := writeVarint(dst[1:], uint64(rl), t)
+	total += n
 	if err != nil {
-		return n, err
+		return total, err
 	}
 
-	return 1 + n, nil
+	return total, nil
 }
 
 func decodeHeader(src []byte, t Type) (int, byte, int, error) {

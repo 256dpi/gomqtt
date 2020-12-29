@@ -140,7 +140,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 	flags = (flags & 249) | (byte(p.Message.QOS) << 1) // 249 = 11111001
 
 	// encode header
-	total, err := encodeHeader(dst, flags, p.len(), p.Len(m), PUBLISH)
+	total, err := encodeHeader(dst, flags, p.len(), PUBLISH)
 	if err != nil {
 		return total, err
 	}

@@ -245,7 +245,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 // the way. If there is an error, the byte slice should be considered invalid.
 func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
-	total, err := encodeHeader(dst, 0, c.len(), c.Len(m), CONNECT)
+	total, err := encodeHeader(dst, 0, c.len(), CONNECT)
 	if err != nil {
 		return total, err
 	}
