@@ -11,11 +11,17 @@ func TestTypes(t *testing.T) {
 }
 
 func TestTypeString(t *testing.T) {
+	for _, tt := range Types() {
+		assert.True(t, tt.String() != "Unknown" && tt.String() != "")
+	}
+
 	assert.Equal(t, "Unknown", Type(99).String())
 }
 
 func TestTypeValid(t *testing.T) {
-	assert.True(t, CONNECT.Valid())
+	for _, tt := range Types() {
+		assert.True(t, tt.Valid())
+	}
 }
 
 func TestTypeNew(t *testing.T) {
