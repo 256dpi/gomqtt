@@ -24,19 +24,19 @@ func encodeHeader(dst []byte, flags byte, rl int, t Type) (int, error) {
 }
 
 func decodeHeader(src []byte, t Type) (int, byte, int, error) {
-	// check buffer size
-	if len(src) < 2 {
-		return 0, 0, 0, insufficientBufferSize(t)
+	// read type and flags
+	typeAndFlags, total, err := readUint8(src, t)
+	if err != nil {
+		return total, 0, 0, err
 	}
 
 	// read type and flags
-	decodedType := Type(src[0] >> 4)
-	flags := src[0] & 0x0f
-	total := 1
+	typ := Type(typeAndFlags >> 4)
+	flags := typeAndFlags & 0x0f
 
 	// check against static type
-	if decodedType != t {
-		return total, 0, 0, makeError(t, "invalid type %d", decodedType)
+	if typ != t {
+		return total, 0, 0, makeError(t, "invalid type %d", typ)
 	}
 
 	// check flags except for publish packets
