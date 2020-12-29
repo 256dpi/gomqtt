@@ -15,7 +15,7 @@ func nakedDecode(m Mode, src []byte, t Type) (int, error) {
 }
 
 func nakedEncode(m Mode, dst []byte, t Type) (int, error) {
-	return encodeHeader(dst, 0, 0, nakedLen(), t)
+	return encodeHeader(dst, 0, 0, t)
 }
 
 type Auth struct {

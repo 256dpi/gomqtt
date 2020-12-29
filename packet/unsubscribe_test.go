@@ -131,7 +131,7 @@ func TestUnsubscribeEncode(t *testing.T) {
 		assert.Equal(t, packet, dst[:n])
 
 		// small buffer
-		assertEncodeError(t, m, 1, 0, &Unsubscribe{
+		assertEncodeError(t, m, 1, 1, &Unsubscribe{
 			ID:     7,
 			Topics: []string{"gomqtt"},
 		})

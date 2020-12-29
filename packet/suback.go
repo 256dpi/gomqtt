@@ -108,7 +108,7 @@ func (s *Suback) Decode(m Mode, src []byte) (int, error) {
 // the way. If there is an error, the byte slice should be considered invalid.
 func (s *Suback) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
-	total, err := encodeHeader(dst, 0, s.len(), s.Len(m), SUBACK)
+	total, err := encodeHeader(dst, 0, s.len(), SUBACK)
 	if err != nil {
 		return total, err
 	}

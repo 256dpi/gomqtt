@@ -99,7 +99,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 // the way. If there is an error, the byte slice should be considered invalid.
 func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
-	total, err := encodeHeader(dst, 0, u.len(), u.Len(m), UNSUBSCRIBE)
+	total, err := encodeHeader(dst, 0, u.len(), UNSUBSCRIBE)
 	if err != nil {
 		return total, err
 	}

@@ -142,7 +142,7 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 // the way. If there is an error, the byte slice should be considered invalid.
 func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
-	total, err := encodeHeader(dst, 0, 2, c.Len(m), CONNACK)
+	total, err := encodeHeader(dst, 0, 2, CONNACK)
 	if err != nil {
 		return total, err
 	}

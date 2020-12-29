@@ -44,7 +44,7 @@ func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 // encodes an identified packet
 func identifiedEncode(m Mode, dst []byte, id ID, t Type) (int, error) {
 	// encode header
-	total, err := encodeHeader(dst, 0, 2, identifiedLen(), t)
+	total, err := encodeHeader(dst, 0, 2, t)
 	if err != nil {
 		return total, err
 	}

@@ -70,7 +70,7 @@ func TestNakedEncode(t *testing.T) {
 		assert.Equal(t, packet, dst[:n])
 
 		// small buffer
-		assertEncodeError(t, m, 1, 0, &Disconnect{})
+		assertEncodeError(t, m, 1, 1, &Disconnect{})
 	})
 }
 
