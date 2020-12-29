@@ -147,42 +147,9 @@ func TestUnsubscribeEncode(t *testing.T) {
 	})
 }
 
-func BenchmarkUnsubscribeEncode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		pkt := NewUnsubscribe()
-		pkt.ID = 1
-		pkt.Topics = []string{"t"}
-
-		buf := make([]byte, pkt.Len(m))
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Encode(m, buf)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-}
-
-func BenchmarkUnsubscribeDecode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		packet := []byte{
-			byte(UNSUBSCRIBE<<4) | 2,
-			5, // remaining length
-			0, // packet id
-			1,
-			0, // topic
-			1,
-			't',
-		}
-
-		pkt := NewUnsubscribe()
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Decode(m, packet)
-			if err != nil {
-				panic(err)
-			}
-		}
+func BenchmarkUnsubscribe(b *testing.B) {
+	benchPacket(b, &Unsubscribe{
+		Topics: []string{"t"},
+		ID:     7,
 	})
 }

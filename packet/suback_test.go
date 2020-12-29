@@ -131,40 +131,9 @@ func TestSubackEncode(t *testing.T) {
 	})
 }
 
-func BenchmarkSubackEncode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		pkt := NewSuback()
-		pkt.ID = 1
-		pkt.ReturnCodes = []QOS{0}
-
-		buf := make([]byte, pkt.Len(m))
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Encode(m, buf)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-}
-
-func BenchmarkSubackDecode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		packet := []byte{
-			byte(SUBACK << 4),
-			3, // remaining length
-			0, // packet id
-			1,
-			0, // return code 1
-		}
-
-		pkt := NewSuback()
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Decode(m, packet)
-			if err != nil {
-				panic(err)
-			}
-		}
+func BenchmarkSuback(b *testing.B) {
+	benchPacket(b, &Suback{
+		ReturnCodes: []QOS{0},
+		ID:          7,
 	})
 }

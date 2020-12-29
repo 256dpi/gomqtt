@@ -201,45 +201,15 @@ func TestPublishEncode(t *testing.T) {
 	})
 }
 
-func BenchmarkPublishEncode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		pkt := NewPublish()
-		pkt.Message.Topic = "t"
-		pkt.Message.QOS = QOSAtLeastOnce
-		pkt.ID = 1
-		pkt.Message.Payload = []byte("p")
-
-		buf := make([]byte, pkt.Len(m))
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Encode(m, buf)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-}
-
-func BenchmarkPublishDecode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		packet := []byte{
-			byte(PUBLISH<<4) | 2,
-			6, // remaining length
-			0, // topic
-			1,
-			't',
-			0, // packet id
-			1,
-			'p',
-		}
-
-		pkt := NewPublish()
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Decode(m, packet)
-			if err != nil {
-				panic(err)
-			}
-		}
+func BenchmarkPublish(b *testing.B) {
+	benchPacket(b, &Publish{
+		Message: Message{
+			Topic:   "t",
+			QOS:     QOSAtLeastOnce,
+			Payload: []byte("p"),
+			Retain:  true,
+		},
+		Dup: false,
+		ID:  7,
 	})
 }

@@ -121,38 +121,8 @@ func TestIdentifiedEncode(t *testing.T) {
 	})
 }
 
-func BenchmarkIdentifiedEncode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		pkt := &Puback{}
-		pkt.ID = 1
-
-		buf := make([]byte, pkt.Len(m))
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Encode(m, buf)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-}
-
-func BenchmarkIdentifiedDecode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		packet := []byte{
-			byte(PUBACK << 4),
-			2, // remaining length
-			0, // packet id
-			1,
-		}
-
-		pkt := &Puback{}
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Decode(m, packet)
-			if err != nil {
-				panic(err)
-			}
-		}
+func BenchmarkIdentified(b *testing.B) {
+	benchPacket(b, &Puback{
+		ID: 7,
 	})
 }

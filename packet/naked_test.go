@@ -74,31 +74,6 @@ func TestNakedEncode(t *testing.T) {
 	})
 }
 
-func BenchmarkNakedEncode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		buf := make([]byte, nakedLen())
-
-		for i := 0; i < b.N; i++ {
-			_, err := nakedEncode(m, buf, DISCONNECT)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-}
-
-func BenchmarkNakedDecode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		packet := []byte{
-			byte(DISCONNECT << 4),
-			0, // remaining length
-		}
-
-		for i := 0; i < b.N; i++ {
-			_, err := nakedDecode(m, packet, DISCONNECT)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
+func BenchmarkNaked(b *testing.B) {
+	benchPacket(b, &Disconnect{})
 }

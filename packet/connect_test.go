@@ -495,67 +495,19 @@ func TestConnectEncode(t *testing.T) {
 	})
 }
 
-func BenchmarkConnectEncode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		pkt := NewConnect()
-		pkt.Will = &Message{
-			Topic:   "w",
+func BenchmarkConnect(b *testing.B) {
+	benchPacket(b, &Connect{
+		ClientID:     "i",
+		KeepAlive:    10,
+		Username:     "u",
+		Password:     "p",
+		CleanSession: false,
+		Will: &Message{
+			Topic:   "t",
 			Payload: []byte("m"),
 			QOS:     QOSAtLeastOnce,
-		}
-		pkt.CleanSession = true
-		pkt.ClientID = "i"
-		pkt.KeepAlive = 10
-		pkt.Username = "u"
-		pkt.Password = "p"
-
-		buf := make([]byte, pkt.Len(m))
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Encode(m, buf)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-}
-
-func BenchmarkConnectDecode(b *testing.B) {
-	benchTest(b, func(b *testing.B, m Mode) {
-		packet := []byte{
-			byte(CONNECT << 4),
-			25, // remaining length
-			0,  // protocol string
-			4,
-			'M', 'Q', 'T', 'T',
-			4,   // protocol level 4
-			206, // connect flags
-			0,   // keep alive
-			10,
-			0, // client id
-			1,
-			'i',
-			0, // will topic
-			1,
-			'w',
-			0, // will message
-			1,
-			'm',
-			0, // username
-			1,
-			'u',
-			0, // password
-			1,
-			'p',
-		}
-
-		pkt := NewConnect()
-
-		for i := 0; i < b.N; i++ {
-			_, err := pkt.Decode(m, packet)
-			if err != nil {
-				panic(err)
-			}
-		}
+			Retain:  true,
+		},
+		Version: Version311,
 	})
 }
