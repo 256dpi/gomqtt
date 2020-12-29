@@ -106,7 +106,7 @@ func TestSubscribeDecode(t *testing.T) {
 
 		assertDecodeError(t, m, SUBSCRIBE, 4, []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			5, // remaining length
+			6, // remaining length
 			0, // packet id
 			0, // < zero packet id
 			0, // topic
@@ -117,7 +117,7 @@ func TestSubscribeDecode(t *testing.T) {
 
 		assertDecodeError(t, m, SUBSCRIBE, 8, []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			5, // remaining length
+			6, // remaining length
 			0, // packet id
 			7,
 			0, // topic
