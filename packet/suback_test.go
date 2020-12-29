@@ -111,7 +111,7 @@ func TestSubackEncode(t *testing.T) {
 		n, err := pkt.Encode(m, dst)
 		assert.NoError(t, err)
 		assert.Equal(t, len(packet), n)
-		assert.Equal(t, packet, dst[:n])
+		assert.Equal(t, packet, dst)
 
 		// small buffer
 		assertEncodeError(t, m, 1, 1, &Suback{})
