@@ -40,8 +40,10 @@ func (p *Publish) Type() Type {
 
 // String returns a string representation of the packet.
 func (p *Publish) String() string {
-	return fmt.Sprintf("<Publish ID=%d Message=%s Dup=%t>",
-		p.ID, p.Message.String(), p.Dup)
+	return fmt.Sprintf(
+		"<Publish ID=%d Message=%s Dup=%t>",
+		p.ID, p.Message.String(), p.Dup,
+	)
 }
 
 // Len returns the byte length of the encoded packet.

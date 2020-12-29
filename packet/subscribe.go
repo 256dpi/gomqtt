@@ -56,8 +56,10 @@ func (s *Subscribe) String() string {
 		subscriptions = append(subscriptions, t.String())
 	}
 
-	return fmt.Sprintf("<Subscribe ID=%d Subscriptions=[%s]>",
-		s.ID, strings.Join(subscriptions, ", "))
+	return fmt.Sprintf(
+		"<Subscribe ID=%d Subscriptions=[%s]>",
+		s.ID, strings.Join(subscriptions, ", "),
+	)
 }
 
 // Len returns the byte length of the encoded packet.

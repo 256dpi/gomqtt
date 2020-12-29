@@ -85,8 +85,10 @@ func (c *Connack) Type() Type {
 
 // String returns a string representation of the packet.
 func (c *Connack) String() string {
-	return fmt.Sprintf("<Connack SessionPresent=%t ReturnCode=%d>",
-		c.SessionPresent, c.ReturnCode)
+	return fmt.Sprintf(
+		"<Connack SessionPresent=%t ReturnCode=%d>",
+		c.SessionPresent, c.ReturnCode,
+	)
 }
 
 // Len returns the byte length of the encoded packet.
