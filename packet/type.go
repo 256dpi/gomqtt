@@ -77,34 +77,12 @@ func (t Type) String() string {
 // by the MQTT spec, except for PUBLISH.
 func (t Type) defaultFlags() byte {
 	switch t {
-	case CONNECT:
-		return 0
-	case CONNACK:
-		return 0
-	case PUBACK:
-		return 0
-	case PUBREC:
-		return 0
 	case PUBREL:
 		return 2 // 00000010
-	case PUBCOMP:
-		return 0
 	case SUBSCRIBE:
 		return 2 // 00000010
-	case SUBACK:
-		return 0
 	case UNSUBSCRIBE:
 		return 2 // 00000010
-	case UNSUBACK:
-		return 0
-	case PINGREQ:
-		return 0
-	case PINGRESP:
-		return 0
-	case DISCONNECT:
-		return 0
-	case AUTH:
-		return 0
 	}
 
 	return 0
