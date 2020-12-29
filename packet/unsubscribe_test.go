@@ -135,7 +135,7 @@ func TestUnsubscribeEncode(t *testing.T) {
 			"/a/b/#/cdd",
 		}
 
-		dst := make([]byte, 100)
+		dst := make([]byte, pkt.Len(m))
 		n, err := pkt.Encode(m, dst)
 		assert.NoError(t, err)
 		assert.Equal(t, len(packet), n)
