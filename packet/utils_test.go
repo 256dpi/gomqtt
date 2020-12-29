@@ -58,8 +58,9 @@ func benchTest(b *testing.B, fn func(b *testing.B, m Mode)) {
 	})
 }
 
-func assertDecodeError(t *testing.T, m Mode, typ Type, packet []byte) {
+func assertDecodeError(t *testing.T, m Mode, typ Type, read int, packet []byte) {
 	pkt, _ := typ.New()
-	_, err := pkt.Decode(m, packet)
+	n, err := pkt.Decode(m, packet)
 	assert.Error(t, err)
+	assert.Equal(t, read, n)
 }

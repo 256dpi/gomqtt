@@ -54,35 +54,35 @@ func TestConnackDecode(t *testing.T) {
 		assert.False(t, pkt.SessionPresent)
 		assert.Equal(t, ConnectionAccepted, pkt.ReturnCode)
 
-		assertDecodeError(t, m, CONNACK, []byte{
+		assertDecodeError(t, m, CONNACK, 2, []byte{
 			byte(CONNACK << 4),
 			3, // < remaining length: wrong size
 			0, // session not present
 			0, // connection accepted
 		})
 
-		assertDecodeError(t, m, CONNACK, []byte{
+		assertDecodeError(t, m, CONNACK, 2, []byte{
 			byte(CONNACK << 4),
 			2, // remaining length
 			0, // session not present
 			// < wrong packet size
 		})
 
-		assertDecodeError(t, m, CONNACK, []byte{
+		assertDecodeError(t, m, CONNACK, 3, []byte{
 			byte(CONNACK << 4),
 			2,  // remaining length
 			64, // < wrong value
 			0,  // connection accepted
 		})
 
-		assertDecodeError(t, m, CONNACK, []byte{
+		assertDecodeError(t, m, CONNACK, 4, []byte{
 			byte(CONNACK << 4),
 			2, // remaining length
 			0,
 			6, // < wrong code
 		})
 
-		assertDecodeError(t, m, CONNACK, []byte{
+		assertDecodeError(t, m, CONNACK, 4, []byte{
 			byte(CONNACK << 4),
 			1, // < wrong remaining length
 			0,

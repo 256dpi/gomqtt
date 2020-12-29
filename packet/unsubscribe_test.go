@@ -55,7 +55,7 @@ func TestUnsubscribeDecode(t *testing.T) {
 		assert.Equal(t, "/a/b/#/c", pkt.Topics[1])
 		assert.Equal(t, "/a/b/#/cdd", pkt.Topics[2])
 
-		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, 4, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			2, // remaining length
 			0, // packet id
@@ -63,20 +63,20 @@ func TestUnsubscribeDecode(t *testing.T) {
 			// < empty topic list
 		})
 
-		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, 2, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			6, // < wrong remaining length
 			0, // packet id
 			7,
 		})
 
-		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, 2, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			0, // remaining length
 			// missing packet id
 		})
 
-		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, 6, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			10, // remaining length
 			0,  // packet id
@@ -86,7 +86,7 @@ func TestUnsubscribeDecode(t *testing.T) {
 			'g', 'o', 'm', 'q', 't', 't',
 		})
 
-		assertDecodeError(t, m, UNSUBSCRIBE, []byte{
+		assertDecodeError(t, m, UNSUBSCRIBE, 4, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			10, // remaining length
 			0,  // packet ID
