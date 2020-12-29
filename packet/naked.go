@@ -13,7 +13,7 @@ func nakedDecode(m Mode, src []byte, t Type) (int, error) {
 
 	// check buffer
 	if len(src[total:]) != 0 {
-		return total, makeError(CONNACK, "leftover buffer length (%d)", len(src[total:]))
+		return total, makeError(t, "leftover buffer length (%d)", len(src[total:]))
 	}
 
 	return total, nil
