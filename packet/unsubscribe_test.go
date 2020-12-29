@@ -141,7 +141,7 @@ func TestUnsubscribeEncode(t *testing.T) {
 			Topics: []string{string(make([]byte, 65536))}, // too big
 		})
 
-		assertEncodeError(t, m, 0, 0, &Unsubscribe{
+		assertEncodeError(t, m, 0, 2, &Unsubscribe{
 			ID: 0, // < missing
 		})
 	})

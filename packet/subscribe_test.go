@@ -174,7 +174,7 @@ func TestSubscribeEncode(t *testing.T) {
 			},
 		})
 
-		assertEncodeError(t, m, 0, 0, &Subscribe{
+		assertEncodeError(t, m, 0, 2, &Subscribe{
 			ID: 0, // < missing
 		})
 

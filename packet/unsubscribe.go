@@ -106,7 +106,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 
 	// check packet id
 	if !u.ID.Valid() {
-		return 0, makeError(UNSUBSCRIBE, "packet id must be grater than zero")
+		return total, makeError(UNSUBSCRIBE, "packet id must be grater than zero")
 	}
 
 	// write packet id
