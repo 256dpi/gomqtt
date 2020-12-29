@@ -54,9 +54,9 @@ func decodeHeader(src []byte, t Type) (int, byte, int, error) {
 	// get remaining length
 	rl := int(_rl)
 
-	// check remaining buffer
-	if rl > len(src[total:]) {
-		return total, 0, 0, makeError(t, "remaining length (%d) is greater than remaining buffer (%d)", rl, len(src[total:]))
+	// check buffer
+	if rl != len(src[total:]) {
+		return total, 0, 0, makeError(t, "remaining length (%d) does not equal remaining buffer size (%d)", rl, len(src[total:]))
 	}
 
 	return total, flags, rl, nil

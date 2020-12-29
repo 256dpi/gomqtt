@@ -82,7 +82,7 @@ func TestConnackDecode(t *testing.T) {
 			6, // < wrong code
 		})
 
-		assertDecodeError(t, m, CONNACK, 4, []byte{
+		assertDecodeError(t, m, CONNACK, 2, []byte{
 			byte(CONNACK << 4),
 			1, // < wrong remaining length
 			0,

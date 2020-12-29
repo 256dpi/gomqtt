@@ -100,7 +100,7 @@ func TestPublishDecode(t *testing.T) {
 
 		assertDecodeError(t, m, PUBLISH, 5, []byte{
 			byte(PUBLISH<<4) | 2,
-			2, // remaining length
+			3, // remaining length
 			0, // topic
 			1,
 			't',
@@ -109,7 +109,7 @@ func TestPublishDecode(t *testing.T) {
 
 		assertDecodeError(t, m, PUBLISH, 7, []byte{
 			byte(PUBLISH<<4) | 2,
-			2, // remaining length
+			5, // remaining length
 			0, // topic
 			1,
 			't',
