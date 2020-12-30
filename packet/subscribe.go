@@ -77,11 +77,6 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 		return total, err
 	}
 
-	// check buffer length
-	if len(src) < total+2 {
-		return total, insufficientBufferSize(SUBSCRIBE)
-	}
-
 	// read packet id
 	pid, n, err := readUint(src[total:], 2, SUBSCRIBE)
 	total += n
@@ -108,11 +103,6 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 		total += n
 		if err != nil {
 			return total, err
-		}
-
-		// check buffer length
-		if len(src) < total+1 {
-			return total, makeError(SUBSCRIBE, "insufficient buffer size, expected %d, got %d", total+1, len(src))
 		}
 
 		// read qos
