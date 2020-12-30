@@ -127,20 +127,3 @@ func TestGetID(t *testing.T) {
 		assert.Equal(t, d.ok, ok)
 	}
 }
-
-func TestFuzz(t *testing.T) {
-	// too small buffer
-	assert.Equal(t, 1, Fuzz([]byte{}))
-
-	// wrong packet type
-	b1 := []byte{0 << 4, 0x00}
-	assert.Equal(t, 0, Fuzz(b1))
-
-	// wrong packet format
-	b2 := []byte{2 << 4, 0x02, 0x00, 0x06}
-	assert.Equal(t, 0, Fuzz(b2))
-
-	// right packet format
-	b3 := []byte{2 << 4, 0x02, 0x00, 0x01}
-	assert.Equal(t, 1, Fuzz(b3))
-}
