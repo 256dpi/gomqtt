@@ -71,7 +71,7 @@ func (s *Suback) Decode(m Mode, src []byte) (int, error) {
 	// set packet id
 	s.ID = ID(pid)
 	if !s.ID.Valid() {
-		return total, makeError(SUBACK, "packet id must be grater than zero")
+		return total, invalidPacketID(SUBACK)
 	}
 
 	// calculate number of return codes
@@ -117,7 +117,7 @@ func (s *Suback) Encode(m Mode, dst []byte) (int, error) {
 
 	// check packet id
 	if !s.ID.Valid() {
-		return total, makeError(SUBACK, "packet id must be grater than zero")
+		return total, invalidPacketID(SUBACK)
 	}
 
 	// write packet id

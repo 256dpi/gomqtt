@@ -19,6 +19,10 @@ func (e *Error) Error() string {
 	return fmt.Sprintf(e.format, e.arguments...)
 }
 
+func invalidPacketID(t Type) error {
+	return makeError(t, "invalid packet id")
+}
+
 func insufficientBufferSize(t Type) error {
 	return makeError(t, "insufficient buffer size")
 }

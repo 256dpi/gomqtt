@@ -63,7 +63,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 	// set packet id
 	u.ID = ID(pid)
 	if !u.ID.Valid() {
-		return total, makeError(UNSUBSCRIBE, "packet id must be grater than zero")
+		return total, invalidPacketID(UNSUBSCRIBE)
 	}
 
 	// reset topics
@@ -106,7 +106,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 
 	// check packet id
 	if !u.ID.Valid() {
-		return total, makeError(UNSUBSCRIBE, "packet id must be grater than zero")
+		return total, invalidPacketID(UNSUBSCRIBE)
 	}
 
 	// write packet id
