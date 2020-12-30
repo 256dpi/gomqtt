@@ -47,12 +47,16 @@ func (id ID) Valid() bool {
 
 // Mode defines the encoding/decoding mode.
 type Mode struct {
-	// UseV5 will use MQTT V5 encoding/decoding.
-	UseV5 bool
+	// The used protocol version.
+	Version byte
 }
 
-var M4 = Mode{UseV5: false}
-var M5 = Mode{UseV5: false}
+// The available modes.
+var (
+	M3 = Mode{Version: Version3}
+	M4 = Mode{Version: Version4}
+	M5 = Mode{Version: Version5}
+)
 
 // Generic is an MQTT control packet that can be encoded to a buffer or decoded
 // from a buffer.

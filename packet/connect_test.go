@@ -19,7 +19,7 @@ func TestConnect(t *testing.T) {
 		}, &Connect{
 			KeepAlive:    10,
 			CleanSession: true,
-			Version:      Version31,
+			Version:      Version3,
 		}, `<Connect ClientID="" KeepAlive=10 Username="" Password="" CleanSession=true Will=nil Version=3>`)
 
 		assertEncodeDecode(t, m, []byte{
@@ -37,7 +37,7 @@ func TestConnect(t *testing.T) {
 		}, &Connect{
 			KeepAlive:    10,
 			CleanSession: true,
-			Version:      Version311,
+			Version:      Version4,
 		}, `<Connect ClientID="" KeepAlive=10 Username="" Password="" CleanSession=true Will=nil Version=4>`)
 
 		assertEncodeDecode(t, m, []byte{
@@ -77,7 +77,7 @@ func TestConnect(t *testing.T) {
 				QOS:     QOSAtLeastOnce,
 				Retain:  false,
 			},
-			Version: Version311,
+			Version: Version4,
 		}, `<Connect ClientID="gomqtt" KeepAlive=10 Username="user" Password="pass" CleanSession=true Will=<Message Topic="will" QOS=1 Retain=false Payload=627965> Version=4>`)
 
 		assertEncodeDecode(t, m, []byte{
@@ -117,7 +117,7 @@ func TestConnect(t *testing.T) {
 				QOS:     QOSAtLeastOnce,
 				Retain:  false,
 			},
-			Version: Version31,
+			Version: Version3,
 		}, `<Connect ClientID="gomqtt" KeepAlive=10 Username="user" Password="pass" CleanSession=true Will=<Message Topic="will" QOS=1 Retain=false Payload=627965> Version=3>`)
 
 		assertDecodeError(t, m, CONNECT, 2, []byte{
@@ -341,7 +341,7 @@ func TestConnect(t *testing.T) {
 
 		assertEncodeError(t, m, 0, 9, &Connect{
 			CleanSession: true,
-			Version:      4,
+			Version:      Version4,
 			Will: &Message{
 				Topic: "t",
 				QOS:   3, // < wrong qos
@@ -350,13 +350,13 @@ func TestConnect(t *testing.T) {
 
 		assertEncodeError(t, m, 0, 14, &Connect{
 			CleanSession: true,
-			Version:      4,
+			Version:      Version4,
 			ClientID:     longString, // < too big
 		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 16, &Connect{
 			CleanSession: true,
-			Version:      4,
+			Version:      Version4,
 			Will: &Message{
 				Topic: longString, // < too big
 			},
@@ -364,7 +364,7 @@ func TestConnect(t *testing.T) {
 
 		assertEncodeError(t, m, 0, 19, &Connect{
 			CleanSession: true,
-			Version:      4,
+			Version:      Version4,
 			Will: &Message{
 				Topic:   "t",
 				Payload: longBytes, // < too big
@@ -373,27 +373,27 @@ func TestConnect(t *testing.T) {
 
 		assertEncodeError(t, m, 0, 16, &Connect{
 			CleanSession: true,
-			Version:      4,
+			Version:      Version4,
 			Username:     longString, // < too big
 		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 14, &Connect{
 			CleanSession: true,
-			Version:      4,
+			Version:      Version4,
 			Username:     "", // < missing
 			Password:     "p",
 		}, "missing username")
 
 		assertEncodeError(t, m, 0, 19, &Connect{
 			CleanSession: true,
-			Version:      4,
+			Version:      Version4,
 			Username:     "u",
 			Password:     longString, // < too big
 		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 9, &Connect{
 			CleanSession: true,
-			Version:      4,
+			Version:      Version4,
 			Will: &Message{
 				Topic: "", // < missing
 			},
@@ -423,6 +423,6 @@ func BenchmarkConnect(b *testing.B) {
 			QOS:     QOSAtLeastOnce,
 			Retain:  true,
 		},
-		Version: Version311,
+		Version: Version4,
 	})
 }
