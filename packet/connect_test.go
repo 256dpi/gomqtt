@@ -124,7 +124,7 @@ func TestConnect(t *testing.T) {
 			byte(CONNECT << 4),
 			60, // < wrong remaining length
 			0,  // protocol string
-			5,
+			4,
 			'M', 'Q', 'T', 'T',
 		})
 
@@ -221,8 +221,7 @@ func TestConnect(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
 			0, // connect flags
-			0, // < keep alive: missing
-			// < keep alive: missing
+			0, // < keep alive: incomplete
 		})
 
 		assertDecodeError(t, m, CONNECT, 14, []byte{
