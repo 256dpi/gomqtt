@@ -48,6 +48,24 @@ func multiTest(t *testing.T, fn func(t *testing.T, m Mode)) {
 	})
 }
 
+func assertEncodeDecode(t *testing.T, m Mode, packet []byte, pkt Generic, str string) {
+	out, _ := pkt.Type().New()
+	n, err := out.Decode(m, packet)
+	assert.NoError(t, err)
+	assert.Equal(t, len(packet), n)
+	assert.Equal(t, pkt, out)
+
+	buf := make([]byte, pkt.Len(m))
+	n, err = pkt.Encode(m, buf)
+	assert.NoError(t, err)
+	assert.Equal(t, len(packet), n)
+	assert.Equal(t, packet, buf)
+
+	if str != "" {
+		assert.Equal(t, str, pkt.String())
+	}
+}
+
 func assertDecodeError(t *testing.T, m Mode, typ Type, read int, packet []byte) {
 	pkt, _ := typ.New()
 	n, err := pkt.Decode(m, packet)

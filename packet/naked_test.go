@@ -3,81 +3,39 @@ package packet
 import (
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func testNaked(t *testing.T, typ Type) {
+func testNaked(t *testing.T, pkt Generic) {
 	multiTest(t, func(t *testing.T, m Mode) {
-		pkt, err := typ.New()
-		assert.NoError(t, err)
-		assert.Equal(t, typ, pkt.Type())
-		assert.Equal(t, fmt.Sprintf("<%s>", pkt.Type().String()), pkt.String())
-
-		buf := make([]byte, pkt.Len(m))
-		n, err := pkt.Encode(m, buf)
-		assert.NoError(t, err)
-		assert.Equal(t, pkt.Len(m), n)
-
-		n, err = pkt.Decode(m, buf)
-		assert.NoError(t, err)
-		assert.Equal(t, pkt.Len(m), n)
-	})
-}
-
-func TestDisconnect(t *testing.T) {
-	testNaked(t, DISCONNECT)
-}
-
-func TestPingreq(t *testing.T) {
-	testNaked(t, PINGREQ)
-}
-
-func TestPingresp(t *testing.T) {
-	testNaked(t, PINGRESP)
-}
-
-func TestNakedDecode(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
-			byte(DISCONNECT << 4),
+		assertEncodeDecode(t, m, []byte{
+			byte(pkt.Type() << 4),
 			0, // remaining length
-		}
+		}, pkt, fmt.Sprintf("<%s>", pkt.Type().String()))
 
-		n, err := nakedDecode(m, packet, DISCONNECT)
-		assert.NoError(t, err)
-		assert.Equal(t, 2, n)
-
-		assertDecodeError(t, m, DISCONNECT, 2, []byte{
-			byte(DISCONNECT << 4),
+		assertDecodeError(t, m, pkt.Type(), 2, []byte{
+			byte(pkt.Type() << 4),
 			1, // < wrong remaining length
 			0,
 		})
 
-		assertDecodeError(t, m, DISCONNECT, 2, []byte{
-			byte(DISCONNECT << 4),
+		assertDecodeError(t, m, pkt.Type(), 2, []byte{
+			byte(pkt.Type() << 4),
 			1, // remaining length
 			0, // < superfluous byte
 		})
 	})
 }
 
-func TestNakedEncode(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
-			byte(DISCONNECT << 4),
-			0, // remaining length
-		}
+func TestDisconnect(t *testing.T) {
+	testNaked(t, &Disconnect{})
+}
 
-		dst := make([]byte, nakedLen())
-		n, err := nakedEncode(m, dst, DISCONNECT)
-		assert.NoError(t, err)
-		assert.Equal(t, nakedLen(), n)
-		assert.Equal(t, packet, dst)
+func TestPingreq(t *testing.T) {
+	testNaked(t, &Pingreq{})
+}
 
-		// small buffer
-		assertEncodeError(t, m, 1, 1, &Disconnect{})
-	})
+func TestPingresp(t *testing.T) {
+	testNaked(t, &Pingresp{})
 }
 
 func BenchmarkNaked(b *testing.B) {
