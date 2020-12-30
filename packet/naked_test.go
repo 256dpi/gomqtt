@@ -38,6 +38,10 @@ func TestPingresp(t *testing.T) {
 	testNaked(t, &Pingresp{})
 }
 
+func TestAuth(t *testing.T) {
+	testNaked(t, &Auth{})
+}
+
 func BenchmarkNaked(b *testing.B) {
 	benchPacket(b, &Disconnect{})
 }
