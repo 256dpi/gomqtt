@@ -2,26 +2,38 @@ package packet
 
 import "fmt"
 
+// Method represents the called method.
+type Method string
+
+// The available methods.
+const (
+	ENCODE Method = "Encode"
+	DECODE Method = "Decode"
+)
+
 // Error represents decoding and encoding errors.
 type Error struct {
 	Type      Type
+	Method    Method
 	Mode      Mode
 	Err       error
 	Format    string
 	Arguments []interface{}
 }
 
-func wrapError(t Type, m Mode, err error) *Error {
+func wrapError(t Type, mt Method, m Mode, err error) *Error {
 	return &Error{
-		Type: t,
-		Mode: m,
-		Err:  err,
+		Type:   t,
+		Method: mt,
+		Mode:   m,
+		Err:    err,
 	}
 }
 
-func makeError(t Type, m Mode, fmt string, args ...interface{}) *Error {
+func makeError(t Type, mt Method, m Mode, fmt string, args ...interface{}) *Error {
 	return &Error{
 		Type:      t,
+		Method:    mt,
 		Mode:      m,
 		Format:    fmt,
 		Arguments: args,
@@ -35,8 +47,4 @@ func (e *Error) Error() string {
 	}
 
 	return fmt.Sprintf(e.Format, e.Arguments...)
-}
-
-func invalidPacketID(t Type, m Mode) error {
-	return makeError(t, m, "invalid packet id")
 }

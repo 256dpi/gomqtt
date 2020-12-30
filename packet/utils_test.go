@@ -99,7 +99,7 @@ func benchPacket(b *testing.B, pkt Generic) {
 	benchTest(b, func(b *testing.B, m Mode) {
 		buf := make([]byte, pkt.Len(m))
 
-		b.Run("Encode", func(b *testing.B) {
+		b.Run("ENCODE", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				_, err := pkt.Encode(m, buf)
 				if err != nil {

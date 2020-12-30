@@ -8,12 +8,12 @@ func nakedDecode(m Mode, src []byte, t Type) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, t)
 	if err != nil {
-		return total, wrapError(t, m, err)
+		return total, wrapError(t, DECODE, m, err)
 	}
 
 	// check buffer
 	if len(src[total:]) != 0 {
-		return total, makeError(t, m, "leftover buffer length (%d)", len(src[total:]))
+		return total, makeError(t, DECODE, m, "leftover buffer length (%d)", len(src[total:]))
 	}
 
 	return total, nil
@@ -23,7 +23,7 @@ func nakedEncode(m Mode, dst []byte, t Type) (int, error) {
 	// encode header
 	n, err := encodeHeader(dst, 0, 0, t)
 	if err != nil {
-		return n, wrapError(t, m, err)
+		return n, wrapError(t, ENCODE, m, err)
 	}
 
 	return n, nil
