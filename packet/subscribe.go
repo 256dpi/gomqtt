@@ -74,20 +74,20 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, SUBSCRIBE)
 	if err != nil {
-		return total, wrapError(SUBSCRIBE, m, err)
+		return total, wrapError(SUBSCRIBE, DECODE, m, err)
 	}
 
 	// read packet id
 	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, wrapError(SUBSCRIBE, m, err)
+		return total, wrapError(SUBSCRIBE, DECODE, m, err)
 	}
 
 	// set packet id
 	s.ID = ID(pid)
 	if !s.ID.Valid() {
-		return total, invalidPacketID(SUBSCRIBE, m)
+		return total, wrapError(SUBSCRIBE, DECODE, m, ErrInvalidPacketID)
 	}
 
 	// reset subscriptions
@@ -102,20 +102,20 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 		topic, n, err := readString(src[total:])
 		total += n
 		if err != nil {
-			return total, wrapError(SUBSCRIBE, m, err)
+			return total, wrapError(SUBSCRIBE, DECODE, m, err)
 		}
 
 		// read qos
 		_qos, n, err := readUint8(src[total:])
 		total += n
 		if err != nil {
-			return total, wrapError(SUBSCRIBE, m, err)
+			return total, wrapError(SUBSCRIBE, DECODE, m, err)
 		}
 
 		// get qos
 		qos := QOS(_qos)
 		if !qos.Successful() {
-			return total, makeError(SUBSCRIBE, m, "invalid QOS level (%d)", qos)
+			return total, makeError(SUBSCRIBE, DECODE, m, "invalid QOS level (%d)", qos)
 		}
 
 		// add subscription
@@ -127,7 +127,7 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 
 	// check for empty subscription list
 	if len(s.Subscriptions) == 0 {
-		return total, makeError(SUBSCRIBE, m, "empty subscription list")
+		return total, makeError(SUBSCRIBE, DECODE, m, "empty subscription list")
 	}
 
 	return total, nil
@@ -140,19 +140,19 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, s.len(), SUBSCRIBE)
 	if err != nil {
-		return total, wrapError(SUBSCRIBE, m, err)
+		return total, wrapError(SUBSCRIBE, ENCODE, m, err)
 	}
 
 	// check packet id
 	if !s.ID.Valid() {
-		return total, invalidPacketID(SUBSCRIBE, m)
+		return total, wrapError(SUBSCRIBE, ENCODE, m, ErrInvalidPacketID)
 	}
 
 	// write packet id
 	n, err := writeUint(dst[total:], uint64(s.ID), 2)
 	total += n
 	if err != nil {
-		return total, wrapError(SUBSCRIBE, m, err)
+		return total, wrapError(SUBSCRIBE, ENCODE, m, err)
 	}
 
 	// write subscriptions
@@ -161,19 +161,19 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 		n, err = writeString(dst[total:], sub.Topic)
 		total += n
 		if err != nil {
-			return total, wrapError(SUBSCRIBE, m, err)
+			return total, wrapError(SUBSCRIBE, ENCODE, m, err)
 		}
 
 		// check qos
 		if !sub.QOS.Successful() {
-			return total, makeError(SUBSCRIBE, m, "invalid QOS level (%d)", sub.QOS)
+			return total, makeError(SUBSCRIBE, ENCODE, m, "invalid QOS level (%d)", sub.QOS)
 		}
 
 		// write qos
 		n, err = writeUint8(dst[total:], uint8(sub.QOS))
 		total += n
 		if err != nil {
-			return total, wrapError(SUBSCRIBE, m, err)
+			return total, wrapError(SUBSCRIBE, ENCODE, m, err)
 		}
 	}
 

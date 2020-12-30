@@ -1,7 +1,13 @@
 // Package packet implements functionality for encoding and decoding MQTT packets.
 package packet
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"errors"
+)
+
+// ErrInvalidPacketID is returned for invalid packet ids.
+var ErrInvalidPacketID = errors.New("invalid packet id")
 
 // QOS is the type used to store quality of service levels.
 type QOS byte

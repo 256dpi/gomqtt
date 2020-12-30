@@ -58,26 +58,26 @@ func (s *Suback) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, SUBACK)
 	if err != nil {
-		return total, wrapError(SUBACK, m, err)
+		return total, wrapError(SUBACK, DECODE, m, err)
 	}
 
 	// read packet id
 	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, wrapError(SUBACK, m, err)
+		return total, wrapError(SUBACK, DECODE, m, err)
 	}
 
 	// set packet id
 	s.ID = ID(pid)
 	if !s.ID.Valid() {
-		return total, invalidPacketID(SUBACK, m)
+		return total, wrapError(SUBACK, DECODE, m, ErrInvalidPacketID)
 	}
 
 	// calculate number of return codes
 	rcl := rl - 2
 	if rcl < 1 {
-		return total, makeError(SUBACK, m, "expected at least one return code")
+		return total, makeError(SUBACK, DECODE, m, "expected at least one return code")
 	}
 
 	// prepare return codes
@@ -89,13 +89,13 @@ func (s *Suback) Decode(m Mode, src []byte) (int, error) {
 		rc, n, err := readUint8(src[total:])
 		total += n
 		if err != nil {
-			return total, wrapError(SUBACK, m, err)
+			return total, wrapError(SUBACK, DECODE, m, err)
 		}
 
 		// get return code
 		returnCode := QOS(rc)
 		if !returnCode.Successful() && returnCode != QOSFailure {
-			return total, makeError(SUBACK, m, "invalid return code %d", returnCode)
+			return total, makeError(SUBACK, DECODE, m, "invalid return code %d", returnCode)
 		}
 
 		// add return code
@@ -112,33 +112,33 @@ func (s *Suback) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, s.len(), SUBACK)
 	if err != nil {
-		return total, wrapError(SUBACK, m, err)
+		return total, wrapError(SUBACK, ENCODE, m, err)
 	}
 
 	// check packet id
 	if !s.ID.Valid() {
-		return total, invalidPacketID(SUBACK, m)
+		return total, wrapError(SUBACK, ENCODE, m, ErrInvalidPacketID)
 	}
 
 	// write packet id
 	n, err := writeUint(dst[total:], uint64(s.ID), 2)
 	total += n
 	if err != nil {
-		return total, wrapError(SUBACK, m, err)
+		return total, wrapError(SUBACK, ENCODE, m, err)
 	}
 
 	// write return codes
 	for _, rc := range s.ReturnCodes {
 		// check return code
 		if !rc.Successful() && rc != QOSFailure {
-			return total, makeError(SUBACK, m, "invalid return code %d", rc)
+			return total, makeError(SUBACK, ENCODE, m, "invalid return code %d", rc)
 		}
 
 		// write return code
 		n, err := writeUint8(dst[total:], uint8(rc))
 		total += n
 		if err != nil {
-			return total, wrapError(SUBACK, m, err)
+			return total, wrapError(SUBACK, ENCODE, m, err)
 		}
 	}
 
