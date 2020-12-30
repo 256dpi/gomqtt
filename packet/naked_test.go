@@ -14,9 +14,14 @@ func testNaked(t *testing.T, pkt Generic) {
 
 		assertDecodeError(t, m, pkt.Type(), 2, []byte{
 			byte(pkt.Type() << 4),
+			1, // wrong remaining length
+		}, ErrRemainingLengthMismatch)
+
+		assertDecodeError(t, m, pkt.Type(), 2, []byte{
+			byte(pkt.Type() << 4),
 			1, // remaining length
 			0, // < superfluous byte
-		})
+		}, "leftover buffer length")
 	})
 }
 

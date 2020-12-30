@@ -79,6 +79,11 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 		return total, wrapError(PUBLISH, DECODE, m, total, err)
 	}
 
+	// check topic
+	if len(topic) == 0 {
+		return total, makeError(PUBLISH, DECODE, m, total, "invalid topic")
+	}
+
 	// set topic
 	p.Message.Topic = topic
 
@@ -144,7 +149,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 
 	// check topic length
 	if len(p.Message.Topic) == 0 {
-		return total, makeError(PUBLISH, ENCODE, m, total, "missing topic")
+		return total, makeError(PUBLISH, ENCODE, m, total, "invalid topic")
 	}
 
 	// write topic

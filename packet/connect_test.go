@@ -126,7 +126,7 @@ func TestConnect(t *testing.T) {
 			0,  // protocol string
 			4,
 			'M', 'Q', 'T', 'T',
-		})
+		}, ErrRemainingLengthMismatch)
 
 		assertDecodeError(t, m, CONNECT, 4, []byte{
 			byte(CONNECT << 4),
@@ -134,7 +134,7 @@ func TestConnect(t *testing.T) {
 			0, // protocol string
 			5, // < invalid size
 			'M', 'Q', 'T', 'T',
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 8, []byte{
 			byte(CONNECT << 4),
@@ -143,7 +143,7 @@ func TestConnect(t *testing.T) {
 			4,
 			'M', 'Q', 'T', 'T',
 			// < protocol level: missing
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
@@ -152,7 +152,7 @@ func TestConnect(t *testing.T) {
 			5,
 			'M', 'Q', 'T', 'T', 'X', // < wrong protocol string
 			4,
-		})
+		}, "invalid protocol string")
 
 		assertDecodeError(t, m, CONNECT, 9, []byte{
 			byte(CONNECT << 4),
@@ -161,7 +161,7 @@ func TestConnect(t *testing.T) {
 			4,
 			'M', 'Q', 'T', 'T',
 			7, // < protocol level: wrong level
-		})
+		}, "invalid protocol version")
 
 		assertDecodeError(t, m, CONNECT, 9, []byte{
 			byte(CONNECT << 4),
@@ -171,7 +171,7 @@ func TestConnect(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
 			// < connect flags: missing
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
@@ -181,7 +181,7 @@ func TestConnect(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
 			1, // < connect flags: reserved bit set to one
-		})
+		}, "invalid connect flags")
 
 		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
@@ -191,7 +191,7 @@ func TestConnect(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4,  // protocol level
 			24, // < connect flags: invalid qos
-		})
+		}, ErrInvalidQOSLevel)
 
 		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
@@ -201,7 +201,7 @@ func TestConnect(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4, // protocol level
 			8, // < connect flags: will flag set to zero but others not
-		})
+		}, "invalid connect flags")
 
 		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
@@ -211,7 +211,7 @@ func TestConnect(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 			4,  // protocol level
 			64, // < connect flags: password flag set but not username
-		})
+		}, "invalid connect flags")
 
 		assertDecodeError(t, m, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
@@ -222,7 +222,7 @@ func TestConnect(t *testing.T) {
 			4, // protocol level
 			0, // connect flags
 			0, // < keep alive: incomplete
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
@@ -237,7 +237,7 @@ func TestConnect(t *testing.T) {
 			0, // client id
 			2, // < wrong size
 			'x',
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
@@ -251,7 +251,7 @@ func TestConnect(t *testing.T) {
 			1,
 			0, // client id
 			0,
-		})
+		}, "missing client id")
 
 		assertDecodeError(t, m, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
@@ -267,7 +267,7 @@ func TestConnect(t *testing.T) {
 			0,
 			0, // will topic
 			1, // < wrong size
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 18, []byte{
 			byte(CONNECT << 4),
@@ -285,7 +285,7 @@ func TestConnect(t *testing.T) {
 			0,
 			0, // will payload
 			1, // < wrong size
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
@@ -301,7 +301,7 @@ func TestConnect(t *testing.T) {
 			0,
 			0, // username
 			1, // < wrong size
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 18, []byte{
 			byte(CONNECT << 4),
@@ -319,7 +319,7 @@ func TestConnect(t *testing.T) {
 			0,
 			0, // password
 			1, // < wrong size
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
@@ -334,10 +334,10 @@ func TestConnect(t *testing.T) {
 			0, // client id
 			0,
 			0, // < superfluous byte
-		})
+		}, "leftover buffer length")
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Connect{})
+		assertEncodeError(t, m, 1, 1, &Connect{}, ErrInsufficientBufferSize)
 
 		assertEncodeError(t, m, 0, 9, &Connect{
 			CleanSession: true,
@@ -346,13 +346,13 @@ func TestConnect(t *testing.T) {
 				Topic: "t",
 				QOS:   3, // < wrong qos
 			},
-		})
+		}, ErrInvalidQOSLevel)
 
 		assertEncodeError(t, m, 0, 14, &Connect{
 			CleanSession: true,
 			Version:      4,
 			ClientID:     longString, // < too big
-		})
+		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 16, &Connect{
 			CleanSession: true,
@@ -360,36 +360,36 @@ func TestConnect(t *testing.T) {
 			Will: &Message{
 				Topic: longString, // < too big
 			},
-		})
+		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 19, &Connect{
 			CleanSession: true,
 			Version:      4,
 			Will: &Message{
 				Topic:   "t",
-				Payload: make([]byte, 65536), // < too big
+				Payload: longBytes, // < too big
 			},
-		})
+		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 16, &Connect{
 			CleanSession: true,
 			Version:      4,
 			Username:     longString, // < too big
-		})
+		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 14, &Connect{
 			CleanSession: true,
 			Version:      4,
 			Username:     "", // < missing
 			Password:     "p",
-		})
+		}, "missing username")
 
 		assertEncodeError(t, m, 0, 19, &Connect{
 			CleanSession: true,
 			Version:      4,
 			Username:     "u",
 			Password:     longString, // < too big
-		})
+		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 9, &Connect{
 			CleanSession: true,
@@ -397,16 +397,16 @@ func TestConnect(t *testing.T) {
 			Will: &Message{
 				Topic: "", // < missing
 			},
-		})
+		}, "missing will topic")
 
 		assertEncodeError(t, m, 0, 2, &Connect{
 			Version: 255, // < invalid
-		})
+		}, "invalid protocol version")
 
 		assertEncodeError(t, m, 0, 9, &Connect{
 			CleanSession: false,
 			ClientID:     "", // < missing
-		})
+		}, "missing client id")
 	})
 }
 

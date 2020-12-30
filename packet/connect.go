@@ -256,7 +256,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// check version byte
 	if c.Version != Version311 && c.Version != Version31 {
-		return total, makeError(CONNECT, ENCODE, m, total, "unsupported protocol version")
+		return total, makeError(CONNECT, ENCODE, m, total, "invalid protocol version")
 	}
 
 	// write version string
@@ -293,7 +293,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 		// check will topic length
 		if len(c.Will.Topic) == 0 {
-			return total, makeError(CONNECT, ENCODE, m, total, "will topic is empty")
+			return total, makeError(CONNECT, ENCODE, m, total, "missing will topic")
 		}
 
 		// check will qos

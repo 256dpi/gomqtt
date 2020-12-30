@@ -43,50 +43,43 @@ func TestConnack(t *testing.T) {
 			3, // < remaining length: wrong size
 			0, // connack flags
 			0, // return code
-		})
+		}, ErrRemainingLengthMismatch)
 
-		assertDecodeError(t, m, CONNACK, 2, []byte{
+		assertDecodeError(t, m, CONNACK, 3, []byte{
 			byte(CONNACK << 4),
-			2, // remaining length
+			1, // remaining length
 			0, // connack flags
-			// < wrong packet size
-		})
+			// < missing return code
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, CONNACK, 3, []byte{
 			byte(CONNACK << 4),
 			2,  // remaining length
 			64, // < wrong value
 			0,  // return code
-		})
+		}, "invalid connack flags")
 
 		assertDecodeError(t, m, CONNACK, 4, []byte{
 			byte(CONNACK << 4),
 			2, // remaining length
 			0, // connack flags
 			6, // < wrong return code
-		})
-
-		assertDecodeError(t, m, CONNACK, 2, []byte{
-			byte(CONNACK << 4),
-			1, // < wrong remaining length
-			0, // connack flags
-			6, // return code
-		})
+		}, "invalid return code")
 
 		assertDecodeError(t, m, CONNACK, 4, []byte{
 			byte(CONNACK << 4),
 			3, // remaining length
 			0, // connack flags
-			6, // return code
+			0, // return code
 			0, // < superfluous byte
-		})
+		}, "leftover buffer length")
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Connack{})
+		assertEncodeError(t, m, 1, 1, &Connack{}, ErrInsufficientBufferSize)
 
 		assertEncodeError(t, m, 0, 3, &Connack{
 			ReturnCode: 11, // < wrong return code
-		})
+		}, "invalid return code")
 	})
 }
 

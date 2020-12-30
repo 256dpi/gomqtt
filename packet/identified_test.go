@@ -19,21 +19,14 @@ func testIdentified(t *testing.T, pkt Generic) {
 			1, // < wrong remaining length
 			0, // packet id
 			7,
-		})
-
-		assertDecodeError(t, m, pkt.Type(), 2, []byte{
-			byte(pkt.Type()<<4) | pkt.Type().defaultFlags(),
-			2, // remaining length
-			7, // packet id
-			// < insufficient bytes
-		})
+		}, ErrRemainingLengthMismatch)
 
 		assertDecodeError(t, m, pkt.Type(), 4, []byte{
 			byte(pkt.Type()<<4) | pkt.Type().defaultFlags(),
 			2, // remaining length
 			0, // packet id
 			0, // < zero id
-		})
+		}, ErrInvalidPacketID)
 
 		assertDecodeError(t, m, pkt.Type(), 4, []byte{
 			byte(pkt.Type()<<4) | pkt.Type().defaultFlags(),
@@ -41,14 +34,14 @@ func testIdentified(t *testing.T, pkt Generic) {
 			0, // packet id
 			7,
 			0, // < superfluous byte
-		})
+		}, "leftover buffer length")
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Puback{})
+		assertEncodeError(t, m, 1, 1, &Puback{}, ErrInsufficientBufferSize)
 
 		assertEncodeError(t, m, 0, 2, &Puback{
 			ID: 0, // < zero id
-		})
+		}, ErrInvalidPacketID)
 	})
 }
 
