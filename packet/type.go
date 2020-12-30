@@ -76,11 +76,11 @@ func (t Type) String() string {
 func (t Type) defaultFlags() byte {
 	switch t {
 	case PUBREL:
-		return 0x2 // 00000010
+		return 0b10
 	case SUBSCRIBE:
-		return 0x2 // 00000010
+		return 0b10
 	case UNSUBSCRIBE:
-		return 0x2 // 00000010
+		return 0b10
 	}
 
 	return 0

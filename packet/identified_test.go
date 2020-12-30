@@ -14,22 +14,22 @@ func testIdentified(t *testing.T, pkt Generic) {
 			1,
 		}, pkt, fmt.Sprintf("<%s ID=1>", pkt.Type().String()))
 
-		assertDecodeError(t, m, pkt.Type(), 2, []byte{
-			byte(pkt.Type()<<4) | pkt.Type().defaultFlags(),
+		assertDecodeError(t, m, PUBACK, 2, []byte{
+			byte(PUBACK << 4),
 			1, // < wrong remaining length
 			0, // packet id
 			7,
 		}, ErrRemainingLengthMismatch)
 
-		assertDecodeError(t, m, pkt.Type(), 4, []byte{
-			byte(pkt.Type()<<4) | pkt.Type().defaultFlags(),
+		assertDecodeError(t, m, PUBACK, 4, []byte{
+			byte(PUBACK << 4),
 			2, // remaining length
 			0, // packet id
 			0, // < zero id
 		}, ErrInvalidPacketID)
 
-		assertDecodeError(t, m, pkt.Type(), 4, []byte{
-			byte(pkt.Type()<<4) | pkt.Type().defaultFlags(),
+		assertDecodeError(t, m, PUBACK, 4, []byte{
+			byte(PUBACK << 4),
 			3, // remaining length
 			0, // packet id
 			7,

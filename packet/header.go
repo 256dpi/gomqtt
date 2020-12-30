@@ -26,7 +26,7 @@ func encodeHeader(dst []byte, flags byte, rl int, t Type) (int, error) {
 	}
 
 	// write type and flags
-	typeAndFlags := byte(t)<<4 | (t.defaultFlags() & 0xf) | flags
+	typeAndFlags := byte(t)<<4 | (t.defaultFlags() & 0b1111) | flags
 	total, err := writeUint8(dst, typeAndFlags)
 	if err != nil {
 		return total, err
@@ -56,7 +56,7 @@ func decodeHeader(src []byte, t Type) (int, byte, int, error) {
 
 	// read type and flags
 	typ := Type(typeAndFlags >> 4)
-	flags := typeAndFlags & 0x0f
+	flags := typeAndFlags & 0b1111
 
 	// check against static type
 	if typ != t {
