@@ -2,22 +2,27 @@ package packet
 
 import (
 	"encoding/binary"
+	"errors"
 	"math"
 )
 
-func readUint8(buf []byte, t Type) (uint8, int, error) {
-	num, n, err := readUint(buf, 1, t)
+var ErrInsufficientBufferSize = errors.New("insufficient buffer size")
+var ErrVariableIntegerOverflow = errors.New("variable integer overflow")
+var ErrPrefixedBytesOverflow = errors.New("prefixed bytes overflow")
+
+func readUint8(buf []byte) (uint8, int, error) {
+	num, n, err := readUint(buf, 1)
 	return uint8(num), n, err
 }
 
-func writeUint8(buf []byte, num uint8, t Type) (int, error) {
-	return writeUint(buf, uint64(num), 1, t)
+func writeUint8(buf []byte, num uint8) (int, error) {
+	return writeUint(buf, uint64(num), 1)
 }
 
-func readUint(buf []byte, width int, t Type) (uint64, int, error) {
+func readUint(buf []byte, width int) (uint64, int, error) {
 	// check buffer
 	if len(buf) < width {
-		return 0, 0, insufficientBufferSize(t)
+		return 0, 0, ErrInsufficientBufferSize
 	}
 
 	// read number
@@ -32,16 +37,16 @@ func readUint(buf []byte, width int, t Type) (uint64, int, error) {
 	case 8:
 		num = binary.BigEndian.Uint64(buf)
 	default:
-		panic("unsupported uint width")
+		panic("unsupported width")
 	}
 
 	return num, width, nil
 }
 
-func writeUint(buf []byte, num uint64, width int, t Type) (int, error) {
+func writeUint(buf []byte, num uint64, width int) (int, error) {
 	// check buffer
 	if len(buf) < width {
-		return 0, insufficientBufferSize(t)
+		return 0, ErrInsufficientBufferSize
 	}
 
 	// write number
@@ -55,7 +60,7 @@ func writeUint(buf []byte, num uint64, width int, t Type) (int, error) {
 	case 8:
 		binary.BigEndian.PutUint64(buf, num)
 	default:
-		panic("unsupported uint width")
+		panic("unsupported width")
 	}
 
 	return width, nil
@@ -77,30 +82,27 @@ func varintLen(n uint64) int {
 	return 0
 }
 
-func readVarint(buf []byte, t Type) (uint64, int, error) {
-	// limit buf
-	if len(buf) > 4 {
-		buf = buf[:4]
-	}
-
+func readVarint(buf []byte) (uint64, int, error) {
 	// read number
 	num, n := binary.Uvarint(buf)
-	if n <= 0 {
-		return 0, 0, makeError(t, "error reading variable integer")
+	if n == 0 {
+		return 0, 0, ErrInsufficientBufferSize
+	} else if n < 0 || n > 4 {
+		return 0, 0, ErrVariableIntegerOverflow
 	}
 
 	return num, n, nil
 }
 
-func writeVarint(buf []byte, num uint64, t Type) (int, error) {
+func writeVarint(buf []byte, num uint64) (int, error) {
 	// check size
 	if num > maxVarint {
-		return 0, makeError(t, "variable integer out of bound")
+		return 0, ErrVariableIntegerOverflow
 	}
 
 	// check length
 	if len(buf) < varintLen(num) {
-		return 0, insufficientBufferSize(t)
+		return 0, ErrInsufficientBufferSize
 	}
 
 	// write remaining length
@@ -109,18 +111,18 @@ func writeVarint(buf []byte, num uint64, t Type) (int, error) {
 	return n, nil
 }
 
-func readString(buf []byte, t Type) (string, int, error) {
-	bytes, n, err := readBytes(buf, false, t)
+func readString(buf []byte) (string, int, error) {
+	bytes, n, err := readBytes(buf, false)
 	return string(bytes), n, err
 }
 
-func writeString(buf []byte, str string, t Type) (int, error) {
-	return writeBytes(buf, cast(str), t)
+func writeString(buf []byte, str string) (int, error) {
+	return writeBytes(buf, cast(str))
 }
 
-func readBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
+func readBytes(buf []byte, safe bool) ([]byte, int, error) {
 	// read length
-	l, n, err := readUint(buf, 2, t)
+	l, n, err := readUint(buf, 2)
 	if err != nil {
 		return nil, n, err
 	}
@@ -130,7 +132,7 @@ func readBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 
 	// check length
 	if len(buf[n:]) < length {
-		return nil, n, insufficientBufferSize(t)
+		return nil, n, ErrInsufficientBufferSize
 	}
 
 	// get bytes
@@ -148,24 +150,24 @@ func readBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 	return cpy, n, nil
 }
 
-func writeBytes(buf []byte, bytes []byte, t Type) (int, error) {
+func writeBytes(buf []byte, bytes []byte) (int, error) {
 	// get length
 	length := len(bytes)
 
 	// check length
 	if length > math.MaxUint16 {
-		return 0, makeError(t, "length %d greater than allowed %d bytes", length, math.MaxUint16)
+		return 0, ErrPrefixedBytesOverflow
 	}
 
 	// write length
-	n, err := writeUint(buf, uint64(length), 2, t)
+	n, err := writeUint(buf, uint64(length), 2)
 	if err != nil {
 		return n, err
 	}
 
 	// check buffer
 	if len(buf) < length {
-		return n, insufficientBufferSize(t)
+		return n, ErrInsufficientBufferSize
 	}
 
 	// write bytes
@@ -174,15 +176,15 @@ func writeBytes(buf []byte, bytes []byte, t Type) (int, error) {
 	return n, nil
 }
 
-func readPair(buf []byte, t Type) (string, string, int, error) {
+func readPair(buf []byte) (string, string, int, error) {
 	// read key
-	key, nk, err := readString(buf, t)
+	key, nk, err := readString(buf)
 	if err != nil {
 		return "", "", nk, err
 	}
 
 	// read value
-	value, nv, err := readString(buf[nk:], t)
+	value, nv, err := readString(buf[nk:])
 	if err != nil {
 		return key, "", nk + nv, err
 	}
@@ -190,15 +192,15 @@ func readPair(buf []byte, t Type) (string, string, int, error) {
 	return key, value, nk + nv, nil
 }
 
-func writePair(buf []byte, key, value string, t Type) (int, error) {
+func writePair(buf []byte, key, value string) (int, error) {
 	// write key
-	nk, err := writeString(buf, key, t)
+	nk, err := writeString(buf, key)
 	if err != nil {
 		return nk, err
 	}
 
 	// write value
-	nv, err := writeString(buf, value, t)
+	nv, err := writeString(buf, value)
 	if err != nil {
 		return nk + nv, err
 	}

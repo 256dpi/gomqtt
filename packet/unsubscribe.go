@@ -54,7 +54,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read packet id
-	pid, n, err := readUint(src[total:], 2, UNSUBSCRIBE)
+	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
 		return total, err
@@ -73,7 +73,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 	tl := rl - 2
 	for tl > 0 {
 		// read topic
-		topic, n, err := readString(src[total:], UNSUBSCRIBE)
+		topic, n, err := readString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -110,7 +110,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write packet id
-	n, err := writeUint(dst[total:], uint64(u.ID), 2, UNSUBSCRIBE)
+	n, err := writeUint(dst[total:], uint64(u.ID), 2)
 	total += n
 	if err != nil {
 		return total, err
@@ -119,7 +119,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	// write topics
 	for _, topic := range u.Topics {
 		// write topic
-		n, err := writeString(dst[total:], topic, UNSUBSCRIBE)
+		n, err := writeString(dst[total:], topic)
 		total += n
 		if err != nil {
 			return total, err

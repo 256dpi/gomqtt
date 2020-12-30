@@ -8,13 +8,13 @@ func headerLen(rl int) int {
 func encodeHeader(dst []byte, flags byte, rl int, t Type) (int, error) {
 	// write type and flags
 	typeAndFlags := byte(t)<<4 | (t.defaultFlags() & 0xf) | flags
-	total, err := writeUint8(dst, typeAndFlags, t)
+	total, err := writeUint8(dst, typeAndFlags)
 	if err != nil {
 		return total, err
 	}
 
 	// write remaining length
-	n, err := writeVarint(dst[1:], uint64(rl), t)
+	n, err := writeVarint(dst[1:], uint64(rl))
 	total += n
 	if err != nil {
 		return total, err
@@ -30,7 +30,7 @@ func encodeHeader(dst []byte, flags byte, rl int, t Type) (int, error) {
 
 func decodeHeader(src []byte, t Type) (int, byte, int, error) {
 	// read type and flags
-	typeAndFlags, total, err := readUint8(src, t)
+	typeAndFlags, total, err := readUint8(src)
 	if err != nil {
 		return total, 0, 0, err
 	}
@@ -50,7 +50,7 @@ func decodeHeader(src []byte, t Type) (int, byte, int, error) {
 	}
 
 	// read remaining length
-	_rl, n, err := readVarint(src[total:], t)
+	_rl, n, err := readVarint(src[total:])
 	total += n
 	if err != nil {
 		return total, 0, 0, err

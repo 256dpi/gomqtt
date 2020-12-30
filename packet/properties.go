@@ -5,6 +5,9 @@ import (
 	"errors"
 )
 
+var ErrInvalidPropertyType = errors.New("invalid property type")
+var ErrInvalidPropertyCode = errors.New("invalid property code")
+
 type PropertyType int
 
 const (
@@ -189,51 +192,51 @@ func (p *Property) len() int {
 	return cl + vl
 }
 
-func (p *Property) decode(buf []byte, t Type) (int, error) {
+func (p *Property) decode(buf []byte) (int, error) {
 	// read value
 	var n int
 	var err error
 	switch p.Code.Type() {
 	case UINT8:
-		p.Uint64, n, err = readUint(buf, 1, t)
+		p.Uint64, n, err = readUint(buf, 1)
 	case UINT16:
-		p.Uint64, n, err = readUint(buf, 2, t)
+		p.Uint64, n, err = readUint(buf, 2)
 	case UINT32:
-		p.Uint64, n, err = readUint(buf, 4, t)
+		p.Uint64, n, err = readUint(buf, 4)
 	case VARINT:
-		p.Uint64, n, err = readVarint(buf, t)
+		p.Uint64, n, err = readVarint(buf)
 	case STRING:
-		p.String, n, err = readString(buf, t)
+		p.String, n, err = readString(buf)
 	case BYTES:
-		p.Bytes, n, err = readBytes(buf, true, t)
+		p.Bytes, n, err = readBytes(buf, true)
 	case PAIR:
-		p.Key, p.Value, n, err = readPair(buf, t)
+		p.Key, p.Value, n, err = readPair(buf)
 	default:
-		return 0, makeError(t, "unknown property code")
+		return 0, ErrInvalidPropertyType
 	}
 
 	return n, err
 }
 
-func (p *Property) encode(buf []byte, t Type) (int, error) {
+func (p *Property) encode(buf []byte) (int, error) {
 	// write value
 	switch p.Code.Type() {
 	case UINT8:
-		return writeUint(buf, p.Uint64, 1, t)
+		return writeUint(buf, p.Uint64, 1)
 	case UINT16:
-		return writeUint(buf, p.Uint64, 2, t)
+		return writeUint(buf, p.Uint64, 2)
 	case UINT32:
-		return writeUint(buf, p.Uint64, 4, t)
+		return writeUint(buf, p.Uint64, 4)
 	case VARINT:
-		return writeVarint(buf, p.Uint64, t)
+		return writeVarint(buf, p.Uint64)
 	case STRING:
-		return writeString(buf, p.String, t)
+		return writeString(buf, p.String)
 	case BYTES:
-		return writeBytes(buf, p.Bytes, t)
+		return writeBytes(buf, p.Bytes)
 	case PAIR:
-		return writePair(buf, p.Key, p.Value, t)
+		return writePair(buf, p.Key, p.Value)
 	default:
-		return 0, errors.New("unknown property code")
+		return 0, ErrInvalidPropertyType
 	}
 }
 
@@ -250,12 +253,12 @@ func propertiesLen(properties []Property) int {
 	return pll + sum
 }
 
-func readProperties(buf []byte, t Type) ([]Property, int, error) {
+func readProperties(buf []byte) ([]Property, int, error) {
 	// prepare read counter
 	read := 0
 
 	// read property length
-	pl, n, err := readVarint(buf, t)
+	pl, n, err := readVarint(buf)
 	read += n
 	if err != nil {
 		return nil, read, err
@@ -270,7 +273,7 @@ func readProperties(buf []byte, t Type) ([]Property, int, error) {
 		pc, n := binary.Uvarint(buf[read:])
 		read += n
 		if n <= 0 {
-			return nil, read, makeError(t, "invalid property type")
+			return nil, read, ErrInvalidPropertyType
 		}
 
 		// get code
@@ -278,11 +281,11 @@ func readProperties(buf []byte, t Type) ([]Property, int, error) {
 
 		// check code
 		if !code.Valid() {
-			return nil, read, makeError(t, "invalid property")
+			return nil, read, ErrInvalidPropertyCode
 		}
 
 		// decode property
-		n, err := properties[i].decode(buf[read:], t)
+		n, err := properties[i].decode(buf[read:])
 		read += n
 		if err != nil {
 			return nil, read, err
@@ -292,12 +295,12 @@ func readProperties(buf []byte, t Type) ([]Property, int, error) {
 	return properties, read, nil
 }
 
-func writeProperties(buf []byte, properties []Property, t Type) (int, error) {
+func writeProperties(buf []byte, properties []Property) (int, error) {
 	// prepare write counter
 	write := 0
 
 	// write property length
-	n, err := writeVarint(buf, uint64(len(properties)), t)
+	n, err := writeVarint(buf, uint64(len(properties)))
 	write += n
 	if err != nil {
 		return write, err
@@ -307,11 +310,11 @@ func writeProperties(buf []byte, properties []Property, t Type) (int, error) {
 	for _, property := range properties {
 		// check code
 		if !property.Code.Valid() {
-			return write, makeError(t, "invalid property")
+			return write, ErrInvalidPropertyCode
 		}
 
 		// encode property
-		n, err := property.encode(buf[write:], t)
+		n, err := property.encode(buf[write:])
 		write += n
 		if err != nil {
 			return write, err

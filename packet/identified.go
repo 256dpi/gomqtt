@@ -18,7 +18,7 @@ func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 	}
 
 	// read packet id
-	pid, n, err := readUint(src[total:], 2, t)
+	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
 		return total, err
@@ -55,7 +55,7 @@ func identifiedEncode(m Mode, dst []byte, id ID, t Type) (int, error) {
 	}
 
 	// write packet id
-	n, err := writeUint(dst[total:], uint64(id), 2, t)
+	n, err := writeUint(dst[total:], uint64(id), 2)
 	total += n
 	if err != nil {
 		return total, err

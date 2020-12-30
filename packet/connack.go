@@ -106,7 +106,7 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read connack flags
-	connackFlags, n, err := readUint8(src[total:], CONNACK)
+	connackFlags, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
 		return total, err
@@ -121,7 +121,7 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	c.SessionPresent = connackFlags&0x1 == 1
 
 	// read return code
-	rc, n, err := readUint8(src[total:], CONNACK)
+	rc, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
 		return total, err
@@ -163,7 +163,7 @@ func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write flags
-	n, err := writeUint8(dst[total:], flags, CONNACK)
+	n, err := writeUint8(dst[total:], flags)
 	total += n
 	if err != nil {
 		return total, err
@@ -175,7 +175,7 @@ func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write return code
-	n, err = writeUint8(dst[total:], uint8(c.ReturnCode), CONNACK)
+	n, err = writeUint8(dst[total:], uint8(c.ReturnCode))
 	total += n
 	if err != nil {
 		return total, err
