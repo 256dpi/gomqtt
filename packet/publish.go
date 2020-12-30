@@ -84,11 +84,6 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 
 	// check quality of service
 	if p.Message.QOS != 0 {
-		// check buffer length
-		if len(src) < total+2 {
-			return total, insufficientBufferSize(PUBLISH)
-		}
-
 		// read packet id
 		pid, n, err := readUint(src[total:], 2, PUBLISH)
 		total += n
