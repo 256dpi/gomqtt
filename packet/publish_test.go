@@ -40,19 +40,26 @@ func TestPublish(t *testing.T) {
 
 		assertDecodeError(t, m, PUBLISH, 2, []byte{
 			byte(PUBLISH << 4),
-			2, // < remaining length: too much
-		})
+			1, // < wrong remaining length
+		}, ErrRemainingLengthMismatch)
 
 		assertDecodeError(t, m, PUBLISH, 2, []byte{
 			byte(PUBLISH<<4) | 6, // < wrong qos
 			0,                    // remaining length
-		})
+		}, ErrInvalidQOSLevel)
 
 		assertDecodeError(t, m, PUBLISH, 2, []byte{
 			byte(PUBLISH << 4),
 			0, // remaining length
-			// < missing topic stuff
-		})
+			// < missing topic length
+		}, ErrInsufficientBufferSize)
+
+		assertDecodeError(t, m, PUBLISH, 4, []byte{
+			byte(PUBLISH << 4),
+			2, // remaining length
+			0, // topic
+			0, // < zero topic
+		}, "invalid topic")
 
 		assertDecodeError(t, m, PUBLISH, 4, []byte{
 			byte(PUBLISH << 4),
@@ -60,7 +67,7 @@ func TestPublish(t *testing.T) {
 			0, // topic
 			1,
 			// < missing topic string
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, PUBLISH, 5, []byte{
 			byte(PUBLISH<<4) | 2,
@@ -69,7 +76,7 @@ func TestPublish(t *testing.T) {
 			1,
 			't',
 			// < missing packet id
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, PUBLISH, 7, []byte{
 			byte(PUBLISH<<4) | 2,
@@ -79,29 +86,29 @@ func TestPublish(t *testing.T) {
 			't',
 			0,
 			0, // < zero packet id
-		})
+		}, ErrInvalidPacketID)
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Publish{})
+		assertEncodeError(t, m, 1, 1, &Publish{}, ErrInsufficientBufferSize)
 
 		assertEncodeError(t, m, 0, 2, &Publish{
 			Message: Message{
 				Topic: "", // < missing
 			},
-		})
+		}, "invalid topic")
 
 		assertEncodeError(t, m, 0, 0, &Publish{
 			Message: Message{
 				Topic: "test",
 				QOS:   3, // < invalid
 			},
-		})
+		}, ErrInvalidQOSLevel)
 
 		assertEncodeError(t, m, 0, 4, &Publish{
 			Message: Message{
 				Topic: longString, // < too big
 			},
-		})
+		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 8, &Publish{
 			ID: 0, // < missing
@@ -109,7 +116,7 @@ func TestPublish(t *testing.T) {
 				Topic: "test",
 				QOS:   1,
 			},
-		})
+		}, ErrInvalidPacketID)
 	})
 }
 

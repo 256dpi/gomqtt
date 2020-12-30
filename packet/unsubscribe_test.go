@@ -32,21 +32,44 @@ func TestUnsubscribe(t *testing.T) {
 			2, // remaining length
 			0, // packet id
 			7,
-			// < empty topic list
-		})
+			// < missing topic
+		}, "missing topics")
 
 		assertDecodeError(t, m, UNSUBSCRIBE, 2, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			6, // < wrong remaining length
 			0, // packet id
 			7,
-		})
+		}, ErrRemainingLengthMismatch)
 
 		assertDecodeError(t, m, UNSUBSCRIBE, 2, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
 			0, // remaining length
 			// missing packet id
-		})
+		}, ErrInsufficientBufferSize)
+
+		assertDecodeError(t, m, UNSUBSCRIBE, 4, []byte{
+			byte(UNSUBSCRIBE<<4) | 2,
+			2, // remaining length
+			0, // packet ID
+			0, // < zero packet id
+		}, ErrInvalidPacketID)
+
+		assertDecodeError(t, m, UNSUBSCRIBE, 4, []byte{
+			byte(UNSUBSCRIBE<<4) | 2,
+			2, // remaining length
+			0, // packet id
+			7,
+		}, "missing topics")
+
+		assertDecodeError(t, m, UNSUBSCRIBE, 6, []byte{
+			byte(UNSUBSCRIBE<<4) | 2,
+			4, // remaining length
+			0, // packet id
+			7,
+			0, // topic
+			0, // < zero topic
+		}, "invalid topic")
 
 		assertDecodeError(t, m, UNSUBSCRIBE, 6, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
@@ -56,17 +79,7 @@ func TestUnsubscribe(t *testing.T) {
 			0, // topic
 			9, // < wrong size
 			'g', 'o', 'm', 'q', 't', 't',
-		})
-
-		assertDecodeError(t, m, UNSUBSCRIBE, 4, []byte{
-			byte(UNSUBSCRIBE<<4) | 2,
-			10, // remaining length
-			0,  // packet ID
-			0,  // < zero packet id
-			0,  // topic name
-			6,
-			'g', 'o', 'm', 'q', 't', 't',
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, UNSUBSCRIBE, 12, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
@@ -77,19 +90,24 @@ func TestUnsubscribe(t *testing.T) {
 			6,
 			'g', 'o', 'm', 'q', 't', 't',
 			0, // < superfluous byte
-		})
+		}, ErrInsufficientBufferSize)
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Unsubscribe{})
+		assertEncodeError(t, m, 1, 1, &Unsubscribe{}, ErrInsufficientBufferSize)
+
+		assertEncodeError(t, m, 0, 4, &Unsubscribe{
+			ID:     7,
+			Topics: []string{""}, // < zero empty topic
+		}, "invalid topic")
 
 		assertEncodeError(t, m, 0, 6, &Unsubscribe{
 			ID:     7,
 			Topics: []string{longString}, // too big
-		})
+		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 2, &Unsubscribe{
 			ID: 0, // < missing
-		})
+		}, ErrInvalidPacketID)
 	})
 }
 

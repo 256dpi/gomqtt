@@ -33,13 +33,13 @@ func TestSubscribe(t *testing.T) {
 		assertDecodeError(t, m, SUBSCRIBE, 2, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			9, // < remaining length: too much
-		})
+		}, ErrRemainingLengthMismatch)
 
 		assertDecodeError(t, m, SUBSCRIBE, 2, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			0, // remaining length
 			// < missing packet id
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, SUBSCRIBE, 4, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -47,7 +47,16 @@ func TestSubscribe(t *testing.T) {
 			0, // packet id
 			7,
 			// < missing subscription
-		})
+		}, "missing subscriptions")
+
+		assertDecodeError(t, m, SUBSCRIBE, 6, []byte{
+			byte(SUBSCRIBE<<4) | 2,
+			4, // remaining length
+			0, // packet id
+			7,
+			0, // topic
+			0, // < zero topic
+		}, "invalid topic")
 
 		assertDecodeError(t, m, SUBSCRIBE, 6, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -57,7 +66,7 @@ func TestSubscribe(t *testing.T) {
 			0, // topic
 			2, // < wrong size
 			's',
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, SUBSCRIBE, 7, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -68,7 +77,7 @@ func TestSubscribe(t *testing.T) {
 			1,
 			's',
 			// < missing qos
-		})
+		}, ErrInsufficientBufferSize)
 
 		assertDecodeError(t, m, SUBSCRIBE, 4, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -79,7 +88,7 @@ func TestSubscribe(t *testing.T) {
 			1,
 			's',
 			0,
-		})
+		}, ErrInvalidPacketID)
 
 		assertDecodeError(t, m, SUBSCRIBE, 8, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -90,7 +99,7 @@ func TestSubscribe(t *testing.T) {
 			1,
 			's',
 			0x81, // < invalid qos
-		})
+		}, ErrInvalidQOSLevel)
 
 		assertDecodeError(t, m, SUBSCRIBE, 8, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -102,34 +111,47 @@ func TestSubscribe(t *testing.T) {
 			's',
 			0, // qos
 			0, // < superfluous byte
-		})
+		}, ErrInsufficientBufferSize)
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Subscribe{})
+		assertEncodeError(t, m, 1, 1, &Subscribe{}, ErrInsufficientBufferSize)
 
 		assertEncodeError(t, m, 0, 2, &Subscribe{
 			ID: 0, // < missing
-		})
+		}, ErrInvalidPacketID)
+
+		assertEncodeError(t, m, 0, 4, &Subscribe{
+			ID:            7,
+			Subscriptions: []Subscription{},
+		}, "missing subscriptions")
+
+		assertEncodeError(t, m, 0, 4, &Subscribe{
+			ID: 7,
+			Subscriptions: []Subscription{
+				{
+					Topic: "", // < zero topic
+				},
+			},
+		}, "invalid topic")
 
 		assertEncodeError(t, m, 0, 6, &Subscribe{
 			ID: 7,
 			Subscriptions: []Subscription{
 				{
 					Topic: longString, // < too big
-					QOS:   0,
 				},
 			},
-		})
+		}, ErrPrefixedBytesOverflow)
 
-		assertEncodeError(t, m, 0, 16, &Subscribe{
+		assertEncodeError(t, m, 0, 10, &Subscribe{
 			ID: 7,
 			Subscriptions: []Subscription{
 				{
-					Topic: string(make([]byte, 10)),
+					Topic: "test",
 					QOS:   0x81, // < invalid qos
 				},
 			},
-		})
+		}, ErrInvalidQOSLevel)
 	})
 }
 

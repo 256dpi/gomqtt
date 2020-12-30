@@ -7,7 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var longString = string(make([]byte, 65536))
+var longBytes = make([]byte, 65536)
+var longString = string(longBytes)
 
 type errorWriter struct {
 	writer io.Writer
@@ -66,21 +67,48 @@ func assertEncodeDecode(t *testing.T, m Mode, packet []byte, pkt Generic, str st
 	}
 }
 
-func assertDecodeError(t *testing.T, m Mode, typ Type, read int, packet []byte) {
+func assertDecodeError(t *testing.T, m Mode, typ Type, read int, packet []byte, r interface{}) {
+	var e Error
+	e.Type = typ
+	e.Method = DECODE
+	e.Mode = m
+	e.Position = read
+	switch r := r.(type) {
+	case string:
+		e.Message = r
+	case error:
+		e.Err = r
+	}
+
 	pkt, _ := typ.New()
 	n, err := pkt.Decode(m, packet)
 	assert.Error(t, err)
 	assert.Equal(t, read, n)
+	assert.Equal(t, &e, err)
 }
 
-func assertEncodeError(t *testing.T, m Mode, len, written int, pkt Generic) {
+func assertEncodeError(t *testing.T, m Mode, len, written int, pkt Generic, r interface{}) {
+	var e Error
+	e.Type = pkt.Type()
+	e.Method = ENCODE
+	e.Mode = m
+	e.Position = written
+	switch r := r.(type) {
+	case string:
+		e.Message = r
+	case error:
+		e.Err = r
+	}
+
 	if len == 0 {
 		len = pkt.Len(m)
 	}
+
 	dst := make([]byte, len)
 	n, err := pkt.Encode(m, dst)
 	assert.Error(t, err)
 	assert.Equal(t, written, n)
+	assert.Equal(t, &e, err)
 }
 
 func benchTest(b *testing.B, fn func(b *testing.B, m Mode)) {

@@ -105,6 +105,11 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 			return total, wrapError(SUBSCRIBE, DECODE, m, total, err)
 		}
 
+		// check topic
+		if len(topic) == 0 {
+			return total, makeError(SUBSCRIBE, DECODE, m, total, "invalid topic")
+		}
+
 		// read qos
 		_qos, n, err := readUint8(src[total:])
 		total += n
@@ -155,8 +160,18 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 		return total, wrapError(SUBSCRIBE, ENCODE, m, total, err)
 	}
 
+	// check for empty subscription list
+	if len(s.Subscriptions) == 0 {
+		return total, makeError(SUBSCRIBE, ENCODE, m, total, "missing subscriptions")
+	}
+
 	// write subscriptions
 	for _, sub := range s.Subscriptions {
+		// check topic
+		if len(sub.Topic) == 0 {
+			return total, makeError(SUBSCRIBE, ENCODE, m, total, "invalid topic")
+		}
+
 		// write topic
 		n, err = writeString(dst[total:], sub.Topic)
 		total += n
