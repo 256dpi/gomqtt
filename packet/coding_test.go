@@ -37,79 +37,89 @@ func TestVarintLen(t *testing.T) {
 }
 
 func TestReadVarint(t *testing.T) {
-	num, n, err := readVarint([]byte{}, CONNECT)
-	assert.Error(t, err)
-	assert.Zero(t, num)
-	assert.Zero(t, n)
-
-	num, n, err = readVarint([]byte{0xff, 0xff}, CONNECT)
-	assert.Error(t, err)
-	assert.Zero(t, num)
-	assert.Equal(t, 0, n)
-
-	num, n, err = readVarint([]byte{0xff, 0xff, 0xff, 0xff, 0x1}, CONNECT)
-	assert.Error(t, err)
-	assert.Zero(t, num)
-	assert.Equal(t, 0, n)
-
-	num, n, err = readVarint([]byte{0xff, 0x42}, CONNECT)
+	num, n, err := readVarint([]byte{0xff, 0x42})
 	assert.NoError(t, err)
 	assert.Equal(t, 8575, int(num))
 	assert.Equal(t, 2, n)
+
+	num, n, err = readVarint([]byte{})
+	assert.Error(t, err)
+	assert.Zero(t, num)
+	assert.Zero(t, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	num, n, err = readVarint([]byte{0xff, 0xff})
+	assert.Error(t, err)
+	assert.Zero(t, num)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	num, n, err = readVarint([]byte{0xff, 0xff, 0xff, 0xff, 0x1})
+	assert.Error(t, err)
+	assert.Zero(t, num)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, ErrVariableIntegerOverflow, err)
 }
 
 func TestWriteVarint(t *testing.T) {
-	n, err := writeVarint([]byte{}, 42, CONNECT)
-	assert.Error(t, err)
-	assert.Zero(t, n)
-
-	n, err = writeVarint([]byte{0}, 8575, CONNECT)
-	assert.Error(t, err)
-	assert.Zero(t, n)
-
-	n, err = writeVarint([]byte{0, 0, 0, 0}, maxVarint+1, CONNECT)
-	assert.Error(t, err)
-	assert.Zero(t, n)
-
-	n, err = writeVarint([]byte{0, 0}, 8575, CONNECT)
+	n, err := writeVarint([]byte{0, 0}, 8575)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
+
+	n, err = writeVarint([]byte{}, 42)
+	assert.Error(t, err)
+	assert.Zero(t, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	n, err = writeVarint([]byte{0}, 8575)
+	assert.Error(t, err)
+	assert.Zero(t, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	n, err = writeVarint([]byte{0, 0, 0, 0}, maxVarint+1)
+	assert.Error(t, err)
+	assert.Zero(t, n)
+	assert.Equal(t, ErrVariableIntegerOverflow, err)
 }
 
 func TestReadString(t *testing.T) {
-	str, n, err := readString([]byte{}, CONNECT)
-	assert.Error(t, err)
-	assert.Empty(t, str)
-	assert.Zero(t, n)
-
-	str, n, err = readString([]byte{0xff, 0xff, 0xff, 0xff}, CONNECT)
-	assert.Error(t, err)
-	assert.Empty(t, str)
-	assert.Equal(t, 2, n)
-
-	str, n, err = readString([]byte{0x0, 0x0}, CONNECT)
+	str, n, err := readString([]byte{0x0, 0x0})
 	assert.NoError(t, err)
 	assert.Equal(t, "", str)
 	assert.Equal(t, 2, n)
 
-	str, n, err = readString([]byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, CONNECT)
+	str, n, err = readString([]byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'})
 	assert.NoError(t, err)
 	assert.Equal(t, "Hello", str)
 	assert.Equal(t, 7, n)
+
+	str, n, err = readString([]byte{})
+	assert.Error(t, err)
+	assert.Empty(t, str)
+	assert.Zero(t, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	str, n, err = readString([]byte{0xff, 0xff, 0xff, 0xff})
+	assert.Error(t, err)
+	assert.Empty(t, str)
+	assert.Equal(t, 2, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
 }
 
 func TestWriteString(t *testing.T) {
-	n, err := writeString([]byte{}, longString, CONNECT)
-	assert.Error(t, err)
-	assert.Zero(t, n)
-
-	n, err = writeString([]byte{}, string(make([]byte, 10)), CONNECT)
-	assert.Error(t, err)
-	assert.Zero(t, n)
-
 	buf := make([]byte, 7)
-	n, err = writeString(buf, "Hello", CONNECT)
+	n, err := writeString(buf, "Hello")
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, buf)
 	assert.Equal(t, 7, n)
+
+	n, err = writeString([]byte{}, longString)
+	assert.Error(t, err)
+	assert.Zero(t, n)
+	assert.Equal(t, ErrPrefixedBytesOverflow, err)
+
+	n, err = writeString([]byte{}, string(make([]byte, 10)))
+	assert.Error(t, err)
+	assert.Zero(t, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
 }

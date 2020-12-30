@@ -73,7 +73,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read topic
-	topic, n, err := readString(src[total:], PUBLISH)
+	topic, n, err := readString(src[total:])
 	total += n
 	if err != nil {
 		return total, err
@@ -85,7 +85,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	// check quality of service
 	if p.Message.QOS != 0 {
 		// read packet id
-		pid, n, err := readUint(src[total:], 2, PUBLISH)
+		pid, n, err := readUint(src[total:], 2)
 		total += n
 		if err != nil {
 			return total, err
@@ -148,7 +148,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write topic
-	n, err := writeString(dst[total:], p.Message.Topic, PUBLISH)
+	n, err := writeString(dst[total:], p.Message.Topic)
 	total += n
 	if err != nil {
 		return total, err
@@ -161,7 +161,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 
 	// write packet id
 	if p.Message.QOS != 0 {
-		n, err := writeUint(dst[total:], uint64(p.ID), 2, PUBLISH)
+		n, err := writeUint(dst[total:], uint64(p.ID), 2)
 		total += n
 		if err != nil {
 			return total, err

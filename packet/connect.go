@@ -108,14 +108,14 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read protocol string
-	protoName, n, err := readBytes(src[total:], false, CONNECT)
+	protoName, n, err := readBytes(src[total:], false)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// read version
-	versionByte, n, err := readUint8(src[total:], CONNECT)
+	versionByte, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
 		return total, err
@@ -135,7 +135,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// get connect flags
-	connectFlags, n, err := readUint8(src[total:], CONNECT)
+	connectFlags, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
 		return total, err
@@ -175,7 +175,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read keep alive
-	ka, n, err := readUint(src[total:], 2, CONNECT)
+	ka, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
 		return total, err
@@ -185,7 +185,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	c.KeepAlive = uint16(ka)
 
 	// read client id
-	c.ClientID, n, err = readString(src[total:], CONNECT)
+	c.ClientID, n, err = readString(src[total:])
 	total += n
 	if err != nil {
 		return total, err
@@ -199,14 +199,14 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	// check will
 	if c.Will != nil {
 		// read will topic
-		c.Will.Topic, n, err = readString(src[total:], CONNECT)
+		c.Will.Topic, n, err = readString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
 		}
 
 		// read will payload
-		c.Will.Payload, n, err = readBytes(src[total:], true, CONNECT)
+		c.Will.Payload, n, err = readBytes(src[total:], true)
 		total += n
 		if err != nil {
 			return total, err
@@ -215,7 +215,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// read username
 	if usernameFlag {
-		c.Username, n, err = readString(src[total:], CONNECT)
+		c.Username, n, err = readString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -224,7 +224,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// read password
 	if passwordFlag {
-		c.Password, n, err = readString(src[total:], CONNECT)
+		c.Password, n, err = readString(src[total:])
 		total += n
 		if err != nil {
 			return total, err
@@ -260,14 +260,14 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write version string
-	n, err := writeBytes(dst[total:], versionNames[c.Version], CONNECT)
+	n, err := writeBytes(dst[total:], versionNames[c.Version])
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write version value
-	n, err = writeUint8(dst[total:], c.Version, CONNECT)
+	n, err = writeUint8(dst[total:], c.Version)
 	total += n
 	if err != nil {
 		return total, err
@@ -321,21 +321,21 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// write connect flags
-	n, err = writeUint8(dst[total:], connectFlags, CONNECT)
+	n, err = writeUint8(dst[total:], connectFlags)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write keep alive
-	n, err = writeUint(dst[total:], uint64(c.KeepAlive), 2, CONNECT)
+	n, err = writeUint(dst[total:], uint64(c.KeepAlive), 2)
 	total += n
 	if err != nil {
 		return total, err
 	}
 
 	// write client id
-	n, err = writeString(dst[total:], c.ClientID, CONNECT)
+	n, err = writeString(dst[total:], c.ClientID)
 	total += n
 	if err != nil {
 		return total, err
@@ -344,14 +344,14 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	// check will
 	if c.Will != nil {
 		// write will topic
-		n, err = writeString(dst[total:], c.Will.Topic, CONNECT)
+		n, err = writeString(dst[total:], c.Will.Topic)
 		total += n
 		if err != nil {
 			return total, err
 		}
 
 		// write will payload
-		n, err = writeBytes(dst[total:], c.Will.Payload, CONNECT)
+		n, err = writeBytes(dst[total:], c.Will.Payload)
 		total += n
 		if err != nil {
 			return total, err
@@ -365,7 +365,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// write username
 	if len(c.Username) > 0 {
-		n, err = writeString(dst[total:], c.Username, CONNECT)
+		n, err = writeString(dst[total:], c.Username)
 		total += n
 		if err != nil {
 			return total, err
@@ -374,7 +374,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// write password
 	if len(c.Password) > 0 {
-		n, err = writeString(dst[total:], c.Password, CONNECT)
+		n, err = writeString(dst[total:], c.Password)
 		total += n
 		if err != nil {
 			return total, err
