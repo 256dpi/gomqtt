@@ -74,14 +74,14 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, SUBSCRIBE)
 	if err != nil {
-		return total, err
+		return total, wrapError(SUBSCRIBE, err)
 	}
 
 	// read packet id
 	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(SUBSCRIBE, err)
 	}
 
 	// set packet id
@@ -102,14 +102,14 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 		topic, n, err := readString(src[total:])
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(SUBSCRIBE, err)
 		}
 
 		// read qos
 		_qos, n, err := readUint8(src[total:])
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(SUBSCRIBE, err)
 		}
 
 		// get qos
@@ -140,7 +140,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, s.len(), SUBSCRIBE)
 	if err != nil {
-		return total, err
+		return total, wrapError(SUBSCRIBE, err)
 	}
 
 	// check packet id
@@ -152,7 +152,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 	n, err := writeUint(dst[total:], uint64(s.ID), 2)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(SUBSCRIBE, err)
 	}
 
 	// write subscriptions
@@ -161,7 +161,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 		n, err = writeString(dst[total:], sub.Topic)
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(SUBSCRIBE, err)
 		}
 
 		// check qos
@@ -173,7 +173,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 		n, err = writeUint8(dst[total:], uint8(sub.QOS))
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(SUBSCRIBE, err)
 		}
 	}
 

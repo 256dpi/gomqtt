@@ -14,14 +14,14 @@ func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, t)
 	if err != nil {
-		return total, err
+		return total, wrapError(t, err)
 	}
 
 	// read packet id
 	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(t, err)
 	}
 
 	// get packet id
@@ -46,7 +46,7 @@ func identifiedEncode(m Mode, dst []byte, id ID, t Type) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, 2, t)
 	if err != nil {
-		return total, err
+		return total, wrapError(t, err)
 	}
 
 	// check packet id
@@ -58,7 +58,7 @@ func identifiedEncode(m Mode, dst []byte, id ID, t Type) (int, error) {
 	n, err := writeUint(dst[total:], uint64(id), 2)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(t, err)
 	}
 
 	return total, nil

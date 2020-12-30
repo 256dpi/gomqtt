@@ -73,16 +73,14 @@ func (t Type) String() string {
 	return "Unknown"
 }
 
-// DefaultFlags returns the default flag values for the packet type, as defined
-// by the MQTT spec, except for PUBLISH.
 func (t Type) defaultFlags() byte {
 	switch t {
 	case PUBREL:
-		return 2 // 00000010
+		return 0x2 // 00000010
 	case SUBSCRIBE:
-		return 2 // 00000010
+		return 0x2 // 00000010
 	case UNSUBSCRIBE:
-		return 2 // 00000010
+		return 0x2 // 00000010
 	}
 
 	return 0

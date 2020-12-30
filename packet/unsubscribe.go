@@ -50,14 +50,14 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, UNSUBSCRIBE)
 	if err != nil {
-		return total, err
+		return total, wrapError(UNSUBSCRIBE, err)
 	}
 
 	// read packet id
 	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(UNSUBSCRIBE, err)
 	}
 
 	// set packet id
@@ -76,7 +76,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 		topic, n, err := readString(src[total:])
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(UNSUBSCRIBE, err)
 		}
 
 		// append to list
@@ -101,7 +101,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, u.len(), UNSUBSCRIBE)
 	if err != nil {
-		return total, err
+		return total, wrapError(UNSUBSCRIBE, err)
 	}
 
 	// check packet id
@@ -113,7 +113,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	n, err := writeUint(dst[total:], uint64(u.ID), 2)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(UNSUBSCRIBE, err)
 	}
 
 	// write topics
@@ -122,7 +122,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 		n, err := writeString(dst[total:], topic)
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(UNSUBSCRIBE, err)
 		}
 	}
 

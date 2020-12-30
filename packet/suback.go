@@ -58,14 +58,14 @@ func (s *Suback) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, SUBACK)
 	if err != nil {
-		return total, err
+		return total, wrapError(SUBACK, err)
 	}
 
 	// read packet id
 	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(SUBACK, err)
 	}
 
 	// set packet id
@@ -89,7 +89,7 @@ func (s *Suback) Decode(m Mode, src []byte) (int, error) {
 		rc, n, err := readUint8(src[total:])
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(SUBACK, err)
 		}
 
 		// get return code
@@ -112,7 +112,7 @@ func (s *Suback) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, s.len(), SUBACK)
 	if err != nil {
-		return total, err
+		return total, wrapError(SUBACK, err)
 	}
 
 	// check packet id
@@ -124,7 +124,7 @@ func (s *Suback) Encode(m Mode, dst []byte) (int, error) {
 	n, err := writeUint(dst[total:], uint64(s.ID), 2)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(SUBACK, err)
 	}
 
 	// write return codes
@@ -138,7 +138,7 @@ func (s *Suback) Encode(m Mode, dst []byte) (int, error) {
 		n, err := writeUint8(dst[total:], uint8(rc))
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(SUBACK, err)
 		}
 	}
 

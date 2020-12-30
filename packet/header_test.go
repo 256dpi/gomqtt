@@ -7,51 +7,66 @@ import (
 )
 
 func TestDecodeHeader(t *testing.T) {
-	buf := []byte{0x6f, 193, 2} // < not enough bytes
-	_, _, _, err := decodeHeader(buf, 0)
-	assert.Error(t, err)
+	buf := []byte{0x62, 0x1, 0x0}
+	n, flags, rl, err := decodeHeader(buf, PUBREL)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
+	assert.Equal(t, uint8(0x2), flags)
+	assert.Equal(t, 1, rl)
 
-	// source to small
 	buf = []byte{}
-	_, _, _, err = decodeHeader(buf, 0)
+	n, _, _, err = decodeHeader(buf, PUBREL)
 	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
 
-	// source to small
+	buf = []byte{0x0}
+	n, _, _, err = decodeHeader(buf, PUBREL)
+	assert.Error(t, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, ErrInvalidPacketType, err)
+
+	buf = []byte{0x6f}
+	n, _, _, err = decodeHeader(buf, PUBREL)
+	assert.Error(t, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, ErrInvalidStaticFlags, err)
+
 	buf = []byte{0x62}
-	_, _, _, err = decodeHeader(buf, 0)
+	n, _, _, err = decodeHeader(buf, PUBREL)
 	assert.Error(t, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
 
-	buf = []byte{0x62, 0xff} // < invalid packet type
-	_, _, _, err = decodeHeader(buf, 0)
+	buf = []byte{0x62, 0xff}
+	n, _, _, err = decodeHeader(buf, PUBREL)
 	assert.Error(t, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
 
-	// invalid remaining length
 	buf = []byte{0x62, 0xff, 0xff, 0xff, 0xff}
-	n, _, _, err := decodeHeader(buf, 6)
+	n, _, _, err = decodeHeader(buf, PUBREL)
 	assert.Error(t, err)
 	assert.Equal(t, 1, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
 
-	// remaining length to big
 	buf = []byte{0x62, 0xff, 0xff, 0xff, 0xff, 0x1}
-	n, _, _, err = decodeHeader(buf, 6)
+	n, _, _, err = decodeHeader(buf, PUBREL)
 	assert.Error(t, err)
 	assert.Equal(t, 1, n)
-
-	// source to small
-	buf = []byte{0x62, 0xff, 0x1}
-	n, _, _, err = decodeHeader(buf, 6)
-	assert.Error(t, err)
-	assert.Equal(t, 3, n)
-
-	buf = []byte{0x66, 0x00, 0x01} // < wrong flags
-	n, _, _, err = decodeHeader(buf, 6)
-	assert.Error(t, err)
-	assert.Equal(t, 1, n)
+	assert.Equal(t, ErrVariableIntegerOverflow, err)
 
 	buf = []byte{0x62, 0x0, 0x0}
-	n, _, _, err = decodeHeader(buf, 6)
+	n, _, _, err = decodeHeader(buf, PUBREL)
 	assert.Error(t, err)
 	assert.Equal(t, 2, n)
+	assert.Equal(t, ErrRemainingLengthMismatch, err)
+
+	buf = []byte{0x62, 0xff, 0x1}
+	n, _, _, err = decodeHeader(buf, PUBREL)
+	assert.Error(t, err)
+	assert.Equal(t, 3, n)
+	assert.Equal(t, ErrRemainingLengthMismatch, err)
 }
 
 func TestEncodeHeader(t *testing.T) {
@@ -67,34 +82,51 @@ func TestEncodeHeader(t *testing.T) {
 	assert.Equal(t, 5, n)
 	assert.Equal(t, []byte{0x62, 0xff, 0xff, 0xff, 0x7f}, buf[:5])
 
-	buf = make([]byte, 0) // < wrong buffer size
+	buf = make([]byte, 0)
 	n, err = encodeHeader(buf, 0, 0, PUBREL)
 	assert.Error(t, err)
 	assert.Equal(t, 0, n)
 	assert.Equal(t, []byte{}, buf)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
 
-	buf = make([]byte, 1) // < wrong buffer size
+	buf = make([]byte, 0)
+	n, err = encodeHeader(buf, 0, 0, 0x80)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, []byte{}, buf)
+	assert.Equal(t, ErrInvalidPacketType, err)
+
+	buf = make([]byte, 0)
+	n, err = encodeHeader(buf, 1, 0, PUBREL)
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, []byte{}, buf)
+	assert.Equal(t, ErrInvalidStaticFlags, err)
+
+	buf = make([]byte, 1)
 	n, err = encodeHeader(buf, 0, 0, PUBREL)
 	assert.Error(t, err)
 	assert.Equal(t, 1, n)
 	assert.Equal(t, []byte{0x62}, buf)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
 
-	// overload max remaining length
-	buf = make([]byte, 2)
-	n, err = encodeHeader(buf, 0, maxVarint+1, PUBREL)
-	assert.Error(t, err)
-	assert.Equal(t, 1, n)
-	assert.Equal(t, []byte{0x62, 0x00}, buf)
-
-	// too small buffer
 	buf = make([]byte, 2)
 	n, err = encodeHeader(buf, 0, 2097151, PUBREL)
 	assert.Error(t, err)
 	assert.Equal(t, 1, n)
 	assert.Equal(t, []byte{0x62, 0x00}, buf)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	buf = make([]byte, 2)
+	n, err = encodeHeader(buf, 0, maxVarint+1, PUBREL)
+	assert.Error(t, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, []byte{0x62, 0x00}, buf)
+	assert.Equal(t, ErrVariableIntegerOverflow, err)
 
 	buf = make([]byte, 3)
 	n, err = encodeHeader(buf, 0, 0, PUBREL)
 	assert.Error(t, err)
 	assert.Equal(t, 2, n)
+	assert.Equal(t, ErrRemainingLengthMismatch, err)
 }

@@ -102,14 +102,14 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, CONNACK)
 	if err != nil {
-		return total, err
+		return total, wrapError(CONNACK, err)
 	}
 
 	// read connack flags
 	connackFlags, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(CONNACK, err)
 	}
 
 	// check flags
@@ -124,7 +124,7 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	rc, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(CONNACK, err)
 	}
 
 	// get return code
@@ -151,7 +151,7 @@ func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, 2, CONNACK)
 	if err != nil {
-		return total, err
+		return total, wrapError(CONNACK, err)
 	}
 
 	// get connack flags
@@ -166,7 +166,7 @@ func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	n, err := writeUint8(dst[total:], flags)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(CONNACK, err)
 	}
 
 	// check return code
@@ -178,7 +178,7 @@ func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	n, err = writeUint8(dst[total:], uint8(c.ReturnCode))
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(CONNACK, err)
 	}
 
 	return total, nil

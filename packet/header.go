@@ -1,11 +1,30 @@
 package packet
 
+import "errors"
+
+// ErrRemainingLengthMismatch is returned if the remaining length does not match
+// the buffer length.
+var ErrRemainingLengthMismatch = errors.New("remaining length mismatch")
+
+// ErrInvalidStaticFlags is returned if the static flags do not match.
+var ErrInvalidStaticFlags = errors.New("invalid static flags")
+
 func headerLen(rl int) int {
 	// add packet type and flag byte + remaining length
 	return 1 + varintLen(uint64(rl))
 }
 
 func encodeHeader(dst []byte, flags byte, rl int, t Type) (int, error) {
+	// check type
+	if !t.Valid() {
+		return 0, ErrInvalidPacketType
+	}
+
+	// check flags
+	if flags != 0 && t != PUBLISH && flags != t.defaultFlags() {
+		return 0, ErrInvalidStaticFlags
+	}
+
 	// write type and flags
 	typeAndFlags := byte(t)<<4 | (t.defaultFlags() & 0xf) | flags
 	total, err := writeUint8(dst, typeAndFlags)
@@ -22,7 +41,7 @@ func encodeHeader(dst []byte, flags byte, rl int, t Type) (int, error) {
 
 	// check buffer
 	if rl != len(dst[total:]) {
-		return total, makeError(t, "remaining length (%d) does not equal remaining buffer size (%d)", rl, len(dst[total:]))
+		return total, ErrRemainingLengthMismatch
 	}
 
 	return total, nil
@@ -41,12 +60,12 @@ func decodeHeader(src []byte, t Type) (int, byte, int, error) {
 
 	// check against static type
 	if typ != t {
-		return total, 0, 0, makeError(t, "invalid type %d", typ)
+		return total, 0, 0, ErrInvalidPacketType
 	}
 
 	// check flags except for publish packets
 	if t != PUBLISH && flags != t.defaultFlags() {
-		return total, 0, 0, makeError(t, "invalid flags, expected %d, got %d", t.defaultFlags(), flags)
+		return total, 0, 0, ErrInvalidStaticFlags
 	}
 
 	// read remaining length
@@ -61,7 +80,7 @@ func decodeHeader(src []byte, t Type) (int, byte, int, error) {
 
 	// check buffer
 	if rl != len(src[total:]) {
-		return total, 0, 0, makeError(t, "remaining length (%d) does not equal remaining buffer size (%d)", rl, len(src[total:]))
+		return total, 0, 0, ErrRemainingLengthMismatch
 	}
 
 	return total, flags, rl, nil
