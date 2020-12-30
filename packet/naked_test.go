@@ -12,13 +12,13 @@ func testNaked(t *testing.T, pkt Generic) {
 			0, // remaining length
 		}, pkt, fmt.Sprintf("<%s>", pkt.Type().String()))
 
-		assertDecodeError(t, m, pkt.Type(), 2, []byte{
-			byte(pkt.Type() << 4),
+		assertDecodeError(t, m, DISCONNECT, 2, []byte{
+			byte(DISCONNECT << 4),
 			1, // wrong remaining length
 		}, ErrRemainingLengthMismatch)
 
-		assertDecodeError(t, m, pkt.Type(), 2, []byte{
-			byte(pkt.Type() << 4),
+		assertDecodeError(t, m, DISCONNECT, 2, []byte{
+			byte(DISCONNECT << 4),
 			1, // remaining length
 			0, // < superfluous byte
 		}, "leftover buffer length")

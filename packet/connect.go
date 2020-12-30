@@ -7,9 +7,9 @@ import (
 
 // The supported MQTT versions.
 const (
-	Version31  byte = 3
-	Version311 byte = 4
-	Version5   byte = 5
+	Version31  byte = 0x3
+	Version311 byte = 0x4
+	Version5   byte = 0x5
 )
 
 var versionNames = map[byte][]byte{
@@ -69,7 +69,7 @@ type Connect struct {
 func NewConnect() *Connect {
 	return &Connect{
 		CleanSession: true,
-		Version:      4,
+		Version:      Version311,
 	}
 }
 
@@ -142,12 +142,12 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read flags
-	usernameFlag := ((connectFlags >> 7) & 0x1) == 1
-	passwordFlag := ((connectFlags >> 6) & 0x1) == 1
-	willFlag := ((connectFlags >> 2) & 0x1) == 1
-	willRetain := ((connectFlags >> 5) & 0x1) == 1
-	willQOS := QOS((connectFlags >> 3) & 0x3)
-	c.CleanSession = ((connectFlags >> 1) & 0x1) == 1
+	usernameFlag := ((connectFlags >> 7) & 0b1) == 1
+	passwordFlag := ((connectFlags >> 6) & 0b1) == 1
+	willFlag := ((connectFlags >> 2) & 0b1) == 1
+	willRetain := ((connectFlags >> 5) & 0b1) == 1
+	willQOS := QOS((connectFlags >> 3) & 0b11)
+	c.CleanSession = ((connectFlags >> 1) & 0b1) == 1
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
@@ -278,18 +278,18 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// set username flag
 	if len(c.Username) > 0 {
-		connectFlags |= 128 // 10000000
+		connectFlags |= 0b1000_0000
 	}
 
 	// set password flag
 	if len(c.Password) > 0 {
-		connectFlags |= 64 // 01000000
+		connectFlags |= 0b100_0000
 	}
 
 	// check will
 	if c.Will != nil {
 		// set will flag
-		connectFlags |= 0x4 // 00000100
+		connectFlags |= 0b100
 
 		// check will topic length
 		if len(c.Will.Topic) == 0 {
@@ -302,11 +302,11 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 		}
 
 		// set will qos flag
-		connectFlags = (connectFlags & 231) | (byte(c.Will.QOS) << 3) // 231 = 11100111
+		connectFlags = (connectFlags & 0b1110_0111) | (byte(c.Will.QOS) << 3)
 
 		// set will retain flag
 		if c.Will.Retain {
-			connectFlags |= 32 // 00100000
+			connectFlags |= 0b010_0000
 		}
 	}
 
@@ -317,7 +317,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// set clean session flag
 	if c.CleanSession {
-		connectFlags |= 0x2 // 00000010
+		connectFlags |= 0b10
 	}
 
 	// write connect flags
@@ -388,18 +388,8 @@ func (c *Connect) len() int {
 	// prepare total
 	total := 0
 
-	// add version
-	if c.Version == Version31 {
-		// 2 bytes protocol name length
-		// 6 bytes protocol name
-		// 1 byte protocol version
-		total += 2 + 6 + 1
-	} else {
-		// 2 bytes protocol name length
-		// 4 bytes protocol name
-		// 1 byte protocol version
-		total += 2 + 4 + 1
-	}
+	// add protocol string and version
+	total += 2 + len(versionNames[c.Version]) + 1
 
 	// add 1 byte connect flags
 	// add 2 bytes keep alive timer

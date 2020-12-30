@@ -63,9 +63,9 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read flags
-	p.Dup = ((flags >> 3) & 0x1) == 1
-	p.Message.Retain = (flags & 0x1) == 1
-	p.Message.QOS = QOS((flags >> 1) & 0x3)
+	p.Dup = ((flags >> 3) & 0b1) == 1
+	p.Message.Retain = (flags & 0b1) == 1
+	p.Message.QOS = QOS((flags >> 1) & 0b11)
 
 	// check qos
 	if !p.Message.QOS.Successful() {
@@ -125,12 +125,12 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 
 	// set dup flag
 	if p.Dup {
-		flags |= 0x8 // 00001000
+		flags |= 0b1000
 	}
 
 	// set retain flag
 	if p.Message.Retain {
-		flags |= 0x1 // 00000001
+		flags |= 0b1
 	}
 
 	// check qos
@@ -139,7 +139,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 	}
 
 	// set qos
-	flags = (flags & 249) | (byte(p.Message.QOS) << 1) // 249 = 11111001
+	flags = (flags & 0b1111_1001) | (byte(p.Message.QOS) << 1)
 
 	// encode header
 	total, err := encodeHeader(dst, flags, p.len(), PUBLISH)
