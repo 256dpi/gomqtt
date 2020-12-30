@@ -113,35 +113,3 @@ func GetID(pkt Generic) (ID, bool) {
 
 	return 0, false
 }
-
-// Fuzz is a basic fuzzing test that works with https://github.com/dvyukov/go-fuzz:
-//
-//		$ go-fuzz-build github.com/gomqtt/packet
-//		$ go-fuzz -bin=./packet-fuzz.zip -workdir=./fuzz
-func Fuzz(data []byte) int {
-	// check for zero length data
-	if len(data) == 0 {
-		return 1
-	}
-
-	// detect packet
-	_, mt := DetectPacket(data)
-
-	// for testing purposes we will not cancel
-	// on incomplete buffers
-
-	// create a new packet
-	pkt, err := mt.New()
-	if err != nil {
-		return 0
-	}
-
-	// decode it from the buffer.
-	_, err = pkt.Decode(Mode{}, data)
-	if err != nil {
-		return 0
-	}
-
-	// everything was ok
-	return 1
-}
