@@ -120,6 +120,7 @@ func TestGetID(t *testing.T) {
 		PINGREQ:     {NewPingreq(), false},
 		PINGRESP:    {NewPingresp(), false},
 		DISCONNECT:  {NewDisconnect(), false},
+		AUTH:        {NewAuth(), false},
 	}
 
 	for _, d := range details {
