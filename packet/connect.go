@@ -7,15 +7,15 @@ import (
 
 // The supported MQTT versions.
 const (
-	Version31  byte = 0x3
-	Version311 byte = 0x4
-	Version5   byte = 0x5
+	Version3 byte = 0x3
+	Version4 byte = 0x4
+	Version5 byte = 0x5
 )
 
 var versionNames = map[byte][]byte{
-	Version31:  []byte("MQIsdp"),
-	Version311: []byte("MQTT"),
-	Version5:   []byte("MQTT"),
+	Version3: []byte("MQIsdp"),
+	Version4: []byte("MQTT"),
+	Version5: []byte("MQTT"),
 }
 
 // A Connect packet is sent by a client to the server after a network
@@ -39,7 +39,7 @@ type Connect struct {
 	// The will message.
 	Will *Message
 
-	// The MQTT version 3 or 4 (defaults to 4 when 0).
+	// The MQTT version.
 	Version byte
 
 	CleanStart bool
@@ -69,7 +69,7 @@ type Connect struct {
 func NewConnect() *Connect {
 	return &Connect{
 		CleanSession: true,
-		Version:      Version311,
+		Version:      Version4,
 	}
 }
 
@@ -122,7 +122,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// check protocol version
-	if versionByte < Version31 || versionByte > Version5 {
+	if versionByte < Version3 || versionByte > Version5 {
 		return total, makeError(CONNECT, DECODE, m, total, "invalid protocol version")
 	}
 
@@ -251,11 +251,11 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// set default version byte
 	if c.Version == 0 {
-		c.Version = Version311
+		c.Version = Version4
 	}
 
 	// check version byte
-	if c.Version != Version311 && c.Version != Version31 {
+	if c.Version != Version4 && c.Version != Version3 {
 		return total, makeError(CONNECT, ENCODE, m, total, "invalid protocol version")
 	}
 
