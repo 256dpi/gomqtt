@@ -251,11 +251,11 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// set default version byte
 	if c.Version == 0 {
-		c.Version = Version4
+		c.Version = m.Version
 	}
 
 	// check version byte
-	if c.Version != Version4 && c.Version != Version3 {
+	if c.Version < Version3 || c.Version > Version5 {
 		return total, makeError(CONNECT, ENCODE, m, total, "invalid protocol version")
 	}
 
