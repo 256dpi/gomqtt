@@ -113,12 +113,12 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// check flags
-	if connackFlags&254 != 0 {
+	if connackFlags&0b1111_1110 != 0 {
 		return total, makeError(CONNACK, DECODE, m, total, "invalid connack flags")
 	}
 
 	// set session present
-	c.SessionPresent = connackFlags&0x1 == 1
+	c.SessionPresent = connackFlags&0b1 == 1
 
 	// read return code
 	rc, n, err := readUint8(src[total:])
@@ -157,9 +157,9 @@ func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	// get connack flags
 	var flags uint8
 	if c.SessionPresent {
-		flags = 0x1 // 00000001
+		flags = 0b1
 	} else {
-		flags = 0x0 // 00000000
+		flags = 0b0
 	}
 
 	// write flags
