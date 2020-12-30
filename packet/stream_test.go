@@ -112,7 +112,7 @@ func TestDecoderInvalidTypeError(t *testing.T) {
 func TestDecoderReadLimitError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
-	dec.limit = 1
+	dec.SetReadLimit(1)
 
 	buf.Write([]byte{0x00, 0x00})
 
