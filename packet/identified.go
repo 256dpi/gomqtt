@@ -14,20 +14,20 @@ func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, t)
 	if err != nil {
-		return total, wrapError(t, err)
+		return total, wrapError(t, m, err)
 	}
 
 	// read packet id
 	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, wrapError(t, err)
+		return total, wrapError(t, m, err)
 	}
 
 	// get packet id
 	packetID := ID(pid)
 	if !packetID.Valid() {
-		return total, invalidPacketID(t)
+		return total, invalidPacketID(t, m)
 	}
 
 	// set packet id
@@ -35,7 +35,7 @@ func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 
 	// check buffer
 	if len(src[total:]) != 0 {
-		return total, makeError(t, "leftover buffer length (%d)", len(src[total:]))
+		return total, makeError(t, m, "leftover buffer length (%d)", len(src[total:]))
 	}
 
 	return total, nil
@@ -46,19 +46,19 @@ func identifiedEncode(m Mode, dst []byte, id ID, t Type) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, 2, t)
 	if err != nil {
-		return total, wrapError(t, err)
+		return total, wrapError(t, m, err)
 	}
 
 	// check packet id
 	if !id.Valid() {
-		return total, invalidPacketID(t)
+		return total, invalidPacketID(t, m)
 	}
 
 	// write packet id
 	n, err := writeUint(dst[total:], uint64(id), 2)
 	total += n
 	if err != nil {
-		return total, wrapError(t, err)
+		return total, wrapError(t, m, err)
 	}
 
 	return total, nil
