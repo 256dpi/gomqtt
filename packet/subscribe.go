@@ -87,7 +87,7 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 	// set packet id
 	s.ID = ID(pid)
 	if !s.ID.Valid() {
-		return total, makeError(SUBSCRIBE, "packet id must be grater than zero")
+		return total, invalidPacketID(SUBSCRIBE)
 	}
 
 	// reset subscriptions
@@ -145,7 +145,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 
 	// check packet id
 	if !s.ID.Valid() {
-		return total, makeError(SUBSCRIBE, "packet id must be grater than zero")
+		return total, invalidPacketID(SUBSCRIBE)
 	}
 
 	// write packet id

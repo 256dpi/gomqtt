@@ -94,7 +94,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 		// set packet id
 		p.ID = ID(pid)
 		if !p.ID.Valid() {
-			return total, makeError(PUBLISH, "packet id must be grater than zero")
+			return total, invalidPacketID(PUBLISH)
 		}
 	}
 
@@ -156,7 +156,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 
 	// check packet id
 	if p.Message.QOS > 0 && !p.ID.Valid() {
-		return total, makeError(PUBLISH, "packet id must be grater than zero")
+		return total, invalidPacketID(PUBLISH)
 	}
 
 	// write packet id

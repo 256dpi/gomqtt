@@ -27,7 +27,7 @@ func identifiedDecode(m Mode, src []byte, id *ID, t Type) (int, error) {
 	// get packet id
 	packetID := ID(pid)
 	if !packetID.Valid() {
-		return total, makeError(t, "packet id must be grater than zero")
+		return total, invalidPacketID(t)
 	}
 
 	// set packet id
@@ -51,7 +51,7 @@ func identifiedEncode(m Mode, dst []byte, id ID, t Type) (int, error) {
 
 	// check packet id
 	if !id.Valid() {
-		return total, makeError(t, "packet id must be grater than zero")
+		return total, invalidPacketID(t)
 	}
 
 	// write packet id
