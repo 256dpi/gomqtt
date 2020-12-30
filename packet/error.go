@@ -4,25 +4,36 @@ import "fmt"
 
 // Error represents decoding and encoding errors.
 type Error struct {
-	Type Type
-
-	format    string
-	arguments []interface{}
+	Type      Type
+	Err       error
+	Format    string
+	Arguments []interface{}
 }
 
-func makeError(typ Type, format string, arguments ...interface{}) *Error {
-	return &Error{Type: typ, format: format, arguments: arguments}
+func wrapError(t Type, err error) *Error {
+	return &Error{
+		Type: t,
+		Err:  err,
+	}
+}
+
+func makeError(t Type, fmt string, args ...interface{}) *Error {
+	return &Error{
+		Type:      t,
+		Format:    fmt,
+		Arguments: args,
+	}
 }
 
 // Error implements the error interface.
 func (e *Error) Error() string {
-	return fmt.Sprintf(e.format, e.arguments...)
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+
+	return fmt.Sprintf(e.Format, e.Arguments...)
 }
 
 func invalidPacketID(t Type) error {
 	return makeError(t, "invalid packet id")
-}
-
-func insufficientBufferSize(t Type) error {
-	return makeError(t, "insufficient buffer size")
 }

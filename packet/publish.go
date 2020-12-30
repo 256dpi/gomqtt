@@ -59,7 +59,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	hl, flags, rl, err := decodeHeader(src, PUBLISH)
 	total := hl
 	if err != nil {
-		return total, err
+		return total, wrapError(PUBLISH, err)
 	}
 
 	// read flags
@@ -76,7 +76,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	topic, n, err := readString(src[total:])
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(PUBLISH, err)
 	}
 
 	// set topic
@@ -88,7 +88,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 		pid, n, err := readUint(src[total:], 2)
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(PUBLISH, err)
 		}
 
 		// set packet id
@@ -139,7 +139,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, flags, p.len(), PUBLISH)
 	if err != nil {
-		return total, err
+		return total, wrapError(PUBLISH, err)
 	}
 
 	// check topic length
@@ -151,7 +151,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 	n, err := writeString(dst[total:], p.Message.Topic)
 	total += n
 	if err != nil {
-		return total, err
+		return total, wrapError(PUBLISH, err)
 	}
 
 	// check packet id
@@ -164,7 +164,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 		n, err := writeUint(dst[total:], uint64(p.ID), 2)
 		total += n
 		if err != nil {
-			return total, err
+			return total, wrapError(PUBLISH, err)
 		}
 	}
 

@@ -8,7 +8,7 @@ func nakedDecode(m Mode, src []byte, t Type) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, t)
 	if err != nil {
-		return total, err
+		return total, wrapError(t, err)
 	}
 
 	// check buffer
@@ -20,7 +20,13 @@ func nakedDecode(m Mode, src []byte, t Type) (int, error) {
 }
 
 func nakedEncode(m Mode, dst []byte, t Type) (int, error) {
-	return encodeHeader(dst, 0, 0, t)
+	// encode header
+	n, err := encodeHeader(dst, 0, 0, t)
+	if err != nil {
+		return n, wrapError(t, err)
+	}
+
+	return n, nil
 }
 
 // An Auth packet is sent from the client to the server or vice versa.
