@@ -47,6 +47,11 @@ func TestDecodeHeader(t *testing.T) {
 	n, _, _, err = decodeHeader(buf, 6)
 	assert.Error(t, err)
 	assert.Equal(t, 1, n)
+
+	buf = []byte{0x62, 0x0, 0x0}
+	n, _, _, err = decodeHeader(buf, 6)
+	assert.Error(t, err)
+	assert.Equal(t, 2, n)
 }
 
 func TestEncodeHeader(t *testing.T) {
@@ -87,4 +92,9 @@ func TestEncodeHeader(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, 1, n)
 	assert.Equal(t, []byte{0x62, 0x00}, buf)
+
+	buf = make([]byte, 3)
+	n, err = encodeHeader(buf, 0, 0, PUBREL)
+	assert.Error(t, err)
+	assert.Equal(t, 2, n)
 }
