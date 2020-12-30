@@ -1,78 +1,42 @@
 package packet
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
+import "testing"
 
 func TestPublish(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
-		pkt := NewPublish()
-		pkt.ID = 1
-		pkt.Message.Topic = "foo"
-		pkt.Message.QOS = 2
-		pkt.Dup = true
+		assertEncodeDecode(t, m, []byte{
+			byte(PUBLISH << 4),
+			13, // remaining length
+			0,  // topic
+			6,
+			'g', 'o', 'm', 'q', 't', 't',
+			'h', 'e', 'l', 'l', 'o',
+		}, &Publish{
+			Message: Message{
+				Topic:   "gomqtt",
+				Payload: []byte("hello"),
+			},
+		}, `<Publish ID=0 Message=<Message Topic="gomqtt" QOS=0 Retain=false Payload=68656c6c6f> Dup=false>`)
 
-		assert.Equal(t, pkt.Type(), PUBLISH)
-		assert.Equal(t, `<Publish ID=1 Message=<Message Topic="foo" QOS=2 Retain=false Payload=> Dup=true>`, pkt.String())
-
-		buf := make([]byte, pkt.Len(m))
-		n1, err := pkt.Encode(m, buf)
-		assert.NoError(t, err)
-
-		pkt2 := NewPublish()
-		n2, err := pkt2.Decode(m, buf)
-		assert.NoError(t, err)
-
-		assert.Equal(t, pkt, pkt2)
-		assert.Equal(t, n1, n2)
-	})
-}
-
-func TestPublishDecode(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
+		assertEncodeDecode(t, m, []byte{
 			byte(PUBLISH<<4) | 11,
-			22, // remaining length
+			15, // remaining length
 			0,  // topic
 			6,
 			'g', 'o', 'm', 'q', 't', 't',
 			0, // packet id
 			7,
-			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		}
-
-		pkt := NewPublish()
-		n, err := pkt.Decode(m, packet)
-		assert.NoError(t, err)
-		assert.Equal(t, len(packet), n)
-		assert.Equal(t, ID(7), pkt.ID)
-		assert.Equal(t, "gomqtt", pkt.Message.Topic)
-		assert.Equal(t, []byte("send me home"), pkt.Message.Payload)
-		assert.Equal(t, QOS(1), pkt.Message.QOS)
-		assert.Equal(t, true, pkt.Message.Retain)
-		assert.Equal(t, true, pkt.Dup)
-
-		packet = []byte{
-			byte(PUBLISH << 4),
-			20, // remaining length
-			0,  // topic
-			6,
-			'g', 'o', 'm', 'q', 't', 't',
-			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		}
-
-		pkt = NewPublish()
-		n, err = pkt.Decode(m, packet)
-		assert.NoError(t, err)
-		assert.Equal(t, len(packet), n)
-		assert.Equal(t, ID(0), pkt.ID)
-		assert.Equal(t, "gomqtt", pkt.Message.Topic)
-		assert.Equal(t, []byte("send me home"), pkt.Message.Payload)
-		assert.Equal(t, QOS(0), pkt.Message.QOS)
-		assert.Equal(t, false, pkt.Message.Retain)
-		assert.Equal(t, false, pkt.Dup)
+			'h', 'e', 'l', 'l', 'o',
+		}, &Publish{
+			Message: Message{
+				Topic:   "gomqtt",
+				Payload: []byte("hello"),
+				QOS:     QOSAtLeastOnce,
+				Retain:  true,
+			},
+			Dup: true,
+			ID:  7,
+		}, `<Publish ID=7 Message=<Message Topic="gomqtt" QOS=1 Retain=true Payload=68656c6c6f> Dup=true>`)
 
 		assertDecodeError(t, m, PUBLISH, 2, []byte{
 			byte(PUBLISH << 4),
@@ -116,54 +80,6 @@ func TestPublishDecode(t *testing.T) {
 			0,
 			0, // < zero packet id
 		})
-	})
-}
-
-func TestPublishEncode(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
-			byte(PUBLISH<<4) | 11,
-			22, // remaining length
-			0,  // topic
-			6,
-			'g', 'o', 'm', 'q', 't', 't',
-			0, // packet id
-			7,
-			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		}
-
-		pkt := NewPublish()
-		pkt.Message.Topic = "gomqtt"
-		pkt.Message.QOS = QOSAtLeastOnce
-		pkt.Message.Retain = true
-		pkt.Dup = true
-		pkt.ID = 7
-		pkt.Message.Payload = []byte("send me home")
-
-		dst := make([]byte, pkt.Len(m))
-		n, err := pkt.Encode(m, dst)
-		assert.NoError(t, err)
-		assert.Equal(t, len(packet), n)
-		assert.Equal(t, packet, dst)
-
-		packet = []byte{
-			byte(PUBLISH << 4),
-			20, // remaining length
-			0,  // topic
-			6,
-			'g', 'o', 'm', 'q', 't', 't',
-			's', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e',
-		}
-
-		pkt = NewPublish()
-		pkt.Message.Topic = "gomqtt"
-		pkt.Message.Payload = []byte("send me home")
-
-		dst = make([]byte, pkt.Len(m))
-		n, err = pkt.Encode(m, dst)
-		assert.NoError(t, err)
-		assert.Equal(t, len(packet), n)
-		assert.Equal(t, packet, dst)
 
 		// small buffer
 		assertEncodeError(t, m, 1, 1, &Publish{})

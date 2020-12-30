@@ -1,68 +1,34 @@
 package packet
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
+import "testing"
 
 func TestSubscribe(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
-		pkt := NewSubscribe()
-		pkt.ID = 1
-		pkt.Subscriptions = []Subscription{
-			{Topic: "foo", QOS: QOSAtMostOnce},
-			{Topic: "bar", QOS: QOSAtLeastOnce},
-		}
-
-		assert.Equal(t, pkt.Type(), SUBSCRIBE)
-		assert.Equal(t, `<Subscribe ID=1 Subscriptions=["foo"=>0, "bar"=>1]>`, pkt.String())
-
-		buf := make([]byte, pkt.Len(m))
-		n1, err := pkt.Encode(m, buf)
-		assert.NoError(t, err)
-
-		pkt2 := NewSubscribe()
-		n2, err := pkt2.Decode(m, buf)
-		assert.NoError(t, err)
-
-		assert.Equal(t, pkt, pkt2)
-		assert.Equal(t, n1, n2)
-	})
-}
-
-func TestSubscribeDecode(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
+		assertEncodeDecode(t, m, []byte{
 			byte(SUBSCRIBE<<4) | 2,
-			35, // remaining length
+			31, // remaining length
 			0,  // packet id
 			7,
-			0, // topic
+			0, // topic name
 			6,
 			'g', 'o', 'm', 'q', 't', 't',
 			0, // qos
 			0, // topic
 			8,
-			'/', 'a', '/', 'b', '/', '#', '/', 'c',
+			'/', 'a', '/', 'b', '/', '*', '/', 'c',
 			1, // qos
 			0, // topic
-			10,
-			'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
+			6,
+			'/', 'a', '/', 'b', '/', '#',
 			2, // qos
-		}
-
-		pkt := NewSubscribe()
-		n, err := pkt.Decode(m, packet)
-		assert.NoError(t, err)
-		assert.Equal(t, len(packet), n)
-		assert.Equal(t, 3, len(pkt.Subscriptions))
-		assert.Equal(t, "gomqtt", pkt.Subscriptions[0].Topic)
-		assert.Equal(t, QOS(0), pkt.Subscriptions[0].QOS)
-		assert.Equal(t, "/a/b/#/c", pkt.Subscriptions[1].Topic)
-		assert.Equal(t, QOS(1), pkt.Subscriptions[1].QOS)
-		assert.Equal(t, "/a/b/#/cdd", pkt.Subscriptions[2].Topic)
-		assert.Equal(t, QOS(2), pkt.Subscriptions[2].QOS)
+		}, &Subscribe{
+			Subscriptions: []Subscription{
+				{Topic: "gomqtt", QOS: 0},
+				{Topic: "/a/b/*/c", QOS: 1},
+				{Topic: "/a/b/#", QOS: 2},
+			},
+			ID: 7,
+		}, `<Subscribe ID=7 Subscriptions=["gomqtt"=>0, "/a/b/*/c"=>1, "/a/b/#"=>2]>`)
 
 		assertDecodeError(t, m, SUBSCRIBE, 2, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -137,43 +103,6 @@ func TestSubscribeDecode(t *testing.T) {
 			0, // qos
 			0, // < superfluous byte
 		})
-	})
-}
-
-func TestSubscribeEncode(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
-			byte(SUBSCRIBE<<4) | 2,
-			35, // remaining length
-			0,  // packet id
-			7,
-			0, // topic name
-			6,
-			'g', 'o', 'm', 'q', 't', 't',
-			0, // qos
-			0, // topic
-			8,
-			'/', 'a', '/', 'b', '/', '#', '/', 'c',
-			1, // qos
-			0, // topic
-			10,
-			'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-			2, // qos
-		}
-
-		pkt := NewSubscribe()
-		pkt.ID = 7
-		pkt.Subscriptions = []Subscription{
-			{Topic: "gomqtt", QOS: 0},
-			{Topic: "/a/b/#/c", QOS: 1},
-			{Topic: "/a/b/#/cdd", QOS: 2},
-		}
-
-		dst := make([]byte, pkt.Len(m))
-		n, err := pkt.Encode(m, dst)
-		assert.NoError(t, err)
-		assert.Equal(t, len(packet), n)
-		assert.Equal(t, packet, dst)
 
 		// small buffer
 		assertEncodeError(t, m, 1, 1, &Subscribe{})

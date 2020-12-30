@@ -1,38 +1,12 @@
 package packet
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
+import "testing"
 
 func TestUnsubscribe(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
-		pkt := NewUnsubscribe()
-		pkt.ID = 1
-		pkt.Topics = []string{"foo", "bar"}
-
-		assert.Equal(t, pkt.Type(), UNSUBSCRIBE)
-		assert.Equal(t, `<Unsubscribe ID=1 Topics=["foo", "bar"]>`, pkt.String())
-
-		buf := make([]byte, pkt.Len(m))
-		n1, err := pkt.Encode(m, buf)
-		assert.NoError(t, err)
-
-		pkt2 := NewUnsubscribe()
-		n2, err := pkt2.Decode(m, buf)
-		assert.NoError(t, err)
-
-		assert.Equal(t, pkt, pkt2)
-		assert.Equal(t, n1, n2)
-	})
-}
-
-func TestUnsubscribeDecode(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
+		assertEncodeDecode(t, m, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
-			32, // remaining length
+			28, // remaining length
 			0,  // packet id
 			7,
 			0, // topic
@@ -40,20 +14,18 @@ func TestUnsubscribeDecode(t *testing.T) {
 			'g', 'o', 'm', 'q', 't', 't',
 			0, // topic
 			8,
-			'/', 'a', '/', 'b', '/', '#', '/', 'c',
+			'/', 'a', '/', 'b', '/', '*', '/', 'c',
 			0, // topic
-			10,
-			'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-		}
-
-		pkt := NewUnsubscribe()
-		n, err := pkt.Decode(m, packet)
-		assert.NoError(t, err)
-		assert.Equal(t, len(packet), n)
-		assert.Equal(t, 3, len(pkt.Topics))
-		assert.Equal(t, "gomqtt", pkt.Topics[0])
-		assert.Equal(t, "/a/b/#/c", pkt.Topics[1])
-		assert.Equal(t, "/a/b/#/cdd", pkt.Topics[2])
+			6,
+			'/', 'a', '/', 'b', '/', '#',
+		}, &Unsubscribe{
+			Topics: []string{
+				"gomqtt",
+				"/a/b/*/c",
+				"/a/b/#",
+			},
+			ID: 7,
+		}, `<Unsubscribe ID=7 Topics=["gomqtt", "/a/b/*/c", "/a/b/#"]>`)
 
 		assertDecodeError(t, m, UNSUBSCRIBE, 4, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
@@ -106,40 +78,6 @@ func TestUnsubscribeDecode(t *testing.T) {
 			'g', 'o', 'm', 'q', 't', 't',
 			0, // < superfluous byte
 		})
-	})
-}
-
-func TestUnsubscribeEncode(t *testing.T) {
-	multiTest(t, func(t *testing.T, m Mode) {
-		packet := []byte{
-			byte(UNSUBSCRIBE<<4) | 2,
-			32, // remaining length
-			0,  // packet id
-			7,
-			0, // topic
-			6,
-			'g', 'o', 'm', 'q', 't', 't',
-			0, // topic
-			8,
-			'/', 'a', '/', 'b', '/', '#', '/', 'c',
-			0, // topic
-			10,
-			'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
-		}
-
-		pkt := NewUnsubscribe()
-		pkt.ID = 7
-		pkt.Topics = []string{
-			"gomqtt",
-			"/a/b/#/c",
-			"/a/b/#/cdd",
-		}
-
-		dst := make([]byte, pkt.Len(m))
-		n, err := pkt.Encode(m, dst)
-		assert.NoError(t, err)
-		assert.Equal(t, len(packet), n)
-		assert.Equal(t, packet, dst)
 
 		// small buffer
 		assertEncodeError(t, m, 1, 1, &Unsubscribe{})
