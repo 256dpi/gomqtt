@@ -23,6 +23,8 @@ func nakedEncode(m Mode, dst []byte, t Type) (int, error) {
 	return encodeHeader(dst, 0, 0, t)
 }
 
+// An Auth packet is sent from the client to the server or vice versa.
+// It allows for more complex authentication mechanisms.
 type Auth struct {
 	ReasonCode byte
 
