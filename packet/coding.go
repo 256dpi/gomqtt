@@ -6,8 +6,16 @@ import (
 	"math"
 )
 
+// ErrInsufficientBufferSize is returned if the provided buffer is too small
+// to write to or read from.
 var ErrInsufficientBufferSize = errors.New("insufficient buffer size")
+
+// ErrVariableIntegerOverflow is returned if the provided or to be written
+// integer requires more than 4 bytes to write or read.
 var ErrVariableIntegerOverflow = errors.New("variable integer overflow")
+
+// ErrPrefixedBytesOverflow is returned if the provided bytes require more than
+// two bytes to encode its length.
 var ErrPrefixedBytesOverflow = errors.New("prefixed bytes overflow")
 
 func readUint8(buf []byte) (uint8, int, error) {

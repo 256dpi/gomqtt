@@ -5,11 +5,16 @@ import (
 	"errors"
 )
 
+// ErrInvalidPropertyType is returned if the property type is not known.
 var ErrInvalidPropertyType = errors.New("invalid property type")
+
+// ErrInvalidPropertyCode is returned if the property code is not known.
 var ErrInvalidPropertyCode = errors.New("invalid property code")
 
+// PropertyType defines the properties type.
 type PropertyType int
 
+// The available property types.
 const (
 	UINT8 PropertyType = iota + 1
 	UINT16
@@ -20,6 +25,7 @@ const (
 	PAIR
 )
 
+// String returns the property type name.
 func (t PropertyType) String() string {
 	switch t {
 	case UINT8:
@@ -41,12 +47,15 @@ func (t PropertyType) String() string {
 	}
 }
 
+// Valid returns whether the property type is valid.
 func (t PropertyType) Valid() bool {
 	return t >= UINT8 && t <= PAIR
 }
 
+// PropertyCode defines a property code.
 type PropertyCode byte
 
+// The available property codes.
 const (
 	PayloadFormatIndicator          PropertyCode = 0x01
 	MessageExpiryInterval           PropertyCode = 0x02
@@ -137,18 +146,22 @@ var propertyNames = map[PropertyCode]string{
 	SharedSubscriptionAvailable:     "SharedSubscriptionAvailable",
 }
 
+// Type returns the property type.
 func (c PropertyCode) Type() PropertyType {
 	return propertyTypes[c]
 }
 
+// String returns the property code name.
 func (c PropertyCode) String() string {
 	return propertyNames[c]
 }
 
+// Valid returns whether the property code is known.
 func (c PropertyCode) Valid() bool {
 	return c.Type().Valid() && c.String() != ""
 }
 
+// Property is a MQTT packet property.
 type Property struct {
 	// The property code.
 	Code PropertyCode
