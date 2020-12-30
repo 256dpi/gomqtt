@@ -50,20 +50,20 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, rl, err := decodeHeader(src, UNSUBSCRIBE)
 	if err != nil {
-		return total, wrapError(UNSUBSCRIBE, DECODE, m, err)
+		return total, wrapError(UNSUBSCRIBE, DECODE, m, total, err)
 	}
 
 	// read packet id
 	pid, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, wrapError(UNSUBSCRIBE, DECODE, m, err)
+		return total, wrapError(UNSUBSCRIBE, DECODE, m, total, err)
 	}
 
 	// set packet id
 	u.ID = ID(pid)
 	if !u.ID.Valid() {
-		return total, wrapError(UNSUBSCRIBE, DECODE, m, ErrInvalidPacketID)
+		return total, wrapError(UNSUBSCRIBE, DECODE, m, total, ErrInvalidPacketID)
 	}
 
 	// reset topics
@@ -76,7 +76,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 		topic, n, err := readString(src[total:])
 		total += n
 		if err != nil {
-			return total, wrapError(UNSUBSCRIBE, DECODE, m, err)
+			return total, wrapError(UNSUBSCRIBE, DECODE, m, total, err)
 		}
 
 		// append to list
@@ -88,7 +88,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 
 	// check for empty list
 	if len(u.Topics) == 0 {
-		return total, makeError(UNSUBSCRIBE, DECODE, m, "empty topic list")
+		return total, makeError(UNSUBSCRIBE, DECODE, m, total, "missing topics")
 	}
 
 	return total, nil
@@ -101,19 +101,19 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, u.len(), UNSUBSCRIBE)
 	if err != nil {
-		return total, wrapError(UNSUBSCRIBE, ENCODE, m, err)
+		return total, wrapError(UNSUBSCRIBE, ENCODE, m, total, err)
 	}
 
 	// check packet id
 	if !u.ID.Valid() {
-		return total, wrapError(UNSUBSCRIBE, ENCODE, m, ErrInvalidPacketID)
+		return total, wrapError(UNSUBSCRIBE, ENCODE, m, total, ErrInvalidPacketID)
 	}
 
 	// write packet id
 	n, err := writeUint(dst[total:], uint64(u.ID), 2)
 	total += n
 	if err != nil {
-		return total, wrapError(UNSUBSCRIBE, ENCODE, m, err)
+		return total, wrapError(UNSUBSCRIBE, ENCODE, m, total, err)
 	}
 
 	// write topics
@@ -122,7 +122,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 		n, err := writeString(dst[total:], topic)
 		total += n
 		if err != nil {
-			return total, wrapError(UNSUBSCRIBE, ENCODE, m, err)
+			return total, wrapError(UNSUBSCRIBE, ENCODE, m, total, err)
 		}
 	}
 

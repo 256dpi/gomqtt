@@ -59,7 +59,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	hl, flags, rl, err := decodeHeader(src, PUBLISH)
 	total := hl
 	if err != nil {
-		return total, wrapError(PUBLISH, DECODE, m, err)
+		return total, wrapError(PUBLISH, DECODE, m, total, err)
 	}
 
 	// read flags
@@ -69,14 +69,14 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 
 	// check qos
 	if !p.Message.QOS.Successful() {
-		return total, makeError(PUBLISH, DECODE, m, "invalid QOS level (%d)", p.Message.QOS)
+		return total, wrapError(PUBLISH, DECODE, m, total, ErrInvalidQOSLevel)
 	}
 
 	// read topic
 	topic, n, err := readString(src[total:])
 	total += n
 	if err != nil {
-		return total, wrapError(PUBLISH, DECODE, m, err)
+		return total, wrapError(PUBLISH, DECODE, m, total, err)
 	}
 
 	// set topic
@@ -88,13 +88,13 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 		pid, n, err := readUint(src[total:], 2)
 		total += n
 		if err != nil {
-			return total, wrapError(PUBLISH, DECODE, m, err)
+			return total, wrapError(PUBLISH, DECODE, m, total, err)
 		}
 
 		// set packet id
 		p.ID = ID(pid)
 		if !p.ID.Valid() {
-			return total, wrapError(PUBLISH, DECODE, m, ErrInvalidPacketID)
+			return total, wrapError(PUBLISH, DECODE, m, total, ErrInvalidPacketID)
 		}
 	}
 
@@ -130,7 +130,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 
 	// check qos
 	if !p.Message.QOS.Successful() {
-		return 0, makeError(PUBLISH, ENCODE, m, "invalid QOS level %d", p.Message.QOS)
+		return 0, wrapError(PUBLISH, ENCODE, m, 0, ErrInvalidQOSLevel)
 	}
 
 	// set qos
@@ -139,24 +139,24 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, flags, p.len(), PUBLISH)
 	if err != nil {
-		return total, wrapError(PUBLISH, ENCODE, m, err)
+		return total, wrapError(PUBLISH, ENCODE, m, total, err)
 	}
 
 	// check topic length
 	if len(p.Message.Topic) == 0 {
-		return total, makeError(PUBLISH, ENCODE, m, "topic name is empty")
+		return total, makeError(PUBLISH, ENCODE, m, total, "missing topic")
 	}
 
 	// write topic
 	n, err := writeString(dst[total:], p.Message.Topic)
 	total += n
 	if err != nil {
-		return total, wrapError(PUBLISH, ENCODE, m, err)
+		return total, wrapError(PUBLISH, ENCODE, m, total, err)
 	}
 
 	// check packet id
 	if p.Message.QOS > 0 && !p.ID.Valid() {
-		return total, wrapError(PUBLISH, ENCODE, m, ErrInvalidPacketID)
+		return total, wrapError(PUBLISH, ENCODE, m, total, ErrInvalidPacketID)
 	}
 
 	// write packet id
@@ -164,7 +164,7 @@ func (p *Publish) Encode(m Mode, dst []byte) (int, error) {
 		n, err := writeUint(dst[total:], uint64(p.ID), 2)
 		total += n
 		if err != nil {
-			return total, wrapError(PUBLISH, ENCODE, m, err)
+			return total, wrapError(PUBLISH, ENCODE, m, total, err)
 		}
 	}
 

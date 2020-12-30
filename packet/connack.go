@@ -102,19 +102,19 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, CONNACK)
 	if err != nil {
-		return total, wrapError(CONNACK, DECODE, m, err)
+		return total, wrapError(CONNACK, DECODE, m, total, err)
 	}
 
 	// read connack flags
 	connackFlags, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
-		return total, wrapError(CONNACK, DECODE, m, err)
+		return total, wrapError(CONNACK, DECODE, m, total, err)
 	}
 
 	// check flags
 	if connackFlags&254 != 0 {
-		return total, makeError(CONNACK, DECODE, m, "bits 7-1 in acknowledge flags are not 0")
+		return total, makeError(CONNACK, DECODE, m, total, "invalid connack flags")
 	}
 
 	// set session present
@@ -124,13 +124,13 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 	rc, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
-		return total, wrapError(CONNACK, DECODE, m, err)
+		return total, wrapError(CONNACK, DECODE, m, total, err)
 	}
 
 	// get return code
 	returnCode := ConnackCode(rc)
 	if !returnCode.Valid() {
-		return total, makeError(CONNACK, DECODE, m, "invalid return code (%d)", c.ReturnCode)
+		return total, makeError(CONNACK, DECODE, m, total, "invalid return code")
 	}
 
 	// set return code
@@ -138,7 +138,7 @@ func (c *Connack) Decode(m Mode, src []byte) (int, error) {
 
 	// check buffer
 	if len(src[total:]) != 0 {
-		return total, makeError(CONNACK, DECODE, m, "leftover buffer length (%d)", len(src[total:]))
+		return total, makeError(CONNACK, DECODE, m, total, "leftover buffer length")
 	}
 
 	return total, nil
@@ -151,7 +151,7 @@ func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, 2, CONNACK)
 	if err != nil {
-		return total, wrapError(CONNACK, ENCODE, m, err)
+		return total, wrapError(CONNACK, ENCODE, m, total, err)
 	}
 
 	// get connack flags
@@ -166,19 +166,19 @@ func (c *Connack) Encode(m Mode, dst []byte) (int, error) {
 	n, err := writeUint8(dst[total:], flags)
 	total += n
 	if err != nil {
-		return total, wrapError(CONNACK, ENCODE, m, err)
+		return total, wrapError(CONNACK, ENCODE, m, total, err)
 	}
 
 	// check return code
 	if !c.ReturnCode.Valid() {
-		return total, makeError(CONNACK, ENCODE, m, "invalid return code (%d)", c.ReturnCode)
+		return total, makeError(CONNACK, ENCODE, m, total, "invalid return code")
 	}
 
 	// write return code
 	n, err = writeUint8(dst[total:], uint8(c.ReturnCode))
 	total += n
 	if err != nil {
-		return total, wrapError(CONNACK, ENCODE, m, err)
+		return total, wrapError(CONNACK, ENCODE, m, total, err)
 	}
 
 	return total, nil
