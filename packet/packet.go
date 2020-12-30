@@ -9,6 +9,9 @@ import (
 // ErrInvalidPacketID is returned for invalid packet ids.
 var ErrInvalidPacketID = errors.New("invalid packet id")
 
+// ErrInvalidQOSLevel is returned for invalid QOS levels.
+var ErrInvalidQOSLevel = errors.New("invalid QOS level")
+
 // QOS is the type used to store quality of service levels.
 type QOS byte
 

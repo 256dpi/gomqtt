@@ -104,26 +104,26 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	// decode header
 	total, _, _, err := decodeHeader(src, CONNECT)
 	if err != nil {
-		return total, wrapError(CONNECT, DECODE, m, err)
+		return total, wrapError(CONNECT, DECODE, m, total, err)
 	}
 
 	// read protocol string
 	protoName, n, err := readBytes(src[total:], false)
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, DECODE, m, err)
+		return total, wrapError(CONNECT, DECODE, m, total, err)
 	}
 
 	// read version
 	versionByte, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, DECODE, m, err)
+		return total, wrapError(CONNECT, DECODE, m, total, err)
 	}
 
 	// check protocol version
 	if versionByte < Version31 || versionByte > Version5 {
-		return total, makeError(CONNECT, DECODE, m, "invalid protocol version (%d)", versionByte)
+		return total, makeError(CONNECT, DECODE, m, total, "invalid protocol version")
 	}
 
 	// set version
@@ -131,14 +131,14 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// check protocol version string
 	if !bytes.Equal(protoName, versionNames[c.Version]) {
-		return total, makeError(CONNECT, DECODE, m, "invalid protocol version string (%s)", protoName)
+		return total, makeError(CONNECT, DECODE, m, total, "invalid protocol string")
 	}
 
 	// get connect flags
 	connectFlags, n, err := readUint8(src[total:])
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, DECODE, m, err)
+		return total, wrapError(CONNECT, DECODE, m, total, err)
 	}
 
 	// read flags
@@ -151,17 +151,17 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// check reserved bit
 	if connectFlags&0x1 != 0 {
-		return total, makeError(CONNECT, DECODE, m, "reserved bit 0 is not 0")
+		return total, makeError(CONNECT, DECODE, m, total, "invalid connect flags")
 	}
 
 	// check will qos
 	if !willQOS.Successful() {
-		return total, makeError(CONNECT, DECODE, m, "invalid QOS level (%d) for will message", willQOS)
+		return total, wrapError(CONNECT, DECODE, m, total, ErrInvalidQOSLevel)
 	}
 
 	// check will flags
 	if !willFlag && (willRetain || willQOS != 0) {
-		return total, makeError(CONNECT, DECODE, m, "if the will flag is set to 0 the will qos and will retain fields must be set to zero")
+		return total, makeError(CONNECT, DECODE, m, total, "invalid connect flags")
 	}
 
 	// create will if present
@@ -171,14 +171,14 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// check auth flags
 	if !usernameFlag && passwordFlag {
-		return total, makeError(CONNECT, DECODE, m, "password flag is set but username flag is not set")
+		return total, makeError(CONNECT, DECODE, m, total, "invalid connect flags")
 	}
 
 	// read keep alive
 	ka, n, err := readUint(src[total:], 2)
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, DECODE, m, err)
+		return total, wrapError(CONNECT, DECODE, m, total, err)
 	}
 
 	// set keep alive
@@ -188,12 +188,12 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	c.ClientID, n, err = readString(src[total:])
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, DECODE, m, err)
+		return total, wrapError(CONNECT, DECODE, m, total, err)
 	}
 
 	// if the client supplies a zero-byte clientID, the client must also set CleanSession to 1
 	if len(c.ClientID) == 0 && !c.CleanSession {
-		return total, makeError(CONNECT, DECODE, m, "clean session must be 1 if client id is zero length")
+		return total, makeError(CONNECT, DECODE, m, total, "missing client id")
 	}
 
 	// check will
@@ -202,14 +202,14 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 		c.Will.Topic, n, err = readString(src[total:])
 		total += n
 		if err != nil {
-			return total, wrapError(CONNECT, DECODE, m, err)
+			return total, wrapError(CONNECT, DECODE, m, total, err)
 		}
 
 		// read will payload
 		c.Will.Payload, n, err = readBytes(src[total:], true)
 		total += n
 		if err != nil {
-			return total, wrapError(CONNECT, DECODE, m, err)
+			return total, wrapError(CONNECT, DECODE, m, total, err)
 		}
 	}
 
@@ -218,7 +218,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 		c.Username, n, err = readString(src[total:])
 		total += n
 		if err != nil {
-			return total, wrapError(CONNECT, DECODE, m, err)
+			return total, wrapError(CONNECT, DECODE, m, total, err)
 		}
 	}
 
@@ -227,13 +227,13 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 		c.Password, n, err = readString(src[total:])
 		total += n
 		if err != nil {
-			return total, wrapError(CONNECT, DECODE, m, err)
+			return total, wrapError(CONNECT, DECODE, m, total, err)
 		}
 	}
 
 	// check buffer
 	if len(src[total:]) != 0 {
-		return total, makeError(CONNECT, DECODE, m, "leftover buffer length (%d)", len(src[total:]))
+		return total, makeError(CONNECT, DECODE, m, total, "leftover buffer length")
 	}
 
 	return total, nil
@@ -246,7 +246,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	// encode header
 	total, err := encodeHeader(dst, 0, c.len(), CONNECT)
 	if err != nil {
-		return total, wrapError(CONNECT, ENCODE, m, err)
+		return total, wrapError(CONNECT, ENCODE, m, total, err)
 	}
 
 	// set default version byte
@@ -256,21 +256,21 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// check version byte
 	if c.Version != Version311 && c.Version != Version31 {
-		return total, makeError(CONNECT, ENCODE, m, "unsupported protocol version %d", c.Version)
+		return total, makeError(CONNECT, ENCODE, m, total, "unsupported protocol version")
 	}
 
 	// write version string
 	n, err := writeBytes(dst[total:], versionNames[c.Version])
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, ENCODE, m, err)
+		return total, wrapError(CONNECT, ENCODE, m, total, err)
 	}
 
 	// write version value
 	n, err = writeUint8(dst[total:], c.Version)
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, ENCODE, m, err)
+		return total, wrapError(CONNECT, ENCODE, m, total, err)
 	}
 
 	// prepare connect flags
@@ -293,12 +293,12 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 		// check will topic length
 		if len(c.Will.Topic) == 0 {
-			return total, makeError(CONNECT, ENCODE, m, "will topic is empty")
+			return total, makeError(CONNECT, ENCODE, m, total, "will topic is empty")
 		}
 
 		// check will qos
 		if !c.Will.QOS.Successful() {
-			return total, makeError(CONNECT, ENCODE, m, "invalid will qos level %d", c.Will.QOS)
+			return total, wrapError(CONNECT, ENCODE, m, total, ErrInvalidQOSLevel)
 		}
 
 		// set will qos flag
@@ -312,7 +312,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 
 	// check client id and clean session
 	if len(c.ClientID) == 0 && !c.CleanSession {
-		return total, makeError(CONNECT, ENCODE, m, "clean session must be 1 if client id is zero length")
+		return total, makeError(CONNECT, ENCODE, m, total, "missing client id")
 	}
 
 	// set clean session flag
@@ -324,21 +324,21 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 	n, err = writeUint8(dst[total:], connectFlags)
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, ENCODE, m, err)
+		return total, wrapError(CONNECT, ENCODE, m, total, err)
 	}
 
 	// write keep alive
 	n, err = writeUint(dst[total:], uint64(c.KeepAlive), 2)
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, ENCODE, m, err)
+		return total, wrapError(CONNECT, ENCODE, m, total, err)
 	}
 
 	// write client id
 	n, err = writeString(dst[total:], c.ClientID)
 	total += n
 	if err != nil {
-		return total, wrapError(CONNECT, ENCODE, m, err)
+		return total, wrapError(CONNECT, ENCODE, m, total, err)
 	}
 
 	// check will
@@ -347,20 +347,20 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 		n, err = writeString(dst[total:], c.Will.Topic)
 		total += n
 		if err != nil {
-			return total, wrapError(CONNECT, ENCODE, m, err)
+			return total, wrapError(CONNECT, ENCODE, m, total, err)
 		}
 
 		// write will payload
 		n, err = writeBytes(dst[total:], c.Will.Payload)
 		total += n
 		if err != nil {
-			return total, wrapError(CONNECT, ENCODE, m, err)
+			return total, wrapError(CONNECT, ENCODE, m, total, err)
 		}
 	}
 
 	// check username and password
 	if len(c.Username) == 0 && len(c.Password) > 0 {
-		return total, makeError(CONNECT, ENCODE, m, "password set without username")
+		return total, makeError(CONNECT, ENCODE, m, total, "missing username")
 	}
 
 	// write username
@@ -368,7 +368,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 		n, err = writeString(dst[total:], c.Username)
 		total += n
 		if err != nil {
-			return total, wrapError(CONNECT, ENCODE, m, err)
+			return total, wrapError(CONNECT, ENCODE, m, total, err)
 		}
 	}
 
@@ -377,7 +377,7 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 		n, err = writeString(dst[total:], c.Password)
 		total += n
 		if err != nil {
-			return total, wrapError(CONNECT, ENCODE, m, err)
+			return total, wrapError(CONNECT, ENCODE, m, total, err)
 		}
 	}
 
