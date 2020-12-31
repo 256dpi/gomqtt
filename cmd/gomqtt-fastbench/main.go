@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"net/http"
@@ -33,7 +34,7 @@ var total int32
 var done = make(chan struct{})
 var wg sync.WaitGroup
 
-var payload = make([]byte, *length)
+var payload = bytes.Repeat([]byte{'X'}, *length)
 
 func main() {
 	// parse flags
