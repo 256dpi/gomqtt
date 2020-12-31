@@ -1,13 +1,14 @@
 package packet
 
 import (
+	"bytes"
 	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var longBytes = make([]byte, 65536)
+var longBytes = bytes.Repeat([]byte{'X'}, 65536)
 var longString = string(longBytes)
 
 type errorWriter struct {

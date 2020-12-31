@@ -1,9 +1,12 @@
 package packet
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"math"
+	"strings"
+	"unicode/utf8"
 )
 
 // ErrInsufficientBufferSize is returned if the provided buffer is too small
@@ -17,6 +20,9 @@ var ErrVariableIntegerOverflow = errors.New("variable integer overflow")
 // ErrPrefixedBytesOverflow is returned if the provided bytes require more than
 // two bytes to encode its length.
 var ErrPrefixedBytesOverflow = errors.New("prefixed bytes overflow")
+
+// ErrInvalidUTF8Sequence is returned if a string is not a valid utf8 sequence.
+var ErrInvalidUTF8Sequence = errors.New("invalid utf8 sequence")
 
 func readUint8(buf []byte) (uint8, int, error) {
 	num, n, err := readUint(buf, 1)
@@ -120,11 +126,26 @@ func writeVarint(buf []byte, num uint64) (int, error) {
 }
 
 func readString(buf []byte) (string, int, error) {
-	bytes, n, err := readBytes(buf, false)
-	return string(bytes), n, err
+	// read str
+	str, n, err := readBytes(buf, false)
+	if err != nil {
+		return "", n, err
+	}
+
+	// check validity
+	if !utf8.Valid(str) || bytes.ContainsRune(str, 0) {
+		return "", n, ErrInvalidUTF8Sequence
+	}
+
+	return string(str), n, nil
 }
 
 func writeString(buf []byte, str string) (int, error) {
+	// check string
+	if !utf8.ValidString(str) || strings.ContainsRune(str, 0) {
+		return 0, ErrInvalidUTF8Sequence
+	}
+
 	return writeBytes(buf, cast(str))
 }
 

@@ -93,6 +93,11 @@ func TestReadString(t *testing.T) {
 	assert.Equal(t, "Hello", str)
 	assert.Equal(t, 7, n)
 
+	str, n, err = readString(append([]byte{0x0, 0x2}, []byte("Ж")...))
+	assert.NoError(t, err)
+	assert.Equal(t, "Ж", str)
+	assert.Equal(t, 4, n)
+
 	str, n, err = readString([]byte{})
 	assert.Error(t, err)
 	assert.Empty(t, str)
@@ -104,6 +109,18 @@ func TestReadString(t *testing.T) {
 	assert.Empty(t, str)
 	assert.Equal(t, 2, n)
 	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	str, n, err = readString([]byte{0x0, 0x2, 66, 250})
+	assert.Error(t, err)
+	assert.Empty(t, str)
+	assert.Equal(t, 4, n)
+	assert.Equal(t, ErrInvalidUTF8Sequence, err)
+
+	str, n, err = readString([]byte{0x0, 0x3, 'N', 0, 0})
+	assert.Error(t, err)
+	assert.Empty(t, str)
+	assert.Equal(t, 5, n)
+	assert.Equal(t, ErrInvalidUTF8Sequence, err)
 }
 
 func TestWriteString(t *testing.T) {
@@ -113,13 +130,39 @@ func TestWriteString(t *testing.T) {
 	assert.Equal(t, []byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, buf)
 	assert.Equal(t, 7, n)
 
-	n, err = writeString([]byte{}, longString)
+	buf = make([]byte, 4)
+	n, err = writeString(buf, "Ж")
+	assert.NoError(t, err)
+	assert.Equal(t, []byte{0x0, 0x2, 0xd0, 0x96}, buf)
+	assert.Equal(t, 4, n)
+
+	buf = nil
+	n, err = writeString(buf, longString)
 	assert.Error(t, err)
-	assert.Zero(t, n)
+	assert.Equal(t, 0, n)
 	assert.Equal(t, ErrPrefixedBytesOverflow, err)
 
-	n, err = writeString([]byte{}, string(make([]byte, 10)))
+	buf = nil
+	n, err = writeString(buf, "Hello")
 	assert.Error(t, err)
-	assert.Zero(t, n)
+	assert.Equal(t, 0, n)
 	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	buf = make([]byte, 4)
+	n, err = writeString(buf, "Hello")
+	assert.Error(t, err)
+	assert.Equal(t, 2, n)
+	assert.Equal(t, ErrInsufficientBufferSize, err)
+
+	buf = make([]byte, 4)
+	n, err = writeString(buf, string([]byte{66, 250}))
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, ErrInvalidUTF8Sequence, err)
+
+	buf = make([]byte, 5)
+	n, err = writeString(buf, string([]byte{'N', 0, 0}))
+	assert.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, ErrInvalidUTF8Sequence, err)
 }
