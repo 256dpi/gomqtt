@@ -129,6 +129,8 @@ func benchPacket(b *testing.B, pkt Generic) {
 		buf := make([]byte, pkt.Len(m))
 
 		b.Run("ENCODE", func(b *testing.B) {
+			b.ReportAllocs()
+
 			for i := 0; i < b.N; i++ {
 				_, err := pkt.Encode(m, buf)
 				if err != nil {
@@ -138,6 +140,8 @@ func benchPacket(b *testing.B, pkt Generic) {
 		})
 
 		b.Run("Decode", func(b *testing.B) {
+			b.ReportAllocs()
+
 			for i := 0; i < b.N; i++ {
 				_, err := pkt.Decode(m, buf)
 				if err != nil {
