@@ -113,7 +113,7 @@ func TestUnsubscribe(t *testing.T) {
 
 func BenchmarkUnsubscribe(b *testing.B) {
 	benchPacket(b, &Unsubscribe{
-		Topics: []string{"t"},
+		Topics: []string{"topic"},
 		ID:     7,
 	})
 }

@@ -412,14 +412,14 @@ func TestConnect(t *testing.T) {
 
 func BenchmarkConnect(b *testing.B) {
 	benchPacket(b, &Connect{
-		ClientID:     "i",
+		ClientID:     "client",
 		KeepAlive:    10,
-		Username:     "u",
-		Password:     "p",
+		Username:     "user",
+		Password:     "pass",
 		CleanSession: false,
 		Will: &Message{
-			Topic:   "t",
-			Payload: []byte("m"),
+			Topic:   "topic",
+			Payload: []byte("payload"),
 			QOS:     QOSAtLeastOnce,
 			Retain:  true,
 		},

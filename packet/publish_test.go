@@ -123,9 +123,9 @@ func TestPublish(t *testing.T) {
 func BenchmarkPublish(b *testing.B) {
 	benchPacket(b, &Publish{
 		Message: Message{
-			Topic:   "t",
+			Topic:   "topic",
 			QOS:     QOSAtLeastOnce,
-			Payload: []byte("p"),
+			Payload: []byte("payload"),
 			Retain:  true,
 		},
 		Dup: false,
