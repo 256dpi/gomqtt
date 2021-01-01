@@ -158,7 +158,7 @@ func TestSubscribe(t *testing.T) {
 func BenchmarkSubscribe(b *testing.B) {
 	benchPacket(b, &Subscribe{
 		Subscriptions: []Subscription{
-			{Topic: "t", QOS: 0},
+			{Topic: "topic", QOS: 0},
 		},
 		ID: 7,
 	})
