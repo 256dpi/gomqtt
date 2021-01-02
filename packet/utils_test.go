@@ -41,6 +41,10 @@ func (r *errorReader) Read(p []byte) (int, error) {
 }
 
 func multiTest(t *testing.T, fn func(t *testing.T, m Mode)) {
+	t.Run("M3", func(t *testing.T) {
+		fn(t, M4)
+	})
+
 	t.Run("M4", func(t *testing.T) {
 		fn(t, M4)
 	})
@@ -112,9 +116,7 @@ func assertEncodeError(t *testing.T, m Mode, len, written int, pkt Generic, r in
 	assert.Equal(t, &e, err)
 }
 
-func benchTest(b *testing.B, fn func(b *testing.B, m Mode)) {
-	b.ReportAllocs()
-
+func multiBench(b *testing.B, fn func(b *testing.B, m Mode)) {
 	b.Run("M4", func(b *testing.B) {
 		fn(b, M4)
 	})
@@ -125,7 +127,7 @@ func benchTest(b *testing.B, fn func(b *testing.B, m Mode)) {
 }
 
 func benchPacket(b *testing.B, pkt Generic) {
-	benchTest(b, func(b *testing.B, m Mode) {
+	multiBench(b, func(b *testing.B, m Mode) {
 		buf := make([]byte, pkt.Len(m))
 
 		b.Run("ENCODE", func(b *testing.B) {

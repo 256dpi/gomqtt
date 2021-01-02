@@ -11,10 +11,10 @@ func Example() {
 	pkt1.Password = "amazing!"
 
 	// Allocate buffer.
-	buf := make([]byte, pkt1.Len(Mode{}))
+	buf := make([]byte, pkt1.Len(M4))
 
 	// Encode the packet.
-	if _, err := pkt1.Encode(Mode{}, buf); err != nil {
+	if _, err := pkt1.Encode(M4, buf); err != nil {
 		panic(err) // error while encoding
 	}
 
@@ -35,7 +35,7 @@ func Example() {
 	}
 
 	// Decode packet.
-	_, err = pkt2.Decode(Mode{}, buf)
+	_, err = pkt2.Decode(M4, buf)
 	if err != nil {
 		panic(err) // there was an error while decoding
 	}
