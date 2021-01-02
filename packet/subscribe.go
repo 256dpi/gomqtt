@@ -33,9 +33,10 @@ type Subscribe struct {
 	// The packet identifier.
 	ID ID
 
-	Properties []Property
+	// The properties:
 	// SubscriptionIdentifier uint64
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewSubscribe creates a new Subscribe packet.

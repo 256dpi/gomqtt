@@ -34,11 +34,12 @@ func nakedEncode(m Mode, dst []byte, t Type) (int, error) {
 type Auth struct {
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// AuthenticationMethod string
 	// AuthenticationData []byte
 	// ReasonString string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewAuth creates a new Auth packet.
@@ -79,11 +80,12 @@ func (ap *Auth) String() string {
 type Disconnect struct {
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// SessionExpiryInterval uint64
 	// ReasonString string
 	// ServerReference string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewDisconnect creates a new Disconnect packet.

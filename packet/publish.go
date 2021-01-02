@@ -17,7 +17,7 @@ type Publish struct {
 	// The packet identifier.
 	ID ID
 
-	Properties []Property
+	// The properties:
 	// PayloadFormatIndicator byte
 	// MessageExpiryInterval uint32
 	// TopicAlias uint16
@@ -25,7 +25,8 @@ type Publish struct {
 	// CorrelationData []byte
 	// SubscriptionIdentifier uint64
 	// ContentType string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewPublish creates a new Publish packet.

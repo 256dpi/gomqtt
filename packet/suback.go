@@ -17,9 +17,10 @@ type Suback struct {
 
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// ReasonString string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewSuback creates a new Suback packet.

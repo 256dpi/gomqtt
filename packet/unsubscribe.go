@@ -13,8 +13,9 @@ type Unsubscribe struct {
 	// The packet identifier.
 	ID ID
 
+	// The properties:
+	// UserProperty string, string
 	Properties []Property
-	// UserProperties map[string][]byte
 }
 
 // NewUnsubscribe creates a new Unsubscribe packet.

@@ -44,16 +44,17 @@ type Connect struct {
 
 	CleanStart bool
 
-	WillProperties []Property
+	// The will properties:
 	// WillDelayInterval uint32
-	// WillPayloadFormatIndicator byte
-	// WillMessageExpiryInterval uint32
-	// WillContentType string
-	// WillResponseTopic string
-	// WillCorrelationData []byte
-	// WillUserProperties map[string][]byte
+	// PayloadFormatIndicator byte
+	// MessageExpiryInterval uint32
+	// ContentType string
+	// ResponseTopic string
+	// CorrelationData []byte
+	// UserProperty string, string
+	WillProperties []Property
 
-	Properties []Property
+	// The properties:
 	// SessionExpiryInterval uint32
 	// ReceiveMaximum uint16
 	// MaximumPacketSize uint32
@@ -62,7 +63,8 @@ type Connect struct {
 	// RequestProblemInformation bool
 	// AuthenticationMethod string
 	// AuthenticationData []byte
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewConnect creates a new Connect packet.

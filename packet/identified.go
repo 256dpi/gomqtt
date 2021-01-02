@@ -71,9 +71,10 @@ type Puback struct {
 
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// ReasonString string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewPuback creates a new Puback packet.
@@ -117,9 +118,10 @@ type Pubcomp struct {
 
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// ReasonString string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewPubcomp creates a new Pubcomp packet.
@@ -163,9 +165,10 @@ type Pubrec struct {
 
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// ReasonString string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewPubrec creates a new Pubrec packet.
@@ -209,9 +212,10 @@ type Pubrel struct {
 
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// ReasonString string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewPubrel creates a new Pubrel packet.
@@ -255,9 +259,10 @@ type Unsuback struct {
 
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// ReasonString string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
+	Properties []Property
 }
 
 // NewUnsuback creates a new Unsuback packet.

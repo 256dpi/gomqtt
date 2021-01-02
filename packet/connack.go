@@ -55,22 +55,23 @@ type Connack struct {
 
 	ReasonCode byte
 
-	Properties []Property
+	// The properties:
 	// SessionExpiryInterval uint32
 	// ReceiveMaximum uint16
 	// MaximumQOS byte
 	// RetainAvailable bool
 	// MaximumPacketSize uint32
-	// AssignedClientID string
+	// AssignedClientIdentifier string
 	// TopicAliasMaximum uint16
 	// ReasonString string
-	// UserProperties map[string][]byte
+	// UserProperty string, string
 	// WildcardSubscriptionAvailable bool
-	// SubscriptionIdentifiersAvailable bool
+	// SubscriptionIdentifierAvailable bool
 	// SharedSubscriptionAvailable bool
 	// ServerKeepAlive uint16
 	// ResponseInformation string
 	// ServerReference string
+	Properties []Property
 }
 
 // NewConnack creates a new Connack packet.
