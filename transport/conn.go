@@ -4,6 +4,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/256dpi/gomqtt/packet"
@@ -61,11 +62,11 @@ type Carrier interface {
 // A BaseConn manages the low-level plumbing between the Carrier and the packet
 // Stream.
 type BaseConn struct {
+	readTimeout  int64
 	carrier      Carrier
 	stream       *packet.Stream
 	sendMutex    sync.Mutex
 	receiveMutex sync.Mutex
-	readTimeout  time.Duration
 }
 
 // NewBaseConn creates a new BaseConn using the specified Carrier.
@@ -164,12 +165,8 @@ func (c *BaseConn) SetReadLimit(limit int64) {
 // If no data is received in the set duration the connection will be closed
 // and Read returns an error.
 func (c *BaseConn) SetReadTimeout(timeout time.Duration) {
-	// acquire mutex
-	c.receiveMutex.Lock()
-	defer c.receiveMutex.Unlock()
-
 	// set new timeout
-	c.readTimeout = timeout
+	atomic.StoreInt64(&c.readTimeout, int64(timeout))
 
 	// apply new timeout immediately
 	_ = c.resetTimeout()
@@ -182,10 +179,14 @@ func (c *BaseConn) SetMaxWriteDelay(delay time.Duration) {
 }
 
 func (c *BaseConn) resetTimeout() error {
-	// check timeout
-	if c.readTimeout > 0 {
-		return c.carrier.SetReadDeadline(time.Now().Add(c.readTimeout))
+	// get read timeout
+	readTimeout := time.Duration(atomic.LoadInt64(&c.readTimeout))
+
+	// get deadline
+	var deadline time.Time
+	if readTimeout > 0 {
+		deadline = time.Now().Add(readTimeout)
 	}
 
-	return c.carrier.SetReadDeadline(time.Time{})
+	return c.carrier.SetReadDeadline(deadline)
 }
