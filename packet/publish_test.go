@@ -59,7 +59,7 @@ func TestPublish(t *testing.T) {
 			2, // remaining length
 			0, // topic
 			0, // < zero topic
-		}, "invalid topic")
+		}, ErrInvalidTopic)
 
 		assertDecodeError(t, m, PUBLISH, 4, []byte{
 			byte(PUBLISH << 4),
@@ -95,7 +95,7 @@ func TestPublish(t *testing.T) {
 			Message: Message{
 				Topic: "", // < missing
 			},
-		}, "invalid topic")
+		}, ErrInvalidTopic)
 
 		assertEncodeError(t, m, 0, 0, &Publish{
 			Message: Message{

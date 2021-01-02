@@ -69,7 +69,7 @@ func TestUnsubscribe(t *testing.T) {
 			7,
 			0, // topic
 			0, // < zero topic
-		}, "invalid topic")
+		}, ErrInvalidTopic)
 
 		assertDecodeError(t, m, UNSUBSCRIBE, 6, []byte{
 			byte(UNSUBSCRIBE<<4) | 2,
@@ -98,7 +98,7 @@ func TestUnsubscribe(t *testing.T) {
 		assertEncodeError(t, m, 0, 4, &Unsubscribe{
 			ID:     7,
 			Topics: []string{""}, // < zero empty topic
-		}, "invalid topic")
+		}, ErrInvalidTopic)
 
 		assertEncodeError(t, m, 0, 6, &Unsubscribe{
 			ID:     7,

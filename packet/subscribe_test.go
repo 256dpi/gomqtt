@@ -56,7 +56,7 @@ func TestSubscribe(t *testing.T) {
 			7,
 			0, // topic
 			0, // < zero topic
-		}, "invalid topic")
+		}, ErrInvalidTopic)
 
 		assertDecodeError(t, m, SUBSCRIBE, 6, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -132,7 +132,7 @@ func TestSubscribe(t *testing.T) {
 					Topic: "", // < zero topic
 				},
 			},
-		}, "invalid topic")
+		}, ErrInvalidTopic)
 
 		assertEncodeError(t, m, 0, 6, &Subscribe{
 			ID: 7,

@@ -12,6 +12,9 @@ var ErrInvalidPacketID = errors.New("invalid packet id")
 // ErrInvalidQOSLevel is returned for invalid QOS levels.
 var ErrInvalidQOSLevel = errors.New("invalid QOS level")
 
+// ErrInvalidTopic is returned for invalid topics.
+var ErrInvalidTopic = errors.New("invalid topic")
+
 // QOS is the type used to store quality of service levels.
 type QOS byte
 

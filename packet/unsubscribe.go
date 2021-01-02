@@ -82,7 +82,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 
 		// check topic
 		if len(topic) == 0 {
-			return total, makeError(UNSUBSCRIBE, DECODE, m, total, "invalid topic")
+			return total, wrapError(UNSUBSCRIBE, DECODE, m, total, ErrInvalidTopic)
 		}
 
 		// append to list
@@ -126,7 +126,7 @@ func (u *Unsubscribe) Encode(m Mode, dst []byte) (int, error) {
 	for _, topic := range u.Topics {
 		// check topic
 		if len(topic) == 0 {
-			return total, makeError(UNSUBSCRIBE, ENCODE, m, total, "invalid topic")
+			return total, wrapError(UNSUBSCRIBE, ENCODE, m, total, ErrInvalidTopic)
 		}
 
 		// write topic

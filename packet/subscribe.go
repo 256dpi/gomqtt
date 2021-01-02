@@ -108,7 +108,7 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 
 		// check topic
 		if len(topic) == 0 {
-			return total, makeError(SUBSCRIBE, DECODE, m, total, "invalid topic")
+			return total, wrapError(SUBSCRIBE, DECODE, m, total, ErrInvalidTopic)
 		}
 
 		// read qos
@@ -170,7 +170,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 	for _, sub := range s.Subscriptions {
 		// check topic
 		if len(sub.Topic) == 0 {
-			return total, makeError(SUBSCRIBE, ENCODE, m, total, "invalid topic")
+			return total, wrapError(SUBSCRIBE, ENCODE, m, total, ErrInvalidTopic)
 		}
 
 		// write topic
