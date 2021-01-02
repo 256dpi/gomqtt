@@ -19,21 +19,21 @@ type Error struct {
 	Message  string
 }
 
-func wrapError(t Type, mt Method, m Mode, pos int, err error) *Error {
+func wrapError(t Type, mt Method, md Mode, pos int, err error) *Error {
 	return &Error{
 		Type:     t,
 		Method:   mt,
-		Mode:     m,
+		Mode:     md,
 		Position: pos,
 		Err:      err,
 	}
 }
 
-func makeError(t Type, mt Method, m Mode, pos int, msg string) *Error {
+func makeError(t Type, mt Method, md Mode, pos int, msg string) *Error {
 	return &Error{
 		Type:     t,
 		Method:   mt,
-		Mode:     m,
+		Mode:     md,
 		Position: pos,
 		Message:  msg,
 	}
@@ -47,4 +47,9 @@ func (e *Error) Error() string {
 	}
 
 	return e.Message
+}
+
+// Unwrap allows unwrapping a wrapped error.
+func (e *Error) Unwrap() error {
+	return e.Err
 }
