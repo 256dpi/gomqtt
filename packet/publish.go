@@ -73,7 +73,7 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// read topic
-	topic, n, err := readString(src[total:])
+	topic, n, err := readString(src[total:], nil)
 	total += n
 	if err != nil {
 		return total, wrapError(PUBLISH, DECODE, m, total, err)
@@ -108,7 +108,14 @@ func (p *Publish) Decode(m Mode, src []byte) (int, error) {
 
 	// read payload
 	if l > 0 {
-		p.Message.Payload = make([]byte, l)
+		// prepare buffer
+		if l < len(p.Message.ScratchPayload) {
+			p.Message.Payload = p.Message.ScratchPayload[0:l]
+		} else {
+			p.Message.Payload = make([]byte, l)
+		}
+
+		// copy payload
 		copy(p.Message.Payload, src[total:total+l])
 		total += len(p.Message.Payload)
 	}

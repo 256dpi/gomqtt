@@ -17,6 +17,9 @@ type Message struct {
 	// so that it can be delivered to future subscribers whose subscriptions
 	// match its topic name.
 	Retain bool
+
+	// The scratch memory may be used to reduce allocations.
+	ScratchPayload [255]byte
 }
 
 // String returns a string representation of the message.

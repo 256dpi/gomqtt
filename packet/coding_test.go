@@ -83,40 +83,40 @@ func TestWriteVarint(t *testing.T) {
 }
 
 func TestReadString(t *testing.T) {
-	str, n, err := readString([]byte{0x0, 0x0})
+	str, n, err := readString([]byte{0x0, 0x0}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "", str)
 	assert.Equal(t, 2, n)
 
-	str, n, err = readString([]byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'})
+	str, n, err = readString([]byte{0x0, 0x5, 'H', 'e', 'l', 'l', 'o'}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "Hello", str)
 	assert.Equal(t, 7, n)
 
-	str, n, err = readString(append([]byte{0x0, 0x2}, []byte("Ж")...))
+	str, n, err = readString(append([]byte{0x0, 0x2}, []byte("Ж")...), nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "Ж", str)
 	assert.Equal(t, 4, n)
 
-	str, n, err = readString([]byte{})
+	str, n, err = readString([]byte{}, nil)
 	assert.Error(t, err)
 	assert.Empty(t, str)
 	assert.Zero(t, n)
 	assert.Equal(t, ErrInsufficientBufferSize, err)
 
-	str, n, err = readString([]byte{0xff, 0xff, 0xff, 0xff})
+	str, n, err = readString([]byte{0xff, 0xff, 0xff, 0xff}, nil)
 	assert.Error(t, err)
 	assert.Empty(t, str)
 	assert.Equal(t, 2, n)
 	assert.Equal(t, ErrInsufficientBufferSize, err)
 
-	str, n, err = readString([]byte{0x0, 0x2, 66, 250})
+	str, n, err = readString([]byte{0x0, 0x2, 66, 250}, nil)
 	assert.Error(t, err)
 	assert.Empty(t, str)
 	assert.Equal(t, 4, n)
 	assert.Equal(t, ErrInvalidUTF8Sequence, err)
 
-	str, n, err = readString([]byte{0x0, 0x3, 'N', 0, 0})
+	str, n, err = readString([]byte{0x0, 0x3, 'N', 0, 0}, nil)
 	assert.Error(t, err)
 	assert.Empty(t, str)
 	assert.Equal(t, 5, n)

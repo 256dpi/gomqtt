@@ -219,7 +219,7 @@ func (p *Property) decode(buf []byte) (int, error) {
 	case VARINT:
 		p.Uint64, n, err = readVarint(buf)
 	case STRING:
-		p.String, n, err = readString(buf)
+		p.String, n, err = readString(buf, nil)
 	case BYTES:
 		p.Bytes, n, err = readBytes(buf, true)
 	case PAIR:

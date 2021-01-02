@@ -73,7 +73,7 @@ func (u *Unsubscribe) Decode(m Mode, src []byte) (int, error) {
 	tl := rl - 2
 	for tl > 0 {
 		// read topic
-		topic, n, err := readString(src[total:])
+		topic, n, err := readString(src[total:], nil)
 		total += n
 		if err != nil {
 			return total, wrapError(UNSUBSCRIBE, DECODE, m, total, err)

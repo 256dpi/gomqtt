@@ -17,6 +17,9 @@ type Subscription struct {
 	NoLocal           bool
 	RetainAsPublished bool
 	RetainHandling    byte
+
+	// The scratch memory may be used to reduce allocations.
+	ScratchTopic [64][]byte
 }
 
 func (s *Subscription) String() string {
@@ -36,6 +39,9 @@ type Subscribe struct {
 	Properties []Property
 	// SubscriptionIdentifier uint64
 	// UserProperties map[string][]byte
+
+	// The scratch memory may be used to reduce allocations.
+	ScratchSubscriptions [16]Subscription
 }
 
 // NewSubscribe creates a new Subscribe packet.
@@ -91,7 +97,7 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 	}
 
 	// reset subscriptions
-	s.Subscriptions = s.Subscriptions[:0]
+	s.Subscriptions = s.ScratchSubscriptions[:0]
 
 	// calculate number of subscriptions
 	sl := rl - 2
@@ -99,7 +105,7 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 	// read subscriptions
 	for sl > 0 {
 		// read topic
-		topic, n, err := readString(src[total:])
+		topic, n, err := readString(src[total:], nil)
 		total += n
 		if err != nil {
 			return total, wrapError(SUBSCRIBE, DECODE, m, total, err)

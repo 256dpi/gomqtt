@@ -7,6 +7,8 @@ import (
 	"math"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tidwall/cast"
 )
 
 // ErrInsufficientBufferSize is returned if the provided buffer is too small
@@ -125,16 +127,27 @@ func writeVarint(buf []byte, num uint64) (int, error) {
 	return n, nil
 }
 
-func readString(buf []byte) (string, int, error) {
+func readString(buf, scratch []byte) (string, int, error) {
 	// read str
 	str, n, err := readBytes(buf, false)
 	if err != nil {
 		return "", n, err
 	}
 
+	// check length
+	if n == 0 {
+		return "", n, nil
+	}
+
 	// check validity
 	if !utf8.Valid(str) || bytes.ContainsRune(str, 0) {
 		return "", n, ErrInvalidUTF8Sequence
+	}
+
+	// check scratch
+	if n <= len(scratch) {
+		copy(scratch, buf)
+		return cast.ToString(scratch[:n]), n, nil
 	}
 
 	return string(str), n, nil
@@ -146,7 +159,7 @@ func writeString(buf []byte, str string) (int, error) {
 		return 0, ErrInvalidUTF8Sequence
 	}
 
-	return writeBytes(buf, cast(str))
+	return writeBytes(buf, cast.ToBytes(str))
 }
 
 func readBytes(buf []byte, safe bool) ([]byte, int, error) {
@@ -207,13 +220,13 @@ func writeBytes(buf []byte, bytes []byte) (int, error) {
 
 func readPair(buf []byte) (string, string, int, error) {
 	// read key
-	key, nk, err := readString(buf)
+	key, nk, err := readString(buf, nil)
 	if err != nil {
 		return "", "", nk, err
 	}
 
 	// read value
-	value, nv, err := readString(buf[nk:])
+	value, nv, err := readString(buf[nk:], nil)
 	if err != nil {
 		return key, "", nk + nv, err
 	}

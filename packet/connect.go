@@ -185,7 +185,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	c.KeepAlive = uint16(ka)
 
 	// read client id
-	c.ClientID, n, err = readString(src[total:])
+	c.ClientID, n, err = readString(src[total:], nil)
 	total += n
 	if err != nil {
 		return total, wrapError(CONNECT, DECODE, m, total, err)
@@ -199,7 +199,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	// check will
 	if c.Will != nil {
 		// read will topic
-		c.Will.Topic, n, err = readString(src[total:])
+		c.Will.Topic, n, err = readString(src[total:], nil)
 		total += n
 		if err != nil {
 			return total, wrapError(CONNECT, DECODE, m, total, err)
@@ -215,7 +215,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// read username
 	if usernameFlag {
-		c.Username, n, err = readString(src[total:])
+		c.Username, n, err = readString(src[total:], nil)
 		total += n
 		if err != nil {
 			return total, wrapError(CONNECT, DECODE, m, total, err)
@@ -224,7 +224,7 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 
 	// read password
 	if passwordFlag {
-		c.Password, n, err = readString(src[total:])
+		c.Password, n, err = readString(src[total:], nil)
 		total += n
 		if err != nil {
 			return total, wrapError(CONNECT, DECODE, m, total, err)

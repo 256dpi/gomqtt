@@ -13,8 +13,9 @@ func TestPublish(t *testing.T) {
 			'h', 'e', 'l', 'l', 'o',
 		}, &Publish{
 			Message: Message{
-				Topic:   "gomqtt",
-				Payload: []byte("hello"),
+				Topic:          "gomqtt",
+				Payload:        []byte("hello"),
+				ScratchPayload: [255]byte{'h', 'e', 'l', 'l', 'o'},
 			},
 		}, `<Publish ID=0 Message=<Message Topic="gomqtt" QOS=0 Retain=false Payload=68656c6c6f> Dup=false>`)
 
@@ -29,10 +30,11 @@ func TestPublish(t *testing.T) {
 			'h', 'e', 'l', 'l', 'o',
 		}, &Publish{
 			Message: Message{
-				Topic:   "gomqtt",
-				Payload: []byte("hello"),
-				QOS:     QOSAtLeastOnce,
-				Retain:  true,
+				Topic:          "gomqtt",
+				Payload:        []byte("hello"),
+				QOS:            QOSAtLeastOnce,
+				Retain:         true,
+				ScratchPayload: [255]byte{'h', 'e', 'l', 'l', 'o'},
 			},
 			Dup: true,
 			ID:  7,

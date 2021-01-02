@@ -28,6 +28,11 @@ func TestSubscribe(t *testing.T) {
 				{Topic: "/a/b/#", QOS: 2},
 			},
 			ID: 7,
+			ScratchSubscriptions: [16]Subscription{
+				{Topic: "gomqtt", QOS: 0},
+				{Topic: "/a/b/*/c", QOS: 1},
+				{Topic: "/a/b/#", QOS: 2},
+			},
 		}, `<Subscribe ID=7 Subscriptions=["gomqtt"=>0, "/a/b/*/c"=>1, "/a/b/#"=>2]>`)
 
 		assertDecodeError(t, m, SUBSCRIBE, 2, []byte{
