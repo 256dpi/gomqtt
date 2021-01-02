@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -23,6 +24,7 @@ var ErrReadLimitExceeded = errors.New("read limit exceeded")
 type Encoder struct {
 	writer *mercury.Writer
 	buffer bytes.Buffer
+	mutex  sync.Mutex
 }
 
 // NewEncoder creates a new Encoder.
@@ -34,6 +36,10 @@ func NewEncoder(writer io.Writer) *Encoder {
 
 // Write encodes and writes the passed packet to the write buffer.
 func (e *Encoder) Write(pkt Generic, async bool) error {
+	// acquire mutex
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	// reset and potentially grow buffer
 	packetLength := pkt.Len(Mode{})
 	e.buffer.Reset()
@@ -75,6 +81,7 @@ type Decoder struct {
 	limit  int64
 	reader *bufio.Reader
 	buffer bytes.Buffer
+	mutex  sync.Mutex
 }
 
 // NewDecoder returns a new Decoder.
@@ -86,6 +93,10 @@ func NewDecoder(reader io.Reader) *Decoder {
 
 // Read reads the next packet from the buffered reader.
 func (d *Decoder) Read() (Generic, error) {
+	// acquire mutex
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+
 	// initial detection length
 	detectionLength := 2
 

@@ -3,7 +3,6 @@ package transport
 import (
 	"io"
 	"net"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -62,11 +61,9 @@ type Carrier interface {
 // A BaseConn manages the low-level plumbing between the Carrier and the packet
 // Stream.
 type BaseConn struct {
-	readTimeout  int64
-	carrier      Carrier
-	stream       *packet.Stream
-	sendMutex    sync.Mutex
-	receiveMutex sync.Mutex
+	readTimeout int64
+	carrier     Carrier
+	stream      *packet.Stream
 }
 
 // NewBaseConn creates a new BaseConn using the specified Carrier.
@@ -84,10 +81,6 @@ func NewBaseConn(c Carrier) *BaseConn {
 //
 // Note: Only one goroutine can send at the same time.
 func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
-	// acquire mutex
-	c.sendMutex.Lock()
-	defer c.sendMutex.Unlock()
-
 	// write packet
 	err := c.stream.Write(pkt, async)
 	if err != nil {
@@ -106,10 +99,6 @@ func (c *BaseConn) Send(pkt packet.Generic, async bool) error {
 //
 // Note: Only one goroutine can receive at the same time.
 func (c *BaseConn) Receive() (packet.Generic, error) {
-	// acquire mutex
-	c.receiveMutex.Lock()
-	defer c.receiveMutex.Unlock()
-
 	// read next packet
 	pkt, err := c.stream.Read()
 	if err != nil {
@@ -134,10 +123,6 @@ func (c *BaseConn) Receive() (packet.Generic, error) {
 // Close will close the underlying connection and cleanup resources. It will
 // return any error encountered while closing the underlying connection.
 func (c *BaseConn) Close() error {
-	// acquire mutex
-	c.sendMutex.Lock()
-	defer c.sendMutex.Unlock()
-
 	// flush buffer
 	err1 := c.stream.Flush()
 
@@ -163,7 +148,7 @@ func (c *BaseConn) SetReadLimit(limit int64) {
 
 // SetReadTimeout sets the maximum time that can pass between reads.
 // If no data is received in the set duration the connection will be closed
-// and Read returns an error.
+// and Receive returns an error.
 func (c *BaseConn) SetReadTimeout(timeout time.Duration) {
 	// set new timeout
 	atomic.StoreInt64(&c.readTimeout, int64(timeout))
