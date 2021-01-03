@@ -39,12 +39,12 @@ func Parse(topic string, allowWildcards bool) (string, error) {
 
 	// get first segment
 	remainder := topic
-	segment := topicSegment(topic, "/")
+	segment := topicSegment(topic)
 
 	// check all segments
 	for segment != topicEnd {
 		// check use of wildcards
-		if (strings.Contains(segment, "+") || strings.Contains(segment, "#")) && len(segment) > 1 {
+		if (strings.ContainsRune(segment, '+') || strings.ContainsRune(segment, '#')) && len(segment) > 1 {
 			return "", ErrWildcards
 		}
 
@@ -54,13 +54,13 @@ func Parse(topic string, allowWildcards bool) (string, error) {
 		}
 
 		// check if hash is the last character
-		if segment == "#" && topicShorten(remainder, "/") != topicEnd {
+		if segment == "#" && topicShorten(remainder) != topicEnd {
 			return "", ErrWildcards
 		}
 
 		// get next segment
-		remainder = topicShorten(remainder, "/")
-		segment = topicSegment(remainder, "/")
+		remainder = topicShorten(remainder)
+		segment = topicSegment(remainder)
 	}
 
 	return topic, nil
@@ -69,7 +69,7 @@ func Parse(topic string, allowWildcards bool) (string, error) {
 // ContainsWildcards tests if the supplied topic contains wildcards. The topics
 // is expected to be tested and normalized using Parse beforehand.
 func ContainsWildcards(topic string) bool {
-	return strings.Contains(topic, "+") || strings.Contains(topic, "#")
+	return strings.ContainsRune(topic, '+') || strings.ContainsRune(topic, '#')
 }
 
 func hasAdjacentSlashes(str string) bool {
