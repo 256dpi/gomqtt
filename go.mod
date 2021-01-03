@@ -1,7 +1,7 @@
 module github.com/256dpi/gomqtt
 
 require (
-	github.com/256dpi/mercury v0.3.0
+	github.com/256dpi/mercury v0.4.0
 	github.com/Pallinder/go-randomdata v1.2.0
 	github.com/abiosoft/ishell v2.0.0+incompatible
 	github.com/abiosoft/readline v0.0.0-20180607040430-155bce2042db // indirect

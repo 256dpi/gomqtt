@@ -7,9 +7,12 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/256dpi/mercury"
 
 	"github.com/256dpi/gomqtt/broker"
 	"github.com/256dpi/gomqtt/packet"
@@ -79,6 +82,9 @@ func main() {
 
 	// run reporter
 	go func() {
+		// prepare mercury stats
+		var stats mercury.Stats
+
 		for {
 			// wait a second
 			time.Sleep(time.Second)
@@ -87,8 +93,16 @@ func main() {
 			pub := atomic.LoadInt32(&published)
 			fwd := atomic.LoadInt32(&forwarded)
 
+			// get stats
+			s := mercury.GetStats()
+			d := s.Sub(stats)
+			stats = s
+
+			// get goroutines
+			n := runtime.NumGoroutine()
+
 			// print statistics
-			fmt.Printf("Publish Rate: %d msg/s, Forward Rate: %d msg/s, Clients: %d\n", pub, fwd, clients)
+			fmt.Printf("Publish Rate: %d msg/s, Forward Rate: %d msg/s, Clients: %d, Mercury: %d/%d, Goroutines: %d\n", pub, fwd, clients, d.Executed, d.Skipped, n)
 
 			// reset counters
 			atomic.StoreInt32(&published, 0)
