@@ -101,7 +101,7 @@ func connect(id string) transport.Conn {
 	}
 
 	// set may delay
-	conn.SetMaxWriteDelay(10 * time.Millisecond)
+	conn.SetMaxWriteDelay(time.Second)
 
 	// parse url
 	mqttURL, err := url.Parse(*broker)

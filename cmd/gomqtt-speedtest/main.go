@@ -38,8 +38,12 @@ func main() {
 		return nil
 	}
 
+	// prepare config
+	cfg := client.NewConfig(*broker)
+	cfg.MaxWriteDelay = time.Millisecond
+
 	// connect
-	cf, err := cl.Connect(client.NewConfig(*broker))
+	cf, err := cl.Connect(cfg)
 	if err != nil {
 		panic(err)
 	}

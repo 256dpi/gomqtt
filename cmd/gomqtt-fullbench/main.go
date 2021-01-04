@@ -101,6 +101,7 @@ func connect(id string) *client.Client {
 
 	// prepare config
 	cfg := client.NewConfigWithClientID(*broker, "gomqtt-benchmark/"+id)
+	cfg.MaxWriteDelay = time.Second
 
 	// connect client
 	cf, err := cl.Connect(cfg)
