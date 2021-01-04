@@ -24,6 +24,7 @@ var queue = flag.Int("queue", 100, "queue size")
 var publish = flag.Int("publish", 100, "parallel publishes")
 var inflight = flag.Int("inflight", 100, "inflight messages")
 var timeout = flag.Int("timeout", 1, "token timeout")
+var maxDelay = flag.Duration("may-delay", time.Second, "maximum write delay")
 
 func main() {
 	// parse flags
@@ -71,6 +72,7 @@ func main() {
 
 	// prepare engine
 	engine := broker.NewEngine(backend)
+	engine.MaxWriteDelay = *maxDelay
 
 	// set error callback
 	engine.OnError = func(err error) {
@@ -102,7 +104,7 @@ func main() {
 			n := runtime.NumGoroutine()
 
 			// print statistics
-			fmt.Printf("Publish Rate: %d msg/s, Forward Rate: %d msg/s, Clients: %d, Mercury: %d/%d, Goroutines: %d\n", pub, fwd, clients, d.Executed, d.Skipped, n)
+			fmt.Printf("Publish Rate: %d msg/s, Forward Rate: %d msg/s, Clients: %d, Mercury: %d, Goroutines: %d\n", pub, fwd, clients, d.Executed, n)
 
 			// reset counters
 			atomic.StoreInt32(&published, 0)
