@@ -1,126 +1,139 @@
 package packet
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestConnect(t *testing.T) {
 	multiTest(t, func(t *testing.T, m Mode) {
-		assertEncodeDecode(t, m, []byte{
-			byte(CONNECT << 4),
-			14, // remaining length
-			0,  // protocol string
-			6,
-			'M', 'Q', 'I', 's', 'd', 'p',
-			3, // protocol level
-			2, // connect flags
-			0, // keep alive
-			10,
-			0, // client id
-			0,
-		}, &Connect{
-			KeepAlive:    10,
-			CleanSession: true,
-			Version:      Version3,
-		}, `<Connect ClientID="" KeepAlive=10 Username="" Password="" CleanSession=true Will=nil Version=3>`)
+		if m.Version == Version3 {
+			assertEncodeDecode(t, m, []byte{
+				byte(CONNECT << 4),
+				14, // remaining length
+				0,  // protocol string
+				6,
+				'M', 'Q', 'I', 's', 'd', 'p',
+				3, // protocol level
+				2, // connect flags
+				0, // keep alive
+				10,
+				0, // client id
+				0,
+			}, &Connect{
+				Version:      Version3,
+				KeepAlive:    10,
+				CleanSession: true,
+			}, `<Connect Version=3 ClientID="" KeepAlive=10 Username="" Password="" CleanSession=true Will=nil>`)
+		} else {
+			assertEncodeDecode(t, m, []byte{
+				byte(CONNECT << 4),
+				12, // remaining length
+				0,  // protocol string
+				4,
+				'M', 'Q', 'T', 'T',
+				m.Version, // protocol level
+				2,         // connect flags
+				0,         // keep alive
+				10,
+				0, // client id
+				0,
+			}, &Connect{
+				Version:      m.Version,
+				KeepAlive:    10,
+				CleanSession: true,
+			}, fmt.Sprintf(`<Connect Version=%d ClientID="" KeepAlive=10 Username="" Password="" CleanSession=true Will=nil>`, m.Version))
+		}
 
-		assertEncodeDecode(t, m, []byte{
-			byte(CONNECT << 4),
-			12, // remaining length
-			0,  // protocol string
-			4,
-			'M', 'Q', 'T', 'T',
-			4, // protocol level
-			2, // connect flags
-			0, // keep alive
-			10,
-			0, // client id
-			0,
-		}, &Connect{
-			KeepAlive:    10,
-			CleanSession: true,
-			Version:      Version4,
-		}, `<Connect ClientID="" KeepAlive=10 Username="" Password="" CleanSession=true Will=nil Version=4>`)
+		if m.Version == Version3 {
+			assertEncodeDecode(t, m, []byte{
+				byte(CONNECT << 4),
+				43, // remaining length
+				0,  // protocol string
+				6,
+				'M', 'Q', 'I', 's', 'd', 'p',
+				3,   // protocol level
+				206, // connect flags
+				0,   // keep alive
+				10,
+				0, // client id
+				6,
+				'g', 'o', 'm', 'q', 't', 't',
+				0, // will topic
+				4,
+				'w', 'i', 'l', 'l',
+				0, // will message
+				3,
+				'b', 'y', 'e',
+				0, // username
+				4,
+				'u', 's', 'e', 'r',
+				0, // password
+				4,
+				'p', 'a', 's', 's',
+			}, &Connect{
+				Version:      Version3,
+				ClientID:     "gomqtt",
+				KeepAlive:    10,
+				Username:     "user",
+				Password:     "pass",
+				CleanSession: true,
+				Will: &Message{
+					Topic:   "will",
+					Payload: []byte("bye"),
+					QOS:     QOSAtLeastOnce,
+					Retain:  false,
+				},
+			}, `<Connect Version=3 ClientID="gomqtt" KeepAlive=10 Username="user" Password="pass" CleanSession=true Will=<Message Topic="will" QOS=1 Retain=false Payload=627965>>`)
+		} else {
+			assertEncodeDecode(t, m, []byte{
+				byte(CONNECT << 4),
+				41, // remaining length
+				0,  // protocol string
+				4,
+				'M', 'Q', 'T', 'T',
+				m.Version, // protocol level
+				206,       // connect flags
+				0,         // keep alive
+				10,
+				0, // client id
+				6,
+				'g', 'o', 'm', 'q', 't', 't',
+				0, // will topic
+				4,
+				'w', 'i', 'l', 'l',
+				0, // will message
+				3,
+				'b', 'y', 'e',
+				0, // username
+				4,
+				'u', 's', 'e', 'r',
+				0, // password
+				4,
+				'p', 'a', 's', 's',
+			}, &Connect{
+				Version:      m.Version,
+				ClientID:     "gomqtt",
+				KeepAlive:    10,
+				Username:     "user",
+				Password:     "pass",
+				CleanSession: true,
+				Will: &Message{
+					Topic:   "will",
+					Payload: []byte("bye"),
+					QOS:     QOSAtLeastOnce,
+					Retain:  false,
+				},
+			}, fmt.Sprintf(`<Connect Version=%d ClientID="gomqtt" KeepAlive=10 Username="user" Password="pass" CleanSession=true Will=<Message Topic="will" QOS=1 Retain=false Payload=627965>>`, m.Version))
+		}
 
-		assertEncodeDecode(t, m, []byte{
-			byte(CONNECT << 4),
-			41, // remaining length
-			0,  // protocol string
-			4,
-			'M', 'Q', 'T', 'T',
-			4,   // protocol level
-			206, // connect flags
-			0,   // keep alive
-			10,
-			0, // client id
-			6,
-			'g', 'o', 'm', 'q', 't', 't',
-			0, // will topic
-			4,
-			'w', 'i', 'l', 'l',
-			0, // will message
-			3,
-			'b', 'y', 'e',
-			0, // username
-			4,
-			'u', 's', 'e', 'r',
-			0, // password
-			4,
-			'p', 'a', 's', 's',
-		}, &Connect{
-			ClientID:     "gomqtt",
-			KeepAlive:    10,
-			Username:     "user",
-			Password:     "pass",
-			CleanSession: true,
-			Will: &Message{
-				Topic:   "will",
-				Payload: []byte("bye"),
-				QOS:     QOSAtLeastOnce,
-				Retain:  false,
-			},
-			Version: Version4,
-		}, `<Connect ClientID="gomqtt" KeepAlive=10 Username="user" Password="pass" CleanSession=true Will=<Message Topic="will" QOS=1 Retain=false Payload=627965> Version=4>`)
+		if m.Version == Version3 {
+			return
+		}
 
-		assertEncodeDecode(t, m, []byte{
-			byte(CONNECT << 4),
-			43, // remaining length
-			0,  // protocol string
-			6,
-			'M', 'Q', 'I', 's', 'd', 'p',
-			3,   // protocol level
-			206, // connect flags
-			0,   // keep alive
-			10,
-			0, // client id
-			6,
-			'g', 'o', 'm', 'q', 't', 't',
-			0, // will topic
-			4,
-			'w', 'i', 'l', 'l',
-			0, // will message
-			3,
-			'b', 'y', 'e',
-			0, // username
-			4,
-			'u', 's', 'e', 'r',
-			0, // password
-			4,
-			'p', 'a', 's', 's',
-		}, &Connect{
-			ClientID:     "gomqtt",
-			KeepAlive:    10,
-			Username:     "user",
-			Password:     "pass",
-			CleanSession: true,
-			Will: &Message{
-				Topic:   "will",
-				Payload: []byte("bye"),
-				QOS:     QOSAtLeastOnce,
-				Retain:  false,
-			},
-			Version: Version3,
-		}, `<Connect ClientID="gomqtt" KeepAlive=10 Username="user" Password="pass" CleanSession=true Will=<Message Topic="will" QOS=1 Retain=false Payload=627965> Version=3>`)
+		md := M4
 
-		assertDecodeError(t, m, CONNECT, 2, []byte{
+		assertDecodeError(t, md, CONNECT, 2, []byte{
 			byte(CONNECT << 4),
 			60, // < wrong remaining length
 			0,  // protocol string
@@ -128,7 +141,7 @@ func TestConnect(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 		}, ErrRemainingLengthMismatch)
 
-		assertDecodeError(t, m, CONNECT, 4, []byte{
+		assertDecodeError(t, md, CONNECT, 4, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -136,7 +149,7 @@ func TestConnect(t *testing.T) {
 			'M', 'Q', 'T', 'T',
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 8, []byte{
+		assertDecodeError(t, md, CONNECT, 8, []byte{
 			byte(CONNECT << 4),
 			6, // remaining length
 			0, // protocol string
@@ -145,7 +158,7 @@ func TestConnect(t *testing.T) {
 			// < protocol level: missing
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 10, []byte{
+		assertDecodeError(t, md, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			8, // remaining length
 			0, // protocol string
@@ -154,7 +167,7 @@ func TestConnect(t *testing.T) {
 			4,
 		}, "invalid protocol string")
 
-		assertDecodeError(t, m, CONNECT, 9, []byte{
+		assertDecodeError(t, md, CONNECT, 9, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -163,7 +176,7 @@ func TestConnect(t *testing.T) {
 			7, // < protocol level: wrong level
 		}, "invalid protocol version")
 
-		assertDecodeError(t, m, CONNECT, 9, []byte{
+		assertDecodeError(t, md, CONNECT, 9, []byte{
 			byte(CONNECT << 4),
 			7, // remaining length
 			0, // protocol string
@@ -173,7 +186,7 @@ func TestConnect(t *testing.T) {
 			// < connect flags: missing
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 10, []byte{
+		assertDecodeError(t, md, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			8, // remaining length
 			0, // protocol string
@@ -183,7 +196,7 @@ func TestConnect(t *testing.T) {
 			1, // < connect flags: reserved bit set to one
 		}, "invalid connect flags")
 
-		assertDecodeError(t, m, CONNECT, 10, []byte{
+		assertDecodeError(t, md, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			8, // remaining length
 			0, // protocol string
@@ -193,7 +206,7 @@ func TestConnect(t *testing.T) {
 			24, // < connect flags: invalid qos
 		}, ErrInvalidQOSLevel)
 
-		assertDecodeError(t, m, CONNECT, 10, []byte{
+		assertDecodeError(t, md, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			8, // remaining length
 			0, // protocol string
@@ -203,7 +216,7 @@ func TestConnect(t *testing.T) {
 			8, // < connect flags: will flag set to zero but others not
 		}, "invalid connect flags")
 
-		assertDecodeError(t, m, CONNECT, 10, []byte{
+		assertDecodeError(t, md, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			8, // remaining length
 			0, // protocol string
@@ -213,7 +226,7 @@ func TestConnect(t *testing.T) {
 			64, // < connect flags: password flag set but not username
 		}, "invalid connect flags")
 
-		assertDecodeError(t, m, CONNECT, 10, []byte{
+		assertDecodeError(t, md, CONNECT, 10, []byte{
 			byte(CONNECT << 4),
 			9, // remaining length
 			0, // protocol string
@@ -224,7 +237,7 @@ func TestConnect(t *testing.T) {
 			0, // < keep alive: incomplete
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 14, []byte{
+		assertDecodeError(t, md, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
 			13, // remaining length
 			0,  // protocol string
@@ -239,7 +252,7 @@ func TestConnect(t *testing.T) {
 			'x',
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 14, []byte{
+		assertDecodeError(t, md, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
 			12, // remaining length
 			0,  // protocol string
@@ -253,7 +266,7 @@ func TestConnect(t *testing.T) {
 			0,
 		}, "missing client id")
 
-		assertDecodeError(t, m, CONNECT, 16, []byte{
+		assertDecodeError(t, md, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
 			14, // remaining length
 			0,  // protocol string
@@ -269,7 +282,7 @@ func TestConnect(t *testing.T) {
 			1, // < wrong size
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 18, []byte{
+		assertDecodeError(t, md, CONNECT, 18, []byte{
 			byte(CONNECT << 4),
 			16, // remaining length
 			0,  // protocol string
@@ -287,7 +300,7 @@ func TestConnect(t *testing.T) {
 			1, // < wrong size
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 16, []byte{
+		assertDecodeError(t, md, CONNECT, 16, []byte{
 			byte(CONNECT << 4),
 			14, // remaining length
 			0,  // protocol string
@@ -303,7 +316,7 @@ func TestConnect(t *testing.T) {
 			1, // < wrong size
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 18, []byte{
+		assertDecodeError(t, md, CONNECT, 18, []byte{
 			byte(CONNECT << 4),
 			16, // remaining length
 			0,  // protocol string
@@ -321,13 +334,13 @@ func TestConnect(t *testing.T) {
 			1, // < wrong size
 		}, ErrInsufficientBufferSize)
 
-		assertDecodeError(t, m, CONNECT, 16, []byte{
+		assertDecodeError(t, md, CONNECT, 14, []byte{
 			byte(CONNECT << 4),
-			15, // remaining length
+			13, // remaining length
 			0,  // protocol string
-			6,
-			'M', 'Q', 'I', 's', 'd', 'p',
-			3, // protocol level
+			4,
+			'M', 'Q', 'T', 'T',
+			4, // protocol level
 			2, // connect flags
 			0, // keep alive
 			10,
@@ -337,11 +350,21 @@ func TestConnect(t *testing.T) {
 		}, "leftover buffer length")
 
 		// small buffer
-		assertEncodeError(t, m, 1, 1, &Connect{}, ErrInsufficientBufferSize)
+		assertEncodeError(t, m, 1, 1, &Connect{
+			Version: m.Version,
+		}, ErrInsufficientBufferSize)
+
+		assertEncodeError(t, Mode{Version: 255}, 0, 2, &Connect{
+			Version: 255, // < invalid
+		}, "invalid protocol version")
+
+		assertEncodeError(t, m, 0, 2, &Connect{
+			Version: 255, // < mismatch
+		}, "version mismatch")
 
 		assertEncodeError(t, m, 0, 9, &Connect{
+			Version:      m.Version,
 			CleanSession: true,
-			Version:      Version4,
 			Will: &Message{
 				Topic: "t",
 				QOS:   3, // < wrong qos
@@ -349,22 +372,22 @@ func TestConnect(t *testing.T) {
 		}, ErrInvalidQOSLevel)
 
 		assertEncodeError(t, m, 0, 14, &Connect{
+			Version:      m.Version,
 			CleanSession: true,
-			Version:      Version4,
 			ClientID:     longString, // < too big
 		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 16, &Connect{
+			Version:      m.Version,
 			CleanSession: true,
-			Version:      Version4,
 			Will: &Message{
 				Topic: longString, // < too big
 			},
 		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 19, &Connect{
+			Version:      m.Version,
 			CleanSession: true,
-			Version:      Version4,
 			Will: &Message{
 				Topic:   "t",
 				Payload: longBytes, // < too big
@@ -372,38 +395,35 @@ func TestConnect(t *testing.T) {
 		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 16, &Connect{
+			Version:      m.Version,
 			CleanSession: true,
-			Version:      Version4,
 			Username:     longString, // < too big
 		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 14, &Connect{
+			Version:      m.Version,
 			CleanSession: true,
-			Version:      Version4,
 			Username:     "", // < missing
 			Password:     "p",
 		}, "missing username")
 
 		assertEncodeError(t, m, 0, 19, &Connect{
+			Version:      m.Version,
 			CleanSession: true,
-			Version:      Version4,
 			Username:     "u",
 			Password:     longString, // < too big
 		}, ErrPrefixedBytesOverflow)
 
 		assertEncodeError(t, m, 0, 9, &Connect{
+			Version:      m.Version,
 			CleanSession: true,
-			Version:      Version4,
 			Will: &Message{
 				Topic: "", // < missing
 			},
 		}, "missing will topic")
 
-		assertEncodeError(t, m, 0, 2, &Connect{
-			Version: 255, // < invalid
-		}, "invalid protocol version")
-
 		assertEncodeError(t, m, 0, 9, &Connect{
+			Version:      m.Version,
 			CleanSession: false,
 			ClientID:     "", // < missing
 		}, "missing client id")
@@ -412,6 +432,7 @@ func TestConnect(t *testing.T) {
 
 func BenchmarkConnect(b *testing.B) {
 	benchPacket(b, &Connect{
+		Version:      Version4,
 		ClientID:     "client",
 		KeepAlive:    10,
 		Username:     "user",
@@ -423,6 +444,5 @@ func BenchmarkConnect(b *testing.B) {
 			QOS:     QOSAtLeastOnce,
 			Retain:  true,
 		},
-		Version: Version4,
 	})
 }

@@ -50,7 +50,8 @@ func (id ID) Valid() bool {
 
 // Mode defines the encoding/decoding mode.
 type Mode struct {
-	// The used protocol version.
+	// The used protocol version. When decoding a Connect packet it represents
+	// the minimum supported version by the receiver.
 	Version byte
 }
 

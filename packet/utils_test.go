@@ -42,7 +42,7 @@ func (r *errorReader) Read(p []byte) (int, error) {
 
 func multiTest(t *testing.T, fn func(t *testing.T, m Mode)) {
 	t.Run("M3", func(t *testing.T) {
-		fn(t, M4)
+		fn(t, M3)
 	})
 
 	t.Run("M4", func(t *testing.T) {

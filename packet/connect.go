@@ -21,6 +21,9 @@ var versionNames = map[byte][]byte{
 // A Connect packet is sent by a client to the server after a network
 // connection has been established.
 type Connect struct {
+	// The version.
+	Version byte
+
 	// The clients client id.
 	ClientID string
 
@@ -38,9 +41,6 @@ type Connect struct {
 
 	// The will message.
 	Will *Message
-
-	// The MQTT version.
-	Version byte
 
 	CleanStart bool
 
@@ -70,8 +70,8 @@ type Connect struct {
 // NewConnect creates a new Connect packet.
 func NewConnect() *Connect {
 	return &Connect{
-		CleanSession: true,
 		Version:      Version4,
+		CleanSession: true,
 	}
 }
 
@@ -89,8 +89,8 @@ func (c *Connect) String() string {
 	}
 
 	return fmt.Sprintf(
-		"<Connect ClientID=%q KeepAlive=%d Username=%q Password=%q CleanSession=%t Will=%s Version=%d>",
-		c.ClientID, c.KeepAlive, c.Username, c.Password, c.CleanSession, will, c.Version,
+		"<Connect Version=%d ClientID=%q KeepAlive=%d Username=%q Password=%q CleanSession=%t Will=%s>",
+		c.Version, c.ClientID, c.KeepAlive, c.Username, c.Password, c.CleanSession, will,
 	)
 }
 
@@ -126,6 +126,11 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	// check protocol version
 	if versionByte < Version3 || versionByte > Version5 {
 		return total, makeError(CONNECT, DECODE, m, total, "invalid protocol version")
+	}
+
+	// check if version is supported
+	if versionByte < m.Version {
+		return total, makeError(CONNECT, DECODE, m, total, "unsupported version")
 	}
 
 	// set version
@@ -251,9 +256,9 @@ func (c *Connect) Encode(m Mode, dst []byte) (int, error) {
 		return total, wrapError(CONNECT, ENCODE, m, total, err)
 	}
 
-	// set default version byte
-	if c.Version == 0 {
-		c.Version = m.Version
+	// check version
+	if c.Version != m.Version {
+		return total, makeError(CONNECT, ENCODE, m, total, "version mismatch")
 	}
 
 	// check version byte

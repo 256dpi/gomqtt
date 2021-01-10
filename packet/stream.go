@@ -41,13 +41,13 @@ func (e *Encoder) Write(pkt Generic, async bool) error {
 	defer e.mutex.Unlock()
 
 	// reset and potentially grow buffer
-	packetLength := pkt.Len(Mode{})
+	packetLength := pkt.Len(M4)
 	e.buffer.Reset()
 	e.buffer.Grow(packetLength)
 	buf := e.buffer.Bytes()[0:packetLength]
 
 	// encode packet
-	_, err := pkt.Encode(Mode{}, buf)
+	_, err := pkt.Encode(M4, buf)
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func (d *Decoder) Read() (Generic, error) {
 		}
 
 		// decode buffer
-		_, err = pkt.Decode(Mode{}, buf)
+		_, err = pkt.Decode(M4, buf)
 		if err != nil {
 			return nil, err
 		}
