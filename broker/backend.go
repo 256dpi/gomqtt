@@ -186,6 +186,9 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 		// close client
 		existingSession.activeClient.Close()
 
+		// capture active client before unlocking to prevent race condition
+		activeClient := existingSession.activeClient
+
 		// release global mutex to allow publish and termination, but leave the
 		// setup mutex to prevent setups
 		m.globalMutex.Unlock()
@@ -193,7 +196,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 		// wait for client to close
 		var err error
 		select {
-		case <-existingSession.activeClient.Closed():
+		case <-activeClient.Closed():
 			// continue
 		case <-time.After(m.KillTimeout):
 			err = ErrKillTimeout
