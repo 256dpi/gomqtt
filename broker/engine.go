@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/transport"
 
 	"gopkg.in/tomb.v2"
@@ -88,6 +89,11 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 		_ = conn.Close()
 		return false
 	}
+
+	// TODO: Configurable minimum version.
+
+	// set mode
+	conn.SetMode(packet.M3)
 
 	// set default read limit
 	conn.SetReadLimit(e.ReadLimit)

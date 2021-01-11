@@ -12,6 +12,9 @@ import (
 // A Conn is a connection between a client and a broker. It abstracts an
 // existing underlying stream connection.
 type Conn interface {
+	// SetMode will set the packet coding mode.
+	SetMode(packet.Mode)
+
 	// Send will write the packet to an internal buffer. It will either flush the
 	// internal buffer immediately or asynchronously in the background when it gets
 	// stale. Encoding errors are directly returned, but any network errors caught
@@ -72,6 +75,11 @@ func NewBaseConn(c Carrier) *BaseConn {
 		carrier: c,
 		stream:  packet.NewStream(c, c),
 	}
+}
+
+// SetMode will set the packet coding mode.
+func (c *BaseConn) SetMode(m packet.Mode) {
+	c.stream.SetMode(m)
 }
 
 // Send will write the packet to an internal buffer. It will either flush the

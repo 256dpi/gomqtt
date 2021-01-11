@@ -183,6 +183,11 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 		return nil, err
 	}
 
+	// TODO: Configurable version.
+
+	// set mode
+	c.conn.SetMode(packet.M4)
+
 	// set read limit
 	c.conn.SetReadLimit(c.config.ReadLimit)
 

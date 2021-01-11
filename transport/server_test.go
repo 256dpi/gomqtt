@@ -21,6 +21,8 @@ func abstractServerTest(t *testing.T, protocol string) {
 		conn1, err := server.Accept()
 		require.NoError(t, err)
 
+		conn1.SetMode(packet.M4)
+
 		pkt, err := conn1.Receive()
 		assert.NoError(t, err)
 		assert.Equal(t, pkt.Type(), packet.CONNECT)
@@ -37,6 +39,8 @@ func abstractServerTest(t *testing.T, protocol string) {
 
 	conn2, err := testDialer.Dial(getURL(server, protocol))
 	require.NoError(t, err)
+
+	conn2.SetMode(packet.M4)
 
 	err = conn2.Send(packet.NewConnect(), false)
 	assert.NoError(t, err)

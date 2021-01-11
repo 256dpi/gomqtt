@@ -22,6 +22,7 @@ var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
 // An Encoder wraps a writer and continuously encodes packets.
 type Encoder struct {
+	mode   Mode
 	writer *mercury.Writer
 	buffer bytes.Buffer
 	mutex  sync.Mutex
@@ -34,6 +35,16 @@ func NewEncoder(writer io.Writer) *Encoder {
 	}
 }
 
+// SetMode will set the encoding mode.
+func (e *Encoder) SetMode(m Mode) {
+	// acquire mutex
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
+	// set mode
+	e.mode = m
+}
+
 // Write encodes and writes the passed packet to the write buffer.
 func (e *Encoder) Write(pkt Generic, async bool) error {
 	// acquire mutex
@@ -41,13 +52,13 @@ func (e *Encoder) Write(pkt Generic, async bool) error {
 	defer e.mutex.Unlock()
 
 	// reset and potentially grow buffer
-	packetLength := pkt.Len(M4)
+	packetLength := pkt.Len(e.mode)
 	e.buffer.Reset()
 	e.buffer.Grow(packetLength)
 	buf := e.buffer.Bytes()[0:packetLength]
 
 	// encode packet
-	_, err := pkt.Encode(M4, buf)
+	_, err := pkt.Encode(e.mode, buf)
 	if err != nil {
 		return err
 	}
@@ -79,6 +90,7 @@ func (e *Encoder) SetMaxWriteDelay(delay time.Duration) {
 // A Decoder wraps a Reader and continuously decodes packets.
 type Decoder struct {
 	limit  int64
+	mode   Mode
 	reader *bufio.Reader
 	buffer bytes.Buffer
 	mutex  sync.Mutex
@@ -89,6 +101,16 @@ func NewDecoder(reader io.Reader) *Decoder {
 	return &Decoder{
 		reader: bufio.NewReader(reader),
 	}
+}
+
+// SetMode will set the decoding mode.
+func (d *Decoder) SetMode(m Mode) {
+	// acquire mutex
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+
+	// set mode
+	d.mode = m
 }
 
 // Read reads the next packet from the buffered reader.
@@ -149,7 +171,7 @@ func (d *Decoder) Read() (Generic, error) {
 		}
 
 		// decode buffer
-		_, err = pkt.Decode(M4, buf)
+		_, err = pkt.Decode(d.mode, buf)
 		if err != nil {
 			return nil, err
 		}
@@ -176,4 +198,10 @@ func NewStream(reader io.Reader, writer io.Writer) *Stream {
 		Decoder: NewDecoder(reader),
 		Encoder: NewEncoder(writer),
 	}
+}
+
+// SetMode will set the coding mode.
+func (s *Stream) SetMode(m Mode) {
+	s.Decoder.SetMode(m)
+	s.Encoder.SetMode(m)
 }

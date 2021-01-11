@@ -20,6 +20,9 @@ func Example() {
 			panic(err)
 		}
 
+		// set mode
+		conn.SetMode(packet.M4)
+
 		// receive next packet
 		pkt, err := conn.Receive()
 		if err != nil {
@@ -43,6 +46,9 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
+
+	// set mode
+	conn.SetMode(packet.M4)
 
 	// send connect packet
 	err = conn.Send(packet.NewConnect(), false)

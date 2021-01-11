@@ -6,6 +6,9 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/256dpi/gomqtt/packet"
+	"github.com/256dpi/gomqtt/transport"
 )
 
 var testPayload = []byte("test")
@@ -70,6 +73,17 @@ func (c *Config) usernamePassword() (string, string) {
 func (c *Config) clientID() string {
 	c.counter++
 	return fmt.Sprintf("c%d", c.counter)
+}
+
+func (c *Config) conn() transport.Conn {
+	conn, err := transport.Dial(c.URL)
+	if err != nil {
+		panic(err)
+	}
+
+	conn.SetMode(packet.M4)
+
+	return conn
 }
 
 // Run will fully test a to support all specified features in the matrix.

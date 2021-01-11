@@ -516,6 +516,9 @@ func (c *Client) processConnect(pkt *packet.Connect) error {
 	// set state
 	atomic.StoreUint32(&c.state, clientConnected)
 
+	// set mode
+	c.conn.SetMode(packet.Mode{Version: pkt.Version})
+
 	// retrieve session
 	s, resumed, err := c.backend.Setup(c, pkt.ClientID, pkt.CleanSession)
 	if err != nil {

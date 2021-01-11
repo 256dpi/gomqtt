@@ -8,7 +8,6 @@ import (
 
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/transport"
 	"github.com/256dpi/gomqtt/transport/flow"
 
 	"github.com/stretchr/testify/assert"
@@ -557,11 +556,9 @@ func KeepAliveTimeoutTest(t *testing.T, config *Config) {
 		Receive(connack).
 		End()
 
-	conn, err := transport.Dial(config.URL)
-	assert.NoError(t, err)
-	assert.NotNil(t, conn)
+	conn := config.conn()
 
-	err = c.Test(conn)
+	err := c.Test(conn)
 	assert.NoError(t, err)
 }
 
@@ -590,10 +587,7 @@ func UnexpectedPubrelTest(t *testing.T, config *Config) {
 		Send(&packet.Disconnect{}).
 		End()
 
-	conn, err := transport.Dial(config.URL)
-	assert.NoError(t, err)
-	assert.NotNil(t, conn)
-
-	err = c.Test(conn)
+	conn := config.conn()
+	err := c.Test(conn)
 	assert.NoError(t, err)
 }

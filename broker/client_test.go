@@ -39,6 +39,8 @@ func TestClientMaximumKeepAlive(t *testing.T) {
 	conn, err := transport.Dial("tcp://localhost:" + port)
 	assert.NoError(t, err)
 
+	conn.SetMode(packet.M4)
+
 	f := flow.New().
 		Send(packet.NewConnect()).
 		Receive(packet.NewConnack()).
@@ -106,6 +108,8 @@ func TestClientTokenTimeoutPublish(t *testing.T) {
 	conn, err := transport.Dial("tcp://localhost:" + port)
 	assert.NoError(t, err)
 
+	conn.SetMode(packet.M4)
+
 	f := flow.New().
 		Send(packet.NewConnect()).
 		Receive(packet.NewConnack()).
@@ -145,6 +149,8 @@ func TestClientTokenTimeoutDequeue(t *testing.T) {
 
 	conn, err := transport.Dial("tcp://localhost:" + port)
 	assert.NoError(t, err)
+
+	conn.SetMode(packet.M4)
 
 	f := flow.New().
 		Send(packet.NewConnect()).

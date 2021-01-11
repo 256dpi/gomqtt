@@ -6,7 +6,6 @@ import (
 
 	"github.com/256dpi/gomqtt/client"
 	"github.com/256dpi/gomqtt/packet"
-	"github.com/256dpi/gomqtt/transport"
 	"github.com/256dpi/gomqtt/transport/flow"
 
 	"github.com/stretchr/testify/assert"
@@ -51,11 +50,9 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 
 	disconnect := packet.NewDisconnect()
 
-	conn1, err := transport.Dial(config.URL)
-	assert.NoError(t, err)
-	assert.NotNil(t, conn1)
+	conn1 := config.conn()
 
-	err = flow.New().
+	err := flow.New().
 		Send(connect).
 		Skip(&packet.Connack{}).
 		Send(subscribe).
@@ -66,9 +63,7 @@ func PublishResendQOS1Test(t *testing.T, config *Config, topic string) {
 		Test(conn1)
 	assert.NoError(t, err)
 
-	conn2, err := transport.Dial(config.URL)
-	assert.NoError(t, err)
-	assert.NotNil(t, conn2)
+	conn2 := config.conn()
 
 	publishIn.Dup = true
 
@@ -128,11 +123,9 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	disconnect := packet.NewDisconnect()
 
-	conn1, err := transport.Dial(config.URL)
-	assert.NoError(t, err)
-	assert.NotNil(t, conn1)
+	conn1 := config.conn()
 
-	err = flow.New().
+	err := flow.New().
 		Send(connect).
 		Skip(&packet.Connack{}).
 		Send(subscribe).
@@ -147,9 +140,7 @@ func PublishResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	time.Sleep(config.ProcessWait)
 
-	conn2, err := transport.Dial(config.URL)
-	assert.NoError(t, err)
-	assert.NotNil(t, conn2)
+	conn2 := config.conn()
 
 	publishIn.Dup = true
 
@@ -214,11 +205,9 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	disconnect := packet.NewDisconnect()
 
-	conn1, err := transport.Dial(config.URL)
-	assert.NoError(t, err)
-	assert.NotNil(t, conn1)
+	conn1 := config.conn()
 
-	err = flow.New().
+	err := flow.New().
 		Send(connect).
 		Skip(&packet.Connack{}).
 		Send(subscribe).
@@ -234,9 +223,7 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 
 	time.Sleep(config.ProcessWait)
 
-	conn2, err := transport.Dial(config.URL)
-	assert.NoError(t, err)
-	assert.NotNil(t, conn2)
+	conn2 := config.conn()
 
 	publishIn.Dup = true
 

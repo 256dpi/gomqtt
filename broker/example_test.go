@@ -98,7 +98,7 @@ func Example() {
 
 	// Output:
 	// B [new connection]
-	// B [packet received] <Connect ClientID="" KeepAlive=30 Username="" Password="" CleanSession=true Will=nil Version=4>
+	// B [packet received] <Connect Version=4 ClientID="" KeepAlive=30 Username="" Password="" CleanSession=true Will=nil>
 	// B [packet sent] <Connack SessionPresent=false ReturnCode=0>
 	// B [packet received] <Subscribe ID=1 Subscriptions=["test"=>0]>
 	// B [packet sent] <Suback ID=1 ReturnCodes=[0]>

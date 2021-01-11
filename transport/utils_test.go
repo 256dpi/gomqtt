@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/256dpi/gomqtt/packet"
 )
 
 var testTLSConfig *tls.Config
@@ -51,6 +53,7 @@ func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 			panic(err)
 		}
 
+		conn.SetMode(packet.M4)
 		conn.SetMaxWriteDelay(10 * time.Millisecond)
 
 		handler(conn)
@@ -64,6 +67,7 @@ func connectionPair(protocol string, handler func(Conn)) (Conn, chan struct{}) {
 		panic(err)
 	}
 
+	conn.SetMode(packet.M4)
 	conn.SetMaxWriteDelay(10 * time.Millisecond)
 
 	return conn, done

@@ -13,6 +13,7 @@ import (
 func TestEncoder(t *testing.T) {
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
+	enc.SetMode(M4)
 	enc.SetMaxWriteDelay(time.Millisecond)
 
 	err := enc.Write(NewConnect(), false)
@@ -27,6 +28,7 @@ func TestEncoder(t *testing.T) {
 func TestEncoderEncodeError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
+	enc.SetMode(M4)
 	enc.SetMaxWriteDelay(time.Millisecond)
 
 	pkt := NewConnack()
@@ -40,6 +42,7 @@ func TestEncoderWriterError(t *testing.T) {
 	enc := NewEncoder(&errorWriter{
 		err: errors.New("foo"),
 	})
+	enc.SetMode(M4)
 	enc.SetMaxWriteDelay(time.Millisecond)
 
 	pkt := NewPublish()
@@ -53,6 +56,7 @@ func TestEncoderWriterError(t *testing.T) {
 func TestDecoder(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
+	dec.SetMode(M4)
 
 	var pkt Generic = NewConnect()
 	b := make([]byte, pkt.Len(M4))
@@ -68,6 +72,7 @@ func TestDecoder(t *testing.T) {
 func TestDecoderDetectionOverflowError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
+	dec.SetMode(M4)
 
 	buf.Write([]byte{0x10, 0xff, 0xff, 0xff, 0x80})
 
@@ -79,6 +84,7 @@ func TestDecoderDetectionOverflowError(t *testing.T) {
 func TestDecoderPeekUnexpectedEOFError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
+	dec.SetMode(M4)
 
 	buf.Write([]byte{0x10, 0xff, 0xff})
 
@@ -91,6 +97,7 @@ func TestDecoderPeekError(t *testing.T) {
 	dec := NewDecoder(&errorReader{
 		err: errors.New("foo"),
 	})
+	dec.SetMode(M4)
 
 	pkt, err := dec.Read()
 	assert.Error(t, err)
@@ -100,6 +107,7 @@ func TestDecoderPeekError(t *testing.T) {
 func TestDecoderInvalidTypeError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
+	dec.SetMode(M4)
 
 	buf.Write([]byte{0x00, 0x00})
 
@@ -112,6 +120,7 @@ func TestDecoderInvalidTypeError(t *testing.T) {
 func TestDecoderReadLimitError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
+	dec.SetMode(M4)
 	dec.SetReadLimit(1)
 
 	buf.Write([]byte{0x00, 0x00})
@@ -136,6 +145,7 @@ func TestDecoderReadError(t *testing.T) {
 func TestDecoderDecodeError(t *testing.T) {
 	buf := new(bytes.Buffer)
 	dec := NewDecoder(buf)
+	dec.SetMode(M4)
 
 	buf.Write([]byte{0x20, 0x02, 0x40, 0x00})
 
@@ -149,6 +159,7 @@ func TestStream(t *testing.T) {
 	out := new(bytes.Buffer)
 
 	s := NewStream(in, out)
+	s.SetMode(M4)
 	s.SetMaxWriteDelay(time.Millisecond)
 
 	err := s.Write(NewConnect(), false)
