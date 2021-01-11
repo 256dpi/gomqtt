@@ -136,6 +136,9 @@ func (c *Connect) Decode(m Mode, src []byte) (int, error) {
 	// set version
 	c.Version = versionByte
 
+	// adjust mode
+	m.Version = versionByte
+
 	// check protocol version string
 	if !bytes.Equal(protoName, versionNames[c.Version]) {
 		return total, makeError(CONNECT, DECODE, m, total, "invalid protocol string")
