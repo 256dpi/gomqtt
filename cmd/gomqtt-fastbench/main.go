@@ -21,11 +21,14 @@ import (
 
 var broker = flag.String("broker", "tcp://0.0.0.0:1883", "broker url")
 var pairs = flag.Int("pairs", 1, "number of pairs")
+var pace = flag.Duration("pace", 100*time.Millisecond, "connection pace")
 var inflight = flag.Int("inflight", 0, "available tokens")
 var duration = flag.Int("duration", 0, "duration in seconds")
 var length = flag.Int("length", 1, "payload length")
 var retained = flag.Bool("retained", false, "retain flag")
+var delay = flag.Duration("delay", 0, "publish delay")
 
+var connections int32
 var sent int32
 var received int32
 var delta int32
@@ -65,6 +68,10 @@ func main() {
 		})
 	}
 
+	// launch reporter
+	wg.Add(1)
+	go reporter()
+
 	// launch pairs
 	for i := 0; i < *pairs; i++ {
 		// compute id
@@ -83,10 +90,12 @@ func main() {
 		wg.Add(2)
 		go consumer(id, tokens)
 		go publisher(id, tokens)
-	}
 
-	// launch reporter
-	go reporter()
+		// pace connections
+		if *pace > 0 {
+			time.Sleep(*pace)
+		}
+	}
 
 	// await finish
 	<-finish
@@ -145,6 +154,9 @@ func connect(id string) transport.Conn {
 	if connack.ReturnCode != packet.ConnectionAccepted {
 		panic("expected connection expected")
 	}
+
+	// increment
+	atomic.AddInt32(&connections, 1)
 
 	return conn
 }
@@ -245,18 +257,31 @@ func publisher(id string, tokens <-chan struct{}) {
 		// update statistics
 		atomic.AddInt32(&sent, 1)
 		atomic.AddInt32(&delta, 1)
+
+		// check delay
+		if *delay > 0 {
+			time.Sleep(*delay)
+		}
 	}
 }
 
 func reporter() {
+	// ensure exit signal
+	defer wg.Done()
+
 	// prepare counter
 	var iterations int32
 
 	for {
 		// wait a second
-		time.Sleep(1 * time.Second)
+		select {
+		case <-time.After(time.Second):
+		case <-done:
+			return
+		}
 
 		// get counters
+		curConnections := atomic.LoadInt32(&connections)
 		curSent := atomic.LoadInt32(&sent)
 		curReceived := atomic.LoadInt32(&received)
 		curDelta := atomic.LoadInt32(&delta)
@@ -266,6 +291,7 @@ func reporter() {
 		iterations++
 
 		// print statistics
+		fmt.Printf("Connections: %d - ", curConnections)
 		fmt.Printf("Sent: %d msgs - ", curSent)
 		fmt.Printf("Received: %d msgs ", curReceived)
 		fmt.Printf("(Buffered: %d msgs) ", curDelta)
