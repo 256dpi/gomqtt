@@ -44,8 +44,8 @@ func (c *DialConfig) ensureDefaults() {
 	if c.DefaultWSPort == "" {
 		c.DefaultWSPort = "80"
 	}
-	if c.DefaultWSPort == "" {
-		c.DefaultWSPort = "443"
+	if c.DefaultWSSPort == "" {
+		c.DefaultWSSPort = "443"
 	}
 }
 
