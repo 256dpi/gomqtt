@@ -1,0 +1,22 @@
+on: [push, pull_request]
+name: Test
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.x
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Prepare
+        run: |
+          sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa -y
+          sudo apt-get update -y
+          sudo apt-get install mosquitto -y
+          sudo service mosquitto start
+          go get filippo.io/mkcert
+          make cert
+      - name: Test
+        run: go test ./...
