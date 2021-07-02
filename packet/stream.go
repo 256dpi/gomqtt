@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -22,23 +23,30 @@ var ErrReadLimitExceeded = errors.New("read limit exceeded")
 // An Encoder wraps a writer and continuously encodes packets.
 type Encoder struct {
 	writer *mercury.Writer
-	buffer bytes.Buffer
+	pool   sync.Pool
 }
 
 // NewEncoder creates a new Encoder.
 func NewEncoder(writer io.Writer) *Encoder {
 	return &Encoder{
 		writer: mercury.NewWriter(writer, 0),
+		pool: sync.Pool{
+			New: func() interface{} {
+				return new(bytes.Buffer)
+			}},
 	}
 }
 
 // Write encodes and writes the passed packet to the write buffer.
 func (e *Encoder) Write(pkt Generic, async bool) error {
+	buffer := e.pool.Get().(*bytes.Buffer)
+	defer e.pool.Put(buffer)
+
 	// reset and potentially grow buffer
 	packetLength := pkt.Len()
-	e.buffer.Reset()
-	e.buffer.Grow(packetLength)
-	buf := e.buffer.Bytes()[0:packetLength]
+	buffer.Reset() // must reset get from pool
+	buffer.Grow(packetLength)
+	buf := buffer.Bytes()[0:packetLength]
 
 	// encode packet
 	_, err := pkt.Encode(buf)
@@ -74,13 +82,17 @@ func (e *Encoder) SetMaxWriteDelay(delay time.Duration) {
 type Decoder struct {
 	limit  int64
 	reader *bufio.Reader
-	buffer bytes.Buffer
+	pool   sync.Pool
 }
 
 // NewDecoder returns a new Decoder.
 func NewDecoder(reader io.Reader) *Decoder {
 	return &Decoder{
 		reader: bufio.NewReader(reader),
+		pool: sync.Pool{
+			New: func() interface{} {
+				return new(bytes.Buffer)
+			}},
 	}
 }
 
@@ -126,10 +138,13 @@ func (d *Decoder) Read() (Generic, error) {
 			return nil, err
 		}
 
+		buffer := d.pool.Get().(*bytes.Buffer)
+		defer d.pool.Put(buffer)
+
 		// reset and eventually grow buffer
-		d.buffer.Reset()
-		d.buffer.Grow(packetLength)
-		buf := d.buffer.Bytes()[0:packetLength]
+		buffer.Reset()
+		buffer.Grow(packetLength)
+		buf := buffer.Bytes()[0:packetLength]
 
 		// read whole packet (will not return EOF)
 		_, err = io.ReadFull(d.reader, buf)
