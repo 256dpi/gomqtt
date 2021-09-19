@@ -611,12 +611,10 @@ func (c *Client) processUnsuback(unsuback *packet.Unsuback) error {
 // handle an incoming Publish packet
 func (c *Client) processPublish(publish *packet.Publish) error {
 	// call callback for unacknowledged and directly acknowledged messages
-	if publish.Message.QOS <= 1 {
-		if c.Callback != nil {
-			err := c.Callback(&publish.Message, nil)
-			if err != nil {
-				return c.die(err, true)
-			}
+	if c.Callback != nil {
+		err := c.Callback(&publish.Message, nil)
+		if err != nil {
+			return c.die(err, true)
 		}
 	}
 
@@ -711,14 +709,6 @@ func (c *Client) processPubrel(id packet.ID) error {
 	publish, ok := pkt.(*packet.Publish)
 	if !ok {
 		return nil // ignore a wrongly sent Pubrel packet
-	}
-
-	// call callback
-	if c.Callback != nil {
-		err = c.Callback(&publish.Message, nil)
-		if err != nil {
-			return c.die(err, true)
-		}
 	}
 
 	// prepare pubcomp packet
