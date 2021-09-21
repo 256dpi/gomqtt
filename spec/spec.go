@@ -260,6 +260,14 @@ func Run(t *testing.T, config *Config) {
 		t.Run("PubrelResendQOS2", func(t *testing.T) {
 			PubrelResendQOS2Test(t, config, "pubres/3")
 		})
+
+		t.Run("ServiceRetryQOS1", func(t *testing.T) {
+			ServiceRetryTest(t, config, "pubretry/1", 1)
+		})
+
+		t.Run("ServiceRetryQOS2", func(t *testing.T) {
+			ServiceRetryTest(t, config, "pubretry/2", 2)
+		})
 	}
 
 	if config.StoredSubscriptions {

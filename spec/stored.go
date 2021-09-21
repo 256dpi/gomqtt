@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"io"
 	"testing"
 	"time"
 
@@ -251,6 +252,67 @@ func PubrelResendQOS2Test(t *testing.T, config *Config, topic string) {
 	assert.NoError(t, err)
 }
 
+// ServiceRetryTest tests the broker for properly retrying messages
+// using two services.
+func ServiceRetryTest(t *testing.T, config *Config, topic string, qos packet.QOS) {
+	id1 := config.clientID()
+	id2 := config.clientID()
+
+	options1 := client.NewConfigWithClientID(config.URL, id1)
+	options1.CleanSession = false
+
+	options2 := client.NewConfigWithClientID(config.URL, id2)
+	options2.CleanSession = false
+
+	assert.NoError(t, client.ClearSession(options1, 10*time.Second))
+	assert.NoError(t, client.ClearSession(options2, 10*time.Second))
+
+	n := 0
+	msgs := make(chan *packet.Message, 1)
+	errs := make(chan error, 1)
+
+	receiver := client.NewService(10)
+	receiver.MessageCallback = func(msg *packet.Message) error {
+		msgs <- msg
+		if n == 0 {
+			n++
+			return io.EOF
+		}
+		return nil
+	}
+
+	receiver.ErrorCallback = func(err error) {
+		errs <- err
+	}
+	receiver.Start(options1)
+
+	sender := client.NewService(10)
+	sender.Start(options2)
+
+	sf := receiver.Subscribe(topic, qos)
+	assert.NoError(t, sf.Wait(10*time.Second))
+	assert.Equal(t, []packet.QOS{qos}, sf.ReturnCodes())
+
+	pf := sender.Publish(topic, testPayload, qos, false)
+	assert.NoError(t, pf.Wait(10*time.Second))
+
+	assert.Equal(t, &packet.Message{
+		Topic:   topic,
+		Payload: testPayload,
+		QOS:     qos,
+	}, <-msgs)
+	assert.Equal(t, io.EOF, <-errs)
+
+	assert.Equal(t, &packet.Message{
+		Topic:   topic,
+		Payload: testPayload,
+		QOS:     qos,
+	}, <-msgs)
+
+	receiver.Stop(true)
+	sender.Stop(true)
+}
+
 // StoredSubscriptionsTest tests the broker for properly handling stored
 // subscriptions.
 func StoredSubscriptionsTest(t *testing.T, config *Config, topic string, qos packet.QOS) {
@@ -285,7 +347,7 @@ func StoredSubscriptionsTest(t *testing.T, config *Config, topic string, qos pac
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, packet.QOS(qos), msg.QOS)
+		assert.Equal(t, qos, msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
