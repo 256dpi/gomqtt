@@ -14,7 +14,7 @@ jobs:
         run: |
           sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa -y
           sudo apt-get update -y
-          sudo apt-get install mosquitto=v1.6.10
+          sudo apt-get install mosquitto=1.6.10
           sudo service mosquitto start
           go get filippo.io/mkcert
           make cert
