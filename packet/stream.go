@@ -20,11 +20,11 @@ var ErrDetectionOverflow = errors.New("detection overflow")
 // exceeded its read limit.
 var ErrReadLimitExceeded = errors.New("read limit exceeded")
 
-// Encoder/Decoder memory pool
-var pool sync.Pool = sync.Pool{
+var pool = sync.Pool{
 	New: func() interface{} {
 		return new(bytes.Buffer)
-	}}
+	},
+}
 
 // An Encoder wraps a writer and continuously encodes packets.
 type Encoder struct {
@@ -40,12 +40,13 @@ func NewEncoder(writer io.Writer) *Encoder {
 
 // Write encodes and writes the passed packet to the write buffer.
 func (e *Encoder) Write(pkt Generic, async bool) error {
+	// get buffer from pool
 	buffer := pool.Get().(*bytes.Buffer)
 	defer pool.Put(buffer)
+	buffer.Reset()
 
-	// reset and potentially grow buffer
+	// grow buffer and get slice
 	packetLength := pkt.Len()
-	buffer.Reset() // must reset get from pool
 	buffer.Grow(packetLength)
 	buf := buffer.Bytes()[0:packetLength]
 
@@ -134,11 +135,12 @@ func (d *Decoder) Read() (Generic, error) {
 			return nil, err
 		}
 
+		// get buffer from pool
 		buffer := pool.Get().(*bytes.Buffer)
 		defer pool.Put(buffer)
-
-		// reset and eventually grow buffer
 		buffer.Reset()
+
+		// grow buffer and get slice
 		buffer.Grow(packetLength)
 		buf := buffer.Bytes()[0:packetLength]
 
