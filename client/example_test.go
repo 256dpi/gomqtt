@@ -98,9 +98,15 @@ func ExampleService() {
 
 	s.Start(config)
 
-	s.Subscribe("test", 0).Wait(10 * time.Second)
+	err = s.Subscribe("test", 0).Wait(10 * time.Second)
+	if err != nil {
+		panic(err)
+	}
 
-	s.Publish("test", []byte("test"), 0, false)
+	err = s.Publish("test", []byte("test"), 0, false).Wait(10 * time.Second)
+	if err != nil {
+		panic(err)
+	}
 
 	<-wait
 

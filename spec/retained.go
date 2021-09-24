@@ -41,7 +41,7 @@ func RetainedMessageTest(t *testing.T, config *Config, out, in string, sub, pub 
 		assert.NoError(t, err)
 		assert.Equal(t, out, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, packet.QOS(sub), msg.QOS)
+		assert.Equal(t, sub, msg.QOS)
 		assert.True(t, msg.Retain)
 
 		close(wait)

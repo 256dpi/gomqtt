@@ -13,7 +13,7 @@ import (
 )
 
 // ErrDetectionOverflow is returned by the Decoder if the next packet couldn't
-// be detect from the initial header bytes.
+// be detected from the initial header bytes.
 var ErrDetectionOverflow = errors.New("detection overflow")
 
 // ErrReadLimitExceeded can be returned during a Receive if the connection
@@ -38,7 +38,7 @@ func NewEncoder(writer io.Writer) *Encoder {
 	}
 }
 
-// Write encodes and writes the passed packet to the write buffer.
+// Write encodes and writes the passed packet to the buffer.
 func (e *Encoder) Write(pkt Generic, async bool) error {
 	// get buffer from pool
 	buffer := pool.Get().(*bytes.Buffer)

@@ -70,7 +70,7 @@ type Session interface {
 	LookupPacket(session.Direction, packet.ID) (packet.Generic, error)
 
 	// DeletePacket should remove a packet from the session. The method should
-	// not return an error if no packet with the specified id does exists.
+	// not return an error if no packet with the specified id does exist.
 	DeletePacket(session.Direction, packet.ID) error
 
 	// AllPackets should return all packets currently saved in the session.
@@ -97,7 +97,7 @@ type Backend interface {
 	// backend should also close any existing clients that use the same id.
 	//
 	// Note: In this call the Backend may also allocate other resources and
-	// setup the client for further usage as the broker will acknowledge the
+	// set up the client for further usage as the broker will acknowledge the
 	// connection when the call returns. The Terminate function is called for
 	// every client that Setup has been called for.
 	Setup(client *Client, id string, clean bool) (a Session, resumed bool, err error)
@@ -130,9 +130,9 @@ type Backend interface {
 	Unsubscribe(client *Client, topics []string, ack Ack) error
 
 	// Publish should forward the passed message to all other clients that hold
-	// a subscription that matches the messages topic. It should also add the
+	// a subscription that matches the message's topic. It should also add the
 	// message to all sessions that have a matching offline subscription. The
-	// later may only apply to messages with a QOS greater than 0. If an Ack is
+	// later may only apply to message's with a QOS greater than 0. If an Ack is
 	// provided, the message will be acknowledged when called during or after
 	// the call to Publish.
 	//
@@ -158,7 +158,7 @@ type Backend interface {
 	// unsubscribe the passed client from all previously subscribed topics. The
 	// backend may also convert a clients subscriptions to offline subscriptions.
 	//
-	// Note: The Backend may also cleanup previously allocated resources for
+	// Note: The Backend may also clean up previously allocated resources for
 	// that client as the broker will close the connection when the call
 	// returns.
 	Terminate(client *Client) error
@@ -205,7 +205,7 @@ type Client struct {
 
 	// ParallelPublishes may be set during Setup to control the number of
 	// parallel calls to Publish a client can perform. This setting also has an
-	// effect on how many incoming packets are stored in the clients session.
+	// effect on how many incoming packets are stored in the client's session.
 	//
 	// Will default to 10.
 	ParallelPublishes int
@@ -218,7 +218,7 @@ type Client struct {
 
 	// InflightMessages may be set during Setup to control the number of
 	// inflight messages from the broker to the client. This also defines how
-	// many outgoing packets are stored in the clients session.
+	// many outgoing packets are stored in the client's session.
 	//
 	// Will default to 10.
 	InflightMessages int
@@ -990,7 +990,7 @@ func (c *Client) die(event LogEvent, err error) error {
 	return err
 }
 
-// will try to cleanup as many resources as possible
+// will try to clean up as many resources as possible
 func (c *Client) cleanup() {
 	// check if not cleanly connected and will is present
 	if atomic.LoadUint32(&c.state) == clientConnected && c.will != nil {

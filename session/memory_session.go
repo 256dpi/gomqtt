@@ -6,7 +6,7 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 )
 
-// Direction denotes a packets direction.
+// Direction denotes a packet direction.
 type Direction int
 
 const (
@@ -51,7 +51,7 @@ func (s *MemorySession) LookupPacket(dir Direction, id packet.ID) (packet.Generi
 }
 
 // DeletePacket will remove a packet from the session. The method must not
-// return an error if no packet with the specified id does exists.
+// return an error if no packet with the specified id does exist.
 func (s *MemorySession) DeletePacket(dir Direction, id packet.ID) error {
 	s.storeForDirection(dir).Delete(id)
 	return nil

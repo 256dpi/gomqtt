@@ -128,7 +128,7 @@ func TestNetConnReadTimeoutAfterDetect(t *testing.T) {
 		assert.NoError(t, err)
 
 		netConn := conn1.(*NetConn)
-		_, err = netConn.UnderlyingConn().Write(buf[0 : len(buf)-1]) // < not all of the bytes
+		_, err = netConn.UnderlyingConn().Write(buf[0 : len(buf)-1]) // < not all the bytes
 		assert.NoError(t, err)
 	})
 

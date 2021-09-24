@@ -48,7 +48,7 @@ type Connack struct {
 	// stored session state.
 	SessionPresent bool
 
-	// If a well formed Connect packet is received by the server, but the server
+	// If a well-formed Connect packet is received by the server, but the server
 	// is unable to process it for some reason, then the server should attempt
 	// to send a Connack containing a non-zero ReturnCode.
 	ReturnCode ConnackCode

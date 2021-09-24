@@ -11,8 +11,8 @@ import (
 type GenericFuture interface {
 	// Wait will wait the given amount of time and return whether the future has
 	// been completed, canceled or the request timed out. If no time has been
-	// provided the wait will never timeout.
-
+	// provided the wait will never time out.
+	//
 	// Note: Wait will not return any Client related errors.
 	Wait(timeout time.Duration) error
 }

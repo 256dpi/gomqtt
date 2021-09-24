@@ -34,7 +34,7 @@ func New() *Future {
 
 // Wait will wait the given amount of time and return whether the future has been
 // completed, canceled or the request timed out. If no time has been provided
-// the wait will never timeout.
+// the wait will never time out.
 func (f *Future) Wait(timeout time.Duration) error {
 	// prepare deadline
 	var deadline <-chan time.Time

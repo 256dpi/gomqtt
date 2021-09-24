@@ -119,7 +119,7 @@ func (e *Engine) Close() {
 }
 
 // Run runs the passed engine on a random available port and returns a channel
-// that can be closed to shutdown the engine. This method is intended to be used
+// that can be closed to shut down the engine. This method is intended to be used
 // in testing scenarios.
 func Run(engine *Engine, protocol string) (string, chan struct{}, chan struct{}) {
 	// launch server

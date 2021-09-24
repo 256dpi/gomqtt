@@ -141,7 +141,7 @@ func readLPBytes(buf []byte, safe bool, t Type) ([]byte, int, error) {
 		return bytes, n + length, nil
 	}
 
-	// otherwise copy buffer
+	// otherwise, copy buffer
 	cpy := make([]byte, length)
 	n += copy(cpy, bytes)
 

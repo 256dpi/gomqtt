@@ -82,7 +82,7 @@ func Dial(address string) (Conn, error) {
 	return sharedDialer.Dial(address)
 }
 
-// Dial initiates a connection based in information extracted from an URL.
+// Dial initiates a connection based in information extracted from a URL.
 func (d *Dialer) Dial(address string) (Conn, error) {
 	// parse address
 	addr, err := url.ParseRequestURI(address)

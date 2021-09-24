@@ -20,7 +20,7 @@ type Config struct {
 	// BrokerURL is the url that is used to infer options to open the connection.
 	BrokerURL string
 
-	// ClientID can be set to the clients id.
+	// ClientID can be set to the client's id.
 	ClientID string
 
 	// CleanSession can be set to request a clean session.

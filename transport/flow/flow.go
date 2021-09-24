@@ -52,7 +52,7 @@ func (conn *Pipe) Receive() (packet.Generic, error) {
 	}
 }
 
-// Close will close the conn and let Send and Receive return errors.
+// Close will close the pipe and let Send and Receive return errors.
 func (conn *Pipe) Close() error {
 	close(conn.close)
 	return nil

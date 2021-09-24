@@ -72,7 +72,7 @@ func (c *Config) clientID() string {
 	return fmt.Sprintf("c%d", c.counter)
 }
 
-// Run will fully test a to support all specified features in the matrix.
+// Run will fully test a broker to support all specified features in the matrix.
 func Run(t *testing.T, config *Config) {
 	t.Run("PublishSubscribeQOS0", func(t *testing.T) {
 		PublishSubscribeTest(t, config, "pubsub/1", "pubsub/1", 0, 0, 0)

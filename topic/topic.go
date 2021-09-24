@@ -66,7 +66,7 @@ func Parse(topic string, allowWildcards bool) (string, error) {
 	return topic, nil
 }
 
-// ContainsWildcards tests if the supplied topic contains wildcards. The topics
+// ContainsWildcards tests if the supplied topic contains wildcards. The topic
 // is expected to be tested and normalized using Parse beforehand.
 func ContainsWildcards(topic string) bool {
 	return strings.Contains(topic, "+") || strings.Contains(topic, "#")

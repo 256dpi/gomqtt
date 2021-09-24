@@ -34,7 +34,7 @@ func NewWebSocketUpgrader(fallback http.Handler) *WebSocketUpgrader {
 }
 
 // Upgrade will attempt to upgrade the request and return the connection. If
-// the request is not a upgrade it will use the fallback handler if available.
+// the request is not an upgrade it will use the fallback handler if available.
 // Encountered errors are already written to the client.
 func (u *WebSocketUpgrader) Upgrade(w http.ResponseWriter, r *http.Request) (*WebSocketConn, error) {
 	// call fallback if request is not an upgrade

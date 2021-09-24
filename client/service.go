@@ -29,7 +29,7 @@ type command struct {
 // application, while it automatically connects and reconnects clients in the
 // background. Errors are not returned but emitted using the ErrorCallback.
 // All methods return Futures that get completed once the acknowledgements are
-// received. Once the services is stopped all waiting futures get canceled.
+// received. Once the service is stopped all waiting futures get canceled.
 //
 // Note: If clean session is false and there are packets in the store, messages
 // might get completed after starting without triggering any futures to complete.
@@ -46,7 +46,7 @@ type Service struct {
 
 	// The MessageCallback is called when a message is received. If an error is
 	// returned the underlying client will be prevented from acknowledging the
-	// specified message and closed immediately. The errors is logged and a
+	// specified message and closed immediately. The error is logged and a
 	// reconnect attempt initiated.
 	//
 	// Note: Execution of the service is resumed after the callback returns.
@@ -69,7 +69,7 @@ type Service struct {
 	OfflineCallback func()
 
 	// The logger that is used to log write low level information like packets
-	// that have ben successfully sent and received, details about the automatic
+	// that have been successfully sent and received, details about the automatic
 	// keep alive handler, reconnection and occurring errors.
 	Logger func(msg string)
 

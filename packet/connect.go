@@ -19,7 +19,7 @@ var versionNames = map[byte][]byte{
 // A Connect packet is sent by a client to the server after a network
 // connection has been established.
 type Connect struct {
-	// The clients client id.
+	// The client's client id.
 	ClientID string
 
 	// The keep alive value.

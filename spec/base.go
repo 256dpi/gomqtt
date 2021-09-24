@@ -23,7 +23,7 @@ func PublishSubscribeTest(t *testing.T, config *Config, pub, sub string, subQOS,
 		assert.NoError(t, err)
 		assert.Equal(t, pub, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, packet.QOS(recQOS), msg.QOS)
+		assert.Equal(t, recQOS, msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -189,7 +189,7 @@ func SubscriptionUpgradeTest(t *testing.T, config *Config, topic string, from, t
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, packet.QOS(to), msg.QOS)
+		assert.Equal(t, to, msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)
@@ -433,7 +433,7 @@ func WillTest(t *testing.T, config *Config, topic string, sub, pub packet.QOS) {
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, packet.QOS(sub), msg.QOS)
+		assert.Equal(t, sub, msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)

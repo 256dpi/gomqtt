@@ -73,7 +73,7 @@ type MemoryBackend struct {
 	// The size of the session queue.
 	SessionQueueSize int
 
-	// The time after an error is returned while waiting on an killed existing
+	// The time after an error is returned while waiting on a killed existing
 	// client to exit.
 	KillTimeout time.Duration
 
@@ -111,7 +111,7 @@ func NewMemoryBackend() *MemoryBackend {
 	}
 }
 
-// Authenticate will authenticates a clients credentials.
+// Authenticate will authenticate a clients credentials.
 func (m *MemoryBackend) Authenticate(_ *Client, user, password string) (bool, error) {
 	// acquire global mutex
 	m.globalMutex.Lock()
@@ -247,7 +247,7 @@ func (m *MemoryBackend) Setup(client *Client, id string, clean bool) (Session, b
 		return storedSession, true, nil
 	}
 
-	// otherwise create fresh session
+	// otherwise, create fresh session
 	storedSession = newMemorySession(m.SessionQueueSize)
 
 	// set active client
@@ -422,7 +422,7 @@ func (m *MemoryBackend) Dequeue(client *Client) (*packet.Message, Ack, error) {
 	sess := client.Session().(*memorySession)
 
 	// this implementation is very basic and will dequeue messages immediately
-	// and not return no ack. messages are lost if the client fails to handle them
+	// and not return an ack. messages are lost if the client fails to handle them
 
 	// get next message from queue
 	select {

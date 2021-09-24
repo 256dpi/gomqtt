@@ -134,7 +134,7 @@ func OfflineSubscriptionRetainedTest(t *testing.T, config *Config, topic string,
 		assert.NoError(t, err)
 		assert.Equal(t, topic, msg.Topic)
 		assert.Equal(t, testPayload, msg.Payload)
-		assert.Equal(t, packet.QOS(sub), msg.QOS)
+		assert.Equal(t, sub, msg.QOS)
 		assert.False(t, msg.Retain)
 
 		close(wait)

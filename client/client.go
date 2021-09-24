@@ -30,11 +30,11 @@ var ErrClientNotConnected = errors.New("client not connected")
 // the config while requesting to resume a session.
 var ErrClientMissingID = errors.New("client missing id")
 
-// ErrClientConnectionDenied is returned in the Callback if the connection has
+// ErrClientConnectionDenied is returned to the Callback if the connection has
 // been reject by the broker.
 var ErrClientConnectionDenied = errors.New("client connection denied")
 
-// ErrClientMissingPong is returned in the Callback if the broker did not respond
+// ErrClientMissingPong is returned to the Callback if the broker did not respond
 // in time to a Pingreq.
 var ErrClientMissingPong = errors.New("client missing pong")
 
@@ -68,7 +68,7 @@ type Session interface {
 	LookupPacket(session.Direction, packet.ID) (packet.Generic, error)
 
 	// DeletePacket will remove a packet from the session. The method must not
-	// return an error if no packet with the specified id does exists.
+	// return an error if no packet with the specified id does exist.
 	DeletePacket(session.Direction, packet.ID) error
 
 	// AllPackets will return all packets currently saved in the session.
@@ -192,7 +192,7 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 	// set to connecting as from this point the client cannot be reused
 	atomic.StoreUint32(&c.state, clientConnecting)
 
-	// from now on the connection has been used and we have to close the
+	// from now on the connection has been used, and we have to close the
 	// connection and cleanup on any subsequent error
 
 	// save clean
@@ -827,7 +827,7 @@ func (c *Client) die(err error, closeConn bool) error {
 	return err
 }
 
-// will try to cleanup as many resources as possible
+// will try to clean up as many resources as possible
 func (c *Client) cleanup(err error, closeConn bool, possiblyClosed bool) error {
 	// cancel connect future if appropriate
 	if atomic.LoadUint32(&c.state) < clientConnacked && c.connectFuture != nil {

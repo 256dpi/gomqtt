@@ -784,7 +784,7 @@ func TestClientSessionResumption(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	c := New()
-	c.Session.SavePacket(session.Outgoing, publish1)
+	_ = c.Session.SavePacket(session.Outgoing, publish1)
 	c.Session.NextID()
 	c.Callback = errorCallback(t)
 
