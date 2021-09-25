@@ -113,6 +113,7 @@ type Client struct {
 	config        *Config
 	conn          transport.Conn
 	clean         bool
+	earlyCallback bool
 	keepAlive     time.Duration
 	tracker       *Tracker
 	futureStore   *future.Store
@@ -205,6 +206,8 @@ func (c *Client) Connect(config *Config) (ConnectFuture, error) {
 			return nil, c.cleanup(err, true, false)
 		}
 	}
+
+	c.earlyCallback = config.AlwaysAnnounceOnPublish
 
 	// allocate packet
 	connect := packet.NewConnect()
@@ -611,7 +614,7 @@ func (c *Client) processUnsuback(unsuback *packet.Unsuback) error {
 // handle an incoming Publish packet
 func (c *Client) processPublish(publish *packet.Publish) error {
 	// call callback for unacknowledged and directly acknowledged messages
-	if publish.Message.QOS <= 1 {
+	if publish.Message.QOS <= 1 || c.earlyCallback {
 		if c.Callback != nil {
 			err := c.Callback(&publish.Message, nil)
 			if err != nil {
@@ -619,7 +622,6 @@ func (c *Client) processPublish(publish *packet.Publish) error {
 			}
 		}
 	}
-
 	// handle qos 1 flow
 	if publish.Message.QOS == 1 {
 		// prepare puback packet
@@ -714,7 +716,7 @@ func (c *Client) processPubrel(id packet.ID) error {
 	}
 
 	// call callback
-	if c.Callback != nil {
+	if c.Callback != nil && !c.earlyCallback {
 		err = c.Callback(&publish.Message, nil)
 		if err != nil {
 			return c.die(err, true)

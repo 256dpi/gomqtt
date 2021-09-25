@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -74,6 +75,336 @@ func TestServicePublishSubscribe(t *testing.T) {
 
 	safeReceive(offline)
 	safeReceive(done)
+}
+
+// test AlwaysAnnounceOnPublish = true with callback error in QOS2 message sequence
+func TestServicePublishSubscribeEarlyCallback(t *testing.T) {
+	clientID := "test-persist-sub"
+
+	connect := connectPacket()
+	connect.ClientID = clientID
+	connect.CleanSession = false
+
+	subscribe := packet.NewSubscribe()
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 2}}
+	subscribe.ID = 1
+
+	suback := packet.NewSuback()
+	suback.ReturnCodes = []packet.QOS{2}
+	suback.ID = 1
+
+	publish := packet.NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 2
+	publish.ID = 2
+
+	publishDup := packet.NewPublish()
+	publishDup.Message.Topic = "test"
+	publishDup.Message.Payload = []byte("test")
+	publishDup.Message.QOS = 2
+	publishDup.ID = 2
+	publishDup.Dup = true
+
+	pubrec := packet.NewPubrec()
+	pubrec.ID = 2
+
+	pubrel := packet.NewPubrel()
+	pubrel.ID = 2
+
+	pubcomp := packet.NewPubcomp()
+	pubcomp.ID = 2
+
+	subscribe2 := packet.NewSubscribe()
+	subscribe2.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 2}}
+	subscribe2.ID = 3
+
+	suback2 := packet.NewSuback()
+	suback2.ReturnCodes = []packet.QOS{2}
+	suback2.ID = 3
+
+	flow1 := flow.New().
+		Receive(connect).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(pubrec).
+		Receive(pubrel).
+		Send(pubcomp).
+		Send(publish).
+		End()
+
+	flow2 := flow.New().
+		Receive(connect).
+		Send(connackPacket()).
+		Run(func() {
+			time.Sleep(55 * time.Millisecond)
+		}).
+		Send(publishDup).
+		Receive(subscribe2). // without above sleep this is sometimes after pubrec
+		Send(suback2).
+		Receive(pubrec). // without above sleep this is sometimes before subscribe
+		Send(pubrel).
+		Receive(pubcomp).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, flow1, flow2)
+
+	online0 := make(chan struct{})
+	message0 := make(chan struct{})
+	offline0 := make(chan struct{})
+	online1 := make(chan struct{})
+	message1 := make(chan struct{})
+	offline1 := make(chan struct{})
+
+	s := NewService()
+
+	failedCallback := errors.New("callback deliberately failed")
+
+	on := 0
+	s.OnlineCallback = func(resumed bool) {
+		assert.False(t, resumed)
+		if on == 0 {
+			close(online0)
+		} else {
+			close(online1)
+		}
+		on++
+	}
+
+	off := 0
+	s.OfflineCallback = func() {
+		if off == 0 {
+			close(offline0)
+		} else {
+			close(offline1)
+		}
+		off++
+	}
+	msgCount := 0
+	errCount := 0
+	s.ErrorCallback = func(err error) {
+		if msgCount == 1 && errCount == 0 {
+			assert.Equal(t, failedCallback, err)
+		} else {
+			assert.NoError(t, err)
+		}
+		errCount++
+	}
+
+	s.MessageCallback = func(msg *packet.Message) (err error) {
+		if msgCount <= 1 {
+			assert.Equal(t, "test", msg.Topic)
+			assert.Equal(t, []byte("test"), msg.Payload)
+			assert.Equal(t, packet.QOS(2), msg.QOS)
+			assert.False(t, msg.Retain)
+		}
+		if msgCount == 0 {
+			err = failedCallback
+			close(message0)
+		} else {
+			close(message1)
+		}
+		msgCount++
+		return
+	}
+
+	cfg := NewConfigWithClientID("tcp://localhost:"+port, clientID)
+	cfg.CleanSession = false
+	cfg.AlwaysAnnounceOnPublish = true
+	s.Start(cfg)
+
+	safeReceive(online0)
+
+	subscribeFuture := s.Subscribe("test", 2)
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
+	assert.Equal(t, []packet.QOS{2}, subscribeFuture.ReturnCodes())
+
+	assert.NoError(t, s.Publish("test", []byte("test"), 2, false).Wait(1*time.Second))
+
+	safeReceive(message0)
+	assert.Equal(t, 1, msgCount)
+
+	safeReceive(offline0)
+	assert.Equal(t, 1, off)
+	assert.Equal(t, 1, errCount)
+
+	// service reconnects
+	safeReceive(online1)
+
+	// Publish redelivery
+	safeReceive(message1)
+	assert.Equal(t, 2, msgCount)
+
+	// ensure pubcomp arrives and disconnect occurs
+	time.Sleep(200 * time.Millisecond)
+
+	wasRunning := s.Stop(true)
+	assert.Equal(t, true, wasRunning)
+
+	safeReceive(offline1)
+	safeReceive(done)
+	assert.Equal(t, 2, off)
+	assert.Equal(t, 1, errCount)
+	assert.Equal(t, 2, msgCount)
+}
+
+// test AlwaysAnnounceOnPublish = false with callback error in QOS2 message sequence
+func TestServicePublishSubscribeLateCallback(t *testing.T) {
+	clientID := "test-persist-sub2"
+
+	connect := connectPacket()
+	connect.ClientID = clientID
+	connect.CleanSession = false
+
+	subscribe := packet.NewSubscribe()
+	subscribe.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 2}}
+	subscribe.ID = 1
+
+	suback := packet.NewSuback()
+	suback.ReturnCodes = []packet.QOS{2}
+	suback.ID = 1
+
+	publish := packet.NewPublish()
+	publish.Message.Topic = "test"
+	publish.Message.Payload = []byte("test")
+	publish.Message.QOS = 2
+	publish.ID = 2
+
+	pubrec := packet.NewPubrec()
+	pubrec.ID = 2
+
+	pubrel := packet.NewPubrel()
+	pubrel.ID = 2
+
+	pubcomp := packet.NewPubcomp()
+	pubcomp.ID = 2
+
+	subscribe2 := packet.NewSubscribe()
+	subscribe2.Subscriptions = []packet.Subscription{{Topic: "test", QOS: 2}}
+	subscribe2.ID = 3
+
+	suback2 := packet.NewSuback()
+	suback2.ReturnCodes = []packet.QOS{2}
+	suback2.ID = 3
+
+	flow1 := flow.New().
+		Receive(connect).
+		Send(connackPacket()).
+		Receive(subscribe).
+		Send(suback).
+		Receive(publish).
+		Send(pubrec).
+		Receive(pubrel).
+		Send(pubcomp).
+		Send(publish).
+		Receive(pubrec).
+		Send(pubrel).
+		End()
+
+	flow2 := flow.New().
+		Receive(connect).
+		Send(connackPacket()).
+		Receive(subscribe2).
+		Send(suback2).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, flow1, flow2)
+
+	online0 := make(chan struct{})
+	message0 := make(chan struct{})
+	offline0 := make(chan struct{})
+	online1 := make(chan struct{})
+	message1 := make(chan struct{})
+	offline1 := make(chan struct{})
+
+	s := NewService()
+
+	failedCallback := errors.New("callback deliberately failed")
+
+	on := 0
+	s.OnlineCallback = func(resumed bool) {
+		assert.False(t, resumed)
+		if on == 0 {
+			close(online0)
+		} else {
+			close(online1)
+		}
+		on++
+	}
+
+	off := 0
+	s.OfflineCallback = func() {
+		if off == 0 {
+			close(offline0)
+		} else {
+			close(offline1)
+		}
+		off++
+	}
+	msgCount := 0
+	errCount := 0
+	s.ErrorCallback = func(err error) {
+		if msgCount == 1 && errCount == 0 {
+			assert.Equal(t, failedCallback, err)
+		} else {
+			assert.NoError(t, err)
+		}
+		errCount++
+	}
+
+	s.MessageCallback = func(msg *packet.Message) (err error) {
+		if msgCount <= 1 {
+			assert.Equal(t, "test", msg.Topic)
+			assert.Equal(t, []byte("test"), msg.Payload)
+			assert.Equal(t, packet.QOS(2), msg.QOS)
+			assert.False(t, msg.Retain)
+		}
+		if msgCount == 0 {
+			err = failedCallback
+			close(message0)
+		} else {
+			close(message1)
+		}
+		msgCount++
+		return
+	}
+
+	cfg := NewConfigWithClientID("tcp://localhost:"+port, clientID)
+	cfg.CleanSession = false
+	cfg.AlwaysAnnounceOnPublish = false
+	s.Start(cfg)
+
+	safeReceive(online0)
+
+	subscribeFuture := s.Subscribe("test", 2)
+	assert.NoError(t, subscribeFuture.Wait(1*time.Second))
+	assert.Equal(t, []packet.QOS{2}, subscribeFuture.ReturnCodes())
+
+	assert.NoError(t, s.Publish("test", []byte("test"), 2, false).Wait(1*time.Second))
+
+	safeReceive(message0)
+	assert.Equal(t, 1, msgCount)
+
+	safeReceive(offline0)
+	assert.Equal(t, 1, off)
+	assert.Equal(t, 1, errCount)
+
+	// service reconnects
+	safeReceive(online1)
+
+	assert.Equal(t, 1, msgCount)
+
+	s.Stop(true)
+
+	safeReceive(done)
+	safeReceive(offline1)
+	assert.Equal(t, 2, off)
+	assert.Equal(t, 1, errCount)
+	assert.Equal(t, 1, msgCount)
 }
 
 func TestServiceCommandsInCallback(t *testing.T) {
