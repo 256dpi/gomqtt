@@ -356,17 +356,17 @@ func (s *Service) supervisor() error {
 			continue
 		}
 
+		// run callback
+		if s.OnlineCallback != nil {
+			s.OnlineCallback(resumed)
+		}
+
 		// resubscribe
 		if s.ResubscribeAllSubscriptions {
 			if !s.resubscribe(client) {
 				_ = client.Close()
 				continue
 			}
-		}
-
-		// run callback
-		if s.OnlineCallback != nil {
-			s.OnlineCallback(resumed)
 		}
 
 		// run dispatcher on client
