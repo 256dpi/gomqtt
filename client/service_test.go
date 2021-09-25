@@ -488,6 +488,7 @@ func TestServiceResubscribeTimeout(t *testing.T) {
 
 	online1 := make(chan struct{})
 	online2 := make(chan struct{})
+	online3 := make(chan struct{})
 	offline := make(chan struct{})
 
 	s := NewService()
@@ -501,11 +502,13 @@ func TestServiceResubscribeTimeout(t *testing.T) {
 			close(online1)
 		} else if i == 2 {
 			close(online2)
+		} else if i == 3 {
+			close(online3)
 		}
 	}
 
 	s.OfflineCallback = func() {
-		if i == 2 {
+		if i == 3 {
 			close(offline)
 		}
 	}
@@ -518,12 +521,14 @@ func TestServiceResubscribeTimeout(t *testing.T) {
 
 	safeReceive(online2)
 
+	safeReceive(online3)
+
 	s.Stop(true)
 
 	safeReceive(offline)
 	safeReceive(done)
 
-	assert.Equal(t, 2, i)
+	assert.Equal(t, 3, i)
 }
 
 func TestServiceFutureSurvival(t *testing.T) {
