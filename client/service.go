@@ -37,7 +37,8 @@ type Service struct {
 	// The session used by the client to store unacknowledged packets.
 	Session Session
 
-	// The OnlineCallback is called when the service is connected.
+	// The OnlineCallback is called when the service is connected, but before
+	// topics are resubscribed.
 	//
 	// Note: Execution of the service is resumed after the callback returns.
 	// This means that waiting on a future inside the callback will deadlock the

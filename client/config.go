@@ -42,12 +42,15 @@ type Config struct {
 	// underlying buffered writer.
 	MaxWriteDelay time.Duration
 
-	// AlwaysAnnounceOnPublish defines when the message callback handler is called.
-	// QOS 0,1: callback always occurs on reception of Publish
-	// QOS 2 and AlwaysAnnounceOnPublish == false: callback occurs on reception of PubRel and returning and error in
-	//   the callback will close the connection before PubComp is sent.
-	// QOS 2 and AlwaysAnnounceOnPublish == true: callback occurs on reception of Publish and returning an error in
-	//   the callback will close the connection, preventing PubRec being sent, thus ensuring redelivery of publish.
+	// AlwaysAnnounceOnPublish defines when the message callback is called.
+	// - QOS 0 and 1: Callback always occurs on reception of Publish.
+	// - QOS 2 and AlwaysAnnounceOnPublish == false: Callback occurs on
+	//   reception of PubRel and returning and error in the callback will close
+	//   the connection before PubComp is sent.
+	// - QOS 2 and AlwaysAnnounceOnPublish == true: Callback occurs on reception
+	//   of Publish and returning an error in the callback will close the
+	//   connection, preventing PubRec being sent, thus ensuring the redelivery
+	//   of Publish.
 	AlwaysAnnounceOnPublish bool
 }
 
