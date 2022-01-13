@@ -48,18 +48,27 @@ func (id ID) Valid() bool {
 	return id != 0
 }
 
+// Empty can be used to denote and empty string and force corresponding flags.
+var Empty = "\x00"
+
 // Mode defines the encoding/decoding mode.
 type Mode struct {
 	// The used protocol version. When decoding a Connect packet it represents
 	// the minimum supported version by the receiver.
 	Version byte
+
+	// If enabled packets are not checked for consistency e.g. zero topic.
+	Loose bool
 }
 
 // The available modes.
 var (
 	M3 = Mode{Version: Version3}
+	M3L = Mode{Version: Version3, Loose: true}
 	M4 = Mode{Version: Version4}
+	M4L = Mode{Version: Version4, Loose: true}
 	M5 = Mode{Version: Version5}
+	M5L = Mode{Version: Version5, Loose: true}
 )
 
 // Generic is an MQTT control packet that can be encoded to a buffer or decoded

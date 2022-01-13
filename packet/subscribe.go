@@ -107,7 +107,7 @@ func (s *Subscribe) Decode(m Mode, src []byte) (int, error) {
 		}
 
 		// check topic
-		if len(topic) == 0 {
+		if !m.Loose && len(topic) == 0 {
 			return total, wrapError(SUBSCRIBE, DECODE, m, total, ErrInvalidTopic)
 		}
 
@@ -169,7 +169,7 @@ func (s *Subscribe) Encode(m Mode, dst []byte) (int, error) {
 	// write subscriptions
 	for _, sub := range s.Subscriptions {
 		// check topic
-		if len(sub.Topic) == 0 {
+		if !m.Loose && len(sub.Topic) == 0 {
 			return total, wrapError(SUBSCRIBE, ENCODE, m, total, ErrInvalidTopic)
 		}
 

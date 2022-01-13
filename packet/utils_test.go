@@ -45,12 +45,24 @@ func multiTest(t *testing.T, fn func(t *testing.T, m Mode)) {
 		fn(t, M3)
 	})
 
+	t.Run("M3L", func(t *testing.T) {
+		fn(t, M3L)
+	})
+
 	t.Run("M4", func(t *testing.T) {
 		fn(t, M4)
 	})
 
+	t.Run("M4L", func(t *testing.T) {
+		fn(t, M4L)
+	})
+
 	t.Run("M5", func(t *testing.T) {
 		fn(t, M5)
+	})
+
+	t.Run("M5L", func(t *testing.T) {
+		fn(t, M5L)
 	})
 }
 

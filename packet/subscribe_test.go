@@ -30,6 +30,23 @@ func TestSubscribe(t *testing.T) {
 			ID: 7,
 		}, `<Subscribe ID=7 Subscriptions=["gomqtt"=>0, "/a/b/*/c"=>1, "/a/b/#"=>2]>`)
 
+		if m.Loose {
+			assertEncodeDecode(t, m, []byte{
+				byte(SUBSCRIBE<<4) | 2,
+				5, // remaining length
+				0, // packet id
+				7,
+				0, // topic name
+				0,
+				0, // qos
+			}, &Subscribe{
+				Subscriptions: []Subscription{
+					{Topic: "", QOS: 0},
+				},
+				ID: 7,
+			}, `<Subscribe ID=7 Subscriptions=[""=>0]>`)
+		}
+
 		assertDecodeError(t, m, SUBSCRIBE, 2, []byte{
 			byte(SUBSCRIBE<<4) | 2,
 			9, // < remaining length: too much
@@ -49,14 +66,16 @@ func TestSubscribe(t *testing.T) {
 			// < missing subscription
 		}, "missing subscriptions")
 
-		assertDecodeError(t, m, SUBSCRIBE, 6, []byte{
-			byte(SUBSCRIBE<<4) | 2,
-			4, // remaining length
-			0, // packet id
-			7,
-			0, // topic
-			0, // < zero topic
-		}, ErrInvalidTopic)
+		if !m.Loose {
+			assertDecodeError(t, m, SUBSCRIBE, 6, []byte{
+				byte(SUBSCRIBE<<4) | 2,
+				4, // remaining length
+				0, // packet id
+				7,
+				0, // topic
+				0, // < zero topic
+			}, ErrInvalidTopic)
+		}
 
 		assertDecodeError(t, m, SUBSCRIBE, 6, []byte{
 			byte(SUBSCRIBE<<4) | 2,
@@ -125,14 +144,16 @@ func TestSubscribe(t *testing.T) {
 			Subscriptions: []Subscription{},
 		}, "missing subscriptions")
 
-		assertEncodeError(t, m, 0, 4, &Subscribe{
-			ID: 7,
-			Subscriptions: []Subscription{
-				{
-					Topic: "", // < zero topic
+		if !m.Loose {
+			assertEncodeError(t, m, 0, 4, &Subscribe{
+				ID: 7,
+				Subscriptions: []Subscription{
+					{
+						Topic: "", // < zero topic
+					},
 				},
-			},
-		}, ErrInvalidTopic)
+			}, ErrInvalidTopic)
+		}
 
 		assertEncodeError(t, m, 0, 6, &Subscribe{
 			ID: 7,
