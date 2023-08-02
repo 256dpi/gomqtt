@@ -8,14 +8,14 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.16.x
+      - name: Mosquitto
+        uses: namoshek/mosquitto-github-action@v1
+        with:
+          version: '1.6'
       - name: Checkout
         uses: actions/checkout@v2
       - name: Prepare
         run: |
-          sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa -y
-          sudo apt-get update -y
-          sudo apt-get install mosquitto=1.6.10
-          sudo service mosquitto start
           go get filippo.io/mkcert
           make cert
       - name: Test
