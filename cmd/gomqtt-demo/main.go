@@ -36,7 +36,6 @@ func main() {
 	topics := generateTopics(*numTopics)
 
 	// run robots
-	fmt.Println("launching robots...")
 	var robots []*robot
 	for i := 1; i <= *numRobots; i++ {
 		robots = append(robots, runRobot(*broker, strconv.Itoa(i), *numSubs, topics, *timeout))
