@@ -23,6 +23,7 @@ var broker = flag.String("broker", "tcp://0.0.0.0:1883", "the broker url")
 var numTopics = flag.Int("topic", 10, "the number of topics")
 var numRobots = flag.Int("robots", 7, "the number of robots")
 var numSubs = flag.Int("subs", 2, "the number of subscriptions")
+var stagger = flag.Int("stagger", 0, "the connect stagger in milliseconds")
 var timeout = flag.Duration("timeout", 5*time.Second, "the publish timeout")
 
 func main() {
@@ -37,14 +38,23 @@ func main() {
 
 	// run robots
 	var robots []*robot
-	for i := 1; i <= *numRobots; i++ {
-		robots = append(robots, runRobot(*broker, strconv.Itoa(i), *numSubs, topics, *timeout))
-	}
+	go func() {
+		for i := 1; i <= *numRobots; i++ {
+			robots = append(robots, runRobot(*broker, strconv.Itoa(i), *numSubs, topics, *timeout))
+			time.Sleep(time.Duration(*stagger) * time.Millisecond)
+		}
+	}()
 
 	// wait until interrupt
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 	<-interrupt
+
+	// ensure close
+	go func() {
+		time.Sleep(10 * time.Second)
+		os.Exit(0)
+	}()
 
 	// close all robots
 	fmt.Println("closing...")
