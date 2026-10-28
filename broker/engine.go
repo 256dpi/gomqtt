@@ -109,12 +109,13 @@ func (e *Engine) Handle(conn transport.Conn) bool {
 //
 // Note: All passed servers to Accept must be closed before calling this method.
 func (e *Engine) Close() {
-	// acquire mutex
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
 	// stop acceptors
+	e.mutex.Lock()
 	e.tomb.Kill(nil)
+	e.mutex.Unlock()
+
+	// wait without the mutex, as acceptors acquire it in Handle, which closes
+	// connections once the engine is dying
 	_ = e.tomb.Wait()
 }
 

@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"net"
 	"testing"
 	"time"
 
@@ -50,4 +51,59 @@ func TestDefaultReadLimit(t *testing.T) {
 	safeReceive(wait)
 	close(quit)
 	safeReceive(done)
+}
+
+type pendingServer struct {
+	waiting chan struct{}
+	conns   chan transport.Conn
+}
+
+func (s *pendingServer) Accept() (transport.Conn, error) {
+	s.waiting <- struct{}{}
+	conn, ok := <-s.conns
+	if !ok {
+		return nil, net.ErrClosed
+	}
+	return conn, nil
+}
+
+func (s *pendingServer) Close() error {
+	return nil
+}
+
+func (s *pendingServer) Addr() net.Addr {
+	return nil
+}
+
+func TestEngineCloseWhileHandling(t *testing.T) {
+	engine := NewEngine(NewMemoryBackend())
+
+	server := &pendingServer{
+		waiting: make(chan struct{}),
+		conns:   make(chan transport.Conn),
+	}
+	engine.Accept(server)
+	<-server.waiting
+
+	// close the engine while a connection is accepted
+	done := make(chan struct{})
+	go func() {
+		engine.Close()
+		close(done)
+	}()
+	<-engine.tomb.Dying()
+
+	local, remote := net.Pipe()
+	defer remote.Close()
+	server.conns <- transport.NewNetConn(local)
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("close did not return")
+	}
+
+	// the accepted connection is closed
+	_, err := remote.Read(make([]byte, 1))
+	assert.Error(t, err)
 }
