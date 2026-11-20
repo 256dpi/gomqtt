@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -784,7 +785,10 @@ func TestClientSessionResumption(t *testing.T) {
 	done, port := fakeBroker(t, broker)
 
 	c := New()
-	_ = c.Session.SavePacket(session.Outgoing, publish1)
+	// store a copy, as the client sets the dup flag while the broker compares
+	stored := *publish1
+	stored.Dup = false
+	_ = c.Session.SavePacket(session.Outgoing, &stored)
 	c.Session.NextID()
 	c.Callback = errorCallback(t)
 
@@ -808,6 +812,74 @@ func TestClientSessionResumption(t *testing.T) {
 	pkts, err := c.Session.AllPackets(session.Outgoing)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(pkts))
+}
+
+type resendHookSession struct {
+	Session
+	once sync.Once
+	hook func()
+}
+
+func (s *resendHookSession) AllPackets(dir session.Direction) ([]packet.Generic, error) {
+	s.once.Do(s.hook)
+	return s.Session.AllPackets(dir)
+}
+
+func TestClientSessionResumptionBeforeConnected(t *testing.T) {
+	connect := connectPacket()
+	connect.ClientID = "test"
+	connect.CleanSession = false
+
+	publish1 := packet.NewPublish()
+	publish1.Message.Topic = "test"
+	publish1.Message.Payload = []byte("test")
+	publish1.Message.QOS = 1
+	publish1.ID = 1
+	publish1.Dup = true
+
+	puback1 := packet.NewPuback()
+	puback1.ID = 1
+
+	broker := flow.New().
+		Receive(connect).
+		Send(connackPacket()).
+		Receive(publish1).
+		Send(puback1).
+		Receive(disconnectPacket()).
+		End()
+
+	done, port := fakeBroker(t, broker)
+
+	c := New()
+	// store a copy, as the client sets the dup flag while the broker compares
+	stored := *publish1
+	stored.Dup = false
+	_ = c.Session.SavePacket(session.Outgoing, &stored)
+	c.Session.NextID()
+	c.Callback = errorCallback(t)
+
+	// a publish issued while the stored packets are being resent must be
+	// refused, as the client is not yet connected
+	var publishErr error
+	c.Session = &resendHookSession{Session: c.Session, hook: func() {
+		_, publishErr = c.Publish("test", []byte("test"), 1, false)
+	}}
+
+	config := NewConfig("tcp://localhost:" + port)
+	config.ClientID = "test"
+	config.CleanSession = false
+
+	connectFuture, err := c.Connect(config)
+	assert.NoError(t, err)
+	assert.NoError(t, connectFuture.Wait(1*time.Second))
+	assert.Equal(t, ErrClientNotConnected, publishErr)
+
+	time.Sleep(20 * time.Millisecond)
+
+	err = c.Disconnect()
+	assert.NoError(t, err)
+
+	safeReceive(done)
 }
 
 func TestClientUnexpectedClose(t *testing.T) {

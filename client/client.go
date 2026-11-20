@@ -524,19 +524,16 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 		return err
 	}
 
-	// set state to connected
-	atomic.StoreUint32(&c.state, clientConnected)
-
-	// complete future
-	c.connectFuture.Complete(connack)
-
 	// retrieve stored packets
 	packets, err := c.Session.AllPackets(session.Outgoing)
 	if err != nil {
-		return c.die(err, true)
+		err = c.die(err, true)
+		c.connectFuture.Cancel(connack)
+		return err
 	}
 
-	// resend stored packets
+	// resend stored packets before the client is marked connected, as a packet
+	// published concurrently would otherwise be stored and picked up here too
 	for _, pkt := range packets {
 		// check for publish packets
 		publish, ok := pkt.(*packet.Publish)
@@ -548,9 +545,17 @@ func (c *Client) processConnack(connack *packet.Connack) error {
 		// resend packet
 		err = c.send(pkt, true)
 		if err != nil {
-			return c.die(err, false)
+			err = c.die(err, false)
+			c.connectFuture.Cancel(connack)
+			return err
 		}
 	}
+
+	// set state to connected
+	atomic.StoreUint32(&c.state, clientConnected)
+
+	// complete future
+	c.connectFuture.Complete(connack)
 
 	return nil
 }
